@@ -1,0 +1,48 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/",
+          "mainDocId": "architecture/cicd-swarm",
+          "docs": [
+            {
+              "id": "architecture/cicd-swarm",
+              "path": "/architecture/cicd-swarm",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "intro",
+              "path": "/intro",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "modules/webhooks-service",
+              "path": "/modules/webhooks-service",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "modules/websocket-gateway",
+              "path": "/modules/websocket-gateway",
+              "sidebar": "tutorialSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "tutorialSidebar": {
+              "link": {
+                "path": "/architecture/cicd-swarm",
+                "label": "architecture/cicd-swarm"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

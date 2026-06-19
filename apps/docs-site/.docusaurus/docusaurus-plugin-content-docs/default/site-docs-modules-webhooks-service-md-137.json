@@ -1,0 +1,23 @@
+{
+  "id": "modules/webhooks-service",
+  "title": "webhooks-service",
+  "description": "",
+  "source": "@site/docs/modules/webhooks-service.md",
+  "sourceDirName": "modules",
+  "slug": "/modules/webhooks-service",
+  "permalink": "/modules/webhooks-service",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "intro",
+    "permalink": "/intro"
+  },
+  "next": {
+    "title": "websocket-gateway",
+    "permalink": "/modules/websocket-gateway"
+  }
+}

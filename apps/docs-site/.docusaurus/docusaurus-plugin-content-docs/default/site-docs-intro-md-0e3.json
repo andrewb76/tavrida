@@ -1,0 +1,23 @@
+{
+  "id": "intro",
+  "title": "intro",
+  "description": "",
+  "source": "@site/docs/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/intro",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "cicd-swarm",
+    "permalink": "/architecture/cicd-swarm"
+  },
+  "next": {
+    "title": "webhooks-service",
+    "permalink": "/modules/webhooks-service"
+  }
+}

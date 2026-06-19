@@ -1,0 +1,39 @@
+{
+  "name": "@auction/backend-auction",
+  "version": "1.0.0",
+  "description": "NestJS Modular Auction Platform Engine",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "test": "jest",
+    "dev": "nest start --watch"
+  },
+  "dependencies": {
+    "@infisical/sdk": "^5.0.2",
+    "@nestjs/bullmq": "^11.0.4",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/platform-socket.io": "^10.0.0",
+    "@nestjs/swagger": "^7.0.0",
+    "@nestjs/terminus": "^11.1.1",
+    "@nestjs/typeorm": "^10.0.0",
+    "@nestjs/websockets": "^10.0.0",
+    "bullmq": "^5.79.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.16"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/testing": "^10.0.0",
+    "@types/node": "^26.0.0",
+    "typescript": "^5.0.0"
+  }
+}

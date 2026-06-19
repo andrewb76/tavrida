@@ -1,0 +1,19 @@
+{
+  "id": "architecture/cicd-swarm",
+  "title": "cicd-swarm",
+  "description": "",
+  "source": "@site/docs/architecture/cicd-swarm.md",
+  "sourceDirName": "architecture",
+  "slug": "/architecture/cicd-swarm",
+  "permalink": "/architecture/cicd-swarm",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "intro",
+    "permalink": "/intro"
+  }
+}
