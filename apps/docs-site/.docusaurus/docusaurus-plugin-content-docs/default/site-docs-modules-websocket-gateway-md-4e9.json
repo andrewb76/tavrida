@@ -15,5 +15,9 @@
   "previous": {
     "title": "webhooks-service",
     "permalink": "/modules/webhooks-service"
+  },
+  "next": {
+    "title": "overview",
+    "permalink": "/overview"
   }
 }

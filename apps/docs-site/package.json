@@ -1,5 +1,5 @@
 {
-  "name": "@auction/docs-site",
+  "name": "@app/docs-site",
   "version": "1.0.0",
   "private": true,
   "scripts": {

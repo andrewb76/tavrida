@@ -1,0 +1,19 @@
+{
+  "id": "overview",
+  "title": "overview",
+  "description": "",
+  "source": "@site/docs/overview.md",
+  "sourceDirName": ".",
+  "slug": "/overview",
+  "permalink": "/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "---",
+    "permalink": "/getting-started"
+  }
+}

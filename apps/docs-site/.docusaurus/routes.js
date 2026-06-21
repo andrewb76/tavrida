@@ -4,37 +4,31 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 export default [
   {
     path: '/',
-    component: ComponentCreator('/', '9eb'),
+    component: ComponentCreator('/', '851'),
     routes: [
       {
         path: '/',
-        component: ComponentCreator('/', 'bad'),
+        component: ComponentCreator('/', '90f'),
         routes: [
           {
             path: '/',
-            component: ComponentCreator('/', '52b'),
+            component: ComponentCreator('/', '4d3'),
             routes: [
               {
-                path: '/architecture/cicd-swarm',
-                component: ComponentCreator('/architecture/cicd-swarm', '9c5'),
+                path: '/architecture',
+                component: ComponentCreator('/architecture', 'c5a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/intro',
-                component: ComponentCreator('/intro', '9fa'),
+                path: '/getting-started',
+                component: ComponentCreator('/getting-started', '23e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/modules/webhooks-service',
-                component: ComponentCreator('/modules/webhooks-service', '1bd'),
-                exact: true,
-                sidebar: "tutorialSidebar"
-              },
-              {
-                path: '/modules/websocket-gateway',
-                component: ComponentCreator('/modules/websocket-gateway', '180'),
+                path: '/overview',
+                component: ComponentCreator('/overview', '7d0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }

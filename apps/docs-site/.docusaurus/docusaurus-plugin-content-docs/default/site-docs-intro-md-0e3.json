@@ -12,12 +12,8 @@
   "version": "current",
   "frontMatter": {},
   "sidebar": "tutorialSidebar",
-  "previous": {
-    "title": "cicd-swarm",
-    "permalink": "/architecture/cicd-swarm"
-  },
   "next": {
-    "title": "webhooks-service",
-    "permalink": "/modules/webhooks-service"
+    "title": "overview",
+    "permalink": "/overview"
   }
 }

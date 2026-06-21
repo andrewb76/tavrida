@@ -1,0 +1,4 @@
+CREATE SCHEMA IF NOT EXISTS auction;
+CREATE SCHEMA IF NOT EXISTS config;
+GRANT ALL ON SCHEMA auction TO auction_user;
+GRANT ALL ON SCHEMA config TO auction_user;

@@ -1,0 +1,191 @@
+version: '3.8'
+
+networks:
+  traefik-public:
+    external: false
+  internal:
+    external: false
+
+secrets:
+  infisical_client_id:
+    external: false  # или указать файл
+  infisical_client_secret:
+    external: false
+  infisical_project_id:
+    external: false
+
+services:
+  # -------------------- TRAEFIK --------------------
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      # Для локального тестирования используем nip.io
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=admin@example.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # -------------------- LOGTO ----------------------
+
+  logto:
+    image: ghcr.io/logto-io/logto:latest
+    environment:
+      # База данных (используем отдельную БД logto_db)
+      DB_URL: postgres://auction_user:auction_password@postgres:5432/logto_db
+      # Порты внутри контейнера
+      PORT: 3001
+      ADMIN_PORT: 3002
+      # Эндпоинты (локальные HTTP)
+      ENDPOINT: http://auth.${DOMAIN}
+      ADMIN_ENDPOINT: http://admin.${DOMAIN}
+      # Для локального теста отключаем проверку прокси
+      TRUST_PROXY_HEADER: "false"
+      # Генерируем случайный KEK (для локального теста можно любой строкой, но лучше из секретов)
+      SECRET_VAULT_KEK: "some-random-32-char-key-for-local-test"
+      # Отключаем таймаут для init
+      DATABASE_STATEMENT_TIMEOUT: DISABLE_TIMEOUT
+    networks:
+      - internal
+      - traefik-public
+    deploy:
+      replicas: 1
+      labels:
+        # Основной OIDC эндпоинт
+        - "traefik.enable=true"
+        - "traefik.http.routers.logto-core.rule=Host(`auth.${DOMAIN}`)"
+        - "traefik.http.routers.logto-core.entrypoints=web"
+        - "traefik.http.routers.logto-core.service=logto-core-svc"
+        - "traefik.http.services.logto-core-svc.loadbalancer.server.port=3001"
+        # Админ-консоль
+        - "traefik.http.routers.logto-admin.rule=Host(`admin.${DOMAIN}`)"
+        - "traefik.http.routers.logto-admin.entrypoints=web"
+        - "traefik.http.routers.logto-admin.service=logto-admin-svc"
+        - "traefik.http.services.logto-admin-svc.loadbalancer.server.port=3002"
+    depends_on:
+      - postgres
+      - redis
+  # -------------------- POSTGRES --------------------
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: auction_user
+      POSTGRES_PASSWORD: auction_password
+      POSTGRES_DB: auction_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - internal
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # -------------------- REDIS --------------------
+  redis:
+    image: redis:7-alpine
+    networks:
+      - internal
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # -------------------- CONFIG SERVICE --------------------
+  config-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${REPO_OWNER}/config-service:${IMAGE_TAG:-latest}
+    secrets:
+      - infisical_client_id
+      - infisical_client_secret
+      - infisical_project_id
+    environment:
+      INFISICAL_CLIENT_ID_FILE: /run/secrets/infisical_client_id
+      INFISICAL_CLIENT_SECRET_FILE: /run/secrets/infisical_client_secret
+      INFISICAL_PROJECT_ID_FILE: /run/secrets/infisical_project_id
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: auction_user
+      DB_PASSWORD: auction_password
+      DB_DATABASE: auction_db
+      REDIS_URL: redis://redis:6379
+      INTERNAL_TOKEN: secret-token
+    networks:
+      - internal
+      - traefik-public
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.config.rule=Host(`config.${DOMAIN}`)"
+        - "traefik.http.services.config.loadbalancer.server.port=3001"
+        - "traefik.http.routers.config.entrypoints=websecure"
+        - "traefik.http.routers.config.tls.certresolver=myresolver"
+    depends_on:
+      - postgres
+      - redis
+
+  # -------------------- AUCTION SERVICE --------------------
+  auction-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${REPO_OWNER}/auction-service:${IMAGE_TAG:-latest}
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: auction_user
+      DB_PASSWORD: auction_password
+      DB_DATABASE: auction_db
+      REDIS_URL: redis://redis:6379
+      CONFIG_SERVICE_URL: http://config-service:3001
+      INTERNAL_TOKEN: secret-token
+      INFISICAL_CLIENT_ID: ${INFISICAL_CLIENT_ID}
+      INFISICAL_CLIENT_SECRET: ${INFISICAL_CLIENT_SECRET}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
+      JWT_SECRET: ${JWT_SECRET}  # если используется
+    networks:
+      - internal
+      - traefik-public
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.auction.rule=Host(`auction.${DOMAIN}`)"
+        - "traefik.http.services.auction.loadbalancer.server.port=3000"
+        - "traefik.http.routers.auction.entrypoints=websecure"
+        - "traefik.http.routers.auction.tls.certresolver=myresolver"
+    depends_on:
+      - postgres
+      - redis
+      - config-service
+
+  # -------------------- DOCS SITE --------------------
+  # docs-site:
+  #   image: ${DOCKER_REGISTRY:-ghcr.io}/${REPO_OWNER}/docs-site:${IMAGE_TAG:-latest}
+  #   networks:
+  #     - traefik-public
+  #   deploy:
+  #     labels:
+  #       - "traefik.enable=true"
+  #       - "traefik.http.routers.docs.rule=Host(`docs.${DOMAIN}`)"
+  #       - "traefik.http.services.docs.loadbalancer.server.port=3003"
+  #       - "traefik.http.routers.docs.entrypoints=websecure"
+  #       - "traefik.http.routers.docs.tls.certresolver=myresolver"
+
+volumes:
+  pgdata:

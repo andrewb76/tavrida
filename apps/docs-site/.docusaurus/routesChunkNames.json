@@ -1,31 +1,27 @@
 {
-  "/-9eb": {
+  "/-851": {
     "__comp": "5e95c892",
     "__context": {
       "plugin": "aba21aa0"
     }
   },
-  "/-bad": {
+  "/-90f": {
     "__comp": "a7bd4aaa",
     "__props": "22dd74f7"
   },
-  "/-52b": {
+  "/-4d3": {
     "__comp": "a94703ab"
   },
-  "/architecture/cicd-swarm-9c5": {
+  "/architecture-c5a": {
     "__comp": "17896441",
-    "content": "cb1ae7de"
+    "content": "5281b7a2"
   },
-  "/intro-9fa": {
+  "/getting-started-23e": {
     "__comp": "17896441",
-    "content": "0e384e19"
+    "content": "d589d3a7"
   },
-  "/modules/webhooks-service-1bd": {
+  "/overview-7d0": {
     "__comp": "17896441",
-    "content": "137db622"
-  },
-  "/modules/websocket-gateway-180": {
-    "__comp": "17896441",
-    "content": "4e904c38"
+    "content": "1db64337"
   }
 }

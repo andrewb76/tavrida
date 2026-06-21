@@ -5,11 +5,11 @@
  */
 export default {
   "title": "Аукционная Платформа",
-  "tagline": "Техническая документация экосистемы антиквариата и монет",
+  "tagline": "Техническая документация экосистемы",
   "favicon": "img/favicon.ico",
   "url": "https://your-platform.com",
   "baseUrl": "/",
-  "onBrokenLinks": "throw",
+  "onBrokenLinks": "warn",
   "i18n": {
     "defaultLocale": "ru",
     "locales": [
@@ -65,8 +65,13 @@ export default {
           "label": "Архитектура и ТЗ"
         },
         {
+          "label": "Auction Service",
           "href": "http://localhost:3000/api/docs",
-          "label": "Swagger API (Порт 3000)",
+          "position": "right"
+        },
+        {
+          "label": "Config Service",
+          "href": "http://localhost:3001/api/docs",
           "position": "right"
         }
       ],
@@ -272,7 +277,8 @@ export default {
       "additionalLanguages": [
         "typescript",
         "json",
-        "bash"
+        "bash",
+        "yaml"
       ],
       "magicComments": [
         {

@@ -8,26 +8,21 @@
           "label": "Next",
           "isLast": true,
           "path": "/",
-          "mainDocId": "architecture/cicd-swarm",
+          "mainDocId": "architecture",
           "docs": [
             {
-              "id": "architecture/cicd-swarm",
-              "path": "/architecture/cicd-swarm",
+              "id": "architecture",
+              "path": "/architecture",
               "sidebar": "tutorialSidebar"
             },
             {
-              "id": "intro",
-              "path": "/intro",
+              "id": "getting-started",
+              "path": "/getting-started",
               "sidebar": "tutorialSidebar"
             },
             {
-              "id": "modules/webhooks-service",
-              "path": "/modules/webhooks-service",
-              "sidebar": "tutorialSidebar"
-            },
-            {
-              "id": "modules/websocket-gateway",
-              "path": "/modules/websocket-gateway",
+              "id": "overview",
+              "path": "/overview",
               "sidebar": "tutorialSidebar"
             }
           ],
@@ -35,8 +30,8 @@
           "sidebars": {
             "tutorialSidebar": {
               "link": {
-                "path": "/architecture/cicd-swarm",
-                "label": "architecture/cicd-swarm"
+                "path": "/architecture",
+                "label": "architecture"
               }
             }
           }

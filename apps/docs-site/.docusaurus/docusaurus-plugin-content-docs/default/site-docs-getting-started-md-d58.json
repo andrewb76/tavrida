@@ -1,0 +1,23 @@
+{
+  "id": "getting-started",
+  "title": "---",
+  "description": "sidebar_position: 3",
+  "source": "@site/docs/getting-started.md",
+  "sourceDirName": ".",
+  "slug": "/getting-started",
+  "permalink": "/getting-started",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "architecture",
+    "permalink": "/architecture"
+  },
+  "next": {
+    "title": "overview",
+    "permalink": "/overview"
+  }
+}

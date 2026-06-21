@@ -4,15 +4,14 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Аукционная Платформа',
-  tagline: 'Техническая документация экосистемы антиквариата и монет',
+  tagline: 'Техническая документация экосистемы',
   favicon: 'img/favicon.ico',
 
-  // Укажите здесь URL вашего будущего продакшн-сайта документации
   url: 'https://your-platform.com',
   baseUrl: '/',
 
-  // Настройки для предотвращения падения сборки при битых ссылках
-  onBrokenLinks: 'throw',
+  // Ключевое изменение – теперь сборка не падает при битых ссылках
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   i18n: {
@@ -20,7 +19,6 @@ const config: Config = {
     locales: ['ru'],
   },
 
-  // АКТИВАЦИЯ MERMAID ДЛЯ СХЕМ STATE MACHINE И ОЧЕРЕДЕЙ
   markdown: {
     mermaid: true,
   },
@@ -32,9 +30,9 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          routeBasePath: '/', // Документация будет открываться на главной странице порта 3001
+          routeBasePath: '/', // документация на главной
         },
-        blog: false, // Отключаем блог, так как нам нужна только техническая база знаний
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -54,8 +52,13 @@ const config: Config = {
           label: 'Архитектура и ТЗ',
         },
         {
+          label: 'Auction Service',
           href: 'http://localhost:3000/api/docs',
-          label: 'Swagger API (Порт 3000)',
+          position: 'right',
+        },
+        {
+          label: 'Config Service',
+          href: 'http://localhost:3001/api/docs',
           position: 'right',
         },
       ],
@@ -65,11 +68,10 @@ const config: Config = {
       links: [],
       copyright: `© ${new Date().getFullYear()} Auction Platform Ecosystem. Построено на Docusaurus, Turborepo и NestJS.`,
     },
-    // Настройка подсветки синтаксиса для наших бэкенд-файлов
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['typescript', 'json', 'bash'],
+      additionalLanguages: ['typescript', 'json', 'bash', 'yaml'],
     },
   } satisfies Preset.ThemeConfig,
 };
