@@ -40,9 +40,30 @@ relation-tuples:
 |--------|-----------|-----------|----------|
 | `platform` | `tavrida-lot` | `member`, `moderator`, `expert`, `admin` | Глобальные роли |
 | `auction` | `{auctionId}` | `owner`, `viewer`, `moderator` | Лот |
-| `post` | `{postId}` | `owner`, `moderator` | Пост/тема форума |
+| `category` | `{categoryId}` | `moderator` | Категория форума |
+| `topic` | `{topicId}` | `owner`, `moderator` | Топик (тема) |
 | `comment` | `{commentId}` | `owner`, `moderator` | Комментарий |
 | `report` | `{reportId}` | `viewer` | Жалоба (moderator+) |
+
+> **Форум:** `post` переименован в `topic` / `comment` для ясности иерархии.
+
+### 👮 Модераторы форума
+
+| Назначение | Tuple | Область check |
+|------------|-------|---------------|
+| **Главный модератор** | `platform:tavrida-lot#moderator@user:{id}` | любой объект форума |
+| **Областной** | `category:{id}#moderator@user:{id}` | категория + все топики и комментарии внутри |
+| **Областной** | `topic:{id}#moderator@user:{id}` | топик + все комментарии ветки |
+| **Областной** | `comment:{id}#moderator@user:{id}` | комментарий + все ответы в поддереве |
+
+Назначение и снятие — только `platform:tavrida-lot#admin@user:{id}`.
+
+**Проверка права** (forum service / BFF): пользователь — moderator, если выполняется **любое** из:
+
+1. `platform:tavrida-lot#moderator@user:{id}` (главный)
+2. `platform:tavrida-lot#admin@user:{id}`
+3. `{objectType}:{objectId}#moderator@user:{id}` для целевого объекта
+4. `{ancestorType}:{ancestorId}#moderator@user:{id}` для любого предка (category → topic → comment)
 
 ---
 
@@ -91,8 +112,29 @@ auction:{auctionId}#moderator@platform:tavrida-lot#moderator
 ### Forum content
 
 ```text
-post:{postId}#owner@user:{authorId}
-post:{postId}#moderator@platform:tavrida-lot#moderator
+topic:{topicId}#owner@user:{authorId}
+topic:{topicId}#moderator@user:{scopedModeratorId}    # областной: только эта ветка
+
+comment:{commentId}#owner@user:{authorId}
+comment:{commentId}#moderator@user:{scopedModeratorId}
+
+category:{categoryId}#moderator@user:{scopedModeratorId}  # вся категория
+```
+
+Главный модератор (наследование от platform):
+
+```text
+topic:{topicId}#moderator@platform:tavrida-lot#moderator
+comment:{commentId}#moderator@platform:tavrida-lot#moderator
+category:{categoryId}#moderator@platform:tavrida-lot#moderator
+```
+
+Назначение областного модератора (admin):
+
+```text
++ category:{categoryId}#moderator@user:{moderatorId}
++ topic:{topicId}#moderator@user:{moderatorId}
++ comment:{commentId}#moderator@user:{moderatorId}
 ```
 
 ---
@@ -115,9 +157,12 @@ post:{postId}#moderator@platform:tavrida-lot#moderator
 | Действие | Check | Fallback |
 |----------|-------|----------|
 | Admin API | `platform:tavrida-lot#admin@user:{id}` | 403 |
-| Moderate forum post | `post:{id}#moderator@user:{id}` OR platform moderator | 403 |
+| Assign/remove forum moderator | `platform:tavrida-lot#admin@user:{id}` | 403 |
+| Moderate forum object | `platform#moderator` OR `{type}:{id}#moderator` OR ancestor `#moderator` | 403 |
+| Promote comment → topic | то же, что moderate на comment/topic/category-предке | 403 |
 | Moderate auction (hide lot) | `auction:{id}#moderator@user:{id}` OR platform moderator | 403 |
-| Edit own post | `post:{id}#owner@user:{id}` | 403 |
+| Edit own topic | `topic:{id}#owner@user:{id}` | 403 |
+| Edit own comment | `comment:{id}#owner@user:{id}` | 403 |
 | Edit auction (seller) | `auction:{id}#owner@user:{id}` | 403 |
 | Add expert appraisal | `platform:tavrida-lot#expert@user:{id}` + not `auction:{id}#owner` | 403 |
 | Place bid | `platform:tavrida-lot#member@user:{id}` + financial-policy limits + rating ban | 403/402 |
@@ -143,18 +188,23 @@ post:{postId}#moderator@platform:tavrida-lot#moderator
 | Событие | Действие Keto |
 |---------|---------------|
 | User registered | `+ platform#member@user` |
-| Admin assigns moderator | `+ platform#moderator@user` |
+| Admin assigns chief moderator | `+ platform#moderator@user` |
+| Admin assigns scoped moderator | `+ category\|topic\|comment:{id}#moderator@user` |
+| Admin removes moderator | `- соответствующий tuple` |
 | Admin assigns expert | `+ platform#expert@user` |
 | Admin removes expert | `- platform#expert@user` |
-| Admin removes moderator | `- platform#moderator@user` |
 | Auction created | `+ auction#owner@user`, `+ auction#viewer@platform#member` |
 | Auction deleted | `- all tuples for auction:{id}` |
-| Post created | `+ post#owner@user` |
+| Topic created | `+ topic#owner@user` |
+| Comment created | `+ comment#owner@user` |
+| Comment promoted to topic | новый `topic` + ссылки; tuples без изменения moderator scope |
 
 ---
 
 ## 📋 TODO
 
+- [x] Модель модератора форума: главный vs scoped `category|topic|comment:{id}`
+- [x] Promote comment → topic: права и lifecycle tuples
 - [ ] Финализировать права moderator на auction (hide, cancel, ban bidder)
 - [ ] Expand API: batch check в BFF middleware
 - [ ] Sync Logto custom claims ↔ Keto (optional mirror)

@@ -257,6 +257,16 @@
 | **Consumers** | notifications (admin alert) |
 | **Payload** | `{ postId, reporterId, reason }` |
 
+### `forum.comment_promoted_to_topic`
+
+| | |
+|---|---|
+| **Producer** | forum |
+| **Consumers** | notifications (опционально: подписчики ветки), BFF/WS (обновление UI) |
+| **Payload** | `{ sourceTopicId, sourceCommentId, newTopicId, moderatorId, directChildCommentIds[] }` |
+
+Модератор выделяет комментарий в равноправный топик: дети комментария переезжают под новый топик, у исходного комментария — ссылка на новый. См. [forum/requirements](../05-microservices/forum/requirements/README.md).
+
 ---
 
 ## 📬 notifications
