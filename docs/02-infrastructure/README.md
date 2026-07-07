@@ -31,6 +31,10 @@
 | Sentry | Ошибки фронта и бэка |
 | Novu Cloud | Уведомления (email, push, in-app) — Free plan |
 
+Матрица сервисов и замен для MVP/локальной разработки: **[services-saas-matrix.md](./services-saas-matrix.md)**
+
+Admin/UI-инструменты и отладка кластера: **[dev-tools.md](./dev-tools.md)**
+
 ## 🔐 Переменные окружения и секреты
 
 Единый реестр для Bitwarden / runtime: **[PLATFORM-SECRETS.md](./PLATFORM-SECRETS.md)**  

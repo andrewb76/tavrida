@@ -29,6 +29,7 @@
 | 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, компоненты |
 | 12 | [Процесс разработки](./12-dev-process/README.md) | Git, code review, релизы |
 | 13 | [Сопровождение](./13-maintenance/README.md) | Guidelines, changelog |
+| 14 | [Фронтенд](./14-frontend/README.md) | SPA: стек, API-слой, auth, сборка |
 
 ## 🏗️ Ключевые документы (фундамент)
 
@@ -73,6 +74,7 @@
 | **3. Domain services** | ⏳ | rating, feedback, forum, user-profile, settings |
 | **4. Ops** | ⏳ | deployment runbooks, Grafana, SLO, security depth |
 | **5. UX** | ⏳ | wireframes (от [platform-for-users](./01-goal/platform-for-users.md)) |
+| **6. Frontend** | 🚧 draft | [SPA-спецификация](./14-frontend/README.md), затем реализация |
 
 ---
 

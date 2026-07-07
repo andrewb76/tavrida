@@ -1,6 +1,7 @@
 # 🎨 UX/UI и wireframes
 
-> **Продуктовый контекст:** [platform-for-users.md](../01-goal/platform-for-users.md) — что пользователь видит и делает на каждом экране.
+> **Продуктовый контекст:** [platform-for-users.md](../01-goal/platform-for-users.md) — что пользователь видит и делает на каждом экране.  
+> **Техническая реализация:** [14-frontend](../14-frontend/README.md) — стек SPA, компоненты, API-слой.
 
 ## 📐 Wireframes страниц
 
@@ -28,5 +29,6 @@
 ## 🔗 Связанные разделы
 
 - [platform-for-users](../01-goal/platform-for-users.md)
+- [14-frontend](../14-frontend/README.md) — техническая спецификация SPA
 - [Цель](../01-goal/README.md)
 - [Форум (требования)](../05-microservices/forum/requirements/README.md)
