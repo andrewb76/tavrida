@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/graphql" },
+    { "path": "./packages/content" },
+    { "path": "./packages/ui" },
+    { "path": "./services/billing" },
+    { "path": "./services/financial-policy" },
+    { "path": "./services/auction" },
+    { "path": "./services/auction-subscriptions" },
+    { "path": "./apps/frontend" }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@tavrida/frontend",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@tavrida/shared": "workspace:*",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@tavrida/tsconfig": "workspace:*",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "^5.4.5",
+    "vite": "^6.0.7",
+    "vue-tsc": "^2.2.0"
+  }
+}

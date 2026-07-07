@@ -1,0 +1,15 @@
+{
+  "extends": "../../packages/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": true,
+    "baseUrl": "../..",
+    "paths": {
+      "@tavrida/shared/*": ["./packages/shared/src/*"],
+      "@tavrida/content/*": ["./packages/content/src/*"],
+      "@tavrida/graphql/*": ["./packages/graphql/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.vue"]
+}

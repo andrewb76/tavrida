@@ -1,0 +1,9 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'services/*'
+
+allowBuilds:
+  '@nestjs/core': true
+  core-js: true
+  esbuild: true
