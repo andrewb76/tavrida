@@ -1,26 +1,77 @@
 # 🧪 Тестирование
 
+> **Статус:** spec ready · **Версия:** 0.2
+
+## 🎯 Пирамида
+
+| Уровень | Инструмент | Scope |
+|---------|------------|-------|
+| Unit | Jest | Domain logic, pure functions |
+| Integration | Jest + Testcontainers | HTTP + PG + RMQ |
+| Contract | (future) OpenAPI diff | BFF ↔ services |
+| E2E | Playwright (future) | Critical user flows |
+| Load | k6 | Auction bids, BFF RPS |
+
 ## 🔬 Unit
 
-- Jest + testing-library
-- Покрытие критических модулей
+- Colocate: `*.spec.ts` рядом с модулем
+- Mock: repositories, HTTP clients, RMQ
+- **Обязательно:** billing charge idempotency, rating formula, financial-policy limit check
 
-## 🔗 Интеграционные
+```bash
+pnpm exec turbo run test --filter=@tavrida/billing
+```
 
-- Тесты с реальными контейнерами (Testcontainers)
-- Проверка контрактов API
+## 🔗 Integration
 
-## 📈 Нагрузочные
+Testcontainers (PostgreSQL, Redis, RabbitMQ):
 
-- k6 или аналог
+```ts
+// sketch: billing charge integration
+beforeAll(async () => {
+  pg = await new PostgreSqlContainer().start()
+  // run migrations on billing schema
+})
+it('charge deducts balance atomically', async () => { … })
+```
 
-## 🎬 Сценарии
+Запуск в CI: Docker-in-Docker или dedicated runner.
 
-- просмотр лотов
-- создание тем
-- ставки
+## 📋 Critical scenarios (MVP)
+
+| # | Сценарий | Services |
+|---|----------|----------|
+| 1 | Create auction → bid → complete → feedback | auction, feedback, rating |
+| 2 | Activate Pro plan → charge → subscription | FP, billing |
+| 3 | Insufficient balance → 402 | billing, BFF |
+| 4 | Forum topic + comment + reaction karma | forum, rating |
+| 5 | Idempotent charge retry | billing |
+
+## 📈 Load (k6)
+
+Targets ([slo](../07-observability/slo.md)):
+
+- `POST /api/v1/auctions/{id}/bids` — 50 VUs, p95 < 500ms
+- WS subscribe + bid events delivery
+
+Scripts: `tools/k6/` (**TODO** in repo).
+
+## ✅ CI gate
+
+PR must pass:
+
+```bash
+pnpm lint
+pnpm build
+pnpm test   # when test scripts wired per package
+```
 
 ## 🔗 Связанные разделы
 
-- [Процесс разработки](../12-dev-process/README.md)
-- [API](../06-api/README.md)
+- [12-dev-process](../12-dev-process/README.md)
+- [06-api](../06-api/README.md)
+- [MICROSERVICE-SPEC](../05-microservices/MICROSERVICE-SPEC.md)
+
+---
+
+**Автор:** команда разработки · **Версия:** 0.2-spec

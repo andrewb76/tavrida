@@ -167,7 +167,9 @@ sequenceDiagram
 - [MICROSERVICE-SPEC](../05-microservices/MICROSERVICE-SPEC.md)
 - [API](../06-api/README.md)
 - [Data](../10-data/README.md)
-- [Notifications analysis](./notifications-analysis.md)
+- [Deployment](../04-deployment/README.md)
+- [Observability](../07-observability/README.md)
+- [Security ops](../09-security/security-ops.md)
 - [Moderator mapping](../09-security/moderator-mapping.md)
 - [Naming](../13-maintenance/naming.md)
 

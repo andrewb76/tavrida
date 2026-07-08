@@ -1,37 +1,42 @@
 # 📊 Observability
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2
 
 ## 🎯 Назначение
 
-Мониторинг, логирование, трейсинг и алертинг для Tavrida Lot.
+Мониторинг, логирование, трейсинг и алертинг Tavrida Lot.
 
 ## 📦 Стек
 
 | Инструмент | Назначение |
 |------------|------------|
-| Grafana Cloud | Метрики, логи, трейсы |
-| Sentry | Ошибки фронта и бэка |
+| Grafana Cloud | Метрики (Mimir), логи (Loki), трейсы (Tempo) |
+| OpenTelemetry | SDK в NestJS-сервисах |
+| Sentry | Ошибки frontend + backend |
+| Dozzle / Jaeger | Local debug ([dev-tools](../02-infrastructure/dev-tools.md)) |
 
 ## 📄 Документы
 
-| Документ | Описание | Статус |
-|----------|----------|--------|
-| [sentry-setup.md](./sentry-setup.md) | Интеграция Sentry (NestJS + Vue) | ✅ |
-| [grafana-setup.md](./grafana-setup.md) | Grafana Cloud, дашборды, алерты | 📝 TODO |
+| Документ | Описание |
+|----------|----------|
+| [logging-metrics.md](./logging-metrics.md) | JSON logs, metric names, OTel |
+| [grafana-setup.md](./grafana-setup.md) | Cloud stack, dashboards, alerts |
+| [slo.md](./slo.md) | SLI/SLO targets |
+| [sentry-setup.md](./sentry-setup.md) | Sentry NestJS + Vue |
 
-## 📋 TODO
+## 📋 Implementation TODO
 
-- [ ] Стандарт именования метрик (`tavrida_lot_{service}_{metric}`)
-- [ ] Structured logging (JSON, correlation ID)
-- [ ] OpenTelemetry SDK в NestJS-сервисах
-- [ ] SLI/SLO для критичных эндпоинтов
+- [ ] Alloy agent в stack-tools
+- [ ] OTel bootstrap shared package `@tavrida/otel`
+- [ ] Grafana dashboards as code (optional)
+- [ ] SLO recording rules в Mimir
 
 ## 🔗 Связанные разделы
 
-- [Инфраструктура](../02-infrastructure/README.md)
+- [Деплой](../04-deployment/README.md)
 - [Тестирование](../08-testing/README.md)
+- [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

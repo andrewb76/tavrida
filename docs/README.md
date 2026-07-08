@@ -43,6 +43,9 @@
 | [keto-schema](./09-security/keto-schema.md) | **Auth:** Ory Keto namespace |
 | [MICROSERVICE-SPEC](./05-microservices/MICROSERVICE-SPEC.md) | Требования к docs и коду каждого сервиса |
 | [Event catalog](./03-architecture/event-catalog.md) | Все RabbitMQ-события |
+| [Deployment](./04-deployment/README.md) | Swarm, CI/CD, migrations |
+| [Observability](./07-observability/README.md) | Grafana, SLO, logging |
+| [Security ops](./09-security/security-ops.md) | Network, secrets, incidents |
 | [ADR index](./03-architecture/adr/README.md) | Архитектурные решения |
 | [moderator-mapping](./09-security/moderator-mapping.md) | UX ↔ Logto ↔ Keto |
 | [naming](./13-maintenance/naming.md) | Именование сервисов, schema, registry |
@@ -74,8 +77,8 @@
 | **1. Фундамент** | ✅ done | Architecture, API, Events, ADR 001–005, naming, moderator-mapping |
 | **2. Core services** | ✅ done | billing, financial-policy, auction, bff |
 | **3. Domain services** | ✅ done | rating, feedback, forum, user-profile, settings, notifications, marketplace, auction-subscriptions |
-| **4. Ops** | ⏳ next | deployment runbooks, Grafana, SLO, security depth |
-| **5. UX** | ⏳ | wireframes (от [platform-for-users](./01-goal/platform-for-users.md)) |
+| **4. Ops** | ✅ done | deployment, observability SLO, security ops, testing, dev-process |
+| **5. UX** | ⏳ next | wireframes (от [platform-for-users](./01-goal/platform-for-users.md)) |
 | **6. Frontend** | 🚧 draft | [SPA-спецификация](./14-frontend/README.md), затем реализация |
 
 ---
