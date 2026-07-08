@@ -136,12 +136,12 @@ Default `rating.contextWeights`:
 | `rating.maxPendingBeforePenalty` | limit | 3 | 5 | 10 | Pending-сделок до штрафа |
 | `rating.maxActiveAuctionsWhenLimited` | limit | 2 | 3 | 5 | Лимит аукционов при низком рейтинге |
 
-### auction-subscriptions
+### auction_subscriptions
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `auction-subscriptions.categoriesMax` | limit | 3 | 10 | ∞ | Подписок на категории |
-| `auction-subscriptions.auctionsMax` | limit | 5 | 20 | ∞ | Подписок на конкретные лоты |
+| `auction_subscriptions.categoriesMax` | limit | 3 | 10 | ∞ | Подписок на категории |
+| `auction_subscriptions.auctionsMax` | limit | 5 | 20 | ∞ | Подписок на конкретные лоты |
 
 ### marketplace _(draft)_
 

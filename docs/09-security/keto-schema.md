@@ -45,38 +45,19 @@ relation-tuples:
 | `comment` | `{commentId}` | `owner`, `moderator` | Комментарий |
 | `report` | `{reportId}` | `viewer` | Жалоба (moderator+) |
 
-> **Форум:** `post` переименован в `topic` / `comment` для ясности иерархии.
+> **Форум:** `post` **deprecated** → `topic` / `comment` ([ADR-005](../03-architecture/adr/005-forum-terminology.md)).  
+> **Модераторы:** [moderator-mapping.md](./moderator-mapping.md) — единая таблица UX ↔ Logto ↔ Keto.
 
 ### 👮 Модераторы форума
 
-| Назначение | Tuple | Область check |
-|------------|-------|---------------|
-| **Главный модератор** | `platform:tavrida-lot#moderator@user:{id}` | любой объект форума |
-| **Областной** | `category:{id}#moderator@user:{id}` | категория + все топики и комментарии внутри |
-| **Областной** | `topic:{id}#moderator@user:{id}` | топик + все комментарии ветки |
-| **Областной** | `comment:{id}#moderator@user:{id}` | комментарий + все ответы в поддереве |
+См. [moderator-mapping.md](./moderator-mapping.md). Keto tuples:
 
-Назначение и снятие — только `platform:tavrida-lot#admin@user:{id}`.
+| Назначение | Tuple | Область |
+|------------|-------|---------|
+| Главный | `platform:tavrida-lot#moderator@user:{id}` | весь форум + аукционы |
+| Областной | `category\|topic\|comment:{id}#moderator@user:{id}` | объект + вложенные |
 
-**Проверка права** (forum service / BFF): пользователь — moderator, если выполняется **любое** из:
-
-1. `platform:tavrida-lot#moderator@user:{id}` (главный)
-2. `platform:tavrida-lot#admin@user:{id}`
-3. `{objectType}:{objectId}#moderator@user:{id}` для целевого объекта
-4. `{ancestorType}:{ancestorId}#moderator@user:{id}` для любого предка (category → topic → comment)
-
----
-
-## 🧩 Форумные роли модерации (naming)
-
-Для форумной области используем отдельные роли модератора:
-
-- `ForumModerator`
-- `ForumModerator:CategoryId:{id}`
-- `ForumModerator:TopicId:{id}`
-- `ForumModerator:CommentId:{id}`
-
-`ForumModerator` — глобальный доступ ко всему форумному контенту, scoped-варианты — доступ только к соответствующему объекту и его дочернему дереву.
+Назначение и снятие — **только admin**.
 
 ---
 
@@ -216,6 +197,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 ## 🔗 Связанные документы
 
 - [roles.md](../01-goal/roles.md)
+- [moderator-mapping.md](./moderator-mapping.md)
 - [BFF](../05-microservices/bff/README.md)
 - [06-api](../06-api/README.md)
 

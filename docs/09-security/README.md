@@ -15,6 +15,7 @@
 - Bitwarden Secrets Manager
 - Переменные окружения только для runtime
 - **Реестр всех env:** [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · шаблон [`.env.example`](../../.env.example)
+- **Модераторы:** [moderator-mapping.md](./moderator-mapping.md)
 
 ## 🔗 Связанные разделы
 

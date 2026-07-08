@@ -44,6 +44,8 @@
 | [MICROSERVICE-SPEC](./05-microservices/MICROSERVICE-SPEC.md) | Требования к docs и коду каждого сервиса |
 | [Event catalog](./03-architecture/event-catalog.md) | Все RabbitMQ-события |
 | [ADR index](./03-architecture/adr/README.md) | Архитектурные решения |
+| [moderator-mapping](./09-security/moderator-mapping.md) | UX ↔ Logto ↔ Keto |
+| [naming](./13-maintenance/naming.md) | Именование сервисов, schema, registry |
 | [Notifications analysis](./03-architecture/notifications-analysis.md) | Выбор платформы уведомлений |
 
 ## 🧩 Микросервисы
@@ -69,7 +71,7 @@
 
 | Фаза | Статус | Содержание |
 |------|--------|------------|
-| **1. Фундамент** | ✅ done | Architecture, API, Events, Data, ADR, MICROSERVICE-SPEC |
+| **1. Фундамент** | ✅ done | Architecture, API, Events, ADR 001–005, naming, moderator-mapping |
 | **2. Core services** | ⏳ next | billing, financial-policy, auction, bff — production-spec |
 | **3. Domain services** | ⏳ | rating, feedback, forum, user-profile, settings |
 | **4. Ops** | ⏳ | deployment runbooks, Grafana, SLO, security depth |

@@ -25,6 +25,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 | 002 | **BFF**: REST `/api/v1` + WebSocket `/ws/v1` |
 | 003 | **settings** (скаляр) + **financial-policy** (лимиты per tariff) — [PLATFORM-REGISTRY](../05-microservices/PLATFORM-REGISTRY.md) |
 | 004 | **Novu Cloud Free** + `notifications` adapter |
+| 005 | **Forum entities:** `topic` + `comment`; `post` deprecated — [ADR-005](../03-architecture/adr/005-forum-terminology.md) |
 
 ## Ключевые docs (читать первым)
 
@@ -38,6 +39,8 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 | Новый сервис | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) |
 | События | [event-catalog.md](../03-architecture/event-catalog.md) |
 | Keto | [keto-schema.md](../09-security/keto-schema.md) |
+| Модераторы (mapping) | [moderator-mapping.md](../09-security/moderator-mapping.md) |
+| Именование | [naming.md](../13-maintenance/naming.md) |
 | API conventions | [06-api/README.md](../06-api/README.md) |
 
 ## Сервисы
@@ -58,6 +61,7 @@ Guest → User (member) · Moderator (+ forum **и auction** mod, уточняе
 - admin-ui — не описан
 - marketplace **комиссия / юридика** — TBD (отдельный doc)
 - Moderator auction powers — draft в keto-schema
+- ~~Moderator forum model~~ → [moderator-mapping.md](../09-security/moderator-mapping.md) ✅
 
 ## Правила docs
 

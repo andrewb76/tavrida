@@ -129,11 +129,13 @@ Idempotency-Key: {uuid}
 
 ### Каналы
 
-| Channel | Events |
-|---------|--------|
-| `auction:{id}` | `bid.placed`, `auction.ended` |
-| `user:{id}` | `notification.new`, `balance.updated` |
-| `forum:{topicId}` | `message.new`, `reaction.added` |
+| Channel | Events (WS name) | RMQ source (если есть) |
+|---------|------------------|------------------------|
+| `auction:{id}` | `bid.placed`, `auction.ended` | `auction.bid_placed`, `auction.completed` |
+| `user:{id}` | `notification.new`, `balance.updated` | `notification.sent`, `billing.charge_completed` |
+| `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | см. [event-catalog § WS mapping](../03-architecture/event-catalog.md#-realtime-ws-mapping) |
+
+> WS `event` ≠ RMQ `eventType` 1:1 — см. mapping table в event-catalog.
 
 ## 🗺️ Public API map (BFF)
 
@@ -143,7 +145,7 @@ Idempotency-Key: {uuid}
 | `/wallets` | deposit, balance, transactions | billing |
 | `/plans` | list, activate, subscription | financial-policy |
 | `/profile` | get, notes | user-profile |
-| `/forum/*` | topics, posts, reactions | forum |
+| `/forum/*` | topics, comments, reactions | forum |
 | `/rating` | get | rating |
 | `/feedback` | submit, status | feedback |
 | `/settings` | get (public subset) | settings |

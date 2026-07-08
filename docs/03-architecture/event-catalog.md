@@ -28,6 +28,24 @@
 
 ---
 
+## 📡 Realtime (WS mapping)
+
+BFF транслирует события в WebSocket с **другими именами** (краткая форма для клиента). Это **не** RabbitMQ routing keys.
+
+| RabbitMQ `eventType` | WS `event` (BFF envelope) | Канал | Примечание |
+|----------------------|----------------------------|-------|------------|
+| `auction.bid_placed` | `bid.placed` | `auction:{id}` | |
+| `auction.completed` | `auction.ended` | `auction:{id}`, `user:{seller\|buyer}` | ended = торги завершены |
+| `billing.charge_completed` | `balance.updated` | `user:{id}` | агрегированное UI-событие |
+| `notification.sent` | `notification.new` | `user:{id}` | |
+| — (forum internal) | `message.new` | `forum:{topicId}` | из forum HTTP/RMQ, не 1:1 RMQ |
+| — (forum internal) | `reaction.added` | `forum:{topicId}` | |
+| `forum.comment_promoted_to_topic` | `topic.promoted` | `forum:{sourceTopicId}` | draft |
+
+> WS-only события без RMQ аналога — допустимы для UI; producer = BFF после агрегации.
+
+---
+
 ## 🔨 auction
 
 ### `auction.created`
@@ -229,6 +247,14 @@
 
 ## ⭐ rating
 
+### `rating.updated`
+
+| | |
+|---|---|
+| **Producer** | rating |
+| **Consumers** | user-profile (denormalized cache), notifications (optional) |
+| **Payload** | `{ userId, ratingValue, karma, context: 'auction' \| 'forum' \| 'marketplace' }` |
+
 ### `rating.penalty_applied`
 
 | | |
@@ -242,20 +268,22 @@
 | | |
 |---|---|
 | **Producer** | rating |
-| **Consumers** | auction (block bids), forum (block posts), notifications |
+| **Consumers** | auction (block bids), forum (block write), notifications |
 | **Payload** | `{ userId, banUntil, reason }` |
 
 ---
 
 ## 🗣️ forum
 
-### `forum.post_reported`
+### `forum.content_reported`
 
 | | |
 |---|---|
 | **Producer** | forum |
 | **Consumers** | notifications (admin alert) |
-| **Payload** | `{ postId, reporterId, reason }` |
+| **Payload** | `{ contentId, contentType: 'topic' \| 'comment', reporterId, reason }` |
+
+> **Deprecated:** `forum.post_reported` / `postId` — см. [ADR-005](../03-architecture/adr/005-forum-terminology.md).
 
 ### `forum.comment_promoted_to_topic`
 
@@ -283,19 +311,23 @@
 
 ## 📊 Матрица producer → consumer
 
-| Event | auction | billing | financial-policy | feedback | rating | notifications | BFF/WS | marketplace |
-|-------|---------|---------|------------------|----------|--------|---------------|--------|-------------|
-| auction.completed | — | | | ✅ | ✅ | ✅ | | |
-| auction.expert_appraisal_added | — | | | | | ✅ | ✅ | |
-| auction.bid_placed | — | | | | | ✅ | ✅ | |
-| marketplace.order_completed | | | | ✅ | ✅ | ✅ | | — |
-| marketplace.order_cancelled | | | | | | ✅ | | — |
-| billing.deposit_completed | | — | ✅ | | | | | |
-| billing.charge_completed | | — | ✅ | | | ✅ | | |
-| feedback.submitted | | | | — | ✅ | | | |
-| feedback.reminder_due | | | | — | | ✅ | | |
-| subscription.activated | | | — | | | ✅ | | |
-| rating.user_banned | ✅ | | | | — | ✅ | | |
+| Event | auction | billing | financial-policy | feedback | rating | notifications | BFF/WS | marketplace | forum |
+|-------|---------|---------|------------------|----------|--------|---------------|--------|-------------|-------|
+| auction.completed | — | | | ✅ | ✅ | ✅ | | | |
+| auction.expert_appraisal_added | — | | | | | ✅ | ✅ | | |
+| auction.bid_placed | — | | | | | ✅ | ✅ | | |
+| marketplace.order_completed | | | | ✅ | ✅ | ✅ | | — | |
+| marketplace.order_cancelled | | | | | | ✅ | | — | |
+| billing.deposit_completed | | — | ✅ | | | | | | |
+| billing.charge_completed | | — | ✅ | | | ✅ | ✅ | | |
+| feedback.submitted | | | | — | ✅ | | | | |
+| feedback.reminder_due | | | | — | | ✅ | | | |
+| subscription.activated | | | — | | | ✅ | | | |
+| rating.updated | | | | | — | opt | | | |
+| rating.penalty_applied | | | | | — | ✅ | | | |
+| rating.user_banned | ✅ | | | | — | ✅ | | | ✅ |
+| forum.content_reported | | | | | | ✅ | | | — |
+| forum.comment_promoted_to_topic | | | | | | opt | ✅ | | — |
 
 ---
 

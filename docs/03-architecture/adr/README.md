@@ -19,6 +19,7 @@
 | [002](./002-bff-rest-wss.md) | BFF: REST + WebSocket | accepted | 2026-07-06 |
 | [003](./003-settings-vs-financial-policy.md) | Settings vs Financial-policy | accepted | 2026-07-06 |
 | [004](./004-notifications-adapter.md) | Notifications: Novu Cloud Free + adapter | accepted | 2026-07-06 |
+| [005](./005-forum-terminology.md) | Forum: topic/comment, deprecate post | accepted | 2026-07-08 |
 
 ## 📝 Шаблон ADR
 

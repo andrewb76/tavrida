@@ -30,8 +30,8 @@
 | `rating` | rating | `user_rating`, `vote_log` | Рейтинг, карма |
 | `feedback` | feedback | `deal_feedback`, `pending_feedback`, `feedback_bonus` | Отзывы |
 | `user_profile` | user-profile | `user_profile`, `profile_note` | Bio, avatar, notes |
-| `forum` | forum | `topic`, `post`, `reaction`, `post_closure` | Контент форума |
-| `marketplace` | marketplace | `service_listing`, `order`, `review` | Маркет услуг |
+| `forum` | forum | `category`, `topic`, `comment`, `reaction`, `comment_closure` | Контент форума |
+| `marketplace` | marketplace | `service_listing`, `portfolio_item`, `service_order` | Маркет услуг |
 | `notifications` | notifications-adapter | `notification_log`, `subscriber` | Audit уведомлений |
 
 ## 🔄 Denormalized cache
@@ -56,7 +56,7 @@
 | Bucket | Owner | Назначение |
 |--------|-------|------------|
 | `avatars` | user-profile | Аватары пользователей |
-| `forum-attachments` | forum | Вложения к постам |
+| `forum-attachments` | forum | Вложения к topic/comment |
 | `auction-images` | auction | Фото лотов |
 | `feedback-media` | feedback | Фото к отзывам |
 

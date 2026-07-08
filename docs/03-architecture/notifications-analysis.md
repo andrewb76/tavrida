@@ -30,7 +30,7 @@
 | `subscription-activated` | Активация подписки | email, in-app | `subscription.activated` |
 | `subscription-expired` | Истечение подписки | email | `subscription.expired` |
 | `rating-penalty` | Штраф рейтинга | in-app, email | `rating.penalty_applied` |
-| `forum-post-reported` | Жалоба на пост (admin) | email | `forum.post_reported` |
+| `forum-content-reported` | Жалоба на контент (admin) | email | `forum.content_reported` |
 
 ## 🏗️ Архитектура
 

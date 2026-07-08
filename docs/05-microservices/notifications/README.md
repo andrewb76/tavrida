@@ -124,7 +124,7 @@ Webhook от Novu Cloud — обновление `NotificationLog`, relay in-app
 | consume | `subscription.activated` | trigger `subscription-activated` |
 | consume | `subscription.expired` | trigger `subscription-expired` |
 | consume | `rating.penalty_applied` | trigger `rating-penalty` |
-| consume | `forum.post_reported` | trigger `forum-post-reported` |
+| consume | `forum.content_reported` | trigger `forum-content-reported` |
 | produce | `notification.sent` | metrics |
 | produce | `notification.failed` | metrics + alert |
 

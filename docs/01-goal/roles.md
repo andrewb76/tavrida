@@ -70,26 +70,15 @@
 | **Главный модератор** | `Модератор` (без типа и ID) | Любой объект форума |
 | **Областной модератор** | `Модератор:<ТипОбъекта:ID>` | Указанный объект и **все вложенные** (`category` / `topic` / `comment`) |
 
-На аукционах и в других доменах — отдельная модель (см. [keto-schema.md](../09-security/keto-schema.md)).
+На аукционах и в других доменах — [moderator-mapping.md](../09-security/moderator-mapping.md).
 
 | Область | Может |
 |---------|-------|
-| **Форум** | Жалобы, скрытие/удаление, pin тем, блокировка автора, **выделение комментария в топик** (ветка живёт в обоих топиках) |
+| **Форум** | Жалобы, скрытие/удаление, pin тем, блокировка автора, **выделение комментария в топик** (маркер в старом topic + новый topic) |
 | **Аукционы** | Просмотр жалоб на лот, скрытие/восстановление лота, блокировка ставок нарушителя на лоте |
-| **Общее** | Не меняет баланс, тарифы, settings; не назначает admin и других модераторов |
+| **Общее** | Не меняет баланс, тарифы, settings; **не назначает** admin и других модераторов |
 
-**Scoped-модерация форума (дополнение):**
-
-- Роли модератора форума:
-  - `ForumModerator`
-  - `ForumModerator:CategoryId:{id}`
-  - `ForumModerator:TopicId:{id}`
-  - `ForumModerator:CommentId:{id}`
-- Глобальный модератор: `ForumModerator` (доступ ко всему форумному контенту).
-- Модератор категории: `ForumModerator:CategoryId:{id}` (пример: `ForumModerator:CategoryId:42342134123413`).
-- Вышестоящий модератор управляет нижестоящими объектами в дереве (вложенные категории → топики → комментарии).
-- Scoped-модератор может делегировать модерацию вниз по дереву на конкретные объекты.
-- У одного объекта может быть несколько модераторов одновременно (локальные + унаследованные + глобальные).
+Logto/Keto mapping: [moderator-mapping.md](../09-security/moderator-mapping.md).
 
 | Не может |
 |----------|
@@ -203,13 +192,13 @@
 ## 🛡️ Техническая реализация
 
 - **Logto** — JWT, `sub` = userId
-- **Ory Keto** — роли (`member`, `moderator`, `expert`, `admin`) и ownership: **[keto-schema.md](../09-security/keto-schema.md)**
+- **Ory Keto** — роли и ownership: **[moderator-mapping.md](../09-security/moderator-mapping.md)**, [keto-schema.md](../09-security/keto-schema.md)
 - **financial-policy** — лимиты тарифов (не Keto)
 - **rating** — баны и штрафы (не Keto)
 
 ### TODO
 
-- [x] Модель модератора форума: главный vs `Модератор:<Тип:ID>` — см. [forum/requirements](../05-microservices/forum/requirements/README.md)
+- [x] Модель модератора форума — [moderator-mapping.md](../09-security/moderator-mapping.md)
 - [ ] Уточнить полный список moderator actions на auction
 - [ ] admin-ui: только `admin`
 - [ ] Роли ортогональны тарифу (moderator + Pro — ok)

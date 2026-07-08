@@ -152,6 +152,7 @@ sequenceDiagram
 | [002](./adr/002-bff-rest-wss.md) | REST + WebSocket на BFF |
 | [003](./adr/003-settings-vs-financial-policy.md) | Два реестра переменных |
 | [004](./adr/004-notifications-adapter.md) | Novu Cloud Free + adapter |
+| [005](./adr/005-forum-terminology.md) | Forum: topic/comment, deprecate post |
 
 ## 📋 TODO
 
@@ -167,6 +168,8 @@ sequenceDiagram
 - [API](../06-api/README.md)
 - [Data](../10-data/README.md)
 - [Notifications analysis](./notifications-analysis.md)
+- [Moderator mapping](../09-security/moderator-mapping.md)
+- [Naming](../13-maintenance/naming.md)
 
 ---
 
