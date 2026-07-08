@@ -61,9 +61,21 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 
 ## 🚀 Включение GitHub Pages
 
-1. Repo → **Settings** → **Pages**
-2. **Source:** GitHub Actions (не branch deploy)
-3. После первого успешного `Docs (GitHub Pages)` workflow — сайт на [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/) (URL также в environment `github-pages`)
+1. Откройте **[Settings → Pages](https://github.com/andrewb76/tavrida/settings/pages)**
+2. **Build and deployment → Source:** выберите **GitHub Actions** (не «Deploy from a branch»)
+3. **Actions** → workflow **Docs (GitHub Pages)** → **Re-run all jobs** (или новый push в `master`)
+
+После успешного deploy: [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)
+
+### Troubleshooting: 404 / `Failed to create deployment (status: 404)`
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| Deploy job: `Ensure GitHub Pages has been enabled` | Pages не включён | Шаги 1–2 выше |
+| Build зелёный, deploy красный | То же | Re-run после включения |
+| Сайт 404 после зелёного deploy | Кэш / ещё не прошёл DNS | Подождать 1–2 мин, hard refresh |
+
+> `gh` не обязателен — достаточно UI в Settings.
 
 ## 🔐 Секреты (будущие стадии CI)
 
