@@ -55,7 +55,7 @@ pnpm docs:preview  # preview dist
 VITEPRESS_BASE=/tavrida/ pnpm docs:build
 ```
 
-В CI переменная выставляется автоматически: `/${{ github.event.repository.name }}/` → `/tavrida/`.
+В CI переменная `VITEPRESS_BASE` выставляется из `github.event.repository.name` (в workflow — `/tavrida/`).
 
 Для custom domain — `VITEPRESS_BASE=/`.
 

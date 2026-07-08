@@ -31,7 +31,7 @@ export default defineConfig({
       {
         text: 'Старт',
         items: [
-          { text: 'Оглавление', link: '/README' },
+          { text: 'Оглавление', link: '/' },
           { text: 'PROJECT-CONTEXT', link: '/00-meta/PROJECT-CONTEXT' },
           { text: 'platform-for-users', link: '/01-goal/platform-for-users' },
           { text: 'club-access', link: '/01-goal/club-access' },
