@@ -1,82 +1,57 @@
 # 📬 Сервис: notifications
 
-> **Статус:** draft · **Версия:** 0.2  
-> **Платформа:** Novu Cloud (Free plan) · [ADR-004](../../03-architecture/adr/004-notifications-adapter.md)
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `notifications`  
+> **Платформа:** Novu Cloud Free · [ADR-004](../../03-architecture/adr/004-notifications-adapter.md)
 
 ## 🎯 Назначение
 
-Adapter-сервис уведомлений Tavrida Lot — единая точка интеграции с **Novu Cloud**.
+**Adapter уведомлений** — Novu workflows, subscribers, audit, relay in-app → BFF WebSocket.
 
-- Триггер Novu workflows по запросу upstream-сервисов и RabbitMQ events
-- Upsert subscribers (синхронизация userId ↔ Novu)
-- Audit log доставки (webhook от Novu)
-- Relay in-app / critical events → BFF WebSocket
+- Trigger по HTTP (internal) и RabbitMQ consumers
+- `subscriberId` = platform `userId`
+- Webhook от Novu → `NotificationLog`
+- Критичный realtime (ставки, balance) — дублируется BFF WS
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **Workflow** | Сценарий уведомления в Novu Dashboard |
-| **Subscriber** | Пользователь в Novu (`subscriberId` = `userId`) |
-| **Trigger** | Вызов workflow с payload |
-| **NotificationLog** | Локальный audit доставки |
+| **Workflow** | Сценарий в Novu Dashboard |
+| **Subscriber** | Пользователь Novu |
+| **Trigger** | Вызов workflow + payload |
+| **NotificationLog** | Локальный audit |
 
 ## 🗄️ Сущности
 
-### `Subscriber`
+### `Subscriber` (`notifications.subscriber`)
 
-```ts
-@Entity({ schema: 'notifications', name: 'subscriber' })
-export class Subscriber {
-  @PrimaryColumn('uuid')
-  userId: string
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `userId` | UUID PK | = novuSubscriberId |
+| `email`, `fcmToken` | varchar nullable | Channels |
+| `updatedAt` | timestamptz | — |
 
-  @Column('varchar')
-  novuSubscriberId: string // = userId
+### `NotificationLog` (`notifications.notification_log`)
 
-  @Column('varchar', { nullable: true })
-  email?: string
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID PK | — |
+| `userId` | UUID | — |
+| `workflowId` | varchar | Novu workflow |
+| `transactionId` | varchar | Novu transaction |
+| `channel` | enum | email \| push \| in_app |
+| `status` | enum | sent \| failed \| pending \| delivered |
+| `payload` | jsonb nullable | — |
+| `createdAt` | timestamptz | — |
 
-  @Column('varchar', { nullable: true })
-  fcmToken?: string
+## 🔌 API (internal only)
 
-  @UpdateDateColumn()
-  updatedAt: Date
-}
-```
-
-### `NotificationLog`
-
-```ts
-@Entity({ schema: 'notifications', name: 'notification_log' })
-export class NotificationLog {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column('uuid')
-  userId: string
-
-  @Column('varchar')
-  workflowId: string
-
-  @Column('varchar')
-  transactionId: string // Novu transactionId
-
-  @Column('varchar')
-  channel: 'email' | 'push' | 'in_app'
-
-  @Column('enum', { enum: ['sent', 'failed', 'pending', 'delivered'] })
-  status: string
-
-  @Column('jsonb', { nullable: true })
-  payload?: object
-
-  @CreateDateColumn()
-  createdAt: Date
-}
-```
-
-## 🔌 API (internal)
+| Method | Path | Описание |
+|--------|------|----------|
+| POST | `/internal/v1/notifications/trigger` | Trigger workflow |
+| POST | `/internal/v1/notifications/subscribers/upsert` | Login/register sync |
+| POST | `/internal/v1/notifications/webhooks/novu` | Novu delivery webhook |
+| GET | `/health`, `/health/ready` | — |
 
 ### `POST /internal/v1/notifications/trigger`
 
@@ -91,91 +66,86 @@ export class NotificationLog {
 }
 ```
 
-**Логика:**
+→ `{ "transactionId": "novu-tx-id" }`
 
-1. `ensureSubscriber(userId)` — upsert в Novu + local cache
-2. `novu.trigger(workflowId, { to: subscriberId, payload })`
-3. Return `{ transactionId }`
+**Flow:** ensureSubscriber → `novu.trigger` → log pending → webhook updates status → in_app → Redis → BFF `notification.new`
 
-### `POST /internal/v1/notifications/subscribers/upsert`
+## ⚙️ Переменные settings
 
-```json
-{
-  "userId": "uuid",
-  "email": "user@example.com",
-  "fcmToken": "optional"
-}
-```
+| Ключ | Default | Описание |
+|------|---------|----------|
+| `notifications.feedbackReminderDays` | [1, 3, 7] | Интервалы feedback CRON |
+| `notifications.digestHourUtc` | 9 | Час digest (UTC) |
 
-Вызывается BFF при login/register.
+## 💳 Переменные financial-policy
 
-### `POST /internal/v1/notifications/webhooks/novu`
-
-Webhook от Novu Cloud — обновление `NotificationLog`, relay in-app → Redis → BFF WS.
+Не применимо.
 
 ## 📨 События
 
-| Direction | Event | Действие |
+| Direction | Event | Workflow |
 |-----------|-------|----------|
-| consume | `auction.completed` | trigger `feedback-request` |
-| consume | `auction.bid_placed` | trigger `auction-bid` (if subscribed) |
-| consume | `feedback.reminder_due` | trigger `feedback-reminder` |
-| consume | `billing.charge_completed` | trigger `balance-charged` |
-| consume | `subscription.activated` | trigger `subscription-activated` |
-| consume | `subscription.expired` | trigger `subscription-expired` |
-| consume | `rating.penalty_applied` | trigger `rating-penalty` |
-| consume | `forum.content_reported` | trigger `forum-content-reported` |
-| produce | `notification.sent` | metrics |
-| produce | `notification.failed` | metrics + alert |
+| consume | `auction.completed` | `feedback-request` |
+| consume | `auction.bid_placed` | `auction-bid` (if subscribed) |
+| consume | `feedback.reminder_due` | `feedback-reminder` |
+| consume | `billing.charge_completed` | `balance-charged` |
+| consume | `subscription.activated` | `subscription-activated` |
+| consume | `subscription.expired` | `subscription-expired` |
+| consume | `rating.penalty_applied` | `rating-penalty` |
+| consume | `forum.content_reported` | `forum-content-reported` |
+| produce | `notification.sent` | Metrics |
+| produce | `notification.failed` | Alert |
 
-> Полный каталог workflows: [notifications-analysis](../../03-architecture/notifications-analysis.md)
+> Workflows: [notifications-analysis](../../03-architecture/notifications-analysis.md)
 
 ## 🔗 Взаимодействие
 
 | Компонент | Протокол |
 |-----------|----------|
-| Novu Cloud | `@novu/node` SDK, HTTPS |
-| BFF | Redis pub/sub → WS `user:{id}` |
-| upstream services | HTTP trigger или RabbitMQ consumer |
-| Logto / user-profile | email при upsert subscriber |
+| Novu Cloud | `@novu/node` HTTPS |
+| BFF | Redis → WS `user:{id}` |
+| feedback, forum, … | RMQ or HTTP trigger |
+| user-profile / Logto | email on upsert |
 
 ## 🔒 Безопасность
 
-- `NOVU_API_KEY` — только Bitwarden, per environment
-- Webhook endpoint — verify Novu signature (HMAC)
-- Internal API — network ACL, не через BFF public
+- `NOVU_API_KEY` — Bitwarden only
+- Webhook — HMAC signature verify
+- Internal API — private network, no BFF public route
 
 ## ⚙️ Окружение
 
-| Переменная | Описание |
-|------------|----------|
-| `NOVU_API_KEY` | Secret key из Novu Dashboard |
-| `NOVU_APPLICATION_IDENTIFIER` | Application ID (для Inbox на фронте) |
-| `DATABASE_URL` | PostgreSQL (`schema: notifications`) |
-| `REDIS_URL` | Pub/sub → BFF |
-| `PORT` | HTTP (default 3010) |
+| Переменная | Обяз. | Описание |
+|------------|-------|----------|
+| `NOVU_API_KEY` | да | Secret |
+| `NOVU_APPLICATION_IDENTIFIER` | да | Public app id (frontend Inbox) |
+| `NOVU_WEBHOOK_SECRET` | да | HMAC |
+| `DATABASE_URL` | да | schema `notifications` |
+| `REDIS_URL` | да | Relay in-app |
+| `RABBITMQ_URL` | да | Consumers |
+| `PORT` | нет | default `3010` |
 
-## 🖥️ Frontend (Vue)
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
-- In-app inbox: `@novu/js` или headless API
-- `applicationIdentifier` — public, из env фронта
-- Критичные realtime — дублировать через BFF WS (ставки, balance)
+## 🖥️ Frontend
 
-## 📋 TODO
+- In-app: `@novu/js` + `NOVU_APPLICATION_IDENTIFIER`
+- Realtime bids/balance — BFF WS, не Novu
 
-- [ ] Создать Novu Cloud account + dev environment
-- [ ] Реализовать workflows в Dashboard (см. analysis doc)
-- [ ] PoC: trigger + webhook + NotificationLog
-- [ ] FCM integration в Novu
+## 📋 TODO (implementation)
+
+- [ ] Novu Cloud account + workflows in Dashboard
+- [ ] PoC trigger + webhook + NotificationLog
+- [ ] FCM in Novu
 - [ ] Vue Inbox component
 
 ## 📎 Связанные разделы
 
-- [Notifications analysis](../../03-architecture/notifications-analysis.md)
+- [notifications-analysis](../../03-architecture/notifications-analysis.md)
 - [ADR-004](../../03-architecture/adr/004-notifications-adapter.md)
-- [Event catalog](../../03-architecture/event-catalog.md)
 - [BFF](../bff/README.md)
+- [Event catalog](../../03-architecture/event-catalog.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.2-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

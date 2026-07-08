@@ -15,7 +15,7 @@
 | Документ docs (целевой) | **kebab-case** | `docs/05-microservices/auction-subscriptions/README.md` |
 | Human name | kebab или пробел | auction-subscriptions |
 
-> **Legacy:** каталог docs `auction_subscriptions/` — переименовать в Фазе 1; до тех пор см. таблицу маппинга ниже.
+> **Legacy docs path:** `auction_subscriptions/` → целевой `auction-subscriptions/` (см. [naming.md](./naming.md)).
 
 ---
 

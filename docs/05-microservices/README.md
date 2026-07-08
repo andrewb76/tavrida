@@ -8,20 +8,20 @@
 
 ## 📦 Сервисы
 
-| Сервис | Порт | Статус кода | Документ |
-|--------|------|-------------|----------|
-| 🌐 bff | — | 📝 | [bff](./bff/README.md) |
-| 💰 billing | 3001 | 🚧 | [billing](./billing/README.md) |
-| 📋 financial-policy | 3002 | 🚧 | [financial-policy](./financial-policy/README.md) |
-| 🔨 auction | — | 🚧 | [auction](./auction/README.md) |
-| 🔔 auction-subscriptions | — | 🚧 | [auction_subscriptions](./auction_subscriptions/README.md) |
-| ⭐ rating | — | 📝 | [rating](./rating/README.md) |
-| 💬 feedback | — | 📝 | [feedback](./feedback/README.md) |
-| 🗣️ forum | — | 📝 | [forum/requirements](./forum/requirements/README.md) |
-| 👤 user-profile | — | 📝 | [user-profile](./user-profile/README.md) |
-| ⚙️ settings | — | 📝 | [settings](./settings/README.md) |
-| 📬 notifications | — | 📝 | [notifications](./notifications/README.md) |
-| 🛒 marketplace | — | 📝 | [marketplace](./marketplace/README.md) |
+| Сервис | Порт | Статус кода | Docs | Документ |
+|--------|------|-------------|------|----------|
+| 🌐 bff | 3000 | 📝 | ✅ spec | [bff](./bff/README.md) |
+| 💰 billing | 3001 | 🚧 | ✅ spec | [billing](./billing/README.md) |
+| 📋 financial-policy | 3002 | 🚧 | ✅ spec | [financial-policy](./financial-policy/README.md) |
+| 🔨 auction | 3003 | 🚧 | ✅ spec | [auction](./auction/README.md) |
+| 🔔 auction-subscriptions | 3004 | 🚧 | ✅ spec | [auction_subscriptions](./auction_subscriptions/README.md) |
+| ⭐ rating | — | 📝 | ✅ spec | [rating](./rating/README.md) |
+| 💬 feedback | — | 📝 | ✅ spec | [feedback](./feedback/README.md) |
+| 🗣️ forum | — | 📝 | ✅ spec | [forum](./forum/README.md) |
+| 👤 user-profile | — | 📝 | ✅ spec | [user-profile](./user-profile/README.md) |
+| ⚙️ settings | — | 📝 | ✅ spec | [settings](./settings/README.md) |
+| 📬 notifications | 3010 | 📝 | ✅ spec | [notifications](./notifications/README.md) |
+| 🛒 marketplace | — | 📝 | ✅ spec | [marketplace](./marketplace/README.md) |
 
 > Спецификация новых сервисов: [MICROSERVICE-SPEC](./MICROSERVICE-SPEC.md) · Реестр переменных: [PLATFORM-REGISTRY](./PLATFORM-REGISTRY.md)
 

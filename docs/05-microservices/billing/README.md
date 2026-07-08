@@ -1,190 +1,198 @@
 # 💰 Сервис: billing
 
-> **Статус:** in progress · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `billing`
 
 ## 🎯 Назначение
 
-Сервис управления **лицевыми счётами пользователей** и **платежами** за услуги платформы.
+Сервис **лицевых счётов** и **платежей** платформы Tavrida Lot.
 
-- Хранит баланс (`userId`, `balance`)
-- Обрабатывает пополнения и списания по запросу других сервисов (financial-policy, auction)
-- **Не знает** о тарифных планах — только баланс и транзакции
+- Хранит баланс пользователя (`UserWallet`)
+- Пополнения (deposit) и списания (charge, refund)
+- **Не знает** о тарифных планах — только деньги и audit trail (`Transaction`)
+- Единственный источник истины для баланса
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **Лицевой счёт** | Счёт пользователя (`userId`, `balance`) |
-| **Платёж (Transaction)** | Операция (`DEPOSIT`, `CHARGE`, `REFUND`) |
-| **Платная фича** | Функция, требующая оплаты (например, `auction.promotion`) |
+| **Лицевой счёт (UserWallet)** | Баланс пользователя в валюте платформы |
+| **Transaction** | Неизменяемая запись операции (`DEPOSIT`, `CHARGE`, `REFUND`) |
+| **target** | Структурированный идентификатор назначения списания (`auction.promotion`, `financial-policy.activate-plan:pro`) |
+| **Idempotency-Key** | UUID; повтор charge с тем же ключом → тот же результат |
 
 ## 🗄️ Сущности
 
-### `UserWallet`
+### `UserWallet` (`billing.user_wallet`)
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `userId` | UUID | ID пользователя |
-| `balance` | number | Текущий баланс |
-| `currency` | string | Валюта (по умолчанию `RUB`) |
-| `createdAt` | datetime | — |
+| `userId` | UUID PK | ID пользователя (Logto `sub`) |
+| `balance` | decimal(12,2) | Текущий баланс |
+| `currency` | varchar(3) | По умолчанию `RUB` |
+| `createdAt`, `updatedAt` | timestamptz | — |
 
-```ts
-@Entity()
-export class UserWallet {
-  @PrimaryColumn('uuid')
-  userId: string
+Кошелёк создаётся **lazy** при первом deposit или charge.
 
-  @Column('decimal')
-  balance: number
-
-  @Column('varchar', { length: 3, default: 'RUB' })
-  currency: string
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
-}
-```
-
-### `Transaction`
+### `Transaction` (`billing.transaction`)
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | ID операции |
-| `userId` | UUID | — |
-| `type` | `DEPOSIT` \| `CHARGE` \| `REFUND` | Тип |
-| `amount` | number | Сумма |
-| `description` | string | Описание (например, `'Pro-подписка'`, `'Аукцион #789 продвижение') |
-| `status` | `PENDING` \| `COMPLETED` \| `FAILED` | Статус |
-| `createdAt` | datetime | — |
+| `id` | UUID PK | ID операции |
+| `userId` | UUID | Владелец кошелька |
+| `type` | enum | `DEPOSIT` \| `CHARGE` \| `REFUND` |
+| `amount` | decimal(12,2) | Сумма (> 0) |
+| `description` | text | Человекочитаемое описание для UI |
+| `target` | varchar | Только для `CHARGE` — см. выше |
+| `status` | enum | `PENDING` \| `COMPLETED` \| `FAILED` |
+| `idempotencyKey` | varchar nullable | Уникален per user + charge |
+| `createdAt` | timestamptz | — |
 
-> 💡 `description` — человекочитаемая строка. Структурированная связь с `auctionId` не нужна — это задача `auction` сервиса хранить такие данные.
+> Связь с `auctionId` / `planId` — через `target` и domain-сервисы; billing не хранит FK на другие schema.
 
-```ts
-@Entity()
-export class Transaction {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
+### Жизненный цикл
 
-  @Column('uuid')
-  userId: string
-
-  @Column('enum', { enum: ['DEPOSIT', 'CHARGE', 'REFUND'] })
-  type: 'DEPOSIT' | 'CHARGE' | 'REFUND'
-
-  @Column('decimal')
-  amount: number
-
-  @Column('text')
-  description: string // например, 'Pro-подписка (автопродление)', 'Аuction #789 promotion'
-
-  @Column('enum', { enum: ['PENDING', 'COMPLETED', 'FAILED'] })
-  status: 'PENDING' | 'COMPLETED' | 'FAILED'
-
-  @CreateDateColumn()
-  createdAt: Date
-}
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create
+    PENDING --> COMPLETED: commit balance
+    PENDING --> FAILED: insufficient funds / error
+    COMPLETED --> [*]
+    FAILED --> [*]
 ```
 
 ## 🔌 API
 
-### `GET /api/v1/wallets/balance`
+### Public (через BFF `/api/v1/wallets/*`)
+
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/wallets/balance` | Баланс текущего пользователя (JWT) |
+| GET | `/wallets/transactions` | История (cursor pagination) |
+| POST | `/wallets/deposit` | Инициировать пополнение |
+| POST | `/wallets/charge` | Списание (только trusted callers через BFF proxy) |
+
+### Internal (`/internal/v1/`)
+
+| Method | Path | Caller | Описание |
+|--------|------|--------|----------|
+| GET | `/wallets/balance?userId=` | financial-policy, BFF | Баланс по userId |
+| POST | `/wallets/charge` | financial-policy, auction | Списание с Idempotency-Key |
+| POST | `/wallets/refund` | admin, financial-policy | Возврат по `transactionId` |
+| GET | `/health` | orchestrator | Liveness |
+| GET | `/health/ready` | orchestrator | DB + RabbitMQ |
+
+### `GET /internal/v1/wallets/balance`
 
 ```http
-GET /api/v1/wallets/balance?userId=user-uuid
-Authorization: Bearer {token}
+GET /internal/v1/wallets/balance?userId=user-uuid
+Authorization: Bearer {service-jwt}
 ```
 
 ```json
 { "userId": "uuid", "balance": 500, "currency": "RUB" }
 ```
 
-### Пополнение
+### `POST /internal/v1/wallets/charge`
 
 ```http
-POST /api/v1/wallets/deposit
-```
-
-Payload:
-```json
-{
-  "userId": "user-uuid",
-  "amount": 500,
-  "paymentMethod": "card"
-}
-```
-
-Ответ: `201 Created` + `transactionId`
-
-### Списание
-
-```http
-POST /api/v1/wallets/charge
+POST /internal/v1/wallets/charge
+Authorization: Bearer {service-jwt}
 Idempotency-Key: {uuid}
+Content-Type: application/json
 ```
-
-Payload:
 
 ```json
 {
   "userId": "user-uuid",
   "amount": 200,
   "target": "financial-policy.activate-plan:pro",
-  "description": "Pro-подписка"
+  "description": "Pro-подписка (1 мес.)"
 }
 ```
 
-Ответ: `200 OK` + `transactionId` (или `402` при недостаточном балансе)
+**Ответы:**
+
+| HTTP | Когда |
+|------|-------|
+| 200 | Списание выполнено (или idempotent replay) |
+| 402 | `insufficient-balance` |
+| 409 | Конфликт idempotency (другой payload с тем же ключом) |
+
+```json
+{ "transactionId": "uuid", "status": "COMPLETED", "balanceAfter": 300 }
+```
+
+### `POST /internal/v1/wallets/deposit`
+
+Вызывается после подтверждения платёжного провайдера (webhook → BFF → billing).
+
+```json
+{
+  "userId": "user-uuid",
+  "amount": 500,
+  "externalReference": "payment-provider-id"
+}
+```
+
+## ⚙️ Переменные settings
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `billing.currencyDefault` | string | `RUB` | global | Валюта по умолчанию |
+| `billing.minDepositAmount` | number | `100` | global | Минимальное пополнение (₽) |
+
+> Полный реестр: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
+
+## 💳 Переменные financial-policy
+
+Не применимо — billing не зависит от тарифа.
+
+## 📨 События
+
+| Direction | Event | Когда |
+|-----------|-------|-------|
+| produce | `billing.deposit_completed` | Deposit → `COMPLETED` |
+| produce | `billing.charge_completed` | Charge → `COMPLETED` |
+| produce | `billing.charge_failed` | Charge → `FAILED` (недостаточно средств) |
+
+> Каталог payload: [event-catalog](../../03-architecture/event-catalog.md)
 
 ## 🔗 Взаимодействие
 
 | Сервис | Взаимодействие | Протокол | Направление |
 |--------|---------------|----------|-------------|
-| financial-policy | `GET /wallets/balance`, `POST /wallets/charge` | HTTP | FP → billing |
-| auction | `POST /wallets/charge` (`target: auction.promotion`) | HTTP | auction → billing |
-
-## 📨 События
-
-| Direction | Event | Описание |
-|-----------|-------|----------|
-| produce | `billing.deposit_completed` | Пополнение успешно |
-| produce | `billing.charge_completed` | Списание успешно |
-| produce | `billing.charge_failed` | Недостаточно средств |
-
-> Каталог: [event-catalog](../../03-architecture/event-catalog.md)
+| financial-policy | balance, charge | HTTP internal | FP → billing |
+| auction | charge (promotion, reserve) | HTTP internal | auction → billing |
+| BFF | proxy public + deposit webhook | HTTP | BFF ↔ billing |
+| notifications | consume events | RabbitMQ | billing → RMQ |
 
 ## 🔒 Безопасность
-- Проверка баланса перед списанием
-- Атомарные операции (Redis lock или PostgreSQL SELECT ... FOR UPDATE)
-- История всех операций (audit log)
 
-## 📨 Очередь
-
-- События через RabbitMQ (см. [event-catalog](../../03-architecture/event-catalog.md))
-- Legacy queue name `billing.events` → **deprecated**, использовать typed events
-
-## 📊 Лимиты и фичи
-- Не зависит от тарифов — billing не знает о планах.
-- financial-policy управляет логикой активации.
+- Charge/refund — **только internal** или BFF с service token; клиент не вызывает charge напрямую
+- Атомарность: `SELECT … FOR UPDATE` на `user_wallet` или advisory lock per `userId`
+- Idempotency: уникальный индекс `(userId, idempotencyKey)` для charge
+- Audit: все `Transaction` immutable после `COMPLETED`
+- Минимальный deposit — из settings
 
 ## ⚙️ Окружение
 
-| Переменная | Описание | Пример |
-|------------|----------|--------|
-| DATABASE_URL | PostgreSQL (`schema: billing`) | postgres://user:pass@localhost:5432/tavrida_lot |
-| RABBITMQ_URL | RabbitMQ | amqp://user:pass@localhost:5672 |
-| FINANCIAL_POLICY_URL | URL financial-policy | http://localhost:3002 |
-| PORT | HTTP-порт | 3001 |
+| Переменная | Обяз. | Описание | Пример |
+|------------|-------|----------|--------|
+| `DATABASE_URL` | да | PostgreSQL, schema `billing` | postgres://…/tavrida_lot |
+| `RABBITMQ_URL` | да | Publisher событий | amqp://… |
+| `PORT` | нет | HTTP | `3001` |
+| `LOG_LEVEL` | нет | — | `info` |
 
----
-
-**Автор:** команда разработки · **Версия:** 0.1-draft
+> Полный реестр: [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
 ## 📎 Связанные разделы
 
 - [financial-policy](../financial-policy/README.md)
+- [06-api — wallets](../../06-api/README.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
 - [Event catalog](../../03-architecture/event-catalog.md)
+- [10-data — billing schema](../../10-data/README.md)
+
+---
+
+**Автор:** команда разработки · **Версия:** 0.2-spec

@@ -148,6 +148,8 @@ Idempotency-Key: {uuid}
 | `/forum/*` | topics, comments, reactions | forum |
 | `/rating` | get | rating |
 | `/feedback` | submit, status | feedback |
+| `/marketplace/*` | listings, orders | marketplace |
+| `/auction-subscriptions` | CRUD | auction-subscriptions |
 | `/settings` | get (public subset) | settings |
 
 > OpenAPI spec: TODO `06-api/openapi.yaml` (генерация из NestJS decorators)

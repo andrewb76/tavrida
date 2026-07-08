@@ -1,122 +1,134 @@
 # 👤 Сервис: user-profile
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `user_profile`
 
 ## 🎯 Назначение
 
-Сервис управления **профилем пользователя**, **приватными заметками** и **базовой информацией**.
+**Профиль пользователя**, аватар, bio и **приватные заметки** между пользователями.
 
-- Кэширует данные рейтинга из `rating` (`rating`, `verifiedSales`, `pendingSales`)
-- Позволяет оставлять **приватные заметки** (видны только автору и владельцу профиля)
-- Данные используются в `auction`, `forum`, `marketplace` для отображения профиля
+- Denormalized cache рейтинга из `rating` (sync по events)
+- Публичный профиль для auction / forum / marketplace UI
+- `ProfileNote` — видны только автору и владельцу профиля
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| `UserProfile` | Профиль пользователя: `bio`, `avatar`, `rating`, `verifiedSales`, `pendingSales` |
-| `ProfileNote` | Приватная заметка от другого пользователя (видна только `authorId` и `ownerId`) |
+| **UserProfile** | Bio, avatar, cached rating fields |
+| **ProfileNote** | Приватная заметка `authorId` → `ownerId` |
+| **Denormalized cache** | `rating`, `verifiedSales`, `pendingSales` — SoT: rating |
 
-## 🗄️ Сущности (TypeORM)
+## 🗄️ Сущности
 
-### `UserProfile`
+### `UserProfile` (`user_profile.user_profile`)
 
-```ts
-@Entity()
-export class UserProfile {
-  @PrimaryColumn('uuid')
-  userId: string
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `userId` | UUID PK | Logto sub |
+| `displayName` | varchar nullable | Override (optional) |
+| `bio` | text nullable | — |
+| `avatarUrl` | varchar nullable | MinIO `avatars` |
+| `rating` | decimal | Cache from rating |
+| `verifiedSales`, `pendingSales` | int | Cache |
+| `lastSyncedAt` | timestamptz | Event sync marker |
+| `createdAt`, `updatedAt` | timestamptz | — |
 
-  @Column('text', { nullable: true })
-  bio?: string
+### `ProfileNote` (`user_profile.profile_note`)
 
-  @Column('varchar', { nullable: true })
-  avatarUrl?: string
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID PK | — |
+| `ownerId` | UUID | Профиль, о котором заметка |
+| `authorId` | UUID | Автор заметки |
+| `text` | text | max 2000 chars |
+| `createdAt` | timestamptz | — |
 
-  @Column('decimal')
-  rating: number
-
-  @Column('int', { default: 0 })
-  verifiedSales: number
-
-  @Column('int', { default: 0 })
-  pendingSales: number
-
-  @Column('datetime')
-  lastUpdated: Date
-}
-```
-
-> 💡 Поля `rating`, `verifiedSales`, `pendingSales` — денормализованный кэш из `rating`. Источник истины — сервис `rating`.
-
-### `ProfileNote`
-
-```ts
-@Entity()
-export class ProfileNote {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column('uuid')
-  ownerId: string // кому написали
-
-  @Column('uuid')
-  authorId: string // кто написал
-
-  @Column('text')
-  text: string
-
-  @CreateDateColumn()
-  createdAt: Date
-}
-```
+Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 🔌 API
 
-### `GET /api/v1/profile?userId=xxx`
+### Public (BFF `/api/v1/profile/*`)
+
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/profile/me` | Свой профиль (+ subscription via BFF agg) |
+| GET | `/profile/{userId}` | Публичный профиль |
+| PATCH | `/profile/me` | bio, displayName, avatar upload URL |
+| GET | `/profile/notes?ownerId=` | Заметки (author or owner only) |
+| POST | `/profile/notes` | Создать/обновить заметку |
+| DELETE | `/profile/notes/{id}` | Удалить (author only) |
+
+### `GET /api/v1/profile/{userId}`
 
 ```json
 {
-  "userId": "xxx",
-  "bio": "Продаватель редких монет",
-  "avatarUrl": "https://...",
+  "userId": "uuid",
+  "displayName": "coin_collector",
+  "bio": "Продавец редких монет",
+  "avatarUrl": "https://…",
   "rating": 4.8,
   "verifiedSales": 20,
   "pendingSales": 1
 }
 ```
 
-### `POST /api/v1/profile/notes`
+### Internal
 
-```http
-POST /api/v1/profile/notes
-Authorization: Bearer {token}
-```
+| Method | Path | Описание |
+|--------|------|----------|
+| POST | `/internal/v1/profile/sync-rating` | Admin/reconcile |
+| POST | `/internal/v1/profile/ensure` | Create empty profile on first login |
+| GET | `/health`, `/health/ready` | — |
 
-**Payload:**
+## ⚙️ Переменные settings
 
-```json
-{
-  "ownerId": "user-uuid",
-  "text": "Стоит обратить внимание на его комментарии — всегда точные."
-}
-```
+Не владеет domain settings.
 
-**Ответ:** `201 Created`
+## 💳 Переменные financial-policy
 
-## 🔒 Безопасность
+Не применимо.
 
-- `GET /notes` — только `ownerId` и `authorId` могут видеть свои заметки.
-- `POST /notes` — только авторизованные пользователи.
-- Заметки **не отображаются** в профиле третьим лицам.
+## 📨 События
+
+| Direction | Event | Действие |
+|-----------|-------|----------|
+| consume | `rating.updated` | Update cached rating fields |
+| consume | `feedback.submitted` | Optional refresh |
+| consume | `subscription.activated` | Invalidate BFF cache (optional) |
 
 ## 🔗 Взаимодействие
 
-| Сервис | Взаимодействие |
-|--------|----------------|
-| `rating` | Синхронизация рейтинговых полей |
-| `auction`, `forum`, `marketplace` | Чтение профиля для UI |
+| Сервис | Протокол |
+|--------|----------|
+| rating | events → cache |
+| BFF | aggregation `/profile/me` |
+| MinIO | avatars bucket |
+| Logto | displayName fallback from JWT claims |
+
+## 🔒 Безопасность
+
+- PATCH `/profile/me` — только owner
+- Notes — **never** exposed in public profile JSON
+- GET notes — Keto: `authorId === sub` OR `ownerId === sub`
+- Avatar upload — presigned URL, max size TBD
+
+## ⚙️ Окружение
+
+| Переменная | Обяз. | Описание |
+|------------|-------|----------|
+| `DATABASE_URL` | да | schema `user_profile` |
+| `RABBITMQ_URL` | да | Consume rating events |
+| `MINIO_*` | да | bucket `avatars` |
+| `PORT` | нет | HTTP |
+
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md) · [10-data](../../10-data/README.md)
+
+## 📎 Связанные разделы
+
+- [rating](../rating/README.md)
+- [BFF aggregation](../bff/README.md)
+- [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

@@ -1,112 +1,135 @@
 # ⚙️ Сервис: settings
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `settings`
 
 ## 🎯 Назначение
 
-Единый сервис управления **настройками** для всей платформы **Tavrida Lot**.
+Единый реестр **скалярных настроек** платформы (одно значение на ключ).
 
-- Хранит JSON-конфиги для `rating.*`, `billing.*`, `auction.*`
-- Кэширует в Redis (`settings:*`)
-- Предоставляет API для чтения и изменения (админ)
+- Хранит JSON-значения: формулы rating, TTL, списки слов forum, defaults auction
+- Redis cache (`settings:{domain}:latest`, TTL из `settings.cacheTtlSeconds`)
+- Регистрация ключей domain-сервисами при деплое
+- Изменение — **admin only**
+
+> vs financial-policy: [ADR-003](../../03-architecture/adr/003-settings-vs-financial-policy.md)
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| `settingKey` | Путь к параметру (например, `rating.authorityExponent`) |
-| `settingValue` | JSON-значение (строка, число, объект) |
-| `settingScope` | Глобальный (`global`) или пользовательский (`user:uuid`) |
+| **key** | `{service}.{parameterName}` camelCase |
+| **scope** | `global` или `user:{userId}` (редко) |
+| **domain** | Префикс до первой точки (`rating`, `forum`) |
 
-## 🗄️ Сущность
+## 🗄️ Сущности
 
-```ts
-@Entity()
-export class Setting {
-  @PrimaryColumn('varchar', { length: 255 })
-  key: string // 'rating.authorityExponent'
+### `Setting` (`settings.setting`)
 
-  @Column('jsonb')
-  value: any
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `key` | varchar PK | `rating.authorityExponent` |
+| `value` | jsonb | Любой JSON |
+| `scope` | varchar | `global` default |
+| `userId` | UUID nullable | Per-user override |
+| `updatedBy` | UUID nullable | Admin audit |
+| `createdAt`, `updatedAt` | timestamptz | — |
 
-  @Column('varchar', { default: 'global' })
-  scope: 'global' | 'user'
+## 🔌 API
 
-  @Column('uuid', { nullable: true })
-  userId?: string // для user-scoped
+### Public (BFF)
 
-  @CreateDateColumn()
-  createdAt: Date
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/settings/public` | Безопасное подмножество для клиента (TBD list) |
 
-  @UpdateDateColumn()
-  updatedAt: Date
-}
-```
+### Internal (`/internal/v1/`)
 
-## ⚙️ Переменные settings (реестр)
+| Method | Path | Caller | Описание |
+|--------|------|--------|----------|
+| GET | `/settings/{domain}` | все domain services | Объект всех ключей домена |
+| GET | `/settings/key/{key}` | — | Одно значение |
+| POST | `/settings/register` | services @ startup | Batch register defaults |
+| POST | `/settings/{domain}` | admin via BFF | Patch domain keys |
+| GET | `/health`, `/health/ready` | orchestrator | — |
 
-Settings **владеет** скалярными конфигами. Доменные сервисы регистрируют ключи — см. **[PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)**.
-
-### API
-
-#### `GET /api/v1/settings/{domain}`
-
-#### `POST /api/v1/settings/{domain}` (admin)
-
-#### `POST /api/v1/settings/register` (internal, при деплое сервиса)
+### `POST /internal/v1/settings/register`
 
 ```json
 {
   "keys": [
-    { "key": "rating.authorityExponent", "type": "number", "default": 0.2, "service": "rating" }
+    {
+      "key": "rating.authorityExponent",
+      "type": "number",
+      "default": 0.2,
+      "service": "rating",
+      "description": "Степень авторитета голосующего"
+    }
   ]
 }
 ```
 
-**Ответ:** `201 Created`
-
-### Пример: `GET /api/v1/settings/rating`
+### `GET /internal/v1/settings/rating`
 
 ```json
 {
+  "baseValue": 1,
   "authorityExponent": 0.2,
-  "contextWeights": { "auction": 1.0, "forum": 1.2 }
-}
-```
-
-### `POST /api/v1/settings/rating` (admin)
-
-**Payload:**
-
-```json
-{
-  "authorityExponent": 0.3,
+  "contextWeights": { "auction": 1.0, "forum": 1.2, "marketplace": 0.9 },
   "bonuses": { "earlyHours": 24, "earlyBonus": 0.5 }
 }
 ```
 
-**Ответ:** `200 OK`
+Admin patch merges partial object; invalidates Redis cache.
 
-## 🚀 Кэширование
+## ⚙️ Переменные settings (meta)
 
-- Redis TTL: `300s` (5 минут)
-- Инвалидация при `POST /settings/*`
-- Ключи: `settings:rating:latest`, `settings:auction:latest`
+| Ключ | Default | Описание |
+|------|---------|----------|
+| `settings.cacheTtlSeconds` | 300 | TTL Redis |
+
+Полный реестр всех доменов: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md) (секция Settings).
+
+## 💳 Переменные financial-policy
+
+Не применимо.
+
+## 📨 События
+
+Не produce/consume RabbitMQ. Cache invalidation — local + Redis pub/sub optional.
 
 ## 🔗 Взаимодействие
 
-| Сервис | Взаимодействие |
-|--------|----------------|
-| `rating` | Читает `settings.rating.*` |
-| `auction` | Читает `settings.auction.*` |
-| `billing` | Читает `settings.billing.*` |
+| Consumer | Домены |
+|----------|--------|
+| rating | `rating.*` |
+| auction | `auction.*` |
+| billing | `billing.*` |
+| forum | `forum.*` |
+| notifications | `notifications.*` |
+| marketplace | `marketplace.*` |
+
+## 🔒 Безопасность
+
+- GET internal — service network
+- POST mutate — Keto admin only via BFF
+- Public subset — no secrets, no banned words list raw export (forum uses server-side filter)
+
+## ⚙️ Окружение
+
+| Переменная | Обяз. | Описание |
+|------------|-------|----------|
+| `DATABASE_URL` | да | schema `settings` |
+| `REDIS_URL` | да | Cache |
+| `PORT` | нет | HTTP |
+
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
 ## 📎 Связанные разделы
 
+- [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
 - [ADR-003](../../03-architecture/adr/003-settings-vs-financial-policy.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
-- [financial-policy](../financial-policy/README.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

@@ -10,7 +10,7 @@
 | **Имя** | Tavrida Lot |
 | **Repo** | `max-alice` |
 | **Суть** | Аукционы + форум + маркет услуг (Крым), рейтинг/отзывы, Free/Basic/Pro |
-| **Фаза** | Docs v0.2 ✅ фундамент · код — каркас NestJS без реализации |
+| **Фаза** | Docs v0.2 ✅ · Core + Domain specs ✅ · код — каркас |
 | **Доки** | [docs/README.md](../README.md) |
 
 ## Стек
@@ -71,7 +71,7 @@ Guest → User (member) · Moderator (+ forum **и auction** mod, уточняе
 
 ## Roadmap docs
 
-1. ✅ Фундамент 2. ⏳ Core specs (billing, FP, auction, bff) 3. Domain 4. Ops 5. UX (wireframes)
+1. ✅ Фундамент 2. ✅ Core specs 3. ✅ Domain specs 4. ⏳ Ops 5. UX 6. Frontend
 
 ---
 

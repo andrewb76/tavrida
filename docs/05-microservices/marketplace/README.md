@@ -1,7 +1,6 @@
 # 🛒 Сервис: marketplace
 
-> **Статус:** draft · **Версия:** 0.1  
-> **Суть:** справочник услуг между пользователями (реставрация, оценка, доставка и т.п.)
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `marketplace`
 
 ## 🎯 Назначение
 
@@ -159,9 +158,9 @@ export class ServiceOrder {
 
 ---
 
-## 🔌 API (через BFF)
+## 🔌 API
 
-### Справочник
+### Public (BFF `/api/v1/marketplace/*`)
 
 ```http
 GET /api/v1/marketplace/listings?category=restoration&providerId=
@@ -192,6 +191,13 @@ POST /api/v1/marketplace/orders
 PATCH /api/v1/marketplace/orders/{id}/status
 GET /api/v1/marketplace/orders?role=provider|customer
 ```
+
+### Internal (`/internal/v1/`)
+
+| Method | Path | Описание |
+|--------|------|----------|
+| POST | `/marketplace/orders/{id}/complete` | Завершение заказа (provider) |
+| GET | `/health`, `/health/ready` | — |
 
 ---
 
@@ -283,8 +289,11 @@ Authorization: Bearer {expert-token}
 
 | Переменная | Описание |
 |------------|----------|
-| `DATABASE_URL` | schema `marketplace` |
-| `MINIO_URL` | bucket `marketplace-portfolio` |
+| `DATABASE_URL` | да | schema `marketplace` |
+| `MINIO_*` | да | bucket `marketplace-portfolio` |
+| `RABBITMQ_URL` | да | order events |
+| `FINANCIAL_POLICY_URL` | да | Limits |
+| `PORT` | нет | HTTP |
 
 ## 📋 Открытые вопросы
 
@@ -301,4 +310,4 @@ Authorization: Bearer {expert-token}
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

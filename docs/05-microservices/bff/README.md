@@ -1,87 +1,160 @@
 # 🌐 Сервис: bff
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2
 
 ## 🎯 Назначение
 
-Backend-for-Frontend — единая точка входа для Vue-приложения Tavrida Lot.
+**Backend-for-Frontend** — единая точка входа для Vue SPA Tavrida Lot.
 
-- **REST** `/api/v1/*` — CRUD, агрегация данных из микросервисов
-- **WebSocket** `/ws/v1` — realtime (ставки, уведомления, чат форума)
-- Проверка JWT (Logto), rate limiting, Idempotency-Key proxy
-- Скрывает внутреннюю топологию сервисов от клиента
+- **REST** `/api/v1/*` — агрегация и proxy к domain services
+- **WebSocket** `/ws/v1` — realtime (ставки, баланс, уведомления, форум)
+- JWT validation (Logto), rate limiting, Idempotency-Key proxy
+- Скрывает internal topology от клиента
 
-> Решение: [ADR-002 REST + WSS](../../03-architecture/adr/002-bff-rest-wss.md)
+> [ADR-002 REST + WSS](../../03-architecture/adr/002-bff-rest-wss.md)
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **BFF** | Backend-for-Frontend, API Gateway для фронтенда |
-| **Upstream** | Внутренний микросервис (billing, auction и т.д.) |
+| **Upstream** | Internal микросервис |
 | **Channel** | WS-подписка: `auction:{id}`, `user:{id}`, `forum:{topicId}` |
+| **Aggregation** | Объединение ответов нескольких upstream в один JSON |
+| **Relay** | Redis pub/sub → WS без бизнес-логики |
 
-## 🔌 API (REST)
+## 🔌 REST — routing table
 
-Полная карта: [06-api/README.md](../../06-api/README.md)
+BFF **не дублирует** domain logic — validate JWT, map paths, forward headers.
 
-| Prefix | Upstream |
-|--------|----------|
-| `/api/v1/auctions` | auction |
-| `/api/v1/wallets` | billing |
-| `/api/v1/plans` | financial-policy |
-| `/api/v1/profile` | user-profile |
-| `/api/v1/forum/*` | forum |
-| `/api/v1/rating` | rating |
-| `/api/v1/feedback` | feedback |
+| BFF path | Methods | Upstream | Internal path |
+|----------|---------|----------|---------------|
+| `/api/v1/auctions` | GET, POST | auction | `/internal/v1/auctions` |
+| `/api/v1/auctions/{id}` | GET, PATCH | auction | `/internal/v1/auctions/{id}` |
+| `/api/v1/auctions/{id}/bids` | GET, POST | auction | `/internal/v1/auctions/{id}/bids` |
+| `/api/v1/auctions/{id}/promote` | POST | auction | `/internal/v1/auctions/{id}/promote` |
+| `/api/v1/auctions/{id}/expert-appraisals` | GET, POST | auction | `/internal/v1/…` |
+| `/api/v1/wallets/balance` | GET | billing | `/internal/v1/wallets/balance` |
+| `/api/v1/wallets/transactions` | GET | billing | `/internal/v1/wallets/transactions` |
+| `/api/v1/wallets/deposit` | POST | billing | `/internal/v1/wallets/deposit` |
+| `/api/v1/plans` | GET | financial-policy | `/internal/v1/plans` |
+| `/api/v1/plans/subscription` | GET | financial-policy | `/internal/v1/subscription` |
+| `/api/v1/plans/activate` | POST | financial-policy | `/internal/v1/plans/activate` |
+| `/api/v1/profile` | GET, PATCH | user-profile | `/internal/v1/profile` |
+| `/api/v1/profile/notes` | GET, POST | user-profile | `/internal/v1/profile/notes` |
+| `/api/v1/forum/categories` | GET | forum | `/internal/v1/forum/categories` |
+| `/api/v1/forum/topics` | GET, POST | forum | `/internal/v1/forum/topics` |
+| `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
+| `/api/v1/rating/{userId}` | GET | rating | `/internal/v1/rating/{userId}` |
+| `/api/v1/feedback` | POST, GET | feedback | `/internal/v1/feedback` |
+| `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |
+| `/api/v1/auction-subscriptions` | GET, POST, DELETE | auction-subscriptions | `/internal/v1/subscriptions` |
+| `/api/v1/settings/public` | GET | settings | `/internal/v1/settings/public` |
+| `/api/v1/admin/*` | * | mixed | admin + Keto `admin` role |
+
+Полные соглашения: [06-api/README.md](../../06-api/README.md)
+
+### Aggregation patterns
+
+| Endpoint | Upstreams | Пример ответа |
+|----------|-----------|---------------|
+| `GET /profile/me` | user-profile + rating | `{ profile, rating, subscription }` |
+| `GET /auctions/{id}` | auction + expert-appraisals (parallel) | merged JSON |
+| `GET /plans` | financial-policy | pass-through |
+
+Параллельные вызовы — `Promise.all`; partial failure → 207 или degrade field (document per endpoint).
 
 ## 📡 WebSocket
 
 **Endpoint:** `wss://{host}/ws/v1?token={jwt}`
 
-| Channel | Events | Upstream source |
-|---------|--------|-----------------|
-| `auction:{id}` | `bid.placed`, `auction.ended` | auction → Redis pub/sub |
-| `user:{id}` | `notification.new`, `balance.updated` | notifications, billing |
-| `forum:{topicId}` | `message.new`, `reaction.added` | forum |
+### Client → server
+
+```json
+{ "type": "subscribe", "channel": "auction:uuid", "requestId": "1" }
+{ "type": "unsubscribe", "channel": "auction:uuid", "requestId": "2" }
+{ "type": "ping", "requestId": "3" }
+```
+
+### Server → client
+
+```json
+{
+  "type": "event",
+  "channel": "auction:uuid",
+  "event": "bid.placed",
+  "payload": { "bidId": "uuid", "amount": 1500 },
+  "timestamp": "2026-07-08T12:00:00Z"
+}
+```
+
+### Каналы и relay
+
+| Channel | WS `event` | Source |
+|---------|------------|--------|
+| `auction:{id}` | `bid.placed`, `auction.ended` | Redis ← `auction.bid_placed`, `auction.completed` |
+| `user:{id}` | `notification.new`, `balance.updated` | Redis ← notifications, `billing.charge_completed` |
+| `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | Redis ← forum / RMQ |
+
+> WS имена ≠ RMQ `eventType` — [event-catalog § WS mapping](../../03-architecture/event-catalog.md#-realtime-ws-mapping)
+
+### Auth
+
+- JWT в query `token` или первом frame `auth`
+- Подписка `user:{id}` — только если `id === jwt.sub`
+- `auction:{id}` — public read для ACTIVE; write через REST
 
 ## 🔗 Взаимодействие
 
-| Сервис | Протокол | Направление |
-|--------|----------|-------------|
-| Все domain services | HTTP `/internal/v1/` | BFF → upstream |
-| Logto | OIDC/JWT validation | BFF → Logto JWKS |
-| Redis | pub/sub | upstream → BFF → client WS |
+| Компонент | Протокол | Направление |
+|-----------|----------|-------------|
+| Domain services | HTTP `/internal/v1/` | BFF → upstream |
+| Logto | JWKS | BFF → OIDC |
+| Redis | pub/sub + optional session | bidirectional |
+| Traefik | TLS termination | edge → BFF |
 
 ## 🔒 Безопасность
 
-- Единственный публичный API + WS для фронтенда
-- Internal services недоступны из internet (Traefik network ACL)
-- Rate limiting: 120 req/min authenticated, 30 anonymous
-- CORS: только `*.tavrida-lot.ru`, `*.tavrida-lot.localhost`
+- Единственный public HTTP/WS для SPA
+- Internal services — private network (Swarm overlay)
+- Rate limit: 120 req/min auth, 30 anonymous ([06-api](../../06-api/README.md))
+- CORS: `*.tavrida-lot.ru`, localhost dev
+- `Idempotency-Key` — proxy на billing/financial-policy без изменения
+- Admin routes — Keto `platform:tavrida-lot#admin`
 
 ## ⚙️ Окружение
 
-| Переменная | Описание |
-|------------|----------|
-| `LOGTO_JWKS_URL` | JWKS для JWT |
-| `REDIS_URL` | WS pub/sub relay |
-| `{SERVICE}_URL` | URL каждого upstream |
-| `PORT` | HTTP (default 3000) |
+| Переменная | Обяз. | Описание |
+|------------|-------|----------|
+| `LOGTO_JWKS_URL` | да | JWT validation |
+| `REDIS_URL` | да | WS relay |
+| `AUCTION_URL` | да | Upstream |
+| `BILLING_URL` | да | Upstream |
+| `FINANCIAL_POLICY_URL` | да | Upstream |
+| `FORUM_URL` | нет | Upstream |
+| `RATING_URL` | нет | Upstream |
+| `FEEDBACK_URL` | нет | Upstream |
+| `USER_PROFILE_URL` | нет | Upstream |
+| `SETTINGS_URL` | нет | Upstream |
+| `PORT` | нет | default `3000` |
+| `CORS_ORIGINS` | нет | comma-separated |
 
-## 📋 TODO
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
-- [ ] Полный routing table
-- [ ] Response aggregation patterns (profile + rating)
-- [ ] WS scale: sticky sessions / Redis adapter
-- [ ] admin routes `/api/v1/admin/*`
+## 📋 TODO (implementation)
+
+- [ ] OpenAPI generation from NestJS controllers
+- [ ] WS sticky sessions / Redis adapter at scale
+- [ ] Circuit breaker per upstream
+- [ ] admin-ui routing (`/api/v1/admin/*`)
 
 ## 📎 Связанные разделы
 
 - [06-api](../../06-api/README.md)
 - [ADR-002](../../03-architecture/adr/002-bff-rest-wss.md)
+- [event-catalog](../../03-architecture/event-catalog.md)
 - [Security](../../09-security/README.md)
+- [14-frontend](../../14-frontend/README.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

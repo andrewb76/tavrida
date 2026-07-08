@@ -52,18 +52,18 @@
 
 | Сервис | Статус | Документ |
 |--------|--------|----------|
-| 🌐 BFF | 📝 draft | [bff](./05-microservices/bff/README.md) |
-| 💰 billing | 🚧 spec ready | [billing](./05-microservices/billing/README.md) |
-| 📋 financial-policy | 🚧 spec ready | [financial-policy](./05-microservices/financial-policy/README.md) |
-| 🔨 auction | 🚧 spec partial | [auction](./05-microservices/auction/README.md) |
-| 🔔 auction-subscriptions | 📝 draft | [auction_subscriptions](./05-microservices/auction_subscriptions/README.md) |
-| ⭐ rating | 📝 spec ready | [rating](./05-microservices/rating/README.md) |
-| 💬 feedback | 📝 spec ready | [feedback](./05-microservices/feedback/README.md) |
-| 🗣️ forum | 📝 requirements | [forum](./05-microservices/forum/requirements/README.md) |
-| 👤 user-profile | 📝 spec ready | [user-profile](./05-microservices/user-profile/README.md) |
-| ⚙️ settings | 📝 spec ready | [settings](./05-microservices/settings/README.md) |
-| 📬 notifications | 📝 spec ready | [notifications](./05-microservices/notifications/README.md) |
-| 🛒 marketplace | 📝 spec ready | [marketplace](./05-microservices/marketplace/README.md) |
+| 🌐 BFF | ✅ spec ready | [bff](./05-microservices/bff/README.md) |
+| 💰 billing | ✅ spec ready | [billing](./05-microservices/billing/README.md) |
+| 📋 financial-policy | ✅ spec ready | [financial-policy](./05-microservices/financial-policy/README.md) |
+| 🔨 auction | ✅ spec ready | [auction](./05-microservices/auction/README.md) |
+| 🔔 auction-subscriptions | ✅ spec ready | [auction_subscriptions](./05-microservices/auction_subscriptions/README.md) |
+| ⭐ rating | ✅ spec ready | [rating](./05-microservices/rating/README.md) |
+| 💬 feedback | ✅ spec ready | [feedback](./05-microservices/feedback/README.md) |
+| 🗣️ forum | ✅ spec ready | [forum](./05-microservices/forum/README.md) · [requirements](./05-microservices/forum/requirements/README.md) |
+| 👤 user-profile | ✅ spec ready | [user-profile](./05-microservices/user-profile/README.md) |
+| ⚙️ settings | ✅ spec ready | [settings](./05-microservices/settings/README.md) |
+| 📬 notifications | ✅ spec ready | [notifications](./05-microservices/notifications/README.md) |
+| 🛒 marketplace | ✅ spec ready | [marketplace](./05-microservices/marketplace/README.md) |
 
 **Легенда:** 📝 draft/spec · 🚧 код в `services/` (каркас)
 
@@ -72,9 +72,9 @@
 | Фаза | Статус | Содержание |
 |------|--------|------------|
 | **1. Фундамент** | ✅ done | Architecture, API, Events, ADR 001–005, naming, moderator-mapping |
-| **2. Core services** | ⏳ next | billing, financial-policy, auction, bff — production-spec |
-| **3. Domain services** | ⏳ | rating, feedback, forum, user-profile, settings |
-| **4. Ops** | ⏳ | deployment runbooks, Grafana, SLO, security depth |
+| **2. Core services** | ✅ done | billing, financial-policy, auction, bff |
+| **3. Domain services** | ✅ done | rating, feedback, forum, user-profile, settings, notifications, marketplace, auction-subscriptions |
+| **4. Ops** | ⏳ next | deployment runbooks, Grafana, SLO, security depth |
 | **5. UX** | ⏳ | wireframes (от [platform-for-users](./01-goal/platform-for-users.md)) |
 | **6. Frontend** | 🚧 draft | [SPA-спецификация](./14-frontend/README.md), затем реализация |
 

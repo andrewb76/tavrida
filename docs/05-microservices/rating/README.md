@@ -1,124 +1,95 @@
 # ⭐ Сервис: rating
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `rating`
 
 ## 🎯 Назначение
 
-Сервис управления **рейтингами и кармой пользователей** на платформе **Tavrida Lot**.
+**Рейтинг и карма** пользователей Tavrida Lot — агрегаты, формула голоса, бонусы, штрафы и баны.
 
-- Хранит агрегированные данные: `totalRating`, `verifiedSales`, `pendingSales`, `feedbackCoverage`
-- Применяет **гибкую формулу голосования** с учётом авторитета и контекста
-- Включает **стимулирующие бонусы** (за быстрый отзыв, фото) и **штрафы** (за игнорирование сделок)
-- Все параметры настраиваются через `settings.rating.*`
+- Source of truth для `totalRating`, `verifiedSales`, `pendingSales`
+- Формула с учётом авторитета голосующего и контекста (auction / forum / marketplace)
+- Штрафы за неоценённые сделки; бан → блокировка в auction/forum
+- Параметры формул — из `settings`; лимиты pending — из financial-policy
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **Рейтинг (`totalRating`)** | Средняя оценка по оценённым сделкам |
-| **Верифицированные сделки (`verifiedSales`)** | Сделки с оценками |
-| **Ожидающие оценки (`pendingSales`)** | Завершённые аукционы без отзывов |
-| **Покрытие отзывами (`feedbackCoverage`)** | `verifiedSales / (verifiedSales + pendingSales)` |
+| **totalRating** | Средняя оценка по верифицированным сделкам |
+| **verifiedSales** | Сделки с завершённым feedback |
+| **pendingSales** | Завершённые сделки без отзыва |
+| **feedbackCoverage** | `verifiedSales / (verifiedSales + pendingSales)` |
+| **Vote value** | Вес голоса при расчёте (формула ниже) |
 
 ## 🧮 Формула голоса
 
-Пример функции на TypeScript:
-
 ```ts
-function calculateVoteValue(voterId, context) {
-  const settings = getSettings()
+function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'marketplace') {
+  const s = getSettings('rating')
   const voter = getUserRating(voterId)
   const baseAuthority = Math.log10(1 + voter.verifiedSales)
-  const authorityWeight = Math.pow(baseAuthority, settings.authorityExponent)
-  const contextWeight = settings.contextWeights[context] || 1.0
-  return settings.baseValue * authorityWeight * contextWeight
+  const authorityWeight = Math.pow(baseAuthority, s.authorityExponent)
+  const contextWeight = s.contextWeights[context] ?? 1.0
+  return s.baseValue * authorityWeight * contextWeight
 }
 ```
 
-## 🎁 Бонусы и штрафы
+## 🗄️ Сущности
 
-| Сценарий | Бонус/Штраф |
-|---------|-------------|
-| Отзыв в течение 24 часов | `+0.5` к рейтингу |
-| Отзыв с фото/видео | `+1.0` к рейтингу |
-| Отзыв за обе стороны | `+2.0` к рейтингу |
-| 3+ неоценённых за 30 дней | `rating *= 0.9` |
-| 5+ неоценённых за 60 дней | `rating *= 0.8`, `maxPendingRatings=2` |
-| 10+ неоценённых за 90 дней | Бан на 7 дней |
+### `UserRating` (`rating.user_rating`)
 
-## 🗄️ Сущности (TypeORM)
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `userId` | UUID PK | — |
+| `totalRating` | decimal | Агрегат |
+| `karma` | decimal | Форумные реакции (отдельный счётчик) |
+| `verifiedSales` | int | — |
+| `pendingSales` | int | — |
+| `isLimited` | boolean | Ограничение участия |
+| `banUntil` | timestamptz nullable | Активный бан |
+| `lastUpdated` | timestamptz | — |
 
-### `UserRating`
+### `VoteLog` (`rating.vote_log`)
 
-```ts
-@Entity()
-export class UserRating {
-  @PrimaryColumn('uuid')
-  userId: string
-
-  @Column('decimal')
-  totalRating: number
-
-  @Column('int', { default: 0 })
-  verifiedSales: number
-
-  @Column('int', { default: 0 })
-  pendingSales: number
-
-  @Column('datetime')
-  lastUpdated: Date
-}
-```
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID PK | — |
+| `voterId`, `targetUserId` | UUID | — |
+| `context` | enum | `auction` \| `forum` \| `marketplace` |
+| `referenceId` | UUID | feedbackId / reactionId |
+| `voteValue` | decimal | Рассчитанный вес |
+| `createdAt` | timestamptz | — |
 
 ## 🔌 API
 
-### `GET /api/v1/rating?userId=xxx`
+### Public (BFF `/api/v1/rating/*`)
+
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/rating/{userId}` | Публичный рейтинг + coverage |
 
 ```json
 {
-  "userId": "xxx",
+  "userId": "uuid",
   "totalRating": 4.5,
+  "karma": 12.3,
   "verifiedSales": 12,
   "pendingSales": 2,
   "feedbackCoverage": 0.86,
   "isLimited": true,
-  "limitReason": "MAX_PENDING_RATINGS",
-  "nextAction": "Оцените 2 аукциона: #789, #810"
+  "limitReason": "MAX_PENDING_RATINGS"
 }
 ```
 
-> 💡 Полный реестр: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md). Ниже — ключи домена rating.
+### Internal (`/internal/v1/`)
 
-## ⚙️ Переменные settings
-
-| Ключ | Тип | Default | Описание |
-|------|-----|---------|----------|
-| `rating.baseValue` | number | 1 | Базовое значение голоса |
-| `rating.authorityExponent` | number | 0.2 | Степень авторитета |
-| `rating.contextWeights` | object | см. ниже | Веса по контексту |
-| `rating.bonuses.earlyHours` | number | 24 | Окно «быстрого» отзыва |
-| `rating.bonuses.earlyBonus` | number | 0.5 | Бонус за быстрый отзыв |
-| `rating.bonuses.photoBonus` | number | 1.0 | Бонус за фото |
-| `rating.bonuses.bothBonus` | number | 2.0 | Бонус за отзыв обеих сторон |
-| `rating.penalties.penaltyDecayFactor` | number | 0.9 | Множитель штрафа |
-| `rating.penalties.banThreshold` | number | 10 | Порог бана (pending) |
-| `rating.penalties.banDurationDays` | number | 7 | Длительность бана |
-
-Default `rating.contextWeights`:
-
-```json
-{ "auction": 1.0, "forum": 1.2, "marketplace": 0.9 }
-```
-
-> Источник истины — сервис `settings`. Не дублировать значения в коде.
-
-## 💳 Переменные financial-policy
-
-| Ключ | Тип | Описание |
-|------|-----|----------|
-| `rating.maxPendingBeforePenalty` | limit | Макс. pending до штрафа (per plan) |
-
-## 🔌 API (продолжение)
+| Method | Path | Caller | Описание |
+|--------|------|--------|----------|
+| POST | `/rating/bonuses/apply` | feedback | EARLY / PHOTO / BOTH |
+| POST | `/rating/check-ban` | auction, forum, BFF | `{ banned, until? }` |
+| POST | `/rating/votes/apply` | feedback, forum | Применить голос после submit |
+| POST | `/rating/penalties/evaluate` | CRON | Пересчёт штрафов |
+| GET | `/health`, `/health/ready` | orchestrator | — |
 
 ### `POST /internal/v1/rating/bonuses/apply`
 
@@ -126,11 +97,10 @@ Default `rating.contextWeights`:
 {
   "userId": "uuid",
   "type": "EARLY",
-  "auctionId": "uuid"
+  "referenceId": "feedback-uuid",
+  "context": "auction"
 }
 ```
-
-Вызывается сервисом `feedback` после submit.
 
 ### `POST /internal/v1/rating/check-ban`
 
@@ -138,34 +108,79 @@ Default `rating.contextWeights`:
 { "userId": "uuid" }
 ```
 
-Ответ: `{ "banned": false }` или `{ "banned": true, "until": "ISO8601" }`
+→ `{ "banned": false }` или `{ "banned": true, "until": "2026-07-15T00:00:00Z" }`
 
-Вызывается `auction`, `forum` перед mutating operations.
+## ⚙️ Переменные settings
+
+| Ключ | Default | Описание |
+|------|---------|----------|
+| `rating.baseValue` | 1 | Базовое значение голоса |
+| `rating.authorityExponent` | 0.2 | Степень авторитета |
+| `rating.contextWeights` | auction 1.0, forum 1.2, marketplace 0.9 | Веса контекста |
+| `rating.bonuses.earlyHours` | 24 | Окно быстрого отзыва |
+| `rating.bonuses.earlyBonus` | 0.5 | — |
+| `rating.bonuses.photoBonus` | 1.0 | — |
+| `rating.bonuses.bothBonus` | 2.0 | Обе стороны оценили |
+| `rating.penalties.penaltyDecayFactor` | 0.9 | Множитель при N pending |
+| `rating.penalties.banThreshold` | 10 | Pending → бан |
+| `rating.penalties.banDurationDays` | 7 | Длительность бана |
+
+> [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
+
+## 💳 Переменные financial-policy
+
+| Ключ | Free | Basic | Pro | Описание |
+|------|------|-------|-----|----------|
+| `rating.maxPendingBeforePenalty` | 3 | 5 | 10 | Pending до штрафа |
+| `rating.maxActiveAuctionsWhenLimited` | 2 | 3 | 5 | Лимит аукционов при penalty |
 
 ## 📨 События
 
-| Direction | Event |
-|-----------|-------|
-| consume | `auction.completed`, `feedback.submitted` |
-| produce | `rating.penalty_applied`, `rating.user_banned` |
+| Direction | Event | Когда |
+|-----------|-------|-------|
+| consume | `auction.completed` | `pendingSales++` seller/buyer |
+| consume | `feedback.submitted` | Recalc rating, `pendingSales--` |
+| consume | `marketplace.order_completed` | pending для provider/customer |
+| produce | `rating.updated` | Изменение агрегата |
+| produce | `rating.penalty_applied` | Штраф за pending |
+| produce | `rating.user_banned` | Бан → auction/forum block |
 
 ## 🔗 Взаимодействие
 
-| Сервис | Взаимодействие |
-|--------|----------------|
-| `settings` | `GET /settings/rating` — формулы и бонусы |
-| `financial-policy` | `POST /limits/check` — лимиты pending |
-| `feedback` | `POST /rating/bonuses/apply` (internal) |
-| `auction`, `forum` | `POST /rating/check-ban` (internal) |
-| `user-profile` | consume events → sync cache |
+| Сервис | Протокол |
+|--------|----------|
+| settings | HTTP GET settings/rating |
+| financial-policy | limits для pending |
+| feedback | bonuses/apply, votes |
+| forum | karma от реакций |
+| user-profile | consume `rating.updated` → cache |
+| auction, forum | check-ban перед mutate |
+
+## 🔒 Безопасность
+
+- Public GET — любой authenticated/guest (публичные поля)
+- Internal mutate — service token only
+- Ban enforcement — downstream вызывает check-ban; rating не блокирует HTTP напрямую
+
+## ⚙️ Окружение
+
+| Переменная | Обяз. | Описание |
+|------------|-------|----------|
+| `DATABASE_URL` | да | schema `rating` |
+| `RABBITMQ_URL` | да | Events |
+| `SETTINGS_URL` | да | Формулы |
+| `FINANCIAL_POLICY_URL` | да | Лимиты pending |
+| `PORT` | нет | HTTP |
+
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
 ## 📎 Связанные разделы
 
-- [settings](../settings/README.md)
 - [feedback](../feedback/README.md)
-- [ADR-003](../../03-architecture/adr/003-settings-vs-financial-policy.md)
+- [settings](../settings/README.md)
 - [Event catalog](../../03-architecture/event-catalog.md)
+- [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

@@ -1,285 +1,205 @@
 # 📋 Сервис: financial-policy
 
-> **Статус:** in progress · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `financial_policy`
 
 ## 🎯 Назначение
 
-Единый сервис управления **тарифными планами**, **лимитами** и **функциями** для всей платформы **Tavrida Lot**.
+Единый сервис **тарифных планов**, **лимитов** и **фич** для Tavrida Lot.
 
-- Хранит список планов (Free/Basic/Pro...)
-- Хранит **реестр регулируемых параметров** от всех микросервисов
-- Позволяет админу настраивать лимиты и включать/выключать фичи
-- Предоставляет API для проверки лимитов ( `/limits/check` )
-- Управляет **подписками** и **автопродлением**
+- Планы Free / Basic / Pro и подписки пользователей
+- Реестр параметров от domain-сервисов (`Parameter`, `PlanParameter`)
+- API проверки лимитов и фич для BFF и internal callers
+- Активация подписки с charge через billing
+- CRON автопродления
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **План (Plan)** | Тарифная группа (`Free`, `Basic`, `Pro`) |
-| **Подписка (Subscription)** | Действующий план с датами (`startsAt`, `expiresAt`) |
-| **Параметр (Parameter)** | Регулируемая метрика от сервиса (`auction.activeAuctions`) |
-| **Лимит (Limit)** | Числовое значение для конкретного плана (`5` для Free) |
-| **Фича (Feature)** | Флаг активности (`true`/`false`) |
+| **Plan** | Тариф (`free`, `basic`, `pro`) с ценами |
+| **UserSubscription** | Активная подписка пользователя |
+| **Parameter** | Зарегистрированный ключ лимита/фичи (`auction.activeAuctions`) |
+| **PlanParameter** | Значение параметра для конкретного плана |
+| **limit** | Числовой потолок; `∞` = без лимита |
+| **feature** | Boolean-доступ к возможности |
 
-## 🗄️ Сущности (TypeORM)
+## 🗄️ Сущности
 
-### `Plan`
+### `Plan` (`financial_policy.plan`)
 
-```ts
-@Entity()
-export class Plan {
-  @PrimaryColumn('uuid')
-  id: string // 'free', 'basic', 'pro'
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | varchar PK | `free`, `basic`, `pro` |
+| `title`, `description` | text | UI |
+| `monthlyPrice`, `yearlyPrice` | decimal | ₽; `free` = 0 |
+| `isActive` | boolean | Скрытие плана admin |
 
-  @Column('varchar')
-  title: string // 'Бесплатно', 'Базовый', 'Pro'
+### `Parameter` (`financial_policy.parameter`)
 
-  @Column('text', { nullable: true })
-  description?: string
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `key` | varchar unique | `auction.activeAuctions` |
+| `service` | varchar | Домен-владелец |
+| `name`, `description` | text | Admin UI |
+| `valueType` | enum | `limit` \| `feature` \| `enum` |
+| `minValue`, `defaultValue`, `maxValue` | int | Для limit |
+| `isFeatureEnabled` | boolean | Мета (deprecated per plan — см. PlanParameter) |
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  monthlyPrice: number
+### `PlanParameter` (`financial_policy.plan_parameter`)
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  yearlyPrice: number
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `planId` + `parameterKey` | composite PK | — |
+| `limitValue` | int nullable | Для limit; `-1` = ∞ |
+| `isFeatureEnabled` | boolean | Для feature |
+| `enumValues` | jsonb nullable | Для enum (напр. типы аукциона) |
 
-  @Column('boolean', { default: true })
-  isActive: boolean
+### `UserSubscription` (`financial_policy.user_subscription`)
 
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
-}
-```
-
-### `Parameter`
-
-```ts
-@Entity()
-export class Parameter {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column('varchar')
-  key: string // 'auction.activeAuctions'
-
-  @Column('varchar')
-  service: string // 'auction'
-
-  @Column('varchar')
-  name: string // 'Макс. активных аукционов'
-
-  @Column('text', { nullable: true })
-  description?: string
-
-  @Column('int')
-  minValue: number
-
-  @Column('int', { default: 5 })
-  defaultValue: number
-
-  @Column('int', { nullable: true })
-  maxValue?: number
-
-  @Column('boolean', { default: true })
-  isFeatureEnabled: boolean
-
-  @CreateDateColumn()
-  createdAt: Date
-}
-```
-
-### `UserSubscription`
-
-```ts
-@Entity()
-export class UserSubscription {
-  @PrimaryColumn('uuid')
-  userId: string
-
-  @Column('varchar')
-  planId: string // 'pro'
-
-  @Column('datetime')
-  startsAt: Date
-
-  @Column('datetime')
-  expiresAt: Date
-
-  @Column('boolean', { default: true })
-  autoRenew: boolean
-
-  @Column('enum', { enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'] })
-  status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
-}
-```
-
-### `PlanParameter`
-
-```ts
-@Entity()
-export class PlanParameter {
-  @PrimaryColumn('varchar')
-  planId: string
-
-  @PrimaryColumn('varchar')
-  parameterKey: string
-
-  @Column('int')
-  limitValue: number
-
-  @Column('boolean', { default: true })
-  isFeatureEnabled: boolean
-
-  @CreateDateColumn()
-  createdAt: Date
-}
-```
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `userId` | UUID PK | — |
+| `planId` | varchar | Текущий план |
+| `startsAt`, `expiresAt` | timestamptz | Период |
+| `autoRenew` | boolean | Автопродление |
+| `status` | enum | `ACTIVE` \| `EXPIRED` \| `CANCELLED` |
 
 ## 🔌 API
 
-### Регистрация параметров
+### Public (BFF `/api/v1/plans/*`)
 
-```http
-POST /api/v1/parameters/register
-Authorization: Bearer {admin-token}
-```
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/plans` | Список активных планов (цены, features summary) |
+| GET | `/plans/subscription` | Текущая подписка пользователя |
+| POST | `/plans/activate` | Активация / смена плана |
+| POST | `/plans/cancel-auto-renew` | Отключить автопродление |
 
-### Payload:
+### Internal (`/internal/v1/`)
+
+| Method | Path | Caller | Описание |
+|--------|------|--------|----------|
+| POST | `/parameters/register` | domain services (startup) | Регистрация параметра |
+| POST | `/limits/check` | auction, forum, BFF | Проверка лимита |
+| POST | `/features/can-use` | auction, BFF | Проверка feature flag |
+| GET | `/subscription?userId=` | BFF, domain | План пользователя |
+| POST | `/features/set-limit` | admin-ui | Настройка PlanParameter |
+| GET | `/health`, `/health/ready` | orchestrator | — |
+
+### `POST /internal/v1/limits/check`
+
 ```json
 {
-  "key": "auction.activeAuctions",
-  "service": "auction",
-  "name": "Макс. активных аукционов",
-  "description": "Количество активных аукционов, в которых может участвовать пользователь",
-  "minValue": 0,
-  "defaultValue": 5,
-  "maxValue": 999999
-}
-```
-
-### Настройка лимитов
-```http
-POST /api/v1/features/set-limit
-Authorization: Bearer {admin-token}
-```
-
-### Payload:
-```json
-{
-  "planId": "basic",
-  "parameterKey": "auction.activeAuctions",
-  "limitValue": 20,
-  "isFeatureEnabled": true
-}
-```
-
-### Проверка лимита (основной эндпоинт)
-```http
-POST /api/v1/limits/check
-Authorization: Bearer {token}
-```
-### Payload:
-```json
-{
-  "userId": "user-uuid-123",
+  "userId": "user-uuid",
   "parameterKey": "auction.activeAuctions",
   "requestedValue": 1,
   "currentUsage": 4
 }
 ```
 
-### Проверка фичи
-
-```http
-POST /api/v1/features/can-use
-Authorization: Bearer {token}
-```
-
-Payload:
-
 ```json
 {
-  "userId": "user-uuid-123",
-  "featureKey": "auction.promotionEnabled"
+  "allowed": true,
+  "planId": "basic",
+  "limit": 20,
+  "remaining": 16
 }
 ```
 
-Ответ:
+403 / `allowed: false` — лимит исчерпан.
+
+### `POST /internal/v1/features/can-use`
+
+```json
+{
+  "userId": "user-uuid",
+  "featureKey": "auction.promotionEnabled"
+}
+```
 
 ```json
 { "allowed": true, "planId": "pro" }
 ```
 
-### Активация подписки
-```http
-POST /api/v1/plans/activate
-Authorization: Bearer {token}
-```
+### `POST /api/v1/plans/activate` (public via BFF)
 
-### Payload:
 ```json
 {
-  "userId": "user-uuid",
   "planId": "pro",
-  "autoRenew": true
+  "autoRenew": true,
+  "billingPeriod": "monthly"
 }
 ```
 
-### Логика:
-- Проверка баланса через billing
-- Если balance >= monthlyPrice → списание
-- Создание UserSubscription с status=ACTIVE, expiresAt=now() + 1 month
+**Flow:**
 
-### Автопродление
-- По CRON (например, every 1 hour) проверяет expiresAt <= now()
-- Если autoRenew=true и status=ACTIVE → проверяет баланс
-- Если баланса достаточно → списывает monthlyPrice, продлевает на 1 месяц
+1. Resolve price (`monthlyPrice` / `yearlyPrice`)
+2. `billing POST /internal/v1/wallets/charge` с `target: financial-policy.activate-plan:pro`
+3. Upsert `UserSubscription` → `ACTIVE`, `expiresAt = now + period`
+4. Produce `subscription.activated`
+
+### Автопродление (CRON)
+
+- Job каждый час: `expiresAt <= now()` AND `autoRenew = true` AND `status = ACTIVE`
+- Charge → extend `expiresAt` или `subscription.expired` + `EXPIRED`
+
+## ⚙️ Переменные settings
+
+Не владеет settings — только financial-policy parameters.
+
+## 💳 Переменные financial-policy
+
+Сервис **владеет** значениями per plan. Параметры регистрируются доменными сервисами при старте.
+
+Примеры: `auction.activeAuctions`, `forum.postsPerDay`, `auction_subscriptions.categoriesMax`.
+
+> Полный реестр: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
+
+## 📨 События
+
+| Direction | Event | Когда |
+|-----------|-------|-------|
+| produce | `subscription.activated` | Успешная активация / смена плана |
+| produce | `subscription.expired` | Истечение без продления |
+| consume | `billing.charge_completed` | Подтверждение оплаты (optional reconcile) |
+| consume | `billing.deposit_completed` | Retry auto-renew после пополнения |
+
+> Каталог: [event-catalog](../../03-architecture/event-catalog.md)
 
 ## 🔗 Взаимодействие
 
-| Сервис | Взаимодействие | Протокол | Пример |
-|--------|---------------|----------|--------|
-| billing | GET /wallets/balance, POST /wallets/charge | HTTP | Активация подписки |
-| auction, marketplace, auction_subscriptions | POST /limits/check | HTTP | Проверка лимитов |
-| admin-ui | POST /features/set-limit, GET /plans | HTTP | Админка |
+| Сервис | Взаимодействие | Протокол |
+|--------|---------------|----------|
+| billing | balance, charge | HTTP internal |
+| auction, forum, marketplace, auction-subscriptions | limits/check, features/can-use | HTTP internal |
+| admin-ui | set-limit, plans CRUD | HTTP via BFF + Keto admin |
+| notifications | subscription events | RabbitMQ |
 
 ## 🔒 Безопасность
-- POST /limits/check — только для пользователя (с токеном)
-- POST /features/set-limit — только админ (через admin роль в Ory Keto)
-- Все запросы проходят через BFF (нельзя прямой доступ к financial-policy)
+
+- `/limits/check`, `/features/can-use` — service token или BFF (user context)
+- `/features/set-limit`, `/parameters/register` — **admin only** (Keto)
+- Публичный доступ только через BFF; прямой internet → financial-policy запрещён
 
 ## ⚙️ Окружение
 
-| Переменная | Описание | Пример |
-|------------|----------|--------|
-| DATABASE_URL | PostgreSQL (`schema: financial_policy`) | postgres://user:pass@localhost:5432/tavrida_lot |
-| BILLING_URL | URL billing | http://localhost:3001 |
-| PORT | HTTP-порт | 3002 |
+| Переменная | Обяз. | Описание | Пример |
+|------------|-------|----------|--------|
+| `DATABASE_URL` | да | schema `financial_policy` | postgres://… |
+| `BILLING_URL` | да | Internal billing | http://billing:3001 |
+| `RABBITMQ_URL` | да | Events | amqp://… |
+| `PORT` | нет | HTTP | `3002` |
+| `SUBSCRIPTION_CRON_ENABLED` | нет | CRON autoprenew | `true` |
 
----
-
-**Автор:** команда разработки · **Версия:** 0.1-draft
-
-## 💳 Переменные financial-policy (реестр)
-
-Сервис **владеет** тарифными значениями. Параметры **регистрируются** доменными сервисами — см. их README (секция 💳).
-
-Примеры: `auction.activeAuctions`, `forum.postsPerDay` — значения per plan в `plan_parameter`.
-
-> 💡 Полный реестр: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md).
+> [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
 ## 📎 Связанные разделы
 
 - [billing](../billing/README.md)
+- [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
 - [ADR-003](../../03-architecture/adr/003-settings-vs-financial-policy.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
+
+---
+
+**Автор:** команда разработки · **Версия:** 0.2-spec

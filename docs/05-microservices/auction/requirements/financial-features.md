@@ -68,7 +68,7 @@ POST /api/v1/features/can-use
 
 ## 🔗 Связанные разделы
 
-- [auction](./README.md)
+- [auction](../auction/README.md)
 - [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
 - [financial-policy](../../financial-policy/README.md)
 - [billing](../../billing/README.md)
