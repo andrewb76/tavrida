@@ -1,6 +1,6 @@
 # 💻 Фронтенд-приложение (`@tavrida/frontend`)
 
-> **Статус:** draft · **Версия:** 0.1
+> **Статус:** spec ready · **Версия:** 0.2
 >
 > Техническая спецификация SPA. Продуктовая сторона (что видит пользователь) — [platform-for-users.md](../01-goal/platform-for-users.md). Wireframes и дизайн — [11-ux-ui](../11-ux-ui/README.md).
 
@@ -78,6 +78,32 @@ apps/frontend/
 
 Общие примитивы и дизайн-токены выносятся в **`@tavrida/ui`**, чтобы переиспользовать в будущем admin-ui.
 
+## 🗺️ Маршруты
+
+| Path | View | Auth | Wireframe |
+|------|------|------|-----------|
+| `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) |
+| `/about` | AboutView | public | W01 |
+| `/invite` | InviteRedeemView | Logto + code | W01 |
+| `/auctions` | AuctionListView | **member** | [W02](../11-ux-ui/wireframes/auctions.md) |
+| `/auctions/new` | AuctionCreateView | member | W04 |
+| `/auctions/:id` | AuctionDetailView | **member** | W03 |
+| `/forum` | ForumListView | **member** | [W05](../11-ux-ui/wireframes/forum.md) |
+| `/forum/topics/:id` | TopicView | **member** | W06 |
+| `/forum/new` | TopicCreateView | member | W05 |
+| `/profile/me` | ProfileSelfView | member | W07 |
+| `/profile/:userId` | ProfilePublicView | **member** | W07 |
+| `/invites` | InvitesView | member | W01 |
+| `/wallet` | WalletView | member | [W08](../11-ux-ui/wireframes/profile-wallet.md) |
+| `/plans` | PlansView | member | W08 |
+| `/marketplace` | MarketplaceListView | **member** | [W09](../11-ux-ui/wireframes/marketplace.md) |
+| `/marketplace/:id` | ServiceDetailView | **member** | W09 |
+| `/callback` | LogtoCallback | — | W01 |
+
+Guards: `requireMember` (club content), `requireAuth`, `requirePlan('pro')` (UX-only hint + server enforce).
+
+> IA: [information-architecture](../11-ux-ui/information-architecture.md)
+
 ## 🔌 Взаимодействие с API
 
 ### REST
@@ -109,13 +135,13 @@ wss://{host}/ws/v1?token={jwt}
 |---------|---------|-------|
 | `auction:{id}` | `bid.placed`, `auction.ended` | страница лота (таймер, история ставок) |
 | `user:{id}` | `notification.new`, `balance.updated` | inbox, баланс в шапке |
-| `forum:{topicId}` | `message.new`, `reaction.added` | тема форума, чат *(Pro)* |
+| `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | тема форума, чат *(Pro)* |
 
 ## 🔒 Безопасность и auth
 
 - **Вход** через **Logto** (OIDC, Authorization Code + PKCE), SDK `@logto/vue`.
 - JWT хранится и обновляется SDK; для API берётся `getAccessToken()`.
-- Router-guard'ы: `requireAuth` (гость → на страницу входа) и проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [financial-policy](../05-microservices/financial-policy/README.md)).
+- Router-guard'ы: `requireMember` (нет инвайта → `/invite`), `requireAuth`, проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [financial-policy](../05-microservices/financial-policy/README.md)).
 - CORS/rate-limit — на стороне BFF; фронт корректно обрабатывает `429`.
 - Клиент **не** содержит бизнес-лимитов как источника правды — только UX-подсказки; ограничения enforce'ит бэк.
 
@@ -195,4 +221,4 @@ pnpm --filter @tavrida/frontend lint
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-spec

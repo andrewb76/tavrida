@@ -14,9 +14,9 @@
 | 💰 billing | 3001 | 🚧 | ✅ spec | [billing](./billing/README.md) |
 | 📋 financial-policy | 3002 | 🚧 | ✅ spec | [financial-policy](./financial-policy/README.md) |
 | 🔨 auction | 3003 | 🚧 | ✅ spec | [auction](./auction/README.md) |
-| 🔔 auction-subscriptions | 3004 | 🚧 | ✅ spec | [auction_subscriptions](./auction_subscriptions/README.md) |
+| 🔔 subscriptions | 3004 | 🚧 | ✅ spec | [subscriptions](./subscriptions/README.md) |
 | ⭐ rating | — | 📝 | ✅ spec | [rating](./rating/README.md) |
-| 💬 feedback | — | 📝 | ✅ spec | [feedback](./feedback/README.md) |
+| 💬 deal-feedback | — | 📝 | ✅ spec | [deal_feedback](./deal_feedback/README.md) |
 | 🗣️ forum | — | 📝 | ✅ spec | [forum](./forum/README.md) |
 | 👤 user-profile | — | 📝 | ✅ spec | [user-profile](./user-profile/README.md) |
 | ⚙️ settings | — | 📝 | ✅ spec | [settings](./settings/README.md) |

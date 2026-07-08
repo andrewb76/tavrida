@@ -1,62 +1,50 @@
 # 🎨 UX/UI и wireframes
 
-> **Продуктовый контекст:** [platform-for-users.md](../01-goal/platform-for-users.md) — что пользователь видит и делает на каждом экране.  
-> **Техническая реализация:** [14-frontend](../14-frontend/README.md) — стек SPA, компоненты, API-слой.
+> **Статус:** spec ready · **Версия:** 0.2  
+> **Продукт:** [platform-for-users.md](../01-goal/platform-for-users.md)  
+> **Код:** [14-frontend](../14-frontend/README.md)
 
-## 📐 Wireframes страниц
+## 📄 Документы
 
-| Страница | Описание в product doc |
-|----------|------------------------|
-| Главная | [platform-for-users](../01-goal/platform-for-users.md) |
-| Каталог лотов | Аукционы → «Что видит участник» |
-| Страница лота | Ставки в реальном времени, обсуждение *(Pro)* |
-| Форум: список тем, страница темы | Форум |
-| Профиль пользователя | Профиль, рейтинг |
-| Корзина/оплата | Деньги на платформе, подписки |
+| Документ | Описание |
+|----------|----------|
+| [design-tokens.md](./design-tokens.md) | Цвета, типографика, spacing (seed) |
+| [information-architecture.md](./information-architecture.md) | Sitemap, nav, breakpoints |
+| [wireframes/](./wireframes/README.md) | Low-fi спецификации экранов W01–W10 |
+
+## 📐 Wireframes (индекс)
+
+| ID | Экран | Файл |
+|----|-------|------|
+| W01 | Главная, auth | [home-auth.md](./wireframes/home-auth.md) |
+| W02–W04 | Аукционы | [auctions.md](./wireframes/auctions.md) |
+| W05–W06 | Форум | [forum.md](./wireframes/forum.md) |
+| W07–W10 | Профиль, кошелёк, отзыв | [profile-wallet.md](./wireframes/profile-wallet.md) |
+| W09 | Маркет услуг | [marketplace.md](./wireframes/marketplace.md) |
 
 ## 🧱 Компоненты
 
-- Tailwind CSS
-- Библиотека компонентов
-- Novu Inbox (in-app уведомления)
+- **Tailwind** + [design-tokens](./design-tokens.md)
+- **`@tavrida/ui`** — Reka UI primitives
+- **Novu Inbox** — header bell
 
-## 📋 TODO
+## 📋 TODO (design)
 
-- [ ] Wireframes по сценариям из platform-for-users
-- [ ] Mobile-first layouts
-- [ ] Design tokens
-- [ ] Страница admin-ui «Инструменты» (каталог ссылок на `*.tools.<env>`)
+- [ ] Figma file + logo
+- [ ] High-fi mockups from wireframes
+- [ ] Admin-ui «Инструменты» page ([dev-tools](../02-infrastructure/dev-tools.md))
+- [ ] Dark theme pass
 
-## 📘 План по брендбуку
+## 📘 Brandbook
 
-### Цель
-
-Зафиксировать единые правила визуального стиля Tavrida Lot для продукта, маркетинга и документации.
-
-### Состав брендбука (план)
-
-- [ ] Позиционирование и тон коммуникации (Tone of Voice)
-- [ ] Логотип: основная версия, монохром, охранное поле, минимальные размеры
-- [ ] Цветовая система: primary/secondary/semantic, контраст и доступность (WCAG)
-- [ ] Типографика: шрифтовая пара, размеры, интерлиньяж, шкала заголовков
-- [ ] UI-основа: сетка, отступы, радиусы, тени, иконографика
-- [ ] Компоненты: кнопки, поля, карточки, табы, бейджи, модальные окна
-- [ ] Графические принципы: иллюстрации, фото, обложки категорий/лотов
-- [ ] Контент-гайды: стиль текстов интерфейса, ошибки, empty states, уведомления
-- [ ] Примеры применения: веб, email, соцсети, презентации
-- [ ] Правила «нельзя»: типовые антипримеры использования бренда
-
-### Этапы подготовки
-
-1. Аудит текущих экранов и документов.
-2. Формирование design tokens и базовых UI-паттернов.
-3. Сборка черновика брендбука и ревью с продуктовой командой.
-4. Пилотное применение на 2-3 ключевых экранах.
-5. Финализация и публикация v1.
+Seed tokens в [design-tokens.md](./design-tokens.md). Полный брендбук — после ревью дизайна.
 
 ## 🔗 Связанные разделы
 
 - [platform-for-users](../01-goal/platform-for-users.md)
-- [14-frontend](../14-frontend/README.md) — техническая спецификация SPA
-- [Цель](../01-goal/README.md)
-- [Форум (требования)](../05-microservices/forum/requirements/README.md)
+- [14-frontend](../14-frontend/README.md)
+- [forum requirements](../05-microservices/forum/requirements/README.md)
+
+---
+
+**Автор:** команда разработки · **Версия:** 0.2-spec

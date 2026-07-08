@@ -8,6 +8,14 @@
 |----------|-----------|----------|
 | **Этот README** | PM, архитекторы | Миссия, сценарии, NFR |
 | **[platform-for-users.md](./platform-for-users.md)** | Все | Функциональность человеческим языком |
+| **[platform-scenarios.md](./platform-scenarios.md)** | PM, QA, dev | Индекс: 3 группы по частоте, стандарты TDD/BDD |
+| **[scenarios/frequent.md](./scenarios/frequent.md)** | QA, dev | ~85% — core loop |
+| **[scenarios/occasional.md](./scenarios/occasional.md)** | QA, dev | ~12% — монетизация |
+| **[scenarios/rare.md](./scenarios/rare.md)** | QA, security | ~3% — mod, admin, edge |
+| **[club-access.md](./club-access.md)** | PM, UX | Закрытый клуб, лендинг, инвайты |
+| **[content-brief.md](./content-brief.md)** | PM, legal, контент | ТЗ на справочник клуба |
+| **[legal-documents.md](./legal-documents.md)** | legal, PM | Перечень юр. документов |
+| **[karma-and-rating.md](./karma-and-rating.md)** | PM, QA, dev | Рейтинг, карма, формулы, referral |
 | **[roles.md](./roles.md)** | PM, UX, разработчики | Роли, тарифы, права, матрица доступа |
 | **[PROJECT-CONTEXT.md](../00-meta/PROJECT-CONTEXT.md)** | Dev, AI | Bootstrap — краткий контекст проекта |
 
@@ -20,10 +28,13 @@
 
 ## 📱 Основные сценарии
 
+Полный реестр — **[platform-scenarios.md](./platform-scenarios.md)** (индекс) · [частые](./scenarios/frequent.md) · [средние](./scenarios/occasional.md) · [редкие](./scenarios/rare.md).
+
+Кратко:
 - Пользователь публикует лот на аукционе (разные типы аукционов).
 - Пользователь обсуждает находки на форуме.
 - Пользователь покупает/продаёт платные услуги (маркет услуг).
-- Система управляет доступом по планам (Free/Basic/Pro), лимитами, кармой/рейтингами.
+- Система управляет доступом по планам (Free/Basic/Pro), лимитами, кармой/рейтингами; **вход в клуб — только по инвайту**.
 
 ## ✅ Ключевые требования (NFR)
 

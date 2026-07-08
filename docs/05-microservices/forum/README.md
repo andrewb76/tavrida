@@ -5,9 +5,11 @@
 
 ## 🎯 Назначение
 
-**Форум** Tavrida Lot — категории, топики, комментарии, реакции, модерация.
+**Форум** — категории, топики, комментарии, реакции, **Markdown**, теги, справочник клуба.
 
 - Сущности: `topic`, `comment` ([ADR-005](../../03-architecture/adr/005-forum-terminology.md))
+- **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
+- **Теги:** [tags.md](./tags.md)
 - Интеграция: rating (karma), billing (Pro-реакции), financial-policy (лимиты)
 - Realtime: Redis → BFF WS `forum:{topicId}`
 
@@ -25,7 +27,7 @@
 
 | Таблица | Описание |
 |---------|----------|
-| `category` | Иерархия категорий |
+| `category` | Иерархия; `policy` jsonb (allowComments, …) |
 | `topic` | Тема |
 | `comment` | Комментарий; `promotedTopicId` после promote |
 | `comment_closure` | Closure table для дерева |
@@ -101,6 +103,8 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 
 ## 📎 Связанные разделы
 
+- [knowledge-base.md](./knowledge-base.md)
+- [tags.md](./tags.md)
 - [requirements — полный анализ](./requirements/README.md)
 - [ADR-005](../../03-architecture/adr/005-forum-terminology.md)
 - [moderator-mapping](../../09-security/moderator-mapping.md)

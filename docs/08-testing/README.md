@@ -39,6 +39,14 @@ it('charge deducts balance atomically', async () => { … })
 
 ## 📋 Critical scenarios (MVP)
 
+Источник истины — **[platform-scenarios.md](../01-goal/platform-scenarios.md)**:
+
+| Группа | MVP gate |
+|--------|----------|
+| [Частые](../01-goal/scenarios/frequent.md) | S-003, S-010, S-011, S-012, S-015 |
+| [Средние](../01-goal/scenarios/occasional.md) | S-021 |
+| [Редкие](../01-goal/scenarios/rare.md) | S-036 |
+
 | # | Сценарий | Services |
 |---|----------|----------|
 | 1 | Create auction → bid → complete → feedback | auction, feedback, rating |

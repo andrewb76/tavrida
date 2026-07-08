@@ -258,7 +258,10 @@ parentId: string  // был commentId, стал topicId для прямых де
 ## ✅ Резюме
 
 - ✅ **Микросервис `forum`** на NestJS + PostgreSQL + Redis
-- ✅ **Интеграция**: `rating`, `billing`, `financial-policy`, `user-profile`
+- ✅ **Markdown** в topic/comment — [knowledge-base.md](./knowledge-base.md)
+- ✅ **Справочник клуба** на том же движке + политики категорий
+- ✅ **Теги** — [tags.md](./tags.md)
+- ✅ **Интеграция**: `rating`, `billing`, `financial-policy`, `user-profile`, `subscriptions`
 - ✅ **Базовые функции**: темы, комменты, голоса, категории
 - ✅ **Расширенные**: теги, анонимность, уведомления, интеграция с аукционом
 - ✅ **Гибкая система лимитов**: настраиваемые в `financial-policy`

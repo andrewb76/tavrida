@@ -4,22 +4,50 @@
 
 ## 🎯 Назначение
 
-**Рейтинг и карма** пользователей Tavrida Lot — агрегаты, формула голоса, бонусы, штрафы и баны.
+**Рейтинг, карма и реферальный вклад** пользователей Tavrida Lot — агрегаты, формула голоса, бонусы, штрафы, баны и **дерево инвайтов** (N уровней).
 
-- Source of truth для `totalRating`, `verifiedSales`, `pendingSales`
+- Source of truth для `totalRating`, `karma`, `referralKarma`, `referralRating`, `verifiedSales`, `pendingSales`
 - Формула с учётом авторитета голосующего и контекста (auction / forum / marketplace)
+- **Referral tree:** effective karma/rating inviter от invitees до `rating.referral.maxDepth`
 - Штрафы за неоценённые сделки; бан → блокировка в auction/forum
-- Параметры формул — из `settings`; лимиты pending — из financial-policy
+- Параметры формул — из `settings`; лимиты pending и инвайтов — из financial-policy
+
+> **Канонический продуктовый справочник:** [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
 | **totalRating** | Средняя оценка по верифицированным сделкам |
+| **karma** | Социальный счёт (форумные реакции) |
+| **referralKarma** | Добавка от дерева приглашённых |
+| **referralRating** | Добавка к effective rating от дерева |
+| **effectiveKarma** | `karma + referralKarma` |
+| **effectiveRating** | `clamp(totalRating + referralRating, …)` |
+
 | **verifiedSales** | Сделки с завершённым feedback |
 | **pendingSales** | Завершённые сделки без отзыва |
 | **feedbackCoverage** | `verifiedSales / (verifiedSales + pendingSales)` |
 | **Vote value** | Вес голоса при расчёте (формула ниже) |
+
+## 🌳 Реферальное дерево
+
+При `club.referralInfluenceEnabled` (FP) и redeem инвайта (`user-profile.invitation`):
+
+```
+referralKarma(I) = Σ_{d=1..N} α_d × Σ_{u ∈ L(d)} K(u)
+referralRating(I) = Σ_{d=1..N} β_d × Σ_{u ∈ L(d)} (R(u) - R_neutral)
+```
+
+Пересчёт при `rating.updated` для любого потомка; коэффициенты — settings. Подробно: [karma-and-rating.md §6](../../01-goal/karma-and-rating.md#-6-реферальное-дерево-инвайты).
+
+### Поля `UserRating` (referral)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `referralKarma` | decimal | Агрегат дерева (карма) |
+| `referralRating` | decimal | Агрегат дерева (рейтинг) |
+| `referralLastComputedAt` | timestamptz | Маркер reconcile |
 
 ## 🧮 Формула голоса
 
@@ -42,7 +70,9 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 |------|-----|----------|
 | `userId` | UUID PK | — |
 | `totalRating` | decimal | Агрегат |
-| `karma` | decimal | Форумные реакции (отдельный счётчик) |
+| `karma` | decimal | Форумные реакции |
+| `referralKarma` | decimal | От invite tree |
+| `referralRating` | decimal | От invite tree |
 | `verifiedSales` | int | — |
 | `pendingSales` | int | — |
 | `isLimited` | boolean | Ограничение участия |
@@ -73,6 +103,10 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
   "userId": "uuid",
   "totalRating": 4.5,
   "karma": 12.3,
+  "referralKarma": 1.5,
+  "referralRating": 0.08,
+  "effectiveKarma": 13.8,
+  "effectiveRating": 4.58,
   "verifiedSales": 12,
   "pendingSales": 2,
   "feedbackCoverage": 0.86,
@@ -88,6 +122,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | POST | `/rating/bonuses/apply` | feedback | EARLY / PHOTO / BOTH |
 | POST | `/rating/check-ban` | auction, forum, BFF | `{ banned, until? }` |
 | POST | `/rating/votes/apply` | feedback, forum | Применить голос после submit |
+| POST | `/rating/referral/recompute` | user-profile, CRON | Пересчёт referral для inviter chain |
 | POST | `/rating/penalties/evaluate` | CRON | Пересчёт штрафов |
 | GET | `/health`, `/health/ready` | orchestrator | — |
 
@@ -124,8 +159,12 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | `rating.penalties.penaltyDecayFactor` | 0.9 | Множитель при N pending |
 | `rating.penalties.banThreshold` | 10 | Pending → бан |
 | `rating.penalties.banDurationDays` | 7 | Длительность бана |
+| `rating.referral.maxDepth` | 2 | N уровней дерева |
+| `rating.referral.karmaCoefficients` | [0.15, 0.05] | α по уровням |
+| `rating.referral.ratingCoefficients` | [0.05, 0.02] | β по уровням |
+| `rating.referral.neutralRating` | 3.0 | R_neutral |
 
-> [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
+> [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md) · [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 
 ## 💳 Переменные financial-policy
 
@@ -134,6 +173,9 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | `rating.maxPendingBeforePenalty` | 3 | 5 | 10 | Pending до штрафа |
 | `rating.maxActiveAuctionsWhenLimited` | 2 | 3 | 5 | Лимит аукционов при penalty |
 
+| `club.invitesPerMonth` | 1 | 3 | 10 | Инвайт-кодов / месяц |
+| `club.referralInfluenceEnabled` | true | true | true | Referral tree в effective metrics |
+
 ## 📨 События
 
 | Direction | Event | Когда |
@@ -141,6 +183,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | consume | `auction.completed` | `pendingSales++` seller/buyer |
 | consume | `feedback.submitted` | Recalc rating, `pendingSales--` |
 | consume | `marketplace.order_completed` | pending для provider/customer |
+| consume | `invitation.redeemed` | Referral recompute inviter chain |
 | produce | `rating.updated` | Изменение агрегата |
 | produce | `rating.penalty_applied` | Штраф за pending |
 | produce | `rating.user_banned` | Бан → auction/forum block |
@@ -153,7 +196,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | financial-policy | limits для pending |
 | feedback | bonuses/apply, votes |
 | forum | karma от реакций |
-| user-profile | consume `rating.updated` → cache |
+| user-profile | invitation edges, consume `rating.updated` → cache |
 | auction, forum | check-ban перед mutate |
 
 ## 🔒 Безопасность
@@ -176,6 +219,8 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 ## 📎 Связанные разделы
 
+- [karma-and-rating.md](../../01-goal/karma-and-rating.md)
+- [club-access.md](../../01-goal/club-access.md)
 - [feedback](../feedback/README.md)
 - [settings](../settings/README.md)
 - [Event catalog](../../03-architecture/event-catalog.md)

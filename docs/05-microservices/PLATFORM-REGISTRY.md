@@ -32,12 +32,31 @@
 | `rating.penalties.penaltyDecayFactor` | number | `0.9` | global | Множитель штрафа за pending |
 | `rating.penalties.banThreshold` | number | `10` | global | Порог pending → бан |
 | `rating.penalties.banDurationDays` | number | `7` | global | Длительность бана (дни) |
+| `rating.referral.maxDepth` | number | `2` | global | Глубина реферального дерева (N уровней) |
+| `rating.referral.karmaCoefficients` | number[] | `[0.15, 0.05]` | global | α_d — вклад кармы invitee на уровне d |
+| `rating.referral.ratingCoefficients` | number[] | `[0.05, 0.02]` | global | β_d — вклад рейтинга invitee на уровне d |
+| `rating.referral.neutralRating` | number | `3.0` | global | Нейтраль для `(R(u) - R_neutral)` |
+| `rating.referral.ratingClampMin` | number | `1.0` | global | Min `effectiveRating` |
+| `rating.referral.ratingClampMax` | number | `5.0` | global | Max `effectiveRating` |
+
+> Формулы и влияние: [karma-and-rating.md](../01-goal/karma-and-rating.md).
 
 Default `rating.contextWeights`:
 
 ```json
 { "auction": 1.0, "forum": 1.2, "marketplace": 0.9 }
 ```
+
+### club
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `club.registration.inviteOnly` | boolean | `true` | global | Закрытая регистрация (только инвайт) |
+| `club.invite.validityDays` | number | `14` | global | Срок действия кода (дни) |
+| `club.invite.codeType` | enum | `SINGLE_USE` | global | `SINGLE_USE` \| `MULTI_USE` |
+| `club.landing.publicSections` | string[] | `about,rules,request` | global | Блоки публичного лендинга |
+
+> [club-access.md](../01-goal/club-access.md)
 
 ### forum
 
@@ -46,6 +65,8 @@ Default `rating.contextWeights`:
 | `forum.bannedWordsList` | string[] | `[]` | global | Список запрещённых слов |
 | `forum.editWindowMinutes` | number | `10` | global | Окно редактирования своего поста |
 | `forum.reaction.karmaWeights` | object | см. [forum](./forum/requirements/README.md) | global | Вес реакций для кармы |
+| `forum.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
+| `forum.tags.bannedSlugs` | string[] | `[]` | global | Запрещённые slug тегов |
 
 ### auction
 
@@ -136,12 +157,25 @@ Default `rating.contextWeights`:
 | `rating.maxPendingBeforePenalty` | limit | 3 | 5 | 10 | Pending-сделок до штрафа |
 | `rating.maxActiveAuctionsWhenLimited` | limit | 2 | 3 | 5 | Лимит аукционов при низком рейтинге |
 
-### auction_subscriptions
+### club
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `auction_subscriptions.categoriesMax` | limit | 3 | 10 | ∞ | Подписок на категории |
-| `auction_subscriptions.auctionsMax` | limit | 5 | 20 | ∞ | Подписок на конкретные лоты |
+| `club.invitesPerMonth` | limit | 1 | 3 | 10 | Новых инвайт-кодов в месяц |
+| `club.referralInfluenceEnabled` | feature | true | true | true | Учитывать referral tree в effective karma/rating |
+
+### subscriptions
+
+| Ключ | Тип | Free | Basic | Pro | Описание |
+|------|-----|------|-------|-----|----------|
+| `subscriptions.auctionCategoriesMax` | limit | 3 | 10 | ∞ | Подписок на категории аукциона |
+| `subscriptions.auctionsMax` | limit | 5 | 20 | ∞ | Подписок на лоты |
+| `subscriptions.forumCategoriesMax` | limit | 5 | 15 | ∞ | Подписок на категории форума |
+| `subscriptions.forumTopicsMax` | limit | 10 | 50 | ∞ | Подписок на темы |
+| `subscriptions.tagsMax` | limit | 3 | 10 | ∞ | Подписок на теги |
+| `subscriptions.emailDigest` | feature | false | false | true | Email digest |
+
+> Legacy: `auction_subscriptions.*` → migrate ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
 
 ### marketplace _(draft)_
 
@@ -212,9 +246,11 @@ Default `rating.contextWeights`:
 | Сервис | Settings | Financial-policy | Billing |
 |--------|----------|------------------|---------|
 | [rating](./rating/README.md) | ✅ | ✅ | — |
+| [user-profile](./user-profile/README.md) | ✅ club | ✅ club | — |
 | [forum](./forum/requirements/README.md) | ✅ | ✅ | ✅ реакции |
 | [auction](./auction/requirements/financial-features.md) | ✅ | ✅ | ✅ |
-| [auction-subscriptions](./auction_subscriptions/README.md) | — | ✅ | — |
+| [subscriptions](./subscriptions/README.md) | — | ✅ | — |
+| [deal_feedback](./deal_feedback/README.md) | ✅ | — | — |
 | [marketplace](./marketplace/README.md) | ✅ | ✅ draft | — |
 | [billing](./billing/README.md) | ✅ | — | — |
 | [notifications](./notifications/README.md) | ✅ | — | — |

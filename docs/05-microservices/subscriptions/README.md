@@ -1,0 +1,140 @@
+# 🔔 Сервис: subscriptions
+
+> **Статус:** spec ready · **Версия:** 0.3 · **Schema:** `subscriptions` · **Port:** 3004  
+> **ADR:** [006-service-renames](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)  
+> **Legacy:** `auction-subscriptions` / `auction_subscriptions` — deprecated
+
+## 🎯 Назначение
+
+**Универсальные подписки** пользователя на события платформы с доставкой через `notifications`.
+
+Не только аукционы: **форум**, **теги**, **marketplace** (draft), digest по доменам.
+
+## 📖 Термины
+
+| Термин | Описание |
+|--------|----------|
+| **Subscription** | Intent пользователя получать уведомления по target |
+| **Target** | Объект подписки (категория, лот, тема, тег, …) |
+| **Source domain** | Сервис-источник событий |
+| **DeliveryPreference** | instant / digest / off per channel |
+
+## 🗄️ Универсальная модель
+
+### `Subscription` (`subscriptions.subscription`)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID PK | — |
+| `userId` | UUID | Подписчик |
+| `sourceDomain` | enum | `auction` \| `forum` \| `marketplace` \| `platform` |
+| `targetType` | enum | см. таблицу ниже |
+| `targetId` | UUID nullable | ID объекта (null для global digest) |
+| `options` | jsonb | Доменные флаги (см. ниже) |
+| `createdAt` | timestamptz | — |
+
+**Unique:** `(userId, sourceDomain, targetType, targetId)`.
+
+### Target types
+
+| targetType | sourceDomain | События (примеры) | options (jsonb) |
+|------------|--------------|-------------------|-----------------|
+| `AUCTION_CATEGORY` | auction | `auction.created` в категории | `{ notifyOnNewLot: true }` |
+| `AUCTION` | auction | `auction.bid_placed`, `auction.completed` | `{ notifyOnNewBid: true, notifyOnEnd: true }` |
+| `FORUM_CATEGORY` | forum | новые topic в категории | `{ notifyOnNewTopic: true }` |
+| `FORUM_TOPIC` | forum | `forum.comment_created` | `{ notifyOnReply: true, notifyOnReaction: false }` |
+| `TAG` | platform | контент с тегом (cross-domain fan-out) | `{ domains: ['forum','auction'] }` |
+| `MARKETPLACE_CATEGORY` | marketplace | новые услуги | draft |
+| `DIGEST_GLOBAL` | platform | сводка | `{ frequency: 'DAILY' }` |
+
+### `DeliveryPreference` (`subscriptions.delivery_preference`)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `userId` | UUID PK | — |
+| `emailDigestEnabled` | boolean | Pro via FP |
+| `pushEnabled` | boolean | — |
+| `digestFrequency` | enum | `DAILY` \| `WEEKLY` |
+| `quietHours` | jsonb nullable | `{ start, end, tz }` |
+
+## 🔌 API
+
+### Public (BFF `/api/v1/subscriptions/*`)
+
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/subscriptions` | Список (`?sourceDomain=`) |
+| POST | `/subscriptions` | Создать (check limits) |
+| DELETE | `/subscriptions/{id}` | Отписаться |
+| PATCH | `/subscriptions/delivery` | Delivery preferences |
+
+### `POST /api/v1/subscriptions`
+
+```json
+{
+  "sourceDomain": "forum",
+  "targetType": "FORUM_TOPIC",
+  "targetId": "topic-uuid",
+  "options": { "notifyOnReply": true }
+}
+```
+
+**Pre-check:** `financial-policy` → `subscriptions.*` limits.
+
+### Internal
+
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/internal/v1/subscriptions/match` | `{ event, payload }` → userIds[] |
+| GET | `/internal/v1/subscriptions/by-user` | notifications batch |
+| GET | `/health`, `/health/ready` | — |
+
+> **Fan-out contract:** producer event → subscriptions `match` → HTTP trigger `notifications`.
+
+## 💳 Переменные financial-policy
+
+| Ключ | Free | Basic | Pro | Описание |
+|------|------|-------|-----|----------|
+| `subscriptions.auctionCategoriesMax` | 3 | 10 | ∞ | Категории аукциона |
+| `subscriptions.auctionsMax` | 5 | 20 | ∞ | Конкретные лоты |
+| `subscriptions.forumCategoriesMax` | 5 | 15 | ∞ | Категории форума |
+| `subscriptions.forumTopicsMax` | 10 | 50 | ∞ | Темы |
+| `subscriptions.tagsMax` | 3 | 10 | ∞ | Подписки на теги |
+| `subscriptions.emailDigest` | feature | false | false | true |
+
+> Legacy keys `auction_subscriptions.*` → migrate to `subscriptions.*` ([ADR-006](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
+
+## 📨 События
+
+| Direction | Event | Действие |
+|-----------|-------|----------|
+| consume | `auction.created` | Match AUCTION_CATEGORY |
+| consume | `auction.bid_placed` | Match AUCTION |
+| consume | `forum.topic_created` | Match FORUM_CATEGORY |
+| consume | `forum.comment_created` | Match FORUM_TOPIC |
+| consume | `tag.content_tagged` | Match TAG (produce from forum/auction) |
+| — | CRON digest | `subscriptions.digest_due` → notifications |
+
+## 🔗 Взаимодействие
+
+| Сервис | Протокол |
+|--------|----------|
+| financial-policy | limits |
+| auction, forum, marketplace | RMQ events |
+| notifications | HTTP trigger, digest templates |
+| BFF | public CRUD |
+
+## 🔒 Безопасность
+
+- CRUD — только `userId === jwt.sub`
+- Internal match — service token only
+
+## 📎 Связанные разделы
+
+- [notifications](../notifications/README.md)
+- [forum/tags.md](../forum/tags.md)
+- [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
+
+---
+
+**Автор:** команда разработки · **Версия:** 0.3-spec

@@ -20,6 +20,11 @@
 | [003](./003-settings-vs-financial-policy.md) | Settings vs Financial-policy | accepted | 2026-07-06 |
 | [004](./004-notifications-adapter.md) | Notifications: Novu Cloud Free + adapter | accepted | 2026-07-06 |
 | [005](./005-forum-terminology.md) | Forum: topic/comment, deprecate post | accepted | 2026-07-08 |
+| [006](./006-service-renames-deal-feedback-subscriptions.md) | deal-feedback, subscriptions renames | accepted | 2026-07-09 |
+| [007](./007-category-scoped-expert.md) | Expert scoped to category tree | accepted | 2026-07-09 |
+| [008](./008-opensearch-full-text.md) | OpenSearch post-MVP | proposed | 2026-07-09 |
+| [009](./009-deal-messaging-e2ee.md) | E2EE deal chat Phase 2+ | proposed | 2026-07-09 |
+| [010](./010-jwt-validation-traefik.md) | JWT validation at Traefik edge | proposed | 2026-07-09 |
 
 ## 📝 Шаблон ADR
 

@@ -7,6 +7,8 @@
 | Документ | Описание |
 |----------|----------|
 | [🌊 platform-for-users](./01-goal/platform-for-users.md) | Функциональность без технического жаргона |
+| [🏛️ club-access](./01-goal/club-access.md) | Клуб: лендинг, инвайт-only |
+| [⭐ karma-and-rating](./01-goal/karma-and-rating.md) | Рейтинг, карма, формулы, referral |
 | [👥 roles](./01-goal/roles.md) | Роли, тарифы, права, матрица доступа |
 
 ---
@@ -26,7 +28,7 @@
 | 08 | [Тестирование](./08-testing/README.md) | Unit, интеграция, нагрузка |
 | 09 | [Безопасность](./09-security/README.md) | Auth, RBAC, секреты |
 | 10 | [Данные](./10-data/README.md) | Schema per service, ownership |
-| 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, компоненты |
+| 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, design tokens, IA |
 | 12 | [Процесс разработки](./12-dev-process/README.md) | Git, code review, релизы |
 | 13 | [Сопровождение](./13-maintenance/README.md) | Guidelines, changelog |
 | 14 | [Фронтенд](./14-frontend/README.md) | SPA: стек, API-слой, auth, сборка |
@@ -36,7 +38,12 @@
 | Документ | Описание |
 |----------|----------|
 | [platform-for-users](./01-goal/platform-for-users.md) | **Продукт:** функциональность для людей |
+| [platform-scenarios](./01-goal/platform-scenarios.md) | **Поведение:** индекс + [частые / средние / редкие](./01-goal/scenarios/frequent.md) |
 | [roles](./01-goal/roles.md) | **Продукт:** роли и права |
+| [karma-and-rating](./01-goal/karma-and-rating.md) | **Продукт:** рейтинг, карма, referral |
+| [content-brief](./01-goal/content-brief.md) | **Контент:** ТЗ справочника |
+| [legal-documents](./01-goal/legal-documents.md) | **Legal:** документы платформы |
+| [club-access](./01-goal/club-access.md) | **Продукт:** закрытый клуб |
 | [PLATFORM-REGISTRY](./05-microservices/PLATFORM-REGISTRY.md) | **Конфиг:** settings + financial-policy + цены |
 | [PLATFORM-SECRETS](./02-infrastructure/PLATFORM-SECRETS.md) | **Секреты:** env vars для Bitwarden / runtime |
 | [PROJECT-CONTEXT](./00-meta/PROJECT-CONTEXT.md) | **Bootstrap:** краткий контекст для новой сессии |
@@ -46,6 +53,8 @@
 | [Deployment](./04-deployment/README.md) | Swarm, CI/CD, migrations |
 | [Observability](./07-observability/README.md) | Grafana, SLO, logging |
 | [Security ops](./09-security/security-ops.md) | Network, secrets, incidents |
+| [UX / wireframes](./11-ux-ui/README.md) | Design tokens, IA, screens W01–W10 |
+| [Frontend SPA](./14-frontend/README.md) | Vue app spec, routes |
 | [ADR index](./03-architecture/adr/README.md) | Архитектурные решения |
 | [moderator-mapping](./09-security/moderator-mapping.md) | UX ↔ Logto ↔ Keto |
 | [naming](./13-maintenance/naming.md) | Именование сервисов, schema, registry |
@@ -59,9 +68,9 @@
 | 💰 billing | ✅ spec ready | [billing](./05-microservices/billing/README.md) |
 | 📋 financial-policy | ✅ spec ready | [financial-policy](./05-microservices/financial-policy/README.md) |
 | 🔨 auction | ✅ spec ready | [auction](./05-microservices/auction/README.md) |
-| 🔔 auction-subscriptions | ✅ spec ready | [auction_subscriptions](./05-microservices/auction_subscriptions/README.md) |
+| 🔔 subscriptions | ✅ spec ready | [subscriptions](./05-microservices/subscriptions/README.md) |
 | ⭐ rating | ✅ spec ready | [rating](./05-microservices/rating/README.md) |
-| 💬 feedback | ✅ spec ready | [feedback](./05-microservices/feedback/README.md) |
+| 💬 deal-feedback | ✅ spec ready | [deal_feedback](./05-microservices/deal_feedback/README.md) |
 | 🗣️ forum | ✅ spec ready | [forum](./05-microservices/forum/README.md) · [requirements](./05-microservices/forum/requirements/README.md) |
 | 👤 user-profile | ✅ spec ready | [user-profile](./05-microservices/user-profile/README.md) |
 | ⚙️ settings | ✅ spec ready | [settings](./05-microservices/settings/README.md) |
@@ -78,8 +87,8 @@
 | **2. Core services** | ✅ done | billing, financial-policy, auction, bff |
 | **3. Domain services** | ✅ done | rating, feedback, forum, user-profile, settings, notifications, marketplace, auction-subscriptions |
 | **4. Ops** | ✅ done | deployment, observability SLO, security ops, testing, dev-process |
-| **5. UX** | ⏳ next | wireframes (от [platform-for-users](./01-goal/platform-for-users.md)) |
-| **6. Frontend** | 🚧 draft | [SPA-спецификация](./14-frontend/README.md), затем реализация |
+| **5. UX** | ✅ done | design tokens, IA, wireframes W01–W10 |
+| **6. Frontend** | ✅ spec | [SPA-спецификация](./14-frontend/README.md), реализация ⏳ |
 
 ---
 

@@ -24,13 +24,13 @@ max-alice/
 │   ├── billing/               port 3001
 │   ├── financial-policy/      port 3002
 │   ├── auction/               port 3003
-│   └── auction-subscriptions/ port 3004 (PG schema: auction_subscriptions)
+│   └── subscriptions/       port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/
 ```
 
-**Naming:** service directories use **kebab-case** (`auction-subscriptions`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md).
+**Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
 **Docs-only services** (`bff`, `forum`, `rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
 

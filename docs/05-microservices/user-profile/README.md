@@ -4,10 +4,11 @@
 
 ## 🎯 Назначение
 
-**Профиль пользователя**, аватар, bio и **приватные заметки** между пользователями.
+**Профиль пользователя**, аватар, bio, **инвайты клуба** и **приватные заметки** между пользователями.
 
 - Denormalized cache рейтинга из `rating` (sync по events)
-- Публичный профиль для auction / forum / marketplace UI
+- **Invitation graph:** `inviterId`, коды, redeem → trigger referral recompute
+- Публичный профиль для auction / forum / marketplace UI (member-only на BFF)
 - `ProfileNote` — видны только автору и владельцу профиля
 
 ## 📖 Термины
@@ -16,6 +17,8 @@
 |--------|----------|
 | **UserProfile** | Bio, avatar, cached rating fields |
 | **ProfileNote** | Приватная заметка `authorId` → `ownerId` |
+| **InviteCode** | Код приглашения, выданный member |
+| **Invitation** | Связь invitee → inviter после redeem |
 | **Denormalized cache** | `rating`, `verifiedSales`, `pendingSales` — SoT: rating |
 
 ## 🗄️ Сущности
@@ -25,6 +28,8 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `userId` | UUID PK | Logto sub |
+| `inviterId` | UUID nullable | Кто пригласил (после redeem) |
+| `invitationAcceptedAt` | timestamptz nullable | Member gate |
 | `displayName` | varchar nullable | Override (optional) |
 | `bio` | text nullable | — |
 | `avatarUrl` | varchar nullable | MinIO `avatars` |
@@ -45,6 +50,27 @@
 
 Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
+### `InviteCode` (`user_profile.invite_code`)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID PK | — |
+| `code` | varchar unique | Публичный код |
+| `issuerId` | UUID | Member, создавший код |
+| `maxUses` | int | 1 для SINGLE_USE |
+| `usesCount` | int | — |
+| `expiresAt` | timestamptz | `club.invite.validityDays` |
+| `createdAt` | timestamptz | — |
+
+### `Invitation` (`user_profile.invitation`)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `inviteeId` | UUID PK | Новый member |
+| `inviterId` | UUID | Прямой пригласивший |
+| `inviteCodeId` | UUID FK | Использованный код |
+| `acceptedAt` | timestamptz | — |
+
 ## 🔌 API
 
 ### Public (BFF `/api/v1/profile/*`)
@@ -57,6 +83,9 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/profile/notes?ownerId=` | Заметки (author or owner only) |
 | POST | `/profile/notes` | Создать/обновить заметку |
 | DELETE | `/profile/notes/{id}` | Удалить (author only) |
+| GET | `/invites` | Мои коды (member) |
+| POST | `/invites` | Создать код (`club.invitesPerMonth`) |
+| POST | `/invites/redeem` | Активировать инвайт после Logto |
 
 ### `GET /api/v1/profile/{userId}`
 
@@ -86,12 +115,17 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 💳 Переменные financial-policy
 
-Не применимо.
+| Ключ | Описание |
+|------|----------|
+| `club.invitesPerMonth` | Лимит новых кодов |
+
+> [club-access.md](../../01-goal/club-access.md) · [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
 
 ## 📨 События
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
+| produce | `invitation.redeemed` | `{ inviteeId, inviterId }` → rating referral |
 | consume | `rating.updated` | Update cached rating fields |
 | consume | `feedback.submitted` | Optional refresh |
 | consume | `subscription.activated` | Invalidate BFF cache (optional) |
@@ -100,7 +134,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Сервис | Протокол |
 |--------|----------|
-| rating | events → cache |
+| rating | events → cache; referral recompute on redeem |
 | BFF | aggregation `/profile/me` |
 | MinIO | avatars bucket |
 | Logto | displayName fallback from JWT claims |
@@ -125,6 +159,8 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 📎 Связанные разделы
 
+- [club-access.md](../../01-goal/club-access.md)
+- [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 - [rating](../rating/README.md)
 - [BFF aggregation](../bff/README.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)

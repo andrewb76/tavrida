@@ -40,7 +40,7 @@ relation-tuples:
 |--------|-----------|-----------|----------|
 | `platform` | `tavrida-lot` | `member`, `moderator`, `expert`, `admin` | Глобальные роли |
 | `auction` | `{auctionId}` | `owner`, `viewer`, `moderator` | Лот |
-| `category` | `{categoryId}` | `moderator` | Категория форума |
+| `category` | `{categoryId}` | `moderator`, `expert` | Категория форума |
 | `topic` | `{topicId}` | `owner`, `moderator` | Топик (тема) |
 | `comment` | `{commentId}` | `owner`, `moderator` | Комментарий |
 | `report` | `{reportId}` | `viewer` | Жалоба (moderator+) |
@@ -58,6 +58,17 @@ relation-tuples:
 | Областной | `category\|topic\|comment:{id}#moderator@user:{id}` | объект + вложенные |
 
 Назначение и снятие — **только admin**.
+
+### ⭐ Эксперты (scoped)
+
+См. [ADR-007](../03-architecture/adr/007-category-scoped-expert.md).
+
+| Назначение | Tuple | Область |
+|------------|-------|---------|
+| Главный | `platform:tavrida-lot#expert@user:{id}` | все категории |
+| Областной | `category:{id}#expert@user:{id}` | категория + поддерево; expert appraisal лотов в ветке |
+
+Проверка appraisal: `category:{auction.categoryId}#expert@user:{id}` OR platform expert.
 
 ---
 

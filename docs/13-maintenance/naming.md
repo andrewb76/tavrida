@@ -33,10 +33,10 @@
 
 | Контекст | Формат | Пример |
 |----------|--------|--------|
-| Префикс | **snake_case домена** (как schema, без дефисов) | `forum.`, `auction.`, `auction_subscriptions.` |
-| Ключ | `{domain}.{parameterName}` | `auction_subscriptions.categoriesMax` |
+| Префикс | **snake_case домена** (как schema, без дефисов) | `forum.`, `auction.`, `subscriptions.` |
+| Ключ | `{domain}.{parameterName}` | `subscriptions.auctionCategoriesMax` |
 
-**Не использовать** дефис в prefix: ~~`auction-subscriptions.categoriesMax`~~ → `auction_subscriptions.categoriesMax`.
+**Не использовать** дефис в prefix: ~~`auction-subscriptions.categoriesMax`~~ → `subscriptions.auctionCategoriesMax`.
 
 ---
 
@@ -72,10 +72,15 @@
 
 | Legacy | Canonical |
 |--------|-----------|
-| `docs/.../auction_subscriptions/` | `auction-subscriptions` (service/docs) |
+| `docs/.../auction_subscriptions/` | `subscriptions` (service/docs) |
+| `docs/.../feedback/` | `deal_feedback` |
 | `post`, `postId` | `topic` / `comment`, `contentId` + `contentType` |
 | `auction-subscriptions.*` (registry) | `auction_subscriptions.*` |
-| `order`, `review` (marketplace tables) | `service_order`; отзывы — schema `feedback` |
+| `order`, `review` (marketplace tables) | `service_order`; отзывы — schema `deal_feedback` |
+| `feedback` (service/docs) | `deal-feedback` / `deal_feedback` |
+| `auction-subscriptions` (service) | `subscriptions` |
+| `auction_subscriptions` (schema/registry) | `subscriptions` |
+| Event `feedback.submitted` | `deal_feedback.submitted` |
 
 ---
 
