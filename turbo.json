@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".vite/**", "node_modules/.vite/**"]
+      "outputs": ["dist/**", ".vite/**", "node_modules/.vite/**", ".vitepress/dist/**"]
     },
     "dev": {
       "cache": false,

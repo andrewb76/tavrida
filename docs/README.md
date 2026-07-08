@@ -2,6 +2,11 @@
 
 > Платформа для обсуждения и продажи находок (Крым). Статус: **draft v0.2**
 
+**Опубликованная версия (GitHub Pages):** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)  
+Сборка: `@tavrida/docs-site` · workflow [docs-pages.yml](../.github/workflows/docs-pages.yml) · см. [github-actions.md](./04-deployment/github-actions.md)
+
+---
+
 ## 👥 Платформа для людей
 
 | Документ | Описание |
@@ -89,6 +94,7 @@
 | **4. Ops** | ✅ done | deployment, observability SLO, security ops, testing, dev-process |
 | **5. UX** | ✅ done | design tokens, IA, wireframes W01–W10 |
 | **6. Frontend** | ✅ spec | [SPA-спецификация](./14-frontend/README.md), реализация ⏳ |
+| **7. CI / Docs site** | ✅ done | [GitHub Actions](./04-deployment/github-actions.md), `@tavrida/docs-site` |
 
 ---
 

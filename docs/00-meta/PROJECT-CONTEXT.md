@@ -11,7 +11,8 @@
 | **Repo** | `max-alice` |
 | **Суть** | **Клуб** (инвайт-only): аукционы + форум + маркет услуг (Крым), рейтинг/карма/referral, Free/Basic/Pro |
 | **Фаза** | Docs v0.2 ✅ · UX + Frontend spec ✅ · код — каркас |
-| **Доки** | [docs/README.md](../README.md) |
+| **Доки (git)** | [docs/README.md](../README.md) |
+| **Доки (web)** | [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/) |
 
 ## Стек
 

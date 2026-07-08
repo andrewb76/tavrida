@@ -4,7 +4,8 @@ Monorepo: auction/forum platform for finds (Crimea focus). **Docs-first phase** 
 
 **Start here:** [docs/00-meta/PROJECT-CONTEXT.md](docs/00-meta/PROJECT-CONTEXT.md)
 
-Full documentation: [docs/README.md](docs/README.md)
+Full documentation: [docs/README.md](docs/README.md)  
+**Published docs:** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)
 
 ## Monorepo layout
 
@@ -14,6 +15,7 @@ pnpm + Turborepo workspace. Package manager: **pnpm@9.15.0**, Turbo **2.x** (`ta
 max-alice/
 ├── apps/
 │   └── frontend/              @tavrida/frontend — Vue 3 + Vite
+│   └── docs-site/             @tavrida/docs-site — VitePress static docs
 ├── packages/
 │   ├── tsconfig/              @tavrida/tsconfig — shared TS configs
 │   ├── shared/                @tavrida/shared
@@ -42,6 +44,8 @@ pnpm dev          # turbo run dev (all packages)
 pnpm build        # turbo run build
 pnpm lint         # turbo run lint
 pnpm generate     # graphql codegen placeholder
+pnpm docs:dev     # VitePress — docs/ static site
+pnpm docs:build
 ```
 
 Filter a single package:

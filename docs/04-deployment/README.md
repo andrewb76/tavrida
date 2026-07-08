@@ -43,10 +43,14 @@ flowchart LR
 
 | Stage | Действие |
 |-------|----------|
-| PR | `pnpm lint`, `pnpm test`, build affected (turbo) |
-| main | Push images `:git-sha`, deploy `dev` |
+| PR | `pnpm lint`, `pnpm docs:build`, turbo build affected |
+| main | Docs → **GitHub Pages**; позже — push images `:git-sha`, deploy `dev` |
 | Release tag | Deploy `prod`, run migrations job |
 | Rollback | Redeploy previous `:sha` — см. [runbook-rollback](./runbook-rollback.md) |
+
+Workflows: [github-actions.md](./github-actions.md) · `.github/workflows/ci.yml`, `docs-pages.yml`.
+
+**Документация (static):** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)
 
 Секреты CI: Bitwarden → GitHub Actions / runner env. См. [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md).
 
