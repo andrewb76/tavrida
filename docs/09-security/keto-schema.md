@@ -46,6 +46,19 @@ relation-tuples:
 
 ---
 
+## 🧩 Форумные роли модерации (naming)
+
+Для форумной области используем отдельные роли модератора:
+
+- `ForumModerator`
+- `ForumModerator:CategoryId:{id}`
+- `ForumModerator:TopicId:{id}`
+- `ForumModerator:CommentId:{id}`
+
+`ForumModerator` — глобальный доступ ко всему форумному контенту, scoped-варианты — доступ только к соответствующему объекту и его дочернему дереву.
+
+---
+
 ## 🔗 Relation tuples (примеры)
 
 ### Platform roles (назначает admin)
