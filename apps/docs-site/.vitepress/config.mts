@@ -20,6 +20,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Для людей', link: '/01-goal/platform-for-users' },
+      { text: 'Screen tree', link: '/11-ux-ui/screen-tree' },
       { text: 'Архитектура', link: '/03-architecture/README' },
       { text: 'Микросервисы', link: '/05-microservices/README' },
       { text: 'ADR', link: '/03-architecture/adr/README' },

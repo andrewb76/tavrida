@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, copyFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, rmSync, copyFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -22,3 +22,14 @@ if (existsSync(readme)) {
 }
 
 console.log('Synced docs → apps/docs-site/content')
+
+let mdCount = 0
+function walk(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) walk(full)
+    else if (entry.name.endsWith('.md')) mdCount++
+  }
+}
+walk(contentDir)
+console.log(`Markdown files: ${mdCount}`)

@@ -15,11 +15,13 @@ const outFile = join(packageRoot, '.vitepress/sidebar.generated.ts')
 const PINNED_START = [
   { text: 'Оглавление', link: '/' },
   { text: 'PROJECT-CONTEXT', link: '/00-meta/PROJECT-CONTEXT' },
+  { text: 'DOCS-ROADMAP', link: '/00-meta/DOCS-ROADMAP' },
   { text: 'platform-for-users', link: '/01-goal/platform-for-users' },
   { text: 'club-access', link: '/01-goal/club-access' },
   { text: 'karma-and-rating', link: '/01-goal/karma-and-rating' },
   { text: 'roles', link: '/01-goal/roles' },
   { text: 'platform-scenarios', link: '/01-goal/platform-scenarios' },
+  { text: 'Screen tree (UX)', link: '/11-ux-ui/screen-tree' },
 ]
 
 const SECTION_LABELS = {
@@ -38,6 +40,11 @@ const SECTION_LABELS = {
   '12-dev-process': '12 · Dev process',
   '13-maintenance': '13 · Maintenance',
   '14-frontend': '14 · Frontend',
+}
+
+/** Prefer these .md files first within a section (UX landing pages). */
+const SECTION_FILE_PRIORITY = {
+  '11-ux-ui': ['README.md', 'screen-tree.md', 'information-architecture.md', 'design-tokens.md'],
 }
 
 function contentLink(relativePath) {
@@ -74,6 +81,24 @@ function displayName(filename) {
   return filename.replace(/\.md$/, '')
 }
 
+function sortMdFiles(dir, urlParts, files) {
+  const sectionKey = urlParts[0]
+  const priority = SECTION_FILE_PRIORITY[sectionKey]
+  if (!priority) return files
+  return [...files].sort((a, b) => {
+    const ai = priority.indexOf(a)
+    const bi = priority.indexOf(b)
+    if (ai === -1 && bi === -1) {
+      if (a === 'README.md') return -1
+      if (b === 'README.md') return 1
+      return a.localeCompare(b, 'ru')
+    }
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
+}
+
 /** Single leaf: subdir with only README.md and no nested dirs. */
 function isReadmeOnlyLeaf(dir) {
   const subdirs = listSubdirs(dir)
@@ -84,7 +109,7 @@ function isReadmeOnlyLeaf(dir) {
 
 function buildDirItems(dir, urlParts = []) {
   const items = []
-  const mds = listMdFiles(dir)
+  const mds = sortMdFiles(dir, urlParts, listMdFiles(dir))
 
   for (const file of mds) {
     const name = displayName(file)

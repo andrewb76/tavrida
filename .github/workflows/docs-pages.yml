@@ -21,6 +21,7 @@ jobs:
   build:
     name: Build docs site
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +42,14 @@ jobs:
         env:
           # Project site: https://<org>.github.io/<repo>/
           VITEPRESS_BASE: /${{ github.event.repository.name }}/
+
+      - name: Verify key pages in dist
+        run: |
+          dist=apps/docs-site/.vitepress/dist
+          test -f "$dist/index.html"
+          test -f "$dist/11-ux-ui/screen-tree.html"
+          test -f "$dist/00-meta/DOCS-ROADMAP.html"
+          echo "OK: index, screen-tree, DOCS-ROADMAP"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
