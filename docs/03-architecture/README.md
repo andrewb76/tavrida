@@ -154,14 +154,13 @@ sequenceDiagram
 | [003](./adr/003-settings-vs-financial-policy.md) | Два реестра переменных |
 | [004](./adr/004-notifications-adapter.md) | Novu Cloud Free + adapter |
 | [005](./adr/005-forum-terminology.md) | Forum: topic/comment, deprecate post |
-| [011](./adr/011-centralized-outbound-webhooks.md) | Централизованный сервис исходящих webhooks |
+| [006](./adr/006-service-renames-deal-feedback-subscriptions.md) | Renames: deal-feedback, subscriptions |
+| [007](./adr/007-category-scoped-expert.md) | Expert scoped to category tree |
+| [011](./adr/011-centralized-outbound-webhooks.md) | Исходящие webhooks |
 
 ## 📋 TODO
 
-- [ ] C4 Level 3 — компоненты BFF и auction
-- [ ] Service mesh / mTLS между internal services
-- [ ] Saga: компенсация при failed charge
-- [ ] admin-ui — отдельное приложение или модуль BFF
+Актуальный backlog документации: **[DOCS-ROADMAP](../00-meta/DOCS-ROADMAP.md)** (архитектурные пункты: C4 L3, mTLS ADR, saga, admin-ui).
 
 ## 🔗 Связанные разделы
 

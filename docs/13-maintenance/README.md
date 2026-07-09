@@ -19,14 +19,12 @@
 | [roles](../01-goal/roles.md) | Роли и права |
 | [PLATFORM-REGISTRY](../05-microservices/PLATFORM-REGISTRY.md) | Реестр переменных |
 | [PROJECT-CONTEXT](../00-meta/PROJECT-CONTEXT.md) | Bootstrap для новой сессии |
-| [keto-schema](../09-security/keto-schema.md) | Ory Keto |
+| [DOCS-ROADMAP](../00-meta/DOCS-ROADMAP.md) | Roadmap → идеал, backlog |
 | [ADR index](../03-architecture/adr/README.md) | Архитектурные решения |
 
-## 📋 TODO
+## 📋 Backlog
 
-- [ ] Changelog документации (`CHANGELOG-docs.md`)
-- [ ] Автопроверка ссылок в CI
-- [ ] Генерация OpenAPI → `06-api/`
+См. **[DOCS-ROADMAP](../00-meta/DOCS-ROADMAP.md)** (changelog docs, link-check CI, OpenAPI — секция P0–P3).
 
 ## 🔗 Связанные разделы
 

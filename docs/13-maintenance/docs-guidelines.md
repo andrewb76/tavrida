@@ -12,6 +12,7 @@
 6. **Два слоя продуктовой документации** — [platform-for-users.md](../01-goal/platform-for-users.md) (для людей) и технические specs (для реализации). При изменении фичи — обновлять оба.
 7. **Именование** — [naming.md](./naming.md); новый сервис → kebab-case в `services/`, snake_case schema.
 8. **Форум** — `topic`/`comment`; `post` deprecated ([ADR-005](../03-architecture/adr/005-forum-terminology.md)).
+9. **Roadmap** — backlog документации только в [DOCS-ROADMAP.md](../00-meta/DOCS-ROADMAP.md); не плодить ghost-планы вне `docs/`.
 
 ## 📁 Структура каталогов
 

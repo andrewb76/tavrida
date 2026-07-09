@@ -22,7 +22,7 @@
 
 | # | Раздел | Описание |
 |---|--------|----------|
-| 00 | [Метаданные](./00-meta/README.md) | PROJECT-CONTEXT, правила |
+| 00 | [Метаданные](./00-meta/README.md) | PROJECT-CONTEXT, **DOCS-ROADMAP**, правила |
 | 01 | [Цель](./01-goal/README.md) | Миссия · **[для пользователей](./01-goal/platform-for-users.md)** |
 | 02 | [Инфраструктура](./02-infrastructure/README.md) | Окружения, Docker Swarm, хранилища |
 | 03 | [Архитектура](./03-architecture/README.md) | C4, паттерны, ADR, events |
@@ -88,15 +88,14 @@
 
 ## 📋 Roadmap документации
 
-| Фаза | Статус | Содержание |
-|------|--------|------------|
-| **1. Фундамент** | ✅ done | Architecture, API, Events, ADR 001–005, naming, moderator-mapping |
-| **2. Core services** | ✅ done | billing, financial-policy, auction, bff |
-| **3. Domain services** | ✅ done | rating, feedback, forum, user-profile, settings, notifications, marketplace, auction-subscriptions |
-| **4. Ops** | ✅ done | deployment, observability SLO, security ops, testing, dev-process |
-| **5. UX** | ✅ done | design tokens, IA, wireframes W01–W10 |
-| **6. Frontend** | ✅ spec | [SPA-спецификация](./14-frontend/README.md), реализация ⏳ |
-| **7. CI / Docs site** | ✅ done | [GitHub Actions](./04-deployment/github-actions.md), `@tavrida/docs-site` |
+**Живой план** (что есть / чего нет / backlog → «идеал»): **[DOCS-ROADMAP](./00-meta/DOCS-ROADMAP.md)**
+
+| Сводка | |
+|--------|--|
+| Spec-ready сервисы | 13 (+ BFF) |
+| GitHub Pages + автосайдбар | ✅ |
+| OpenAPI, legal тексты, link-check CI | ⏳ см. roadmap |
+| Реализация кода | каркас 4 сервисов |
 
 ---
 
