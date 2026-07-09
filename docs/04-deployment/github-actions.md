@@ -31,7 +31,7 @@ flowchart LR
 | Источник MD | `docs/` → копия в `apps/docs-site/content` (`prebuild` sync) |
 | Выход | `apps/docs-site/.vitepress/dist` |
 
-Перед `dev` / `build` скрипт [`sync-docs.mjs`](../../apps/docs-site/scripts/sync-docs.mjs) копирует `docs/` в `content/` (VitePress требует src внутри пакета).
+Перед `dev` / `build` скрипт [`sync-docs.mjs`](../../apps/docs-site/scripts/sync-docs.mjs) копирует `docs/` в `content/`, затем [`generate-sidebar.mjs`](../../apps/docs-site/scripts/generate-sidebar.mjs) строит левое меню из структуры каталогов (новые `.md` попадают в сайдбар автоматически).
 
 ### Локально
 
