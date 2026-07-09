@@ -114,10 +114,10 @@ MemberHomePage:
 
 ## Auth & invite (flow)
 
-1. Visitor → `/invite` (код) → Logto → `/callback`
-2. `POST /api/v1/invites/redeem` — без успеха club routes недоступны
-3. Redirect → `/auctions` или `returnTo`
-4. Session: `@logto/vue` + Pinia `session` (`isMember`, `inviterId`)
+1. **Новый участник:** `/join` (код `TAV-…` или ссылка) → Logto (one-time token) → `/callback` → `/app`
+2. **Уже есть Logto:** «Войти» на лендинге → `/callback` → `/app`
+3. Member = JWT Logto (ADR-012); реферал — `inviterId` при регистрации по invite
+4. Session: `@logto/vue` + Pinia `session` (`isMember` ≡ authenticated)
 
 ---
 

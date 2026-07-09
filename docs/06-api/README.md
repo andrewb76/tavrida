@@ -145,6 +145,7 @@ Idempotency-Key: {uuid}
 | `/wallets` | deposit, balance, transactions | billing |
 | `/plans` | list, activate, subscription | financial-policy |
 | `/profile` | get, notes | user-profile |
+| `/invites` | create, list, resolve, claim | BFF + Logto M2M — [spec](../05-microservices/bff/invites-api.md) |
 | `/forum/*` | topics, comments, reactions | forum |
 | `/rating` | get | rating |
 | `/feedback` | submit, status | feedback |
@@ -157,6 +158,7 @@ Idempotency-Key: {uuid}
 ## 🔗 Связанные разделы
 
 - [BFF](../05-microservices/bff/README.md)
+- [BFF invites API](../05-microservices/bff/invites-api.md)
 - [Security](../09-security/README.md)
 - [Architecture](../03-architecture/README.md)
 

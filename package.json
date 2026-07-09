@@ -8,6 +8,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "generate": "turbo run generate",
+    "setup:env": "sh scripts/setup-env.sh",
+    "check:logto": "node scripts/check-logto-env.mjs",
     "docs:dev": "pnpm --filter @tavrida/docs-site dev",
     "docs:build": "pnpm --filter @tavrida/docs-site build",
     "docs:preview": "pnpm --filter @tavrida/docs-site preview",

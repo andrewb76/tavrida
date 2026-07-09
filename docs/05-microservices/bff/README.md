@@ -41,6 +41,9 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/plans/activate` | POST | financial-policy | `/internal/v1/plans/activate` |
 | `/api/v1/profile` | GET, PATCH | user-profile | `/internal/v1/profile` |
 | `/api/v1/profile/notes` | GET, POST | user-profile | `/internal/v1/profile/notes` |
+| `/api/v1/invites` | GET, POST | BFF orchestration | [invites-api.md](./invites-api.md) |
+| `/api/v1/invites/resolve` | GET | BFF orchestration | public, см. [invites-api.md](./invites-api.md) |
+| `/api/v1/invites/claim` | POST | BFF orchestration | см. [invites-api.md](./invites-api.md) |
 | `/api/v1/forum/categories` | GET | forum | `/internal/v1/forum/categories` |
 | `/api/v1/forum/topics` | GET, POST | forum | `/internal/v1/forum/topics` |
 | `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
@@ -130,6 +133,10 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | Переменная | Обяз. | Описание |
 |------------|-------|----------|
 | `LOGTO_JWKS_URL` | да | JWT validation |
+| `LOGTO_M2M_APP_ID` | да | Management API (invites) |
+| `LOGTO_M2M_APP_SECRET` | да | M2M secret |
+| `LOGTO_M2M_RESOURCE` | да | `https://default.logto.app/api` |
+| `FRONTEND_ORIGIN` | да | Invite links, CORS ref |
 | `REDIS_URL` | да | WS relay |
 | `AUCTION_URL` | да | Upstream |
 | `BILLING_URL` | да | Upstream |
@@ -158,6 +165,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 - [event-catalog](../../03-architecture/event-catalog.md)
 - [Security](../../09-security/README.md)
 - [14-frontend](../../14-frontend/README.md)
+- [invites-api](./invites-api.md) — Logto one-time token + referral
 
 ---
 

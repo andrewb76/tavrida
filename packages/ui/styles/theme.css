@@ -1,0 +1,26 @@
+/**
+ * Tailwind v4 @theme — maps --token-* to utility classes (bg-bg, text-text, …).
+ * `inline` required so utilities resolve token vars at use-time on html[data-theme].
+ */
+
+@theme inline {
+  --color-primary: var(--token-primary);
+  --color-primary-hover: var(--token-primary-hover);
+  --color-accent: var(--token-accent);
+  --color-bg: var(--token-bg);
+  --color-surface: var(--token-surface);
+  --color-border: var(--token-border);
+  --color-text: var(--token-text);
+  --color-text-muted: var(--token-text-muted);
+  --color-success: var(--token-success);
+  --color-warning: var(--token-warning);
+  --color-error: var(--token-error);
+
+  --radius-sm: var(--token-radius-sm);
+  --radius-md: var(--token-radius-md);
+  --radius-lg: var(--token-radius-lg);
+
+  --font-sans: var(--token-font-sans);
+
+  --shadow-card: var(--token-shadow-card);
+}

@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import { PLATFORM_NAME } from '@tavrida/shared';
+import { useAuthSync } from '@/composables/useAuthSync';
+import { RouterView } from 'vue-router';
+import { Toaster } from 'vue-sonner';
+
+useAuthSync();
 </script>
 
 <template>
-  <main>
-    <h1>{{ PLATFORM_NAME }}</h1>
-    <p>Frontend scaffold — implementation pending.</p>
-  </main>
+  <RouterView />
+  <Toaster position="top-center" rich-colors />
 </template>
-
-<style scoped>
-main {
-  font-family: system-ui, sans-serif;
-  margin: 2rem auto;
-  max-width: 40rem;
-  padding: 0 1rem;
-}
-</style>

@@ -54,6 +54,9 @@
 | `LOGTO_ENDPOINT` | нет | bff, frontend | `https://logto.example.com` | OIDC issuer / Logto tenant URL |
 | `LOGTO_JWKS_URL` | нет | bff | `{LOGTO_ENDPOINT}/oidc/jwks` | JWKS для валидации JWT |
 | `LOGTO_AUDIENCE` | нет | bff | `https://api.tavrida-lot.localhost` | Expected `aud` в JWT |
+| `LOGTO_M2M_APP_ID` | **да** | bff | — | M2M app для Management API (invites) |
+| `LOGTO_M2M_APP_SECRET` | **да** | bff | — | M2M client secret |
+| `LOGTO_M2M_RESOURCE` | нет | bff | `https://default.logto.app/api` | Management API resource |
 | `KETO_READ_URL` | нет | bff, domain services | `http://localhost:4466` | Ory Keto read API |
 | `KETO_WRITE_URL` | нет | bff, admin flows | `http://localhost:4467` | Ory Keto write API |
 | `NOVU_API_KEY` | **да** | notifications | — | Secret key Novu Cloud ([ADR-004](../03-architecture/adr/004-notifications-adapter.md)) |
@@ -72,6 +75,10 @@
 | `PORT` | нет | `3000` | HTTP + WS entrypoint |
 | `LOGTO_JWKS_URL` | нет | см. платформа | JWT validation |
 | `LOGTO_AUDIENCE` | нет | см. платформа | JWT audience |
+| `LOGTO_M2M_APP_ID` | **да** | — | Logto Management API (invites) |
+| `LOGTO_M2M_APP_SECRET` | **да** | — | M2M secret |
+| `LOGTO_M2M_RESOURCE` | нет | `https://default.logto.app/api` | Management API resource |
+| `FRONTEND_ORIGIN` | нет | `http://localhost:5173` | База invite links |
 | `REDIS_URL` | **да** | см. платформа | WS pub/sub relay |
 | `CORS_ORIGINS` | нет | `https://app.tavrida-lot.localhost` | Разрешённые origins (через запятую) |
 | `BILLING_URL` | нет | `http://localhost:3001` | Upstream billing |
@@ -231,10 +238,12 @@
 
 | Переменная | Секрет | Public | Описание |
 |------------|--------|--------|----------|
-| `VITE_API_URL` | нет | да | BFF REST, напр. `https://api.tavrida-lot.localhost/api/v1` |
-| `VITE_WS_URL` | нет | да | BFF WebSocket, напр. `wss://api.tavrida-lot.localhost/ws/v1` |
+| `VITE_USE_MOCK` | нет | да | `true` — mock API/redeem; `false` — BFF |
+| `VITE_API_BASE_URL` | нет | да | BFF REST, напр. `http://localhost:3000/api/v1` |
+| `VITE_WS_URL` | нет | да | BFF WebSocket, напр. `ws://localhost:3000/ws/v1` |
 | `VITE_LOGTO_ENDPOINT` | нет | да | Logto tenant URL |
 | `VITE_LOGTO_APP_ID` | нет | да | Logto application id (SPA) |
+| `VITE_LOGTO_API_RESOURCE` | нет | да | JWT audience для BFF (optional до BFF) |
 | `VITE_NOVU_APPLICATION_IDENTIFIER` | нет | да | Novu Inbox (public) |
 | `VITE_SENTRY_DSN` | нет | да* | Frontend Sentry (*DSN считается public в Sentry) |
 

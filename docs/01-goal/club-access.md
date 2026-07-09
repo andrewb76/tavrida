@@ -1,19 +1,19 @@
 # 🏛️ Клуб: доступ и инвайты
 
-> **Статус:** spec ready · **Версия:** 0.1  
+> **Статус:** spec ready · **Версия:** 0.2  
+> **ADR:** [012-club-invite-via-logto](../03-architecture/adr/012-club-invite-via-logto.md)  
 > **Связано:** [platform-for-users.md](./platform-for-users.md) · [roles.md](./roles.md) · [karma-and-rating.md](./karma-and-rating.md)
 
-## 🎯 Позиционирование
+## Простыми словами
 
-**Tavrida Lot — клуб**, а не открытый маркетплейс. Участники попадают внутрь по **приглашению**; снаружи — только **лендинг** (о клубе, правила, запрос инвайта).
+**Tavrida Lot — закрытый клуб.** С улицы виден только лендинг.
 
-| Снаружи (без аккаунта) | Внутри (член клуба) |
-|------------------------|---------------------|
-| Лендинг `/` | Аукционы, форум, профиль, кошелёк |
-| Описание клуба | Ставки, посты, сделки |
-| «У меня есть инвайт» → вход | Полный продукт |
-
-**Открытая регистрация отключена** (`club.registration.inviteOnly = true` в settings).
+| Вопрос | Ответ |
+|--------|--------|
+| Кто такой member? | Любой, кто **вошёл через Logto** нашего tenant |
+| Зачем инвайт? | Чтобы **новый человек мог зарегистрироваться** (публичная регистрация выключена) и чтобы знать **кто кого пригласил** |
+| Нужен ли инвайт после входа? | **Нет.** Учётка в Logto = доступ в клуб |
+| Что делить: код или ссылку? | Оба. Код `TAV-XXXX-XXXX` — короткий alias той же magic-ссылки |
 
 ---
 
@@ -21,79 +21,109 @@
 
 | Уровень | Кто | Маршруты |
 |---------|-----|----------|
-| **Visitor** | Не авторизован | Только `/`, `/about`, `/invite` (ввод кода), legal |
-| **Member** | Logto + принятый инвайт | Весь SPA за auth-guard |
+| **Visitor** | Не вошёл в Logto | `/`, `/about`, `/join` |
+| **Member** | Есть JWT Logto | Весь SPA (`/app`, аукционы, форум, …) |
 | **Moderator / Expert / Admin** | Member + Keto role | + mod/admin UI |
 
-Router: `requireMember` — без JWT или без `invitationAcceptedAt` → redirect `/invite` или landing.
+Router: `requiresMember` → нет JWT → redirect на `/` или «Войти».
 
 ---
 
-## ✉️ Инвайты
+## ✉️ Инвайты (регистрация + сетка)
 
-### Жизненный цикл
+### Для гостя
+
+1. Получает **ссылку** или **код** от участника клуба.
+2. Открывает `/join?token=…&email=…` или `/join?code=TAV-XXXX-XXXX`.
+3. Logto: регистрация (новый) или вход (уже был аккаунт).
+4. Сразу member — редирект в `/app`.
+
+### Для участника
+
+1. `/invites` → «Пригласить» → email (опционально) или «Скопировать ссылку / код».
+2. BFF создаёт one-time token в Logto + код `TAV-…`.
+3. Друг переходит по ссылке — попадает в клуб; мы записываем `inviterId`.
+
+### День 0 (bootstrap)
+
+1. Admin / основатель — пользователь в Logto (Console или первый magic link).
+2. Публичная регистрация в Logto **выключена**.
+3. Admin создаёт первые инвайты; дальше — цепочка members.
+
+---
+
+## Поток (технический)
 
 ```mermaid
 sequenceDiagram
-    participant M as Member
-    participant B as BFF
-    participant UP as user-profile
-    participant L as Logto
+  participant M as Member
+  participant B as BFF
+  participant L as Logto
+  participant UP as user-profile
+  participant V as Guest
 
-    M->>B: POST /invites (create code)
-    B->>UP: store invite code
-    Note over M: Передаёт код другу
-    participant V as Visitor
-    V->>L: Login OIDC (first time)
-    V->>B: POST /invites/redeem {code}
-    B->>UP: link invitee → inviter
-    UP->>rating: referral tree updated
-    B-->>V: Member access granted
+  M->>B: POST /invites { email? }
+  B->>L: POST /one-time-tokens
+  B->>UP: save code TAV-… → token, inviterId
+  B-->>M: { code, link }
+
+  V->>V: /join?code=TAV-…
+  V->>B: GET /invites/resolve?code=…
+  B-->>V: { token, email? }
+  V->>L: signIn(one_time_token)
+  L->>V: /callback JWT
+  B->>UP: inviterId (webhook или POST /invites/claim)
+  V->>V: /app
 ```
 
-### Правила (draft)
+---
+
+## Правила (draft)
 
 | Правило | Значение |
 |---------|----------|
-| Кто выдаёт инвайт | Member (лимит per plan — FP) |
-| Код | Одноразовый или multi-use — `club.invite.codeType` |
-| Срок жизни | `club.invite.validityDays` |
-| Admin | Неограниченно; audit log |
-
-### Влияние на рейтинг/карму пригласившего
-
-Зависит от успехов и провалов **приглашённых** на **N уровней** вглубь — см. [karma-and-rating.md § Реферальное дерево](./karma-and-rating.md#-6-реферальное-дерево-инвайты).
+| Кто выдаёт | Member (лимит per plan — FP) |
+| Код | `TAV-XXXX-XXXX`, alias magic link |
+| Срок | `club.invite.validityDays` (default 14) |
+| Admin | Без лимита; audit log |
+| Реферал | `inviterId` при первом входе по invite — [karma-and-rating.md](./karma-and-rating.md) |
 
 ---
 
 ## ⚙️ Переменные
 
-### settings (глобальные)
+### settings
 
-| Ключ | Тип | Default | Описание |
-|------|-----|---------|----------|
-| `club.registration.inviteOnly` | boolean | `true` | Закрытая регистрация |
-| `club.invite.validityDays` | number | 14 | Срок действия кода |
-| `club.invite.codeType` | enum | `SINGLE_USE` | `SINGLE_USE` \| `MULTI_USE` |
-| `club.landing.publicSections` | string[] | `about,rules,request` | Блоки лендинга |
+| Ключ | Default | Описание |
+|------|---------|----------|
+| `club.registration.inviteOnly` | `true` | Sign-up только по invite link |
+| `club.invite.validityDays` | `14` | TTL кода / token |
+| `club.landing.publicSections` | `about,rules,request` | Блоки лендинга |
 
 ### financial-policy (per plan)
 
-| Ключ | Тип | Free | Basic | Pro | Описание |
-|------|-----|------|-------|-----|----------|
-| `club.invitesPerMonth` | limit | 1 | 3 | 10 | Новых кодов в месяц |
-| `club.referralInfluenceEnabled` | feature | true | true | true | Учитывать дерево в rating/karma |
+| Ключ | Free | Basic | Pro |
+|------|------|-------|-----|
+| `club.invitesPerMonth` | 1 | 3 | 10 |
 
-> Полный реестр referral coeffs: [karma-and-rating.md](./karma-and-rating.md) · [PLATFORM-REGISTRY](../05-microservices/PLATFORM-REGISTRY.md)
+---
+
+## Logto Console (чеклист)
+
+- [ ] Sign-in experience → **Disable user registration** (invite-only)
+- [ ] SPA app: redirect `http://localhost:5173/callback`
+- [ ] M2M app для BFF → Management API (`one-time-tokens`)
+- [ ] Email connector (если шлём письма из Logto; иначе — своё)
 
 ---
 
 ## 🔗 Связанные разделы
 
-- [karma-and-rating.md](./karma-and-rating.md)
-- [user-profile](../05-microservices/user-profile/README.md) — хранение `inviterId`, коды
-- [14-frontend](../14-frontend/README.md) — guards, landing route
+- [logto-setup.md](../14-frontend/logto-setup.md) — фронт + env
+- [bff/invites-api.md](../05-microservices/bff/invites-api.md) — REST spec
+- [user-profile](../05-microservices/user-profile/README.md) — коды, `inviterId`
+- [roles.md](./roles.md) — Guest vs Member
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-spec
+**v0.2-spec** · ADR-012

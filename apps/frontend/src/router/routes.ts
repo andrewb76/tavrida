@@ -1,0 +1,155 @@
+import type { RouteRecordRaw } from 'vue-router';
+import MemberLayout from '@/layouts/MemberLayout.vue';
+import PublicLayout from '@/layouts/PublicLayout.vue';
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string;
+    requiresMember?: boolean;
+    public?: boolean;
+  }
+}
+
+const memberChildren: RouteRecordRaw[] = [
+  {
+    path: 'app',
+    name: 'member-home',
+    component: () => import('@/views/member/MemberHomeView.vue'),
+    meta: { title: 'Home', requiresMember: true },
+  },
+  {
+    path: 'auctions',
+    name: 'auctions',
+    component: () => import('@/views/member/AuctionListView.vue'),
+    meta: { title: 'Аукционы', requiresMember: true },
+  },
+  {
+    path: 'auctions/new',
+    name: 'auction-create',
+    component: () => import('@/views/member/AuctionCreateView.vue'),
+    meta: { title: 'Новый лот', requiresMember: true },
+  },
+  {
+    path: 'auctions/:id',
+    name: 'auction-detail',
+    component: () => import('@/views/member/AuctionDetailView.vue'),
+    meta: { title: 'Лот', requiresMember: true },
+  },
+  {
+    path: 'forum',
+    name: 'forum',
+    component: () => import('@/views/member/ForumListView.vue'),
+    meta: { title: 'Форум', requiresMember: true },
+  },
+  {
+    path: 'forum/new',
+    name: 'forum-new',
+    component: () => import('@/views/member/ForumNewView.vue'),
+    meta: { title: 'Новая тема', requiresMember: true },
+  },
+  {
+    path: 'forum/topics/:id',
+    name: 'forum-topic',
+    component: () => import('@/views/member/ForumTopicView.vue'),
+    meta: { title: 'Тема', requiresMember: true },
+  },
+  {
+    path: 'profile/me',
+    name: 'profile-me',
+    component: () => import('@/views/member/ProfileView.vue'),
+    meta: { title: 'Мой профиль', requiresMember: true },
+  },
+  {
+    path: 'profile/:userId',
+    name: 'profile-user',
+    component: () => import('@/views/member/ProfileView.vue'),
+    meta: { title: 'Профиль', requiresMember: true },
+  },
+  {
+    path: 'invites',
+    name: 'invites',
+    component: () => import('@/views/member/InvitesView.vue'),
+    meta: { title: 'Инвайты', requiresMember: true },
+  },
+  {
+    path: 'wallet',
+    name: 'wallet',
+    component: () => import('@/views/member/WalletView.vue'),
+    meta: { title: 'Кошелёк', requiresMember: true },
+  },
+  {
+    path: 'plans',
+    name: 'plans',
+    component: () => import('@/views/member/PlansView.vue'),
+    meta: { title: 'Тарифы', requiresMember: true },
+  },
+  {
+    path: 'marketplace',
+    name: 'marketplace',
+    component: () => import('@/views/member/MarketplaceListView.vue'),
+    meta: { title: 'Маркет', requiresMember: true },
+  },
+  {
+    path: 'marketplace/my-listings',
+    name: 'marketplace-my',
+    component: () => import('@/views/member/MarketplaceMyListingsView.vue'),
+    meta: { title: 'Мои услуги', requiresMember: true },
+  },
+  {
+    path: 'marketplace/:id',
+    name: 'marketplace-detail',
+    component: () => import('@/views/member/MarketplaceDetailView.vue'),
+    meta: { title: 'Услуга', requiresMember: true },
+  },
+];
+
+export const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    component: PublicLayout,
+    meta: { public: true },
+    children: [
+      {
+        path: '',
+        name: 'landing',
+        component: () => import('@/views/public/LandingView.vue'),
+        meta: { title: 'Tavrida Lot', public: true },
+      },
+      {
+        path: 'about',
+        name: 'about',
+        component: () => import('@/views/public/AboutView.vue'),
+        meta: { title: 'О клубе', public: true },
+      },
+      {
+        path: 'join',
+        name: 'join',
+        component: () => import('@/views/public/JoinView.vue'),
+        meta: { title: 'Приглашение', public: true },
+      },
+      {
+        path: 'invite',
+        name: 'invite',
+        component: () => import('@/views/public/InviteView.vue'),
+        meta: { title: 'Инвайт', public: true },
+      },
+      {
+        path: 'callback',
+        name: 'callback',
+        component: () => import('@/views/public/CallbackView.vue'),
+        meta: { title: 'Auth', public: true },
+      },
+    ],
+  },
+  {
+    path: '/',
+    component: MemberLayout,
+    children: memberChildren,
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { title: '404' },
+  },
+];

@@ -1,0 +1,20 @@
+@import '../../../../packages/ui/styles/tokens.css';
+@import '../../../../packages/ui/styles/theme.css';
+@import 'tailwindcss';
+
+@layer base {
+  html {
+    font-family: var(--token-font-sans);
+    @apply bg-bg text-text;
+  }
+
+  body {
+    @apply bg-bg text-text antialiased;
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  #app {
+    @apply min-h-dvh bg-bg;
+  }
+}

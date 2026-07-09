@@ -5,9 +5,11 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@tavrida/shared": ["../../packages/shared/src/index.ts"]
+      "@/*": ["src/*"],
+      "@tavrida/shared": ["../../packages/shared/src/index.ts"],
+      "@tavrida/ui": ["../../packages/ui/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue"],
-  "references": [{ "path": "../../packages/shared" }]
+  "references": [{ "path": "../../packages/shared" }, { "path": "../../packages/ui" }]
 }

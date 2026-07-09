@@ -1,0 +1,49 @@
+# Logto OSS — local dev only (NOT for production)
+#
+# Admin console: http://localhost:3302
+# OIDC endpoint: http://localhost:3301
+#
+# After first start, open admin console and create SPA app:
+#   Redirect URI: http://localhost:5173/callback
+#   Post sign-out: http://localhost:5173/
+#   CORS: http://localhost:5173
+#
+# Then in .env.local:
+#   VITE_LOGTO_ENDPOINT=http://localhost:3301
+#   VITE_LOGTO_APP_ID=<from console>
+#
+# Start: docker compose -f docker/compose/logto.local.yml up -d
+# Stop:  docker compose -f docker/compose/logto.local.yml down
+
+services:
+  logto-postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: p0stgr3s
+      POSTGRES_DB: logto
+    volumes:
+      - logto_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  logto:
+    image: svhd/logto:latest
+    depends_on:
+      logto-postgres:
+        condition: service_healthy
+    entrypoint: ['sh', '-c', 'npm run cli db seed -- --swe && npm start']
+    ports:
+      - '3301:3001'
+      - '3302:3002'
+    environment:
+      TRUST_PROXY_HEADER: '1'
+      DB_URL: postgres://postgres:p0stgr3s@logto-postgres:5432/logto
+      ENDPOINT: http://localhost:3301
+      ADMIN_ENDPOINT: http://localhost:3302
+
+volumes:
+  logto_pg_data:

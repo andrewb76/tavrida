@@ -4,19 +4,30 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "lint": "eslint src"
+    "dev": "pnpm exec vite",
+    "build": "vue-tsc -b && pnpm exec vite build",
+    "preview": "pnpm exec vite preview",
+    "lint": "eslint src",
+    "check:logto": "node ../../scripts/check-logto-env.mjs"
   },
   "dependencies": {
+    "@logto/vue": "^3.0.13",
+    "@tanstack/vue-query": "^5.62.8",
     "@tavrida/shared": "workspace:*",
-    "vue": "^3.5.13"
+    "@tavrida/ui": "workspace:*",
+    "@vueuse/core": "^12.0.0",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-i18n": "^10.0.5",
+    "vue-router": "^4.5.0",
+    "vue-sonner": "^1.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
     "@tavrida/tsconfig": "workspace:*",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5.4.5",
     "vite": "^6.0.7",
     "vue-tsc": "^2.2.0"

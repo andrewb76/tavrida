@@ -7,7 +7,7 @@
 **Профиль пользователя**, аватар, bio, **инвайты клуба** и **приватные заметки** между пользователями.
 
 - Denormalized cache рейтинга из `rating` (sync по events)
-- **Invitation graph:** `inviterId`, коды, redeem → trigger referral recompute
+- **Invitation graph:** `inviterId` при регистрации по invite (реферал, не gate доступа)
 - Публичный профиль для auction / forum / marketplace UI (member-only на BFF)
 - `ProfileNote` — видны только автору и владельцу профиля
 
@@ -18,7 +18,7 @@
 | **UserProfile** | Bio, avatar, cached rating fields |
 | **ProfileNote** | Приватная заметка `authorId` → `ownerId` |
 | **InviteCode** | Код приглашения, выданный member |
-| **Invitation** | Связь invitee → inviter после redeem |
+| **Invitation** | Связь invitee → inviter после claim |
 | **Denormalized cache** | `rating`, `verifiedSales`, `pendingSales` — SoT: rating |
 
 ## 🗄️ Сущности
@@ -28,8 +28,8 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `userId` | UUID PK | Logto sub |
-| `inviterId` | UUID nullable | Кто пригласил (после redeem) |
-| `invitationAcceptedAt` | timestamptz nullable | Member gate |
+| `inviterId` | UUID nullable | Кто пригласил (после claim по invite) |
+| `invitationAcceptedAt` | timestamptz nullable | Когда зафиксирован реферал (не gate UI) |
 | `displayName` | varchar nullable | Override (optional) |
 | `bio` | text nullable | — |
 | `avatarUrl` | varchar nullable | MinIO `avatars` |
@@ -83,28 +83,24 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/profile/notes?ownerId=` | Заметки (author or owner only) |
 | POST | `/profile/notes` | Создать/обновить заметку |
 | DELETE | `/profile/notes/{id}` | Удалить (author only) |
-| GET | `/invites` | Мои коды (member) |
-| POST | `/invites` | Создать код (`club.invitesPerMonth`) |
-| POST | `/invites/redeem` | Активировать инвайт после Logto |
 
-### `GET /api/v1/profile/{userId}`
+### Invites (BFF public — см. [bff/invites-api.md](../bff/invites-api.md))
 
-```json
-{
-  "userId": "uuid",
-  "displayName": "coin_collector",
-  "bio": "Продавец редких монет",
-  "avatarUrl": "https://…",
-  "rating": 4.8,
-  "verifiedSales": 20,
-  "pendingSales": 1
-}
-```
+| Method | BFF path | Описание |
+|--------|----------|----------|
+| GET | `/invites` | Мои коды (proxy list) |
+| POST | `/invites` | Создать (internal persist) |
+| GET | `/invites/resolve` | Lookup code → token |
+| POST | `/invites/claim` | Записать invitation |
 
 ### Internal
 
 | Method | Path | Описание |
 |--------|------|----------|
+| POST | `/internal/v1/invites` | Создать invite_code + logtoToken ref |
+| GET | `/internal/v1/invites` | Список по issuerId |
+| GET | `/internal/v1/invites/resolve` | Lookup |
+| POST | `/internal/v1/invites/claim` | invitation + inviterId |
 | POST | `/internal/v1/profile/sync-rating` | Admin/reconcile |
 | POST | `/internal/v1/profile/ensure` | Create empty profile on first login |
 | GET | `/health`, `/health/ready` | — |
@@ -125,7 +121,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
-| produce | `invitation.redeemed` | `{ inviteeId, inviterId }` → rating referral |
+| produce | `invitation.redeemed` | `{ inviteeId, inviterId, inviteCodeId }` → rating referral |
 | consume | `rating.updated` | Update cached rating fields |
 | consume | `feedback.submitted` | Optional refresh |
 | consume | `subscription.activated` | Invalidate BFF cache (optional) |
@@ -134,7 +130,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Сервис | Протокол |
 |--------|----------|
-| rating | events → cache; referral recompute on redeem |
+| rating | events → cache; referral recompute on claim |
 | BFF | aggregation `/profile/me` |
 | MinIO | avatars bucket |
 | Logto | displayName fallback from JWT claims |
@@ -160,6 +156,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 ## 📎 Связанные разделы
 
 - [club-access.md](../../01-goal/club-access.md)
+- [bff/invites-api.md](../bff/invites-api.md)
 - [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 - [rating](../rating/README.md)
 - [BFF aggregation](../bff/README.md)

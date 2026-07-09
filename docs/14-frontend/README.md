@@ -27,8 +27,9 @@
 | HTTP-клиент | тонкая обёртка над `fetch` (`ofetch`) | JWT + `Idempotency-Key` + базовый URL |
 | Realtime | нативный `WebSocket` в composable | реконнект, подписка на каналы |
 | Auth | **Logto Vue SDK** (`@logto/vue`) | OIDC PKCE, silent refresh |
-| Стили | **Tailwind CSS** + дизайн-токены | mobile-first |
+| Стили | **Tailwind CSS v4** + CSS variables | mobile-first, [stack-decisions](./stack-decisions.md) |
 | UI-компоненты | **`@tavrida/ui`** на headless-базе (**Reka UI**) | общие примитивы + токены |
+| Стек (детали) | [stack-decisions.md](./stack-decisions.md) | Tailwind v4, d3, RxJS, tiers |
 | i18n | **vue-i18n** | `ru` по умолчанию (ключи готовы к мультиязычности) |
 | Уведомления | **Novu Inbox** (Vue-компонент) | in-app inbox |
 | Тесты | **Vitest** + `@vue/test-utils`, **Playwright** (e2e) | — |
@@ -84,7 +85,8 @@ apps/frontend/
 |------|------|------|-----------|
 | `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) |
 | `/about` | AboutView | public | W01 |
-| `/invite` | InviteRedeemView | Logto + code | W01 |
+| `/join` | JoinView | invite link / код → Logto | W11 |
+| `/invite` | redirect → `/join` | legacy URL | W11 |
 | `/auctions` | AuctionListView | **member** | [W02](../11-ux-ui/wireframes/auctions.md) |
 | `/auctions/new` | AuctionCreateView | member | W04 |
 | `/auctions/:id` | AuctionDetailView | **member** | W03 |
@@ -141,7 +143,8 @@ wss://{host}/ws/v1?token={jwt}
 
 - **Вход** через **Logto** (OIDC, Authorization Code + PKCE), SDK `@logto/vue`.
 - JWT хранится и обновляется SDK; для API берётся `getAccessToken()`.
-- Router-guard'ы: `requireMember` (нет инвайта → `/invite`), `requireAuth`, проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [financial-policy](../05-microservices/financial-policy/README.md)).
+- Настройка Cloud / self-host: [logto-setup.md](./logto-setup.md).
+- Router-guard'ы: `requireMember` (нет JWT → лендинг), `requireAuth`, проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [financial-policy](../05-microservices/financial-policy/README.md)).
 - CORS/rate-limit — на стороне BFF; фронт корректно обрабатывает `429`.
 - Клиент **не** содержит бизнес-лимитов как источника правды — только UX-подсказки; ограничения enforce'ит бэк.
 
@@ -164,8 +167,9 @@ wss://{host}/ws/v1?token={jwt}
 |------------|----------|--------|
 | `VITE_API_BASE_URL` | базовый URL REST BFF | `https://api.tavrida-lot.ru/api/v1` |
 | `VITE_WS_URL` | URL WebSocket BFF | `wss://api.tavrida-lot.ru/ws/v1` |
-| `VITE_LOGTO_ENDPOINT` | endpoint Logto | `https://auth.tavrida-lot.ru` |
+| `VITE_LOGTO_ENDPOINT` | endpoint Logto (Cloud или self-host) | `https://<tenant>.logto.app` |
 | `VITE_LOGTO_APP_ID` | ID SPA-приложения в Logto | `xxxxx` |
+| `VITE_LOGTO_API_RESOURCE` | API resource identifier (audience JWT) | `https://api.tavrida-lot.ru` |
 | `VITE_NOVU_APP_ID` | application identifier Novu Inbox | `xxxxx` |
 
 > Полный реестр env и секретов: [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md).
@@ -201,14 +205,17 @@ pnpm --filter @tavrida/frontend lint
 
 ## 📋 TODO
 
-- [ ] Скелет: router, pinia, TanStack Query, i18n, Logto в `main.ts`
-- [ ] Настроить Tailwind + дизайн-токены
-- [ ] REST-клиент (`src/api`) + типы из контракта BFF
+- [x] Скелет: router, pinia, TanStack Query, i18n в `main.ts`
+- [x] Tailwind v4 + CSS tokens (`@tavrida/ui/styles`)
+- [x] `UiButton` + CVA + `cn()` — паттерн компонентов
+- [x] Reka UI primitives (Modal) + AppShell / layouts
+- [x] REST mock adapter + fixtures (W02)
+- [x] Routes + guards по [screen-tree](../11-ux-ui/screen-tree.md)
 - [ ] `useWs()` + реестр каналов
-- [ ] Наполнить `@tavrida/ui` примитивами (Reka UI)
-- [ ] Заглушки views по разделам
+- [x] Logto Cloud (`@logto/vue`, invite flow, guards) — [logto-setup.md](./logto-setup.md)
+- [ ] Logto self-host + BFF JWT validation
+- [ ] d3 viz: `ActivityHeatmap` (W07)
 - [ ] Vitest + Playwright конфиги
-- [ ] Разрешить судьбу `@tavrida/graphql`
 
 ## 🔗 Связанные разделы
 
