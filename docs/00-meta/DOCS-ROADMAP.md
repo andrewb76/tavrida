@@ -125,6 +125,7 @@ design-tokens, IA, wireframes W01–W10 (W09 marketplace — v1.1), [14-frontend
 - [ ] Черновики L-01, L-02, L-04 для MVP (остальное — по мере фич)
 - [ ] L-17 webhooks — финал после юристов
 - [ ] W09 marketplace wireframe v1.1
+- [x] Выбрать формат wireframe → **Содержание + ASCII + Component tree** ([wireframes/TEMPLATE](../11-ux-ui/wireframes/TEMPLATE.md))
 - [ ] Цены подписок в PLATFORM-REGISTRY (после решения PM)
 
 ### P3 — сопровождение

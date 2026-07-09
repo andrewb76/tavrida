@@ -1,6 +1,6 @@
 # 🎨 UX/UI и wireframes
 
-> **Статус:** spec ready · **Версия:** 0.2  
+> **Статус:** spec ready · **Версия:** 0.3  
 > **Продукт:** [platform-for-users.md](../01-goal/platform-for-users.md)  
 > **Код:** [14-frontend](../14-frontend/README.md)
 
@@ -10,17 +10,19 @@
 |----------|----------|
 | [design-tokens.md](./design-tokens.md) | Цвета, типографика, spacing (seed) |
 | [information-architecture.md](./information-architecture.md) | Sitemap, nav, breakpoints |
-| [wireframes/](./wireframes/README.md) | Low-fi спецификации экранов W01–W10 |
+| [screen-tree.md](./screen-tree.md) | **Дерево экранов** — масштаб UI, флаги wireframe |
+| [wireframes/](./wireframes/README.md) | W01–W16: содержание + ASCII + component tree |
 
 ## 📐 Wireframes (индекс)
 
 | ID | Экран | Файл |
 |----|-------|------|
-| W01 | Главная, auth | [home-auth.md](./wireframes/home-auth.md) |
+| W01, W11–W13 | Главная, auth, инвайты | [home-auth.md](./wireframes/home-auth.md) |
 | W02–W04 | Аукционы | [auctions.md](./wireframes/auctions.md) |
-| W05–W06 | Форум | [forum.md](./wireframes/forum.md) |
-| W07–W10 | Профиль, кошелёк, отзыв | [profile-wallet.md](./wireframes/profile-wallet.md) |
+| W05–W06, W14 | Форум | [forum.md](./wireframes/forum.md) |
+| W07–W08, W10 | Профиль, кошелёк, отзыв | [profile-wallet.md](./wireframes/profile-wallet.md) |
 | W09 | Маркет услуг | [marketplace.md](./wireframes/marketplace.md) |
+| W15–W16 | Inbox, Paywall | [overlays.md](./wireframes/overlays.md) |
 
 ## 🧱 Компоненты
 

@@ -4,6 +4,8 @@
 
 ## 🌐 Sitemap
 
+> Полное **дерево экранов** (название + назначение, оценка масштаба): [screen-tree.md](./screen-tree.md)
+
 ### Public (Visitor — без member)
 
 ```mermaid
@@ -90,6 +92,7 @@ Moderator UI — inline на контенте (не отдельное app v1).
 
 - [club-access.md](../01-goal/club-access.md)
 - [wireframes](./wireframes/README.md)
+- [screen-tree.md](./screen-tree.md)
 - [14-frontend routes](../14-frontend/README.md#-маршруты)
 - [platform-for-users](../01-goal/platform-for-users.md)
 

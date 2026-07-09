@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>W03 — Страница лота (gray-box wireframe)</title>
+  <style>
+    :root {
+      --color-primary: #1b4d6e;
+      --color-bg: #fafaf8;
+      --color-surface: #fff;
+      --color-border: #e5e2dc;
+      --color-text: #1a1a1a;
+      --color-text-muted: #6b6560;
+      --color-error: #b91c1c;
+      --space-page-x: 16px;
+      --radius-md: 10px;
+      --font: Inter, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font);
+      background: #888;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 0 48px;
+    }
+    .wireframe-label {
+      text-align: center;
+      color: #fff;
+      font-size: 12px;
+      margin-bottom: 8px;
+      max-width: 390px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      background: var(--color-bg);
+      border: 2px solid #333;
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
+    }
+    .wf-block {
+      background: var(--color-surface);
+      border: 1px dashed var(--color-border);
+      color: var(--color-text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px var(--space-page-x);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+    header span { font-size: 14px; color: var(--color-text); font-weight: 600; }
+    .gallery {
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eee;
+      position: relative;
+    }
+    .gallery-dots {
+      position: absolute;
+      bottom: 12px;
+      display: flex;
+      gap: 6px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); }
+    .dot.off { background: #ccc; }
+    .meta { padding: 16px var(--space-page-x); }
+    .meta h1 { font-size: 20px; color: var(--color-text); margin-bottom: 8px; font-weight: 600; }
+    .seller { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--color-text-muted); }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; background: #ddd; border: 1px dashed #999; }
+    .status {
+      margin: 0 var(--space-page-x) 16px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+    }
+    .live { color: var(--color-error); font-weight: 700; font-size: 12px; }
+    .price { font-size: 24px; font-weight: 700; color: var(--color-text); margin-top: 4px; }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 var(--space-page-x);
+      gap: 4px;
+    }
+    .tab {
+      padding: 12px 8px;
+      font-size: 14px;
+      color: var(--color-text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+    .tab-content {
+      flex: 1;
+      padding: 16px var(--space-page-x) 100px;
+      font-size: 14px;
+      color: var(--color-text);
+      line-height: 1.5;
+    }
+    .bid-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+    .sticky-cta {
+      position: absolute;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      padding: 12px var(--space-page-x);
+      background: linear-gradient(transparent, var(--color-bg) 20%);
+    }
+    .sticky-cta button {
+      width: 100%;
+      padding: 14px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      display: flex;
+      border-top: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+    .bottom-nav div {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--color-text-muted);
+    }
+    .bottom-nav div.on { color: var(--color-primary); font-weight: 600; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div>
+    <p class="wireframe-label">Format E · W03 · /auctions/:id · gray-box · 390×844</p>
+    <div class="phone" role="application" aria-label="Wireframe страницы лота">
+      <header class="wf-block" data-zone="Z1">
+        <span>←</span>
+        <span>Лот #1842</span>
+        <span>🔔</span>
+      </header>
+
+      <div class="gallery wf-block" data-zone="Z2">
+        Gallery swipe
+        <div class="gallery-dots"><span class="dot"></span><span class="dot off"></span><span class="dot off"></span></div>
+      </div>
+
+      <div class="meta" data-zone="Z3">
+        <h1>Серебряный денarius · III в.</h1>
+        <div class="seller">
+          <div class="avatar"></div>
+          <span>seller42 · ★ 4.8 · Античность</span>
+        </div>
+      </div>
+
+      <div class="status" data-zone="Z4">
+        <div class="live">🔴 LIVE · ⏱ 02:14:33</div>
+        <div class="price">1 500 ₽</div>
+        <div style="font-size:13px;color:var(--color-text-muted);margin-top:4px;">12 ставок · шаг +50 ₽</div>
+      </div>
+
+      <div class="tabs" data-zone="Z5" role="tablist">
+        <button type="button" class="tab active" data-tab="desc" role="tab">Описание</button>
+        <button type="button" class="tab" data-tab="bids" role="tab">Ставки</button>
+        <button type="button" class="tab" data-tab="expert" role="tab">Экспертиза</button>
+      </div>
+
+      <div class="tab-content" data-zone="Z5-content">
+        <div id="panel-desc">
+          <p>Находка с раскопок 2024. Сохранность VF. Диаметр 18 мм.</p>
+          <p style="margin-top:12px;color:var(--color-text-muted);font-size:13px;">Pro: <a href="#">Обсуждение лота →</a></p>
+        </div>
+        <div id="panel-bids" class="hidden">
+          <div class="bid-row"><span>bidder_7 · 14:02</span><strong>1 500 ₽</strong></div>
+          <div class="bid-row"><span>collector_k · 14:01</span><span>1 450 ₽</span></div>
+          <div class="bid-row"><span>seller42 · старт</span><span>500 ₽</span></div>
+          <p style="margin-top:8px;font-size:12px;color:var(--color-text-muted);">WS: bid.placed → prepend</p>
+        </div>
+        <div id="panel-expert" class="hidden">
+          <p style="color:var(--color-text-muted);">Экспертиза не добавлена.</p>
+        </div>
+      </div>
+
+      <div class="sticky-cta" data-zone="Z6">
+        <button type="button">Сделать ставку · от 1 550 ₽</button>
+      </div>
+
+      <nav class="bottom-nav wf-block" data-zone="Z8" aria-label="Main">
+        <div>Home</div>
+        <div class="on">Auctions</div>
+        <div>Forum</div>
+        <div>Profile</div>
+      </nav>
+    </div>
+  </div>
+  <script>
+    document.querySelectorAll('.tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        btn.classList.add('active');
+        ['desc', 'bids', 'expert'].forEach((id) => {
+          document.getElementById('panel-' + id).classList.toggle('hidden', btn.dataset.tab !== id);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

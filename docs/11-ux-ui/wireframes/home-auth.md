@@ -1,8 +1,30 @@
 # W01 — Лендинг и auth
 
-> **Маршруты:** `/` (visitor) · `/invite` · `/callback` · **Auth:** Logto redirect
+> **Auth:** Logto PKCE · **Club gate:** [club-access.md](../../01-goal/club-access.md)
 
-## Layout (Visitor — лендинг)
+---
+
+## W01 — Visitor (лендинг)
+
+**Route:** `/` · **ID:** W01 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Header | Logo, «Войти» | Login → Logto |
+| Hero | Заголовок клуба, подзаголовок invite-only | Static copy |
+| CTA | «У меня есть инвайт», «О клубе» | → `/invite`, якорь about |
+| Sections | about, rules, как получить инвайт | CMS/static TBD |
+| Footer | legal links | L-01…L-07 |
+
+**States:** default (guest only). **Нет** bottom nav, live carousel, форума.
+
+**Roles:** Visitor only.
+
+**API:** static / `club.landing.publicSections` (settings, TBD).
+
+### ASCII
 
 ```
 ┌─────────────────────────────────────┐
@@ -13,16 +35,52 @@
 │ по приглашению                      │
 │ [У меня есть инвайт]  [О клубе]     │
 ├─────────────────────────────────────┤
-│ Блоки: about · rules · как получить │
-│ инвайт (static / CMS TBD)           │
+│ Блоки: about · rules · инвайт       │
 ├─────────────────────────────────────┤
 │ Footer: legal                       │
 └─────────────────────────────────────┘
 ```
 
-**Нет** live-карусели лотов, форума и bottom nav — только после member.
+### Component tree
 
-## Layout (Member — home после входа)
+```yaml
+LandingPage:
+  - LandingHeader
+      - AppLogo
+      - LoginButton → LogtoRedirect
+  - LandingHero
+      - HeroTitle
+      - HeroSubtitle
+      - InviteCtaButton → /invite
+      - AboutLink
+  - LandingSections
+      - StaticSection (about, rules, invite-how)
+  - LandingFooter
+      - LegalLinks
+```
+
+---
+
+## W01 — Member (home после входа)
+
+**Route:** `/` или `/app` · **ID:** W01 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Header | Logo, Inbox, Balance chip, Avatar | Inbox → notifications |
+| Live carousel | Карточки ACTIVE аукционов | `GET /auctions?status=ACTIVE&limit=6` |
+| Forum teaser | 3 recent topics | → `/forum/topics/:id` |
+| Bottom nav | Home, Auctions, Forum, Profile | Mobile only |
+
+**States:** loading skeleton · empty carousel · error retry banner.
+
+**Roles:** Member (`requireMember` guard).
+
+**API:** `GET /auctions`, `GET /forum/topics?sort=recent&limit=3`, `GET /wallets/balance`.
+
+### ASCII
 
 ```
 ┌─────────────────────────────────────┐
@@ -33,39 +91,188 @@
 ├─────────────────────────────────────┤
 │ Новые на форуме (3 topics)          │
 ├─────────────────────────────────────┤
-│ Bottom nav (mobile)                 │
+│ Home │ Auctions │ Forum │ Profile   │
 └─────────────────────────────────────┘
 ```
 
-## Blocks
+### Component tree
 
-| Block | Data | Empty | Audience |
-|-------|------|-------|----------|
-| Landing sections | static / `club.landing.publicSections` | — | Visitor |
-| Live carousel | `GET /auctions?status=ACTIVE&limit=6` | «Нет активных торгов» | Member |
-| Forum teaser | `GET /forum/topics?sort=recent&limit=3` | link to forum | Member |
-| Balance chip | `GET /wallets/balance` | hidden guest | Member |
-
-## Auth & invite
-
-1. Visitor → «У меня есть инвайт» → `/invite` (поле кода)
-2. Logto PKCE → `/callback`
-3. `POST /api/v1/invites/redeem` — без успеха member **не** видит club routes
-4. Post-redeem redirect → `/auctions` или `returnTo`
-5. Session: `@logto/vue` + Pinia `session` (`isMember`, `inviterId`)
-
-## States
-
-- Loading: skeleton (member feeds only)
-- Error: retry banner on feeds
-- Pending invite: экран «Введите код» после Logto
-
-## 🔗 API / docs
-
-- [club-access.md](../../01-goal/club-access.md)
-- [BFF routing](../../05-microservices/bff/README.md)
-- [platform-for-users](../../01-goal/platform-for-users.md)
+```yaml
+MemberHomePage:
+  - AppHeader
+      - NotificationBell
+      - BalanceChip
+      - UserMenu
+  - LiveAuctionCarousel
+      - AuctionCard (×N)
+  - ForumTeaserList
+      - TopicTeaserCard (×3)
+  - AppBottomNav
+```
 
 ---
 
-**ID:** W01
+## Auth & invite (flow)
+
+1. Visitor → `/invite` (код) → Logto → `/callback`
+2. `POST /api/v1/invites/redeem` — без успеха club routes недоступны
+3. Redirect → `/auctions` или `returnTo`
+4. Session: `@logto/vue` + Pinia `session` (`isMember`, `inviterId`)
+
+---
+
+## W11 — Инвайт (ввод кода)
+
+**Route:** `/invite` · **ID:** W11 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Header | Logo, «Назад» | → `/` |
+| Form | Поле кода, «Продолжить» | Validate format client-side |
+| Hint | Где взять код, ссылка «О клубе» | Static copy |
+| Error | Неверный / использован / истёк | RFC 7807 `detail` |
+
+**States:** default · validating · error · redirect to Logto (если не залогинен).
+
+**Roles:** Visitor (до redeem) или Member (redeem доп. кода — edge, TBD).
+
+**API:** `POST /api/v1/invites/redeem` после Logto; до redeem — только сохранение кода в sessionStorage.
+
+### ASCII
+
+```
+┌─────────────────────────────────────┐
+│ ← Logo                              │
+├─────────────────────────────────────┤
+│ Введите код приглашения              │
+│ ┌─────────────────────────────┐     │
+│ │ TAV-XXXX-XXXX               │     │
+│ └─────────────────────────────┘     │
+│ [         Продолжить            ]   │
+│ Нет кода? [О клубе]                 │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+InviteRedeemPage:
+  - LandingHeader (minimal)
+  - InviteCodeForm
+      - InviteCodeInput
+      - SubmitButton → LogtoRedirect | redeem API
+  - InviteHelpText
+  - FormErrorBanner
+```
+
+---
+
+## W12 — О клубе
+
+**Route:** `/about` · **ID:** W12 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Header | Logo, «Войти» / «В клуб» | Auth-aware CTA |
+| Content | Миссия, правила, как попасть | Static / CMS |
+| CTA | «У меня есть инвайт» | → `/invite` |
+| Footer | legal links | L-01…L-07 |
+
+**States:** default only.
+
+**Roles:** Visitor и Member (public page).
+
+**API:** static / `club.about.sections` (settings, TBD).
+
+### ASCII
+
+```
+┌─────────────────────────────────────┐
+│ Logo                    [Войти]     │
+├─────────────────────────────────────┤
+│ О клубе находок Крыма               │
+│ Миссия · правила · сообщество       │
+│ Как получить инвайт …               │
+├─────────────────────────────────────┤
+│ [      У меня есть инвайт         ] │
+├─────────────────────────────────────┤
+│ Footer: legal                       │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+AboutPage:
+  - LandingHeader
+  - AboutContentSections
+      - MissionSection
+      - RulesSection
+      - HowToJoinSection
+  - InviteCtaButton
+  - LandingFooter
+```
+
+---
+
+## W13 — Управление инвайтами
+
+**Route:** `/invites` · **ID:** W13 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Summary | Выдано / лимит FP | `GET /invites/quota` |
+| List | Код, статус, дата, redeem by | Copy to clipboard |
+| Actions | «Создать инвайт» | Disabled at limit |
+| Share | Copy link, native share (mobile) | `tavrida-lot.ru/invite?code=` |
+
+**States:** loading · empty (нет выданных) · limit reached · error.
+
+**Roles:** Member only (`invitesPerMonth` per FP).
+
+**API:** `GET /invites`, `POST /invites`
+
+### ASCII
+
+```
+┌─────────────────────────────────────┐
+│ ← Мои инвайты                       │
+├─────────────────────────────────────┤
+│ Выдано: 2 / 3 в этом месяце         │
+│ [      + Создать инвайт           ] │
+├─────────────────────────────────────┤
+│ TAV-A1B2 · активен · [Копировать]   │
+│ TAV-C3D4 · использован user@…       │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+InvitesManagePage:
+  - AppHeader
+  - InviteQuotaSummary
+  - CreateInviteButton
+  - InviteCodeList
+      - InviteCodeRow
+          - CodeLabel
+          - StatusBadge
+          - CopyButton
+          - ShareButton
+  - EmptyInvitesState
+```
+
+### 🔗 Docs
+
+- [platform-for-users](../../01-goal/platform-for-users.md)
+- [bff](../../05-microservices/bff/README.md)
+
+---
+
+**IDs:** W01, W11, W12, W13

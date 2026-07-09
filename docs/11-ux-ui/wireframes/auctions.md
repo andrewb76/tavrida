@@ -1,10 +1,27 @@
 # W02–W04 — Аукционы
 
-> **Маршруты:** `/auctions`, `/auctions/:id`, `/auctions/new`
+> **Сервис:** [auction](../../05-microservices/auction/README.md) · **Лимиты:** [financial-features](../../05-microservices/auction/requirements/financial-features.md)
 
-## Каталог
+---
 
-**Route:** `/auctions`
+## W02 — Каталог лотов
+
+**Route:** `/auctions` · **ID:** W02 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Filters | category, status, sort, search | Query params; `searchScope` per tariff |
+| Grid | Card: img, title, price, badges | Cursor pagination «Ещё» |
+| Badges | Live 🔴, Promoted ↑ | `status=ACTIVE`, `promotedUntil` |
+| FAB | «+» | → `/auctions/new`; hide if daily limit |
+
+**States:** loading · empty · end of list.
+
+**API:** `GET /api/v1/auctions?cursor=&limit=20`
+
+### ASCII
 
 ```
 ┌─────────────────────────────────────┐
@@ -15,72 +32,197 @@
 │ │ title│ │ title│ │ title│         │
 │ │ price│ │ 🔴Live│ │ price│         │
 │ └──────┘ └──────┘ └──────┘         │
-│ [Ещё] cursor pagination             │
+│ [Ещё]                               │
+│                            [+] FAB  │
 └─────────────────────────────────────┘
 ```
 
-| Element | Behavior |
-|---------|----------|
-| Filter bar | Query params; `searchScope` per tariff (title vs full) |
-| Live badge | `status=ACTIVE`, pulse animation |
-| Promoted | «↑» badge if `promotedUntil > now` |
-| FAB «+» | → `/auctions/new` (auth); hide if daily limit reached |
+### Component tree
 
-**API:** `GET /api/v1/auctions?cursor=&limit=20`
+```yaml
+AuctionCatalogPage:
+  - AppHeader
+  - AuctionFilterBar
+  - AuctionCardGrid
+      - AuctionCard
+          - LotThumbnail
+          - LiveBadge
+          - PromotedBadge
+          - PriceLabel
+  - LoadMoreButton
+  - CreateAuctionFab → /auctions/new
+  - AppBottomNav
+```
 
 ---
 
-## Страница лота
+## W03 — Страница лота
 
-**Route:** `/auctions/:id`
+**Route:** `/auctions/:id` · **ID:** W03 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Gallery | Swipe photos | CDN MinIO |
+| Meta | Title, seller chip, category | → profile |
+| Status | Timer, price, bid count, Live | WS + countdown |
+| Tabs | Описание \| Ставки \| Экспертиза | Lazy load |
+| Bid list | History | WS `bid.placed` prepend |
+| Sticky CTA | «Сделать ставку» | Modal → POST bid |
+| Owner | Edit, Promote, Cancel | seller only |
+| Pro | Forum topic link | paywall |
+
+**States:** loading · active · ending soon · ended · 402/403/429 errors.
+
+**API / WS:** `GET /auctions/:id`, `GET …/bids`, WS `auction:{id}`.
+
+### ASCII
 
 ```
 ┌─────────────────────────────────────┐
-│ Gallery (swipe)                     │
-│ Title · seller avatar · rating      │
-│ Timer: 02:14:33 · current 1 500 ₽   │
+│ ← Lot #1842              🔔        │
 ├─────────────────────────────────────┤
-│ [Сделать ставку]  (sticky mobile)   │
+│ [ Gallery swipe · ● ○ ○ ]           │
+│ Title · 👤 seller ★4.8 · category   │
 ├─────────────────────────────────────┤
-│ Tabs: Описание | Ставки | Экспертиза│
-│ Bid history (WS live)               │
+│ 🔴 LIVE  ⏱ 02:14:33  ·  1 500 ₽    │
 ├─────────────────────────────────────┤
-│ Pro: [Обсуждение лота → forum topic]│
+│ [ Описание ] [ Ставки ] [ Эксперт ] │
+│ (tab content)                       │
+├─────────────────────────────────────┤
+│ [      Сделать ставку  1 550 ₽   ]  │
 └─────────────────────────────────────┘
 ```
 
-| Interaction | Detail |
-|-------------|--------|
-| Bid button | Modal: amount step, confirm; `POST …/bids` |
-| WS | Subscribe `auction:{id}` → `bid.placed`, `auction.ended` |
-| Timer | Client countdown to `endsAt`; sync on WS |
-| Expert tab | `GET …/expert-appraisals` |
-| Owner actions | Edit (DRAFT), Promote (200₽), Cancel |
+### Component tree
 
-**Errors:** 402 insufficient (wallet link), 403 limit, 429 rate limit
+```yaml
+LotPage:
+  - AppHeader
+  - LotGallery
+  - LotHeader
+      - LotTitle
+      - SellerChip
+      - CategoryBadge
+  - LotStatusBar
+      - LiveBadge
+      - CountdownTimer
+      - CurrentPrice
+      - BidCount
+  - LotTabs
+      - LotDescription
+      - BidHistoryList
+      - ExpertAppraisalList
+  - LotOwnerActions
+  - ForumLinkBlock
+  - StickyBidBar
+      - BidButton → BidModal
+  - AppBottomNav
+```
 
 ---
 
-## Создание лота
+## W03 — Modal: ставка на лот
 
-**Route:** `/auctions/new`
+**Route:** modal (на `/auctions/:id`) · **ID:** W03 · **MVP:** ✅
 
-Wizard steps (single page scroll mobile):
+### Содержание экрана
 
-1. Фото (MinIO upload presign)
-2. Title, description, category
-3. Type (English default; Dutch if plan allows)
-4. Starting price, increment, schedule
-5. Optional: reserve (Pro + 100₽), promote checkbox
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Context | Лот, текущая цена, min next bid | From parent page |
+| Input | Сумма (step validated) | Quick chips +1 step |
+| Confirm | «Подтвердить ставку» | POST bid |
+| Errors | 402 low balance, 403 banned, 429 rate | Inline + link wallet |
 
-Pre-submit: show limit `auctionsCreatedPerDay` remaining.
+**States:** submitting · success (close + WS update) · error.
 
-**API:** `POST /api/v1/auctions` → redirect to lot page
+**API:** `POST /auctions/:id/bids`
 
-## 🔗 Docs
+### ASCII
 
-- [auction service](../../05-microservices/auction/README.md)
-- [financial-features](../../05-microservices/auction/requirements/financial-features.md)
+```
+┌─────────────────────────────────────┐
+│ Ставка на лот                       │
+│ Текущая: 1 500 ₽ · min: 1 550 ₽     │
+│ ┌─────────────────────────────┐     │
+│ │ 1 550                       │     │
+│ └─────────────────────────────┘     │
+│ [+50] [+100] [+500]                 │
+│ [      Подтвердить ставку         ]   │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+BidModal:
+  - BidModalHeader
+  - CurrentPriceSummary
+  - BidAmountInput
+  - BidQuickIncrementChips
+  - ConfirmBidButton
+  - BidErrorBanner
+  - LowBalanceLink → /wallet
+```
+
+---
+
+## W04 — Создание лота
+
+**Route:** `/auctions/new` · **ID:** W04 · **MVP:** ✅
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Step 1 | Photo upload | MinIO presign |
+| Step 2 | Title, description, category | Validation |
+| Step 3 | Type (English / Dutch per plan) | FP check |
+| Step 4 | Start price, increment, schedule | |
+| Step 5 | Reserve (Pro+100₽), promote checkbox | Optional charges |
+| Submit | Create | Show `auctionsCreatedPerDay` remaining |
+
+**States:** draft validation errors · limit reached · success redirect.
+
+**API:** `POST /api/v1/auctions` → redirect `/auctions/:id`
+
+### ASCII
+
+```
+┌─────────────────────────────────────┐
+│ ← Новый лот                         │
+├─────────────────────────────────────┤
+│ 1. Фото [+ upload]                  │
+│ 2. Название · описание · категория  │
+│ 3. Тип: English ▼                   │
+│ 4. Цена · шаг · даты                │
+│ 5. ☐ Резерв  ☐ Продвижение          │
+├─────────────────────────────────────┤
+│ Осталось лотов сегодня: 2/3         │
+│ [        Создать аукцион          ] │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+CreateLotPage:
+  - AppHeader
+  - CreateLotForm
+      - PhotoUploadStep
+      - LotDetailsStep
+      - AuctionTypeSelect
+      - PricingScheduleStep
+      - OptionalPaidFeaturesStep
+      - DailyLimitHint
+      - SubmitButton
+```
+
+### 🔗 Docs
+
+- [format-lab W03 reference](./format-lab/W03-lot-page-formats.md)
 
 ---
 

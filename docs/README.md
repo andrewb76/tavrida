@@ -33,7 +33,7 @@
 | 08 | [Тестирование](./08-testing/README.md) | Unit, интеграция, нагрузка |
 | 09 | [Безопасность](./09-security/README.md) | Auth, RBAC, секреты |
 | 10 | [Данные](./10-data/README.md) | Schema per service, ownership |
-| 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, design tokens, IA |
+| 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, [screen tree](./11-ux-ui/screen-tree.md), IA |
 | 12 | [Процесс разработки](./12-dev-process/README.md) | Git, code review, релизы |
 | 13 | [Сопровождение](./13-maintenance/README.md) | Guidelines, changelog |
 | 14 | [Фронтенд](./14-frontend/README.md) | SPA: стек, API-слой, auth, сборка |
@@ -59,7 +59,7 @@
 | [Deployment](./04-deployment/README.md) | Swarm, CI/CD, migrations |
 | [Observability](./07-observability/README.md) | Grafana, SLO, logging |
 | [Security ops](./09-security/security-ops.md) | Network, secrets, incidents |
-| [UX / wireframes](./11-ux-ui/README.md) | Design tokens, IA, screens W01–W10 |
+| [UX / wireframes](./11-ux-ui/README.md) | Design tokens, IA, [screen tree](./11-ux-ui/screen-tree.md), W01–W10 |
 | [Frontend SPA](./14-frontend/README.md) | Vue app spec, routes |
 | [ADR index](./03-architecture/adr/README.md) | Архитектурные решения |
 | [moderator-mapping](./09-security/moderator-mapping.md) | UX ↔ Logto ↔ Keto |
