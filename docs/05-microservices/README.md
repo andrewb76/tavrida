@@ -21,6 +21,7 @@
 | 👤 user-profile | — | 📝 | ✅ spec | [user-profile](./user-profile/README.md) |
 | ⚙️ settings | — | 📝 | ✅ spec | [settings](./settings/README.md) |
 | 📬 notifications | 3010 | 📝 | ✅ spec | [notifications](./notifications/README.md) |
+| 🔗 webhooks | 3011 | 📝 | ✅ spec | [webhooks](./webhooks/README.md) |
 | 🛒 marketplace | — | 📝 | ✅ spec | [marketplace](./marketplace/README.md) |
 
 > Спецификация новых сервисов: [MICROSERVICE-SPEC](./MICROSERVICE-SPEC.md) · Реестр переменных: [PLATFORM-REGISTRY](./PLATFORM-REGISTRY.md)
@@ -30,6 +31,7 @@
 - Проверка лимитов → `financial-policy` (`POST /limits/check`)
 - Списание средств → `billing` (`POST /wallets/charge`)
 - Настройки формул → `settings` (`GET /settings/{domain}`)
+- Исходящие webhooks → `webhooks` (события RMQ → HTTP callback)
 - Доступ к сервисам — только через **BFF** (кроме внутренних HTTP/RabbitMQ)
 
 ## 🔗 Связанные разделы

@@ -93,7 +93,7 @@ flowchart TB
 | Паттерн | Когда | Пример |
 |---------|-------|--------|
 | **Sync HTTP** | Нужен немедленный ответ | BFF → `financial-policy.limits/check` |
-| **Async event** | Side effects, fan-out | `auction.completed` → feedback, rating |
+| **Async event** | Side effects, fan-out | `auction.completed` → feedback, rating, webhooks — [messaging](./messaging.md) |
 | **WS relay** | Realtime UI | auction → Redis pub/sub → BFF → client |
 | **Denormalized cache** | Частое чтение агрегата | user-profile ← rating |
 | **Saga (choreography)** | Мulti-step без оркестратора | activate plan: FP → billing.charge → FP.subscription |
@@ -142,7 +142,8 @@ sequenceDiagram
 
 ## 📨 События
 
-Полный каталог: [event-catalog.md](./event-catalog.md)
+Полный каталог: [event-catalog.md](./event-catalog.md)  
+Топология RabbitMQ (exchange, fan-out, несколько слушателей): [messaging.md](./messaging.md)
 
 ## 📋 ADR (принятые решения)
 
@@ -153,6 +154,7 @@ sequenceDiagram
 | [003](./adr/003-settings-vs-financial-policy.md) | Два реестра переменных |
 | [004](./adr/004-notifications-adapter.md) | Novu Cloud Free + adapter |
 | [005](./adr/005-forum-terminology.md) | Forum: topic/comment, deprecate post |
+| [011](./adr/011-centralized-outbound-webhooks.md) | Централизованный сервис исходящих webhooks |
 
 ## 📋 TODO
 

@@ -96,6 +96,22 @@ Default `rating.contextWeights`:
 | `notifications.feedbackReminderDays` | number[] | `[1, 3, 7]` | global | Интервалы напоминаний об отзыве |
 | `notifications.digestHourUtc` | number | `9` | global | Час отправки digest (UTC) |
 
+### webhooks
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `webhooks.delivery.maxAttempts` | number | `5` | global | Попыток доставки на endpoint |
+| `webhooks.delivery.initialBackoffSeconds` | number | `30` | global | Первая задержка retry |
+| `webhooks.delivery.maxBackoffSeconds` | number | `3600` | global | Cap exponential backoff |
+| `webhooks.delivery.timeoutMs` | number | `10000` | global | Fallback HTTP timeout |
+| `webhooks.userDefaultTimeoutMs` | number | null | `user:{id}` | Дефолт timeout для всех hooks пользователя |
+| `webhooks.payload.maxBytes` | number | `65536` | global | Max body после redaction |
+| `webhooks.signature.header` | string | `X-Tavrida-Signature` | global | Заголовок подписи |
+| `webhooks.signature.algorithm` | string | `HMAC_SHA256` | global | Алгоритм подписи |
+| `webhooks.ssrf.allowPrivateIPs` | boolean | `false` | global | Запрет private IP в URL |
+| `webhooks.autoDisableOnDead` | boolean | `true` | global | Auto-disable endpoint после серии DEAD |
+| `webhooks.autoDisable.deadStreak` | number | `10` | global | Подряд DEAD до disable |
+
 ### settings _(мета)_
 
 | Ключ | Тип | Default | Scope | Описание |
@@ -176,6 +192,16 @@ Default `rating.contextWeights`:
 | `subscriptions.emailDigest` | feature | false | false | true | Email digest |
 
 > Legacy: `auction_subscriptions.*` → migrate ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
+
+### webhooks
+
+| Ключ | Тип | Free | Basic | Pro | Описание |
+|------|-----|------|-------|-----|----------|
+| `webhooks.endpointsMax` | limit | 0 | 2 | 10 | USER webhook endpoints на аккаунт |
+| `webhooks.replaysPerDay` | limit | 0 | 5 | 50 | Ручных replay доставки / сутки |
+| `webhooks.userScopeEnabled` | feature | false | true | true | Пользовательские webhooks |
+
+> Platform endpoints (`scope=PLATFORM`) — только admin, не лимитируются FP.
 
 ### marketplace _(draft)_
 

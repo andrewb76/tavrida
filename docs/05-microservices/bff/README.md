@@ -49,6 +49,10 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |
 | `/api/v1/auction-subscriptions` | GET, POST, DELETE | auction-subscriptions | `/internal/v1/subscriptions` |
 | `/api/v1/settings/public` | GET | settings | `/internal/v1/settings/public` |
+| `/api/v1/webhooks` | GET, POST | webhooks | `/internal/v1/webhooks` |
+| `/api/v1/webhooks/{id}` | GET, PATCH, DELETE | webhooks | `/internal/v1/webhooks/{id}` |
+| `/api/v1/webhooks/{id}/deliveries` | GET | webhooks | `/internal/v1/webhooks/{id}/deliveries` |
+| `/api/v1/admin/webhooks` | GET, POST, PATCH, DELETE | webhooks | `/internal/v1/admin/webhooks` |
 | `/api/v1/admin/*` | * | mixed | admin + Keto `admin` role |
 
 Полные соглашения: [06-api/README.md](../../06-api/README.md)

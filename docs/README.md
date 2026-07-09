@@ -55,6 +55,7 @@
 | [keto-schema](./09-security/keto-schema.md) | **Auth:** Ory Keto namespace |
 | [MICROSERVICE-SPEC](./05-microservices/MICROSERVICE-SPEC.md) | Требования к docs и коду каждого сервиса |
 | [Event catalog](./03-architecture/event-catalog.md) | Все RabbitMQ-события |
+| [Messaging (RabbitMQ)](./03-architecture/messaging.md) | Exchange, fan-out, очереди на сервис |
 | [Deployment](./04-deployment/README.md) | Swarm, CI/CD, migrations |
 | [Observability](./07-observability/README.md) | Grafana, SLO, logging |
 | [Security ops](./09-security/security-ops.md) | Network, secrets, incidents |
@@ -80,6 +81,7 @@
 | 👤 user-profile | ✅ spec ready | [user-profile](./05-microservices/user-profile/README.md) |
 | ⚙️ settings | ✅ spec ready | [settings](./05-microservices/settings/README.md) |
 | 📬 notifications | ✅ spec ready | [notifications](./05-microservices/notifications/README.md) |
+| 🔗 webhooks | ✅ spec ready | [webhooks](./05-microservices/webhooks/README.md) |
 | 🛒 marketplace | ✅ spec ready | [marketplace](./05-microservices/marketplace/README.md) |
 
 **Легенда:** 📝 draft/spec · 🚧 код в `services/` (каркас)
