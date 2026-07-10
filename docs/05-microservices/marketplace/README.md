@@ -232,6 +232,24 @@ Authorization: Bearer {expert-token}
 
 ---
 
+## 💰 Платежи платформе (billing)
+
+Списание через `billing.charge` при платных опциях маркета. **Цена заказа** (provider↔customer) **не** проходит через billing — расчёт между пользователями.
+
+| Target | Когда | Caller |
+|--------|-------|--------|
+| `marketplace.listingPromotion` | Продвижение услуги в каталоге | marketplace → billing |
+| `marketplace.featuredPlacement` | Закрепление в категории | marketplace → billing |
+| `marketplace.listingActivation` | Платная публикация *(если введём)* | marketplace → billing |
+| `marketplace.platformFee` | Комиссия платформы отдельным charge *(TBD)* | marketplace → billing |
+
+Цены: [PLATFORM-REGISTRY — разовые платежи](../PLATFORM-REGISTRY.md#marketplace).  
+Реферальная категория `MARKETPLACE_SERVICES` — включается админом в `referralRewards.enabledChargeCategories`.
+
+**Не referral:** `marketplace.orderPayment:*` — любой target расчёта по заказу между users.
+
+---
+
 ## ⚙️ Переменные settings
 
 | Ключ | Default | Описание |

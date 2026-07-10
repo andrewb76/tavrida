@@ -83,6 +83,7 @@
 | 📬 notifications | ✅ spec ready | [notifications](./05-microservices/notifications/README.md) |
 | 🔗 webhooks | ✅ spec ready | [webhooks](./05-microservices/webhooks/README.md) |
 | 🛒 marketplace | ✅ spec ready | [marketplace](./05-microservices/marketplace/README.md) |
+| 🎁 referral-rewards | ✅ spec ready | [referral-rewards](./05-microservices/referral-rewards/README.md) |
 
 **Легенда:** 📝 draft/spec · 🚧 код в `services/` (каркас)
 
@@ -92,7 +93,7 @@
 
 | Сводка | |
 |--------|--|
-| Spec-ready сервисы | 13 (+ BFF) |
+| Spec-ready сервисы | 14 (+ BFF) |
 | GitHub Pages + автосайдбар | ✅ |
 | OpenAPI, legal тексты, link-check CI | ⏳ см. roadmap |
 | Реализация кода | каркас 4 сервисов |

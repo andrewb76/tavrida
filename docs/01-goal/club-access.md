@@ -87,6 +87,7 @@ sequenceDiagram
 | Срок | `club.invite.validityDays` (default 14) |
 | Admin | Без лимита; audit log |
 | Реферал | `inviterId` при первом входе по invite — [karma-and-rating.md](./karma-and-rating.md) |
+| Денежные бонусы | Опционально — [referral-rewards](../05-microservices/referral-rewards/README.md) (если программа включена) |
 
 ---
 
@@ -122,6 +123,7 @@ sequenceDiagram
 - [logto-setup.md](../14-frontend/logto-setup.md) — фронт + env
 - [bff/invites-api.md](../05-microservices/bff/invites-api.md) — REST spec
 - [user-profile](../05-microservices/user-profile/README.md) — коды, `inviterId`
+- [referral-rewards](../05-microservices/referral-rewards/README.md) — денежные вознаграждения (опционально)
 - [roles.md](./roles.md) — Guest vs Member
 
 ---

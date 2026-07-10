@@ -101,6 +101,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/internal/v1/invites` | Список по issuerId |
 | GET | `/internal/v1/invites/resolve` | Lookup |
 | POST | `/internal/v1/invites/claim` | invitation + inviterId |
+| GET | `/internal/v1/users/{userId}/ancestor-chain` | Цепочка inviter → … (для referral-rewards, rating) |
 | POST | `/internal/v1/profile/sync-rating` | Admin/reconcile |
 | POST | `/internal/v1/profile/ensure` | Create empty profile on first login |
 | GET | `/health`, `/health/ready` | — |
@@ -121,7 +122,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
-| produce | `invitation.redeemed` | `{ inviteeId, inviterId, inviteCodeId }` → rating referral |
+| produce | `invitation.redeemed` | `{ inviteeId, inviterId, inviteCodeId }` → rating, **referral-rewards** |
 | consume | `rating.updated` | Update cached rating fields |
 | consume | `feedback.submitted` | Optional refresh |
 | consume | `subscription.activated` | Invalidate BFF cache (optional) |
@@ -131,6 +132,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | Сервис | Протокол |
 |--------|----------|
 | rating | events → cache; referral recompute on claim |
+| referral-rewards | ancestor-chain HTTP | referral-rewards → user-profile |
 | BFF | aggregation `/profile/me` |
 | MinIO | avatars bucket |
 | Logto | displayName fallback from JWT claims |

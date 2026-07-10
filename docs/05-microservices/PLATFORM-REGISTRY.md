@@ -89,6 +89,28 @@ Default `rating.contextWeights`:
 | `billing.currencyDefault` | string | `RUB` | global | Валюта по умолчанию |
 | `billing.minDepositAmount` | number | `100` | global | Минимальное пополнение (₽) |
 
+### referralRewards
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `referralRewards.globalEnabled` | boolean | `false` | global | Kill switch денежной реферальной программы |
+| `referralRewards.maxDepth` | number | `1` | global | Макс. глубина дерева для **денежных** выплат (1 = только прямой inviter) |
+| `referralRewards.depthCoefficients` | number[] | `[1.0]` | global | Множители по уровням d=1…N (длина ≥ maxDepth) |
+| `referralRewards.enabledChargeCategories` | enum[] | `["SUBSCRIPTION"]` | global | `SUBSCRIPTION` · `AUCTION_SERVICES` · `MARKETPLACE_SERVICES` · `FORUM_REACTIONS` — [charge-categories](./referral-rewards/requirements/charge-categories.md) |
+| `referralRewards.inviteeBonus.enabled` | boolean | `false` | global | Двусторонний бонус invitee |
+| `referralRewards.inviteeBonus.amount` | number | `0` | global | Сумма бонуса invitee (₽) |
+| `referralRewards.inviteeBonus.trigger` | enum | `ON_REGISTRATION` | global | `ON_REGISTRATION` \| `ON_FIRST_QUALIFYING_CHARGE` |
+| `referralRewards.rules` | object[] | см. README | global | Правила начисления inviter (см. [referral-rewards](./referral-rewards/README.md)) |
+| `referralRewards.defaultHoldDays` | number | `14` | global | Hold по умолчанию (дни) |
+| `referralRewards.payoutCronMinutes` | number | `15` | global | Период cron выплат |
+| `referralRewards.minPayoutAmount` | number | `1` | global | Мин. сумма accrual к выплате (₽) |
+| `referralRewards.globalBudgetPerMonth` | number | null | global | Cap программы / месяц (null = без лимита) |
+| `referralRewards.excludedTargets` | string[] | `["referral.reward:"]` | global | Prefix target, исключённые из триггеров |
+
+> Категории: [charge-categories.md](./referral-rewards/requirements/charge-categories.md).  
+> **GMV сделок не участвует** — [legal-scope.md](./referral-rewards/requirements/legal-scope.md).  
+> Репутационный referral — `rating.referral.*` (другой канал).
+
 ### notifications
 
 | Ключ | Тип | Default | Scope | Описание |
@@ -180,6 +202,14 @@ Default `rating.contextWeights`:
 | `club.invitesPerMonth` | limit | 1 | 3 | 10 | Новых инвайт-кодов в месяц |
 | `club.referralInfluenceEnabled` | feature | true | true | true | Учитывать referral tree в effective karma/rating |
 
+### referralRewards
+
+| Ключ | Тип | Free | Basic | Pro | Описание |
+|------|-----|------|-------|-----|----------|
+| `referralRewards.programEnabled` | feature | false | true | true | Участие тарифа в денежных выплатах |
+| `referralRewards.payoutMultiplier` | limit | 0.5 | 1.0 | 1.5 | Множитель к расчётной сумме |
+| `referralRewards.maxEarnedPerMonth` | limit | 500 | 3000 | 10000 | Cap gross начислений / месяц на user (₽) |
+
 ### subscriptions
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
@@ -240,6 +270,20 @@ Default `rating.contextWeights`:
 | `forum.reaction.brain` | 100 | Реакция 🧠 |
 
 > `forum.reaction.pin` — только модератор, бесплатно ([roles](../01-goal/roles.md)).
+
+### marketplace
+
+Платежи **платформе** за услуги маркета (не цена заказа provider↔customer).  
+Реферальная категория: `MARKETPLACE_SERVICES` — [charge-categories](./referral-rewards/requirements/charge-categories.md).
+
+| Target | Цена (₽) | Описание |
+|--------|----------|----------|
+| `marketplace.listingPromotion` | TBD | Продвижение услуги в каталоге |
+| `marketplace.featuredPlacement` | TBD | Закрепление в категории |
+| `marketplace.listingActivation` | TBD | Платная публикация объявления (если введём) |
+| `marketplace.platformFee` | TBD | Комиссия платформы (отдельный `billing.charge`, не GMV события) |
+
+> **Запрещено** для referral: `marketplace.orderPayment:*` и любые target расчёта между users — [legal-scope](./referral-rewards/requirements/legal-scope.md).
 
 ---
 

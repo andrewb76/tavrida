@@ -39,7 +39,7 @@
 |------|-----|----------|
 | `id` | UUID PK | ID операции |
 | `userId` | UUID | Владелец кошелька |
-| `type` | enum | `DEPOSIT` \| `CHARGE` \| `REFUND` |
+| `type` | enum | `DEPOSIT` \| `CHARGE` \| `REFUND` \| `CREDIT` |
 | `amount` | decimal(12,2) | Сумма (> 0) |
 | `description` | text | Человекочитаемое описание для UI |
 | `target` | varchar | Только для `CHARGE` — см. выше |
@@ -78,6 +78,7 @@ stateDiagram-v2
 | GET | `/wallets/balance?userId=` | financial-policy, BFF | Баланс по userId |
 | POST | `/wallets/charge` | financial-policy, auction | Списание с Idempotency-Key |
 | POST | `/wallets/refund` | admin, financial-policy | Возврат по `transactionId` |
+| POST | `/wallets/credit` | referral-rewards, admin | Platform credit (реферальные выплаты, компенсации) |
 | GET | `/health` | orchestrator | Liveness |
 | GET | `/health/ready` | orchestrator | DB + RabbitMQ |
 
@@ -134,6 +135,23 @@ Content-Type: application/json
 }
 ```
 
+### `POST /internal/v1/wallets/credit`
+
+Зачисление **без внешнего платёжного провайдера** — реферальные выплаты, компенсации admin.
+
+```json
+{
+  "userId": "user-uuid",
+  "amount": 99,
+  "target": "referral.reward:accrual-uuid",
+  "description": "Реферальное вознаграждение",
+  "source": "referral-rewards",
+  "idempotencyKey": "referral-accrual-uuid"
+}
+```
+
+**Ответ:** как у charge — `{ transactionId, status, balanceAfter }`.
+
 ## ⚙️ Переменные settings
 
 | Ключ | Тип | Default | Scope | Описание |
@@ -154,6 +172,8 @@ Content-Type: application/json
 | produce | `billing.deposit_completed` | Deposit → `COMPLETED` |
 | produce | `billing.charge_completed` | Charge → `COMPLETED` |
 | produce | `billing.charge_failed` | Charge → `FAILED` (недостаточно средств) |
+| produce | `billing.refund_completed` | Refund → `COMPLETED` |
+| produce | `billing.credit_completed` | Credit (platform) → `COMPLETED` |
 
 > Каталог payload: [event-catalog](../../03-architecture/event-catalog.md)
 
@@ -163,6 +183,7 @@ Content-Type: application/json
 |--------|---------------|----------|-------------|
 | financial-policy | balance, charge | HTTP internal | FP → billing |
 | auction | charge (promotion, reserve) | HTTP internal | auction → billing |
+| referral-rewards | credit (payout) | HTTP internal | referral-rewards → billing |
 | BFF | proxy public + deposit webhook | HTTP | BFF ↔ billing |
 | notifications | consume events | RabbitMQ | billing → RMQ |
 

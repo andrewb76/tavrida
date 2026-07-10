@@ -102,6 +102,9 @@
 
 ## 6. Реферальное дерево (инвайты)
 
+> **Денежные вознаграждения** (₽ на баланс) — отдельный сервис [referral-rewards](../05-microservices/referral-rewards/README.md).  
+> Этот раздел — только **репутация** (`referralKarma`, `referralRating`).
+
 ### 6.1 Данные
 
 ```
