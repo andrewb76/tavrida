@@ -1,7 +1,7 @@
 # 📐 Wireframes — индекс экранов
 
 > **Статус:** spec ready · **Версия:** 0.4  
-> **Продукт:** [platform-for-users](../../01-goal/platform-for-users.md) · **Токены:** [design-tokens](../design-tokens.md)  
+> **Токены:** [design-tokens](../design-tokens.md) · **DS:** [design-system](../design-system.md)  
 > **Дерево + флаги:** [screen-tree](../screen-tree.md)
 
 Low-fi спецификации для `apps/frontend`. Figma — optional; каталог — **источник структуры**.

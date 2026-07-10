@@ -8,7 +8,9 @@
 
 | Документ | Описание |
 |----------|----------|
-| [design-tokens.md](./design-tokens.md) | Цвета, типографика, spacing (seed) |
+| [brandbook.md](./brandbook.md) | Идентичность, тон, палитра «морские чернила и патина» |
+| [design-system.md](./design-system.md) | **Дизайн-система** — токены в коде, примитивы, паттерны |
+| [design-tokens.md](./design-tokens.md) | Справочник `--token-*` ↔ Tailwind |
 | [information-architecture.md](./information-architecture.md) | Sitemap, nav, breakpoints |
 | [screen-tree.md](./screen-tree.md) | **Дерево экранов** — масштаб UI, флаги wireframe |
 | [wireframes/](./wireframes/README.md) | W01–W16: содержание + ASCII + component tree |
@@ -26,20 +28,24 @@
 
 ## 🧱 Компоненты
 
-- **Tailwind** + [design-tokens](./design-tokens.md)
-- **`@tavrida/ui`** — Reka UI primitives
+- **Tailwind** + [design-tokens](./design-tokens.md) + [design-system](./design-system.md)
+- **`@tavrida/ui`** — Reka UI primitives (см. design-system §6)
 - **Novu Inbox** — header bell
 
 ## 📋 TODO (design)
 
+- [ ] Миграция `tokens.css` на палитру брендбука ([design-system §15](./design-system.md#15-миграция-кода))
 - [ ] Figma file + logo
 - [ ] High-fi mockups from wireframes
 - [ ] Admin-ui «Инструменты» page ([dev-tools](../02-infrastructure/dev-tools.md))
 - [ ] Dark theme pass
 
-## 📘 Brandbook
+## 📘 Brandbook & design system
 
-Seed tokens в [design-tokens.md](./design-tokens.md). Полный брендбук — после ревью дизайна.
+| Документ | Роль |
+|----------|------|
+| [brandbook.md](./brandbook.md) | Зачем и как выглядит бренд |
+| [design-system.md](./design-system.md) | Как собирать UI в коде |
 
 ## 🔗 Связанные разделы
 
