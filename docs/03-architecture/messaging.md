@@ -77,7 +77,7 @@ flowchart TB
 1. Зафиксировать бизнес-состояние в **своей** БД (commit).
 2. Опубликовать envelope в `tavrida-lot.events` с `routing_key = eventType`.
 3. Не ждать consumers — fire-and-forget.
-4. При регистрации webhook-типов — `POST /internal/v1/webhooks/event-types/register` (см. [webhooks](../05-microservices/webhooks/README.md)).
+4. При регистрации webhook-типов — **генератор** вызывает `POST /internal/v1/webhooks/event-types/register` (см. [webhooks](../05-microservices/webhooks/README.md)).
 
 ```mermaid
 sequenceDiagram

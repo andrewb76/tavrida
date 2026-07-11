@@ -25,7 +25,7 @@
 | Idempotency | Consumer хранит `eventId`, повторная обработка — no-op |
 | DLQ | `{queue-name}.dlq` после 3 retries |
 | Routing key | = `eventType` |
-| Webhooks | Тип доступен для подписки только после `POST /internal/v1/webhooks/event-types/register` — см. [webhooks](../05-microservices/webhooks/README.md) |
+| Webhooks | Тип доступен для подписки только после регистрации генератором: `POST /internal/v1/webhooks/event-types/register` — см. [webhooks](../05-microservices/webhooks/README.md) |
 | Fan-out | Один `eventType` → N очередей (по одной на consumer-сервис) — см. [messaging.md](./messaging.md) |
 
 ---

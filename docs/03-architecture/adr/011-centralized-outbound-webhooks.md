@@ -20,8 +20,8 @@
 
 | Ответственность | Кто |
 |-----------------|-----|
-| Реестр типов событий, доступных для подписки | Доменные сервисы регистрируют; **platform**-типы — admin |
-| CRUD webhook endpoints | **User** (свои) / **Admin** (platform) |
+| Реестр типов событий для подписки | **Генераторы** (доменные сервисы) регистрируют при старте; platform-типы — admin |
+| CRUD hooks (endpoints) | **User** — несколько hooks по тарифу; URL + чекбоксы событий из реестра / **Admin** (platform) |
 | Доставка HTTP POST при событии RMQ | `webhooks` consumer |
 | Retry, учёт попыток, журнал | `webhooks` |
 | Redaction payload перед HTTP | `webhooks.redactWebhookPayload()` + rules при register |

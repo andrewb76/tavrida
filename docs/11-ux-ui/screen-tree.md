@@ -97,7 +97,7 @@ Tavrida Lot (SPA + landing)
 │    ├── Заказ услуги (modal)                                                 📐 W09 ⏳
 │    │     Согласование цены, создание order.
 │    └── Интеграции / Webhooks (settings panel)
-│          CRUD webhook URL (Basic+), журнал — route TBD.                     ⬜
+│          `/profile/integrations` — CRUD hooks, чекбоксы событий, журнал.   📐 W17
 │
 └─── 🛡️ Admin / moderator (inline + tools, post-MVP)
      ├── Очередь модерации (inline + queue TBD)                               ⬜
@@ -142,7 +142,7 @@ Tavrida Lot (SPA + landing)
 | Paywall | overlay | 📐 W16 | ✅ |
 | Paid reaction | overlay | 📐 W06* | ✅ |
 | Order service | overlay | 📐 W09 | ⏳ |
-| Webhooks settings | panel | ⬜ | ⏳ |
+| Webhooks / интеграции | `/profile/integrations` | 📐 W17 | ⏳ Basic+ |
 | Admin ×4 | various | ⬜ | ⏳ |
 
 ---

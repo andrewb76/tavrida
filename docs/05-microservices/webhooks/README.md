@@ -1,26 +1,76 @@
 # 🔗 Сервис: webhooks
 
-> **Статус:** spec ready · **Версия:** 0.3 · **Schema:** `webhooks` · **Port (draft):** 3011  
+> **Статус:** spec ready · **Версия:** 0.4 · **Schema:** `webhooks` · **Port (draft):** 3011  
 > **ADR:** [011-centralized-outbound-webhooks](../../03-architecture/adr/011-centralized-outbound-webhooks.md)
 
 ## 🎯 Назначение
 
 **Исходящие HTTP webhooks** — **machine-to-machine** интеграции. Не заменяет [subscriptions](../subscriptions/README.md) и [notifications](../notifications/README.md) (machine-to-human: email, push, in-app).
 
-- Доменные сервисы **регистрируют** исходящие event types и публикуют их в RabbitMQ
+- **Генераторы событий** (доменные сервисы: `auction`, `billing`, …) **регистрируют** типы в реестре `webhooks` и **публикуют** факты в RabbitMQ
 - `webhooks` **слушает** очередь `webhooks.events` ([messaging](../../03-architecture/messaging.md))
-- При совпадении с подпиской — HTTP POST на URL клиента (timeout, retry, журнал)
+- При совпадении типа с подпиской hook — HTTP POST на URL владельца (timeout, retry, журнал)
 - Payload проходит **redaction** — наружу и в UI только безопасное подмножество
 
-> **Не этот сервис:** входящие webhooks платёжки (billing), Novu delivery status (notifications).
+> **Не этот сервис:** входящие webhooks платёжки (billing), Logto → BFF, Novu delivery status (notifications).
+
+## 👤 Модель для пользователя
+
+У каждого участника может быть **несколько hooks** (лимит по тарифу — см. [financial-policy](#-переменные-financial-policy)). Один hook = одна интеграция «куда слать».
+
+| Поле hook (MVP UI) | Обязательно | Описание |
+|--------------------|-------------|----------|
+| **Название** | да | Метка в списке («CRM», «Notion bot») |
+| **URL** | да | HTTPS endpoint, куда уходят POST |
+| **События** | да (≥1) | Чекбоксы из **реестра платформы** — только типы, уже зарегистрированные генераторами и доступные для `USER` scope |
+| **Включён** | да | `enabled` — пауза без удаления |
+| **Секрет** | авто | Выдаётся при создании / rotate; для проверки подписи на стороне интегратора |
+
+Опционально (не блокирует создание): per-event HTTP timeout, пользовательский default timeout — см. [таймауты](#️-таймауты-http).
+
+```mermaid
+flowchart LR
+    subgraph user [Пользователь]
+        H1[Hook 1 URL + events]
+        H2[Hook 2 URL + events]
+    end
+    subgraph registry [Реестр webhooks]
+        ET[EventTypeRegistration]
+    end
+    subgraph gens [Генераторы]
+        A[auction]
+        B[billing]
+    end
+    A -->|register + publish| ET
+    B -->|register + publish| ET
+    ET -->|GET event-types → чекбоксы| user
+    H1 -->|подписка eventTypes| ET
+```
+
+Wireframe: [W17 — Интеграции / Webhooks](../../11-ux-ui/wireframes/webhooks.md).
+
+## 📡 Реестр событий (генераторы)
+
+**Генератор** — доменный сервис, который **производит** события (producer в [event-catalog](../../03-architecture/event-catalog.md)).
+
+| Шаг | Кто | Действие |
+|-----|-----|----------|
+| 1 | Генератор @ startup | `POST /internal/v1/webhooks/event-types/register` — тип, scope, redaction rules, `userFilterStrategy` |
+| 2 | Генератор @ runtime | Публикует envelope в `tavrida-lot.events` после commit в своей БД |
+| 3 | `webhooks` | Whitelist binding очереди `webhooks.events` только на **зарегистрированные** типы |
+| 4 | UI / BFF | `GET /webhooks/event-types` — список для чекбоксов (без «придуманных» пользователем типов) |
+
+Пользователь **не** создаёт новые типы событий — только выбирает из каталога, который наполняют генераторы.
 
 ## 📖 Термины
 
 | Термин | Описание |
 |--------|----------|
-| **Event type** | `domain.action` из event-catalog, зарегистрированный для webhook-подписки |
-| **Scope** | `PLATFORM` (admin) \| `USER` (владелец endpoint) |
-| **Webhook endpoint** | URL + secret + event types + опциональные таймауты |
+| **Hook** (webhook endpoint) | URL + secret + выбранные event types + минимальные настройки |
+| **Генератор событий** | Доменный producer: регистрирует тип в `webhooks` и публикует в RMQ |
+| **Event type** | `domain.action` из event-catalog, запись в `EventTypeRegistration` |
+| **Scope** | `PLATFORM` (admin) \| `USER` (владелец hook) |
+| **Webhook endpoint** | Сущность hook в БД: URL + secret + `eventTypes[]` + опциональные таймауты |
 | **Payload redaction** | Фильтрация полей перед отправкой и отображением |
 | **Delivery** | Одна отправка (событие × endpoint) |
 | **Участник аукциона** | Продавец **или** любой пользователь, сделавший ≥1 ставку на этот лот (роль не важна) |
@@ -145,7 +195,7 @@ flowchart LR
 | # | Источник | Пример |
 |---|----------|--------|
 | 1 | `endpoint.eventTimeouts[eventType]` | 5 с только для `auction.completed` |
-| 2 | `settings` scope `user:{ownerId}` → `webhooks.userDefaultTimeoutMs` | 15 с для всех hooks пользователя |
+| 2 | `settings` scope `user:{ownerId}` → `webhooks.user.defaultTimeoutMs` | 15 с для всех hooks пользователя |
 | 3 | `webhooks.delivery.timeoutMs` (global) | 10 с платформа |
 
 ## 🔌 API
@@ -154,10 +204,10 @@ flowchart LR
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/webhooks/event-types` | Типы + `publicPayloadSchema` |
-| GET | `/webhooks` | Список endpoints |
-| POST | `/webhooks` | Создать (+ `eventTimeouts`) |
-| PATCH | `/webhooks/{id}` | URL, eventTypes, eventTimeouts, enabled |
+| GET | `/webhooks/event-types` | Реестр для UI: типы с `description` + `publicPayloadSchema` (чекбоксы) |
+| GET | `/webhooks` | Список hooks пользователя |
+| POST | `/webhooks` | Создать hook: `name`, `url`, `eventTypes[]` (+ опц. `eventTimeouts`) |
+| PATCH | `/webhooks/{id}` | URL, `eventTypes[]` (чекбоксы), `eventTimeouts`, `enabled` |
 | DELETE | `/webhooks/{id}` | — |
 | GET | `/webhooks/{id}/deliveries` | Журнал (**redacted** preview) |
 | POST | `/webhooks/{id}/deliveries/{deliveryId}/replay` | Replay (лимит FP) |
@@ -221,10 +271,10 @@ X-Tavrida-Timestamp: 1730000000
 | `webhooks.delivery.initialBackoffSeconds` | 30 | global | Первая задержка retry |
 | `webhooks.delivery.maxBackoffSeconds` | 3600 | global | Cap backoff |
 | `webhooks.delivery.timeoutMs` | 10000 | global | Fallback HTTP timeout |
-| `webhooks.userDefaultTimeoutMs` | null | `user:{id}` | Дефолт timeout для всех hooks пользователя |
+| `webhooks.user.defaultTimeoutMs` | null | `user:{id}` | Дефолт timeout для всех hooks пользователя |
 | `webhooks.payload.maxBytes` | 65536 | global | Max body после redaction |
 | `webhooks.signature.header` | `X-Tavrida-Signature` | global | — |
-| `webhooks.autoDisableOnDead` | **true** | global | Отключать endpoint после серии DEAD |
+| `webhooks.autoDisable.onDead` | **true** | global | Отключать endpoint после серии DEAD |
 | `webhooks.autoDisable.deadStreak` | 10 | global | Подряд DEAD до disable |
 | `webhooks.ssrf.allowPrivateIPs` | false | global | Запрет private IP в URL |
 
@@ -232,15 +282,17 @@ X-Tavrida-Timestamp: 1730000000
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
-| `webhooks.endpointsMax` | 0 | 2 | 10 | USER endpoints |
-| `webhooks.replaysPerDay` | 0 | 5 | 50 | Ручных replay / сутки |
-| `webhooks.userScopeEnabled` | false | true | true | USER webhooks |
+| `webhooks.member.01endpoint.max` | 0 | 2 | 10 | Hooks (endpoints) на аккаунт |
+| `webhooks.member.02replay.dailyMax` | 0 | 5 | 50 | Ручных replay / сутки |
+| `webhooks.member.03userScope.enabled` | false | true | true | USER hooks доступны |
+
+> Канонические ключи — [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md#webhooks-1).
 
 ## 🔗 Взаимодействие
 
 | Сервис | Роль |
 |--------|------|
-| producers | RMQ publish + register event types |
+| генераторы (producers) | register event types + RMQ publish |
 | settings | timeouts, retry, autoDisable |
 | financial-policy | лимиты endpoints |
 | notifications | опционально alert на `delivery_failed` |
@@ -282,4 +334,4 @@ X-Tavrida-Timestamp: 1730000000
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.3-spec
+**Автор:** команда разработки · **Версия:** 0.4-spec

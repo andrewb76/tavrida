@@ -38,8 +38,9 @@ Low-fi спецификации для `apps/frontend`. Figma — optional; ка
 | W14 | Новая тема форума | [forum.md](./forum.md#w14--новая-тема) | ✅ | 📐 |
 | W15 | Inbox (Novu) | [overlays.md](./overlays.md#w15--центр-уведомлений-inbox) | ✅ | 📐 |
 | W16 | Paywall modal | [overlays.md](./overlays.md#w16--paywall-pro-фичи) | ✅ | 📐 |
+| W17 | Интеграции / Webhooks | [webhooks.md](./webhooks.md) | ⏳ Basic+ | 📐 |
 
-**Без wireframe (⬜):** OAuth `/callback`, Webhooks settings, Admin — см. [screen-tree](../screen-tree.md).
+**Без wireframe (⬜):** OAuth `/callback`, Admin — см. [screen-tree](../screen-tree.md).
 
 ## 📐 Общие паттерны
 
