@@ -11,7 +11,9 @@ const { inviteOnly } = useClubAccess();
 <template>
   <section class="space-y-8">
     <div class="space-y-4 text-center sm:text-left">
-      <h1 class="text-3xl font-semibold sm:text-4xl">Клуб находок Крыма</h1>
+      <h1 class="text-3xl font-semibold sm:text-4xl">
+        Клуб находок Крыма
+      </h1>
       <p class="max-w-xl text-lg text-text-muted">
         <template v-if="inviteOnly">
           Закрытое сообщество коллекционеров и любителей истории — только по приглашению.
@@ -21,8 +23,16 @@ const { inviteOnly } = useClubAccess();
         </template>
       </p>
       <div class="flex flex-wrap justify-center gap-3 sm:justify-start">
-        <RouterLink v-if="inviteOnly" to="/join">
-          <UiButton intent="primary" size="lg">У меня есть инвайт</UiButton>
+        <RouterLink
+          v-if="inviteOnly"
+          to="/join"
+        >
+          <UiButton
+            intent="primary"
+            size="lg"
+          >
+            У меня есть инвайт
+          </UiButton>
         </RouterLink>
         <UiButton
           v-else-if="!auth.isAuthenticated.value"
@@ -33,7 +43,12 @@ const { inviteOnly } = useClubAccess();
           Зарегистрироваться
         </UiButton>
         <RouterLink to="/about">
-          <UiButton intent="secondary" size="lg">О клубе</UiButton>
+          <UiButton
+            intent="secondary"
+            size="lg"
+          >
+            О клубе
+          </UiButton>
         </RouterLink>
         <UiButton
           v-if="!auth.isAuthenticated.value"
@@ -45,6 +60,8 @@ const { inviteOnly } = useClubAccess();
         </UiButton>
       </div>
     </div>
-    <p class="text-center text-xs text-text-muted sm:text-left">W01 · Visitor landing</p>
+    <p class="text-center text-xs text-text-muted sm:text-left">
+      W01 · Visitor landing
+    </p>
   </section>
 </template>

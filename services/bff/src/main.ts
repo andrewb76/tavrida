@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const port = Number(process.env.BFF_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
-  console.log(`bff listening on :${port}/api/v1`);
+  Logger.log(`bff listening on :${port}/api/v1`, 'Bootstrap');
 }
 
 void bootstrap();

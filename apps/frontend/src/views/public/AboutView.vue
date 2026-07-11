@@ -11,7 +11,9 @@ import { RouterLink } from 'vue-router';
     description="Статическое описание миссии, как попасть в клуб."
   >
     <RouterLink to="/invite">
-      <UiButton intent="primary">У меня есть инвайт</UiButton>
+      <UiButton intent="primary">
+        У меня есть инвайт
+      </UiButton>
     </RouterLink>
   </PlaceholderPage>
 </template>

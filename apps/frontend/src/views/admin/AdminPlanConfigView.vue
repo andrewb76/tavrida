@@ -235,7 +235,9 @@ onMounted(() => {
 <template>
   <section class="space-y-8">
     <div>
-      <h2 class="text-lg font-semibold">Тарифы (plan-config)</h2>
+      <h2 class="text-lg font-semibold">
+        Тарифы (plan-config)
+      </h2>
       <p class="text-sm text-text-muted">
         Планы, plan variables и разовые цены (<code class="text-xs">valueType: price</code>) из
         <code>plan-config</code> — влияют на <code>/plans</code>, <code>billing.charge</code> и
@@ -243,14 +245,30 @@ onMounted(() => {
       </p>
     </div>
 
-    <p v-if="loading" class="text-sm text-text-muted">Загрузка…</p>
-    <p v-else-if="error" class="text-sm text-error">{{ error }}</p>
+    <p
+      v-if="loading"
+      class="text-sm text-text-muted"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="text-sm text-error"
+    >
+      {{ error }}
+    </p>
 
     <template v-else>
       <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h3 class="font-medium">Тарифы (цены подписки)</h3>
-          <UiButton intent="primary" :disabled="savingPlans" @click="savePlans">
+          <h3 class="font-medium">
+            Тарифы (цены подписки)
+          </h3>
+          <UiButton
+            intent="primary"
+            :disabled="savingPlans"
+            @click="savePlans"
+          >
             {{ savingPlans ? 'Сохранение…' : 'Сохранить тарифы' }}
           </UiButton>
         </div>
@@ -259,17 +277,33 @@ onMounted(() => {
           <table class="min-w-full text-sm">
             <thead class="bg-bg text-left text-text-muted">
               <tr>
-                <th class="px-3 py-2 font-medium">План</th>
-                <th class="px-3 py-2 font-medium">₽ / мес</th>
-                <th class="px-3 py-2 font-medium">₽ / год</th>
-                <th class="px-3 py-2 font-medium">Активен</th>
+                <th class="px-3 py-2 font-medium">
+                  План
+                </th>
+                <th class="px-3 py-2 font-medium">
+                  ₽ / мес
+                </th>
+                <th class="px-3 py-2 font-medium">
+                  ₽ / год
+                </th>
+                <th class="px-3 py-2 font-medium">
+                  Активен
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="plan in plans" :key="plan.id" class="border-t border-border">
+              <tr
+                v-for="plan in plans"
+                :key="plan.id"
+                class="border-t border-border"
+              >
                 <td class="px-3 py-2">
-                  <div class="font-medium">{{ planForms[plan.id].title }}</div>
-                  <div class="text-xs text-text-muted">{{ plan.id }}</div>
+                  <div class="font-medium">
+                    {{ planForms[plan.id].title }}
+                  </div>
+                  <div class="text-xs text-text-muted">
+                    {{ plan.id }}
+                  </div>
                 </td>
                 <td class="px-3 py-2">
                   <input
@@ -279,7 +313,7 @@ onMounted(() => {
                     step="1"
                     class="w-28 rounded-md border border-border bg-bg px-2 py-1"
                     :disabled="plan.id === 'free'"
-                  />
+                  >
                 </td>
                 <td class="px-3 py-2">
                   <input
@@ -289,7 +323,7 @@ onMounted(() => {
                     step="1"
                     class="w-28 rounded-md border border-border bg-bg px-2 py-1"
                     :disabled="plan.id === 'free'"
-                  />
+                  >
                 </td>
                 <td class="px-3 py-2">
                   <input
@@ -297,7 +331,7 @@ onMounted(() => {
                     type="checkbox"
                     class="size-4 rounded border-border"
                     :disabled="plan.id === 'free'"
-                  />
+                  >
                 </td>
               </tr>
             </tbody>
@@ -306,7 +340,9 @@ onMounted(() => {
       </section>
 
       <section class="space-y-4">
-        <h3 class="font-medium">Plan variables по сервисам</h3>
+        <h3 class="font-medium">
+          Plan variables по сервисам
+        </h3>
         <p class="text-xs text-text-muted">
           <code>-1</code> = без лимита. Переменные регистрируют domain-сервисы при старте; если ключ
           исчез из манифеста — <strong>Зависший</strong> (удаление только вручную). Quote разовой
@@ -339,13 +375,17 @@ onMounted(() => {
           :key="group"
           class="space-y-2"
         >
-          <h4 class="text-sm font-medium text-text-muted">{{ group }}</h4>
+          <h4 class="text-sm font-medium text-text-muted">
+            {{ group }}
+          </h4>
 
           <div class="overflow-x-auto rounded-lg border border-border">
             <table class="min-w-full text-sm">
               <thead class="bg-bg text-left text-text-muted">
                 <tr>
-                  <th class="px-3 py-2 font-medium">Переменная</th>
+                  <th class="px-3 py-2 font-medium">
+                    Переменная
+                  </th>
                   <th
                     v-for="col in planColumns"
                     :key="col.id"
@@ -374,7 +414,9 @@ onMounted(() => {
                         Зависший
                       </span>
                     </div>
-                    <div class="font-mono text-xs text-text-muted">{{ variable.key }}</div>
+                    <div class="font-mono text-xs text-text-muted">
+                      {{ variable.key }}
+                    </div>
                     <div class="text-xs text-text-muted">
                       {{ variable.valueType }}
                       <span v-if="variable.description">· {{ variable.description }}</span>
@@ -391,7 +433,7 @@ onMounted(() => {
                           v-model="variableForms[variable.key][col.id].isFeatureEnabled"
                           type="checkbox"
                           class="size-4 rounded border-border"
-                        />
+                        >
                         <span class="text-xs">
                           {{ variableForms[variable.key][col.id].isFeatureEnabled ? 'да' : 'нет' }}
                         </span>
@@ -405,13 +447,13 @@ onMounted(() => {
                           min="0"
                           step="1"
                           class="w-24 rounded-md border border-border bg-bg px-2 py-1"
-                        />
+                        >
                         <label class="flex items-center gap-1 text-xs text-text-muted">
                           <input
                             v-model="variableForms[variable.key][col.id].isEnabled"
                             type="checkbox"
                             class="size-3.5 rounded border-border"
-                          />
+                          >
                           вкл.
                         </label>
                       </div>
@@ -422,7 +464,7 @@ onMounted(() => {
                         type="number"
                         class="w-24 rounded-md border border-border bg-bg px-2 py-1"
                         :placeholder="formatLimitValue(null)"
-                      />
+                      >
                     </template>
                   </td>
                   <td class="space-y-1 px-3 py-2">
@@ -450,7 +492,10 @@ onMounted(() => {
           </div>
         </div>
 
-        <p v-if="!groupedVariables.length" class="text-sm text-text-muted">
+        <p
+          v-if="!groupedVariables.length"
+          class="text-sm text-text-muted"
+        >
           Нет plan variables для выбранного сервиса.
         </p>
       </section>

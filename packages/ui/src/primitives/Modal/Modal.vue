@@ -34,8 +34,13 @@ const open = defineModel<boolean>('open', { required: true });
           )
         "
       >
-        <DialogTitle class="text-lg font-semibold text-text">{{ title }}</DialogTitle>
-        <DialogDescription v-if="description" class="mt-2 text-sm text-text-muted">
+        <DialogTitle class="text-lg font-semibold text-text">
+          {{ title }}
+        </DialogTitle>
+        <DialogDescription
+          v-if="description"
+          class="mt-2 text-sm text-text-muted"
+        >
           {{ description }}
         </DialogDescription>
         <div class="mt-4">

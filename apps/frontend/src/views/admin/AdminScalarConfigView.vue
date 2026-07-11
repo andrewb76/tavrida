@@ -109,7 +109,9 @@ onMounted(() => {
 <template>
   <section class="space-y-8">
     <div>
-      <h2 class="text-lg font-semibold">Конфиг (scalar-config)</h2>
+      <h2 class="text-lg font-semibold">
+        Конфиг (scalar-config)
+      </h2>
       <p class="text-sm text-text-muted">
         Скалярный реестр: ключи регистрируют сервисы через <code>sync</code> при старте. Зависшие
         ключи не удаляются автоматически.
@@ -117,27 +119,52 @@ onMounted(() => {
     </div>
 
     <section class="space-y-4">
-      <h3 class="font-medium">Клуб (значения)</h3>
+      <h3 class="font-medium">
+        Клуб (значения)
+      </h3>
       <p class="text-sm text-text-muted">
         Ключи <code class="text-xs">club.*</code> — владелец sync: BFF.
       </p>
 
-      <p v-if="loading" class="text-sm text-text-muted">Загрузка…</p>
+      <p
+        v-if="loading"
+        class="text-sm text-text-muted"
+      >
+        Загрузка…
+      </p>
       <template v-else>
-        <p v-if="error" class="text-sm text-error">{{ error }}</p>
-        <p v-else class="text-xs text-text-muted">
+        <p
+          v-if="error"
+          class="text-sm text-error"
+        >
+          {{ error }}
+        </p>
+        <p
+          v-else
+          class="text-xs text-text-muted"
+        >
           Изменения применяются к новым инвайтам (срок и SINGLE/MULTI_USE). BFF читает scalar-config
           при каждом <code>POST /invites</code>.
         </p>
 
-        <form class="max-w-lg space-y-4" @submit.prevent="save">
-          <p v-if="!form.inviteOnly" class="text-xs text-amber-700 dark:text-amber-400">
+        <form
+          class="max-w-lg space-y-4"
+          @submit.prevent="save"
+        >
+          <p
+            v-if="!form.inviteOnly"
+            class="text-xs text-amber-700 dark:text-amber-400"
+          >
             Открытая регистрация: в Logto Console → Sign-in experience снимите «Disable user
             registration». Иначе кнопка «Зарегистрироваться» на лендинге откроет только вход.
           </p>
 
           <label class="flex items-center gap-2 text-sm">
-            <input v-model="form.inviteOnly" type="checkbox" class="size-4 rounded border-border" />
+            <input
+              v-model="form.inviteOnly"
+              type="checkbox"
+              class="size-4 rounded border-border"
+            >
             Только регистрация по инвайту
             <span class="text-text-muted">(club.registration.inviteOnly)</span>
           </label>
@@ -149,7 +176,7 @@ onMounted(() => {
               type="number"
               min="1"
               class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
-            />
+            >
           </label>
 
           <label class="block text-sm">
@@ -170,18 +197,27 @@ onMounted(() => {
               type="text"
               class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 font-mono text-sm"
               placeholder="about, rules, request"
-            />
+            >
           </label>
 
-          <UiButton type="submit" intent="primary" :disabled="saving">
+          <UiButton
+            type="submit"
+            intent="primary"
+            :disabled="saving"
+          >
             {{ saving ? 'Сохранение…' : 'Сохранить' }}
           </UiButton>
         </form>
       </template>
     </section>
 
-    <section v-if="!loading" class="space-y-4">
-      <h3 class="font-medium">Реестр ключей</h3>
+    <section
+      v-if="!loading"
+      class="space-y-4"
+    >
+      <h3 class="font-medium">
+        Реестр ключей
+      </h3>
       <p class="text-xs text-text-muted">
         Линейный список (одно значение на ключ). Статус «Зависший» — ключ есть в БД, но сервис
         больше не передаёт его в sync-манифесте.
@@ -191,9 +227,15 @@ onMounted(() => {
         <table class="min-w-full text-sm">
           <thead class="bg-bg text-left text-text-muted">
             <tr>
-              <th class="px-3 py-2 font-medium">Ключ</th>
-              <th class="px-3 py-2 font-medium">Сервис</th>
-              <th class="px-3 py-2 font-medium">Значение</th>
+              <th class="px-3 py-2 font-medium">
+                Ключ
+              </th>
+              <th class="px-3 py-2 font-medium">
+                Сервис
+              </th>
+              <th class="px-3 py-2 font-medium">
+                Значение
+              </th>
               <th class="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -214,10 +256,16 @@ onMounted(() => {
                     Зависший
                   </span>
                 </div>
-                <div class="text-xs text-text-muted">{{ entry.type }} · {{ entry.description }}</div>
+                <div class="text-xs text-text-muted">
+                  {{ entry.type }} · {{ entry.description }}
+                </div>
               </td>
-              <td class="px-3 py-2 text-xs">{{ entry.service }}</td>
-              <td class="px-3 py-2 font-mono text-xs">{{ formatValue(entry.value) }}</td>
+              <td class="px-3 py-2 text-xs">
+                {{ entry.service }}
+              </td>
+              <td class="px-3 py-2 font-mono text-xs">
+                {{ formatValue(entry.value) }}
+              </td>
               <td class="px-3 py-2">
                 <UiButton
                   v-if="entry.syncStatus === 'stale'"

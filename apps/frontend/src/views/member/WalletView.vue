@@ -92,45 +92,90 @@ function formatDate(iso: string): string {
 <template>
   <section class="space-y-8">
     <div>
-      <p class="text-xs font-medium uppercase text-accent">W08</p>
-      <h1 class="text-3xl font-semibold">Кошелёк</h1>
-      <p class="mt-2 text-text-muted">Баланс, пополнение и история операций.</p>
+      <p class="text-xs font-medium uppercase text-accent">
+        W08
+      </p>
+      <h1 class="text-3xl font-semibold">
+        Кошелёк
+      </h1>
+      <p class="mt-2 text-text-muted">
+        Баланс, пополнение и история операций.
+      </p>
     </div>
 
-    <p v-if="loading" class="text-text-muted">Загрузка…</p>
-    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p
+      v-if="loading"
+      class="text-text-muted"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="text-danger"
+    >
+      {{ error }}
+    </p>
 
     <template v-if="!loading && !error">
       <div class="rounded-lg border border-border bg-surface p-5 shadow-card">
-        <p class="text-sm text-text-muted">Баланс</p>
+        <p class="text-sm text-text-muted">
+          Баланс
+        </p>
         <p class="mt-1 text-3xl font-semibold tabular-nums">
           {{ formatMoney(balance, currency) }}
         </p>
-        <UiButton intent="primary" class="mt-4" @click="depositOpen = true">Пополнить</UiButton>
+        <UiButton
+          intent="primary"
+          class="mt-4"
+          @click="depositOpen = true"
+        >
+          Пополнить
+        </UiButton>
       </div>
 
       <div class="rounded-lg border border-border bg-surface p-5 shadow-card">
-        <p class="text-sm text-text-muted">Подписка</p>
-        <p class="mt-1 text-lg font-medium capitalize">{{ subscriptionPlanId }}</p>
-        <p v-if="subscriptionExpires" class="mt-1 text-sm text-text-muted">
+        <p class="text-sm text-text-muted">
+          Подписка
+        </p>
+        <p class="mt-1 text-lg font-medium capitalize">
+          {{ subscriptionPlanId }}
+        </p>
+        <p
+          v-if="subscriptionExpires"
+          class="mt-1 text-sm text-text-muted"
+        >
           до {{ new Date(subscriptionExpires).toLocaleDateString('ru-RU') }}
         </p>
         <div class="mt-3 flex flex-wrap gap-2">
           <RouterLink to="/plans">
-            <UiButton intent="secondary">Сменить тариф</UiButton>
+            <UiButton intent="secondary">
+              Сменить тариф
+            </UiButton>
           </RouterLink>
-          <UiButton v-if="autoRenew" intent="secondary" @click="toggleAutoRenewOff">
+          <UiButton
+            v-if="autoRenew"
+            intent="secondary"
+            @click="toggleAutoRenewOff"
+          >
             Отключить автопродление
           </UiButton>
         </div>
       </div>
 
       <div>
-        <h2 class="mb-3 text-lg font-medium">История операций</h2>
-        <p v-if="transactions.length === 0" class="text-sm text-text-muted">
+        <h2 class="mb-3 text-lg font-medium">
+          История операций
+        </h2>
+        <p
+          v-if="transactions.length === 0"
+          class="text-sm text-text-muted"
+        >
           Операций пока нет
         </p>
-        <ul v-else class="divide-y divide-border rounded-lg border border-border bg-surface">
+        <ul
+          v-else
+          class="divide-y divide-border rounded-lg border border-border bg-surface"
+        >
           <li
             v-for="tx in transactions"
             :key="tx.id"
@@ -138,15 +183,23 @@ function formatDate(iso: string): string {
           >
             <div>
               <p>{{ tx.description }}</p>
-              <p class="text-text-muted">{{ formatDate(tx.createdAt) }}</p>
+              <p class="text-text-muted">
+                {{ formatDate(tx.createdAt) }}
+              </p>
             </div>
-            <p class="shrink-0 font-medium tabular-nums">{{ formatTransactionAmount(tx) }}</p>
+            <p class="shrink-0 font-medium tabular-nums">
+              {{ formatTransactionAmount(tx) }}
+            </p>
           </li>
         </ul>
       </div>
     </template>
 
-    <UiModal v-model:open="depositOpen" title="Пополнение баланса" description="Локально — мгновенное зачисление">
+    <UiModal
+      v-model:open="depositOpen"
+      title="Пополнение баланса"
+      description="Локально — мгновенное зачисление"
+    >
       <div class="space-y-4">
         <div class="flex flex-wrap gap-2">
           <UiButton
@@ -167,10 +220,15 @@ function formatDate(iso: string): string {
             min="100"
             step="100"
             class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
-          />
+          >
         </label>
 
-        <p v-if="depositError" class="text-sm text-danger">{{ depositError }}</p>
+        <p
+          v-if="depositError"
+          class="text-sm text-danger"
+        >
+          {{ depositError }}
+        </p>
 
         <UiButton
           intent="primary"

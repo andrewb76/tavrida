@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ensureDatabaseSchema } from './config/ensure-database';
@@ -14,7 +14,7 @@ async function bootstrap() {
 
   const port = Number(process.env.SCALAR_CONFIG_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
-  console.log(`scalar-config listening on :${port}`);
+  Logger.log(`scalar-config listening on :${port}`, 'Bootstrap');
 }
 
 void bootstrap();

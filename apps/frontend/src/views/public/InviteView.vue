@@ -12,5 +12,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <p class="text-center text-sm text-text-muted">Перенаправление…</p>
+  <p class="text-center text-sm text-text-muted">
+    Перенаправление…
+  </p>
 </template>

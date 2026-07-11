@@ -15,14 +15,25 @@ const lotId = computed(() => route.params.id as string);
     :title="`Лот #${lotId}`"
     description="Галерея, таймер, ставки, экспертиза — mock."
   >
-    <UiButton intent="primary" @click="bidOpen = true">Сделать ставку</UiButton>
+    <UiButton
+      intent="primary"
+      @click="bidOpen = true"
+    >
+      Сделать ставку
+    </UiButton>
     <UiModal
       v-model:open="bidOpen"
       title="Ставка на лот"
       description="W03 modal · mock"
     >
-      <p class="mb-4 text-sm text-text-muted">Мин. ставка: 1 550 ₽</p>
-      <UiButton intent="primary" class="w-full" @click="bidOpen = false">
+      <p class="mb-4 text-sm text-text-muted">
+        Мин. ставка: 1 550 ₽
+      </p>
+      <UiButton
+        intent="primary"
+        class="w-full"
+        @click="bidOpen = false"
+      >
         Подтвердить (mock)
       </UiButton>
     </UiModal>

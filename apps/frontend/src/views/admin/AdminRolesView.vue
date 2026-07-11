@@ -20,8 +20,12 @@ const roleLabels: Record<string, string> = {
 <template>
   <section class="space-y-4">
     <div>
-      <h2 class="text-lg font-semibold">Мои роли</h2>
-      <p class="text-sm text-text-muted">Источник: Keto (platform:tavrida-lot).</p>
+      <h2 class="text-lg font-semibold">
+        Мои роли
+      </h2>
+      <p class="text-sm text-text-muted">
+        Источник: Keto (platform:tavrida-lot).
+      </p>
     </div>
 
     <ul class="flex flex-wrap gap-2">
@@ -33,7 +37,12 @@ const roleLabels: Record<string, string> = {
         {{ roleLabels[role] ?? role }}
       </li>
     </ul>
-    <p v-if="session.rolesLoading" class="text-xs text-text-muted">Обновление…</p>
+    <p
+      v-if="session.rolesLoading"
+      class="text-xs text-text-muted"
+    >
+      Обновление…
+    </p>
 
     <p class="text-sm text-text-muted">
       Bootstrap первого admin:

@@ -18,20 +18,42 @@ const emit = defineEmits<{
 
 <template>
   <li class="forum-category-node">
-    <div class="forum-category-node__row" :style="{ paddingLeft: `${depth * 1.25}rem` }">
+    <div
+      class="forum-category-node__row"
+      :style="{ paddingLeft: `${depth * 1.25}rem` }"
+    >
       <div class="forum-category-node__main">
-        <RouterLink :to="`/forum?categoryId=${node.id}`" class="forum-category-node__link">
+        <RouterLink
+          :to="`/forum?categoryId=${node.id}`"
+          class="forum-category-node__link"
+        >
           <strong>{{ node.title }}</strong>
           <span class="forum-category-node__slug">/{{ node.slug }}</span>
         </RouterLink>
-        <p v-if="node.description" class="forum-category-node__desc">{{ node.description }}</p>
+        <p
+          v-if="node.description"
+          class="forum-category-node__desc"
+        >
+          {{ node.description }}
+        </p>
       </div>
 
-      <div v-if="isAdmin" class="forum-category-node__actions">
-        <button type="button" class="forum-category-node__btn" @click="emit('addChild', node)">
+      <div
+        v-if="isAdmin"
+        class="forum-category-node__actions"
+      >
+        <button
+          type="button"
+          class="forum-category-node__btn"
+          @click="emit('addChild', node)"
+        >
           + Подраздел
         </button>
-        <button type="button" class="forum-category-node__btn" @click="emit('edit', node)">
+        <button
+          type="button"
+          class="forum-category-node__btn"
+          @click="emit('edit', node)"
+        >
           Изменить
         </button>
         <button
@@ -44,7 +66,10 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <ul v-if="node.children.length" class="forum-category-node__children">
+    <ul
+      v-if="node.children.length"
+      class="forum-category-node__children"
+    >
       <ForumCategoryTreeNode
         v-for="child in node.children"
         :key="child.id"

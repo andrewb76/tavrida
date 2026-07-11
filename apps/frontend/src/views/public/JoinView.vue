@@ -98,23 +98,44 @@ onMounted(async () => {
         : 'Код или ссылка ускоряют вход и фиксируют пригласившего. Можно также зарегистрироваться без инвайта.'
     "
   >
-    <div v-if="autoStarted && loading" class="py-8 text-center text-text-muted">
+    <div
+      v-if="autoStarted && loading"
+      class="py-8 text-center text-text-muted"
+    >
       Открываем вход через Logto…
     </div>
 
-    <div v-else-if="alreadyLoggedIn" class="space-y-4">
+    <div
+      v-else-if="alreadyLoggedIn"
+      class="space-y-4"
+    >
       <p class="text-sm text-text-muted">
         Вы уже вошли в клуб. Код приглашения нужен только для <strong>новой</strong> регистрации.
         Чтобы зарегистрировать другой аккаунт — сначала выйдите.
       </p>
-      <UiButton intent="primary" @click="router.push({ name: 'member-home' })">
+      <UiButton
+        intent="primary"
+        @click="router.push({ name: 'member-home' })"
+      >
         В приложение
       </UiButton>
-      <UiButton intent="ghost" @click="auth.signOut()">Выйти</UiButton>
+      <UiButton
+        intent="ghost"
+        @click="auth.signOut()"
+      >
+        Выйти
+      </UiButton>
     </div>
 
-    <form v-else class="space-y-4" @submit.prevent="submit">
-      <label class="block text-sm text-text-muted" for="invite-input">
+    <form
+      v-else
+      class="space-y-4"
+      @submit.prevent="submit"
+    >
+      <label
+        class="block text-sm text-text-muted"
+        for="invite-input"
+      >
         Код или ссылка
       </label>
       <input
@@ -123,9 +144,19 @@ onMounted(async () => {
         class="w-full rounded-md border border-border bg-bg px-3 py-2 font-mono text-sm text-text"
         placeholder="TAV-XXXX-XXXX или https://…/join?code=…"
         autocomplete="off"
-      />
-      <p v-if="error" class="text-sm text-error">{{ error }}</p>
-      <UiButton type="submit" intent="primary" class="w-full" :disabled="loading">
+      >
+      <p
+        v-if="error"
+        class="text-sm text-error"
+      >
+        {{ error }}
+      </p>
+      <UiButton
+        type="submit"
+        intent="primary"
+        class="w-full"
+        :disabled="loading"
+      >
         {{ loading ? 'Подождите…' : 'Принять приглашение' }}
       </UiButton>
     </form>
@@ -139,7 +170,10 @@ onMounted(async () => {
       >
         {{ inviteOnly ? 'Войти (существующий аккаунт)' : 'Войти' }}
       </button>
-      <span v-if="inviteOnly" class="block mt-1 text-xs">
+      <span
+        v-if="inviteOnly"
+        class="block mt-1 text-xs"
+      >
         Регистрация без инвайта закрыта (club.registration.inviteOnly).
       </span>
     </p>

@@ -107,17 +107,34 @@ function yearlySavings(plan: PlanSummary): number | null {
 <template>
   <section class="space-y-8">
     <div>
-      <p class="text-xs font-medium uppercase text-accent">W08</p>
-      <h1 class="text-3xl font-semibold">Тарифы</h1>
+      <p class="text-xs font-medium uppercase text-accent">
+        W08
+      </p>
+      <h1 class="text-3xl font-semibold">
+        Тарифы
+      </h1>
       <p class="mt-2 max-w-2xl text-text-muted">
         Сравните лимиты и возможности. Оплата списывается с кошелька — пополнить можно в любой момент.
       </p>
     </div>
 
-    <p v-if="loading" class="text-text-muted">Загрузка…</p>
-    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p
+      v-if="loading"
+      class="text-text-muted"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="text-danger"
+    >
+      {{ error }}
+    </p>
 
-    <p v-if="successMessage" class="rounded-lg border border-border bg-surface px-4 py-3 text-sm">
+    <p
+      v-if="successMessage"
+      class="rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+    >
       {{ successMessage }}
     </p>
 
@@ -125,21 +142,34 @@ function yearlySavings(plan: PlanSummary): number | null {
       v-if="subscription && !loading"
       class="rounded-lg border border-border bg-surface p-4 shadow-card"
     >
-      <p class="text-sm text-text-muted">Текущий план</p>
-      <p class="mt-1 text-lg font-medium capitalize">{{ subscription.planId }}</p>
-      <p v-if="subscription.expiresAt" class="mt-1 text-sm text-text-muted">
+      <p class="text-sm text-text-muted">
+        Текущий план
+      </p>
+      <p class="mt-1 text-lg font-medium capitalize">
+        {{ subscription.planId }}
+      </p>
+      <p
+        v-if="subscription.expiresAt"
+        class="mt-1 text-sm text-text-muted"
+      >
         до {{ expiresLabel(subscription.expiresAt) }}
         <span v-if="subscription.autoRenew"> · автопродление</span>
       </p>
       <p class="mt-2 text-sm">
         Баланс:
-        <RouterLink to="/wallet" class="font-medium text-primary hover:underline">
+        <RouterLink
+          to="/wallet"
+          class="font-medium text-primary hover:underline"
+        >
           {{ formatMoney(balance) }}
         </RouterLink>
       </p>
     </div>
 
-    <div v-if="!loading && !error" class="flex flex-wrap items-center gap-2">
+    <div
+      v-if="!loading && !error"
+      class="flex flex-wrap items-center gap-2"
+    >
       <span class="text-sm text-text-muted">Период оплаты:</span>
       <UiButton
         size="sm"
@@ -159,7 +189,10 @@ function yearlySavings(plan: PlanSummary): number | null {
       </UiButton>
     </div>
 
-    <ul v-if="!loading && !error" class="grid items-start gap-4 lg:grid-cols-3">
+    <ul
+      v-if="!loading && !error"
+      class="grid items-start gap-4 lg:grid-cols-3"
+    >
       <li
         v-for="plan in plans"
         :key="plan.id"
@@ -174,7 +207,9 @@ function yearlySavings(plan: PlanSummary): number | null {
         </span>
 
         <div class="mb-4">
-          <h2 class="text-xl font-semibold">{{ plan.title }}</h2>
+          <h2 class="text-xl font-semibold">
+            {{ plan.title }}
+          </h2>
           <p class="mt-1 text-sm text-text-muted">
             {{ getPlanDetails(plan.id)?.tagline ?? plan.description }}
           </p>
@@ -190,18 +225,27 @@ function yearlySavings(plan: PlanSummary): number | null {
           >
             Экономия {{ formatMoney(yearlySavings(plan)!) }} в год
           </p>
-          <p v-else-if="billingPeriod === 'monthly' && plan.yearlyPrice > 0" class="mt-1 text-sm text-text-muted">
+          <p
+            v-else-if="billingPeriod === 'monthly' && plan.yearlyPrice > 0"
+            class="mt-1 text-sm text-text-muted"
+          >
             или {{ formatPlanPrice(plan, 'yearly') }}
           </p>
         </div>
 
-        <ul v-if="getPlanDetails(plan.id)?.highlights.length" class="mb-4 space-y-2">
+        <ul
+          v-if="getPlanDetails(plan.id)?.highlights.length"
+          class="mb-4 space-y-2"
+        >
           <li
             v-for="(item, index) in getPlanDetails(plan.id)!.highlights"
             :key="index"
             class="flex items-start gap-2 text-sm"
           >
-            <span class="mt-0.5 text-primary" aria-hidden="true">✓</span>
+            <span
+              class="mt-0.5 text-primary"
+              aria-hidden="true"
+            >✓</span>
             <span>{{ item }}</span>
           </li>
         </ul>
@@ -221,7 +265,10 @@ function yearlySavings(plan: PlanSummary): number | null {
                 class="flex items-start gap-2 text-sm"
                 :class="feature.included ? 'text-text' : 'text-text-muted'"
               >
-                <span class="mt-0.5 shrink-0" aria-hidden="true">
+                <span
+                  class="mt-0.5 shrink-0"
+                  aria-hidden="true"
+                >
                   {{ feature.included ? '✓' : '—' }}
                 </span>
                 <span :class="!feature.included ? 'line-through opacity-70' : ''">
@@ -250,7 +297,10 @@ function yearlySavings(plan: PlanSummary): number | null {
       </li>
     </ul>
 
-    <p v-if="!loading && !error" class="text-center text-xs text-text-muted">
+    <p
+      v-if="!loading && !error"
+      class="text-center text-xs text-text-muted"
+    >
       Лимиты соответствуют
       <a
         href="https://andrewb76.github.io/tavrida/05-microservices/PLATFORM-REGISTRY.html"
@@ -268,8 +318,14 @@ function yearlySavings(plan: PlanSummary): number | null {
       :title="selectedPlan ? `Активировать ${selectedPlan.title}` : 'Активация'"
       description="Списание с кошелька"
     >
-      <div v-if="selectedPlan" class="space-y-4">
-        <div v-if="selectedPlan.monthlyPrice > 0" class="flex gap-2">
+      <div
+        v-if="selectedPlan"
+        class="space-y-4"
+      >
+        <div
+          v-if="selectedPlan.monthlyPrice > 0"
+          class="flex gap-2"
+        >
           <UiButton
             type="button"
             :intent="activateBillingPeriod === 'monthly' ? 'primary' : 'secondary'"
@@ -290,23 +346,45 @@ function yearlySavings(plan: PlanSummary): number | null {
           {{ formatPlanPrice(selectedPlan, activateBillingPeriod) }}
         </p>
 
-        <p v-if="selectedPrice > 0" class="text-sm text-text-muted">
+        <p
+          v-if="selectedPrice > 0"
+          class="text-sm text-text-muted"
+        >
           Баланс: {{ formatMoney(balance) }} → после списания
           <span :class="balanceAfter < 0 ? 'text-danger font-medium' : ''">
             {{ formatMoney(balanceAfter) }}
           </span>
         </p>
 
-        <label v-if="selectedPlan.id !== 'free'" class="flex items-center gap-2 text-sm">
-          <input v-model="autoRenew" type="checkbox" class="size-4" />
+        <label
+          v-if="selectedPlan.id !== 'free'"
+          class="flex items-center gap-2 text-sm"
+        >
+          <input
+            v-model="autoRenew"
+            type="checkbox"
+            class="size-4"
+          >
           Автопродление
         </label>
 
-        <p v-if="activateError" class="text-sm text-danger">{{ activateError }}</p>
+        <p
+          v-if="activateError"
+          class="text-sm text-danger"
+        >
+          {{ activateError }}
+        </p>
 
-        <p v-if="balanceAfter < 0" class="text-sm text-danger">
+        <p
+          v-if="balanceAfter < 0"
+          class="text-sm text-danger"
+        >
           Недостаточно средств.
-          <RouterLink to="/wallet" class="text-primary underline" @click="activateOpen = false">
+          <RouterLink
+            to="/wallet"
+            class="text-primary underline"
+            @click="activateOpen = false"
+          >
             Пополнить кошелёк
           </RouterLink>
         </p>

@@ -146,25 +146,55 @@ async function confirmDeposit() {
   <section class="space-y-4 pb-32">
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 class="text-lg font-semibold">Пользователи</h2>
-        <p class="text-sm text-text-muted">{{ subtitle }}</p>
+        <h2 class="text-lg font-semibold">
+          Пользователи
+        </h2>
+        <p class="text-sm text-text-muted">
+          {{ subtitle }}
+        </p>
       </div>
-      <form class="flex gap-2" @submit.prevent="load">
+      <form
+        class="flex gap-2"
+        @submit.prevent="load"
+      >
         <input
           v-model="search"
           type="search"
           placeholder="Имя, email или ID…"
           class="rounded-md border border-border bg-bg px-3 py-2 text-sm"
-        />
-        <UiButton intent="secondary" type="submit">Найти</UiButton>
+        >
+        <UiButton
+          intent="secondary"
+          type="submit"
+        >
+          Найти
+        </UiButton>
       </form>
     </div>
 
-    <p v-if="loading" class="text-sm text-text-muted">Загрузка…</p>
-    <p v-else-if="error" class="text-sm text-danger">{{ error }}</p>
-    <p v-else-if="users.length === 0" class="text-sm text-text-muted">Нет пользователей.</p>
+    <p
+      v-if="loading"
+      class="text-sm text-text-muted"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="text-sm text-danger"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-else-if="users.length === 0"
+      class="text-sm text-text-muted"
+    >
+      Нет пользователей.
+    </p>
 
-    <div v-else class="grid gap-4">
+    <div
+      v-else
+      class="grid gap-4"
+    >
       <article
         v-for="row in users"
         :key="row.userId"
@@ -183,24 +213,41 @@ async function confirmDeposit() {
                 class="absolute inset-0 size-full object-cover"
                 referrerpolicy="no-referrer"
                 @error="avatarFailed[row.userId] = true"
-              />
+              >
             </div>
 
             <div class="min-w-0">
-              <p class="truncate text-base font-semibold text-text">{{ displayLabel(row) }}</p>
-              <p v-if="row.email" class="truncate text-sm text-text-muted">{{ row.email }}</p>
+              <p class="truncate text-base font-semibold text-text">
+                {{ displayLabel(row) }}
+              </p>
+              <p
+                v-if="row.email"
+                class="truncate text-sm text-text-muted"
+              >
+                {{ row.email }}
+              </p>
               <code class="mt-1 block truncate text-xs text-text-muted">{{ row.userId }}</code>
               <p class="mt-1 text-xs text-text-muted">
                 {{ new Date(row.createdAt).toLocaleDateString('ru-RU') }}
-                <span v-if="row.isSuspended" class="text-orange-600"> · заблокирован</span>
-                <span v-else-if="!row.logtoSyncedAt" class="text-orange-600"> · ожидает синхронизацию</span>
+                <span
+                  v-if="row.isSuspended"
+                  class="text-orange-600"
+                > · заблокирован</span>
+                <span
+                  v-else-if="!row.logtoSyncedAt"
+                  class="text-orange-600"
+                > · ожидает синхронизацию</span>
               </p>
             </div>
           </div>
 
           <div class="relative z-10 shrink-0 text-right">
-            <p class="text-xs text-text-muted">Баланс</p>
-            <p class="text-lg font-semibold tabular-nums">{{ formatMoney(row.balance) }}</p>
+            <p class="text-xs text-text-muted">
+              Баланс
+            </p>
+            <p class="text-lg font-semibold tabular-nums">
+              {{ formatMoney(row.balance) }}
+            </p>
             <button
               type="button"
               class="mt-2 inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-white hover:bg-primary-hover"
@@ -212,7 +259,9 @@ async function confirmDeposit() {
         </div>
 
         <div class="mt-4 border-t border-border/70 pt-4">
-          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">Роли (Keto)</p>
+          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
+            Роли (Keto)
+          </p>
           <div class="flex flex-wrap items-center gap-4">
             <label
               v-for="role in MANAGED_ROLES"
@@ -223,7 +272,7 @@ async function confirmDeposit() {
                 v-model="rolesFor(row.userId)[role]"
                 type="checkbox"
                 class="rounded border-border"
-              />
+              >
               {{ ROLE_LABELS[role] }}
             </label>
             <UiButton
@@ -261,10 +310,15 @@ async function confirmDeposit() {
         >
           <div class="flex items-start justify-between gap-3">
             <div>
-              <h3 id="admin-deposit-title" class="text-lg font-semibold text-text">
+              <h3
+                id="admin-deposit-title"
+                class="text-lg font-semibold text-text"
+              >
                 Пополнение баланса
               </h3>
-              <p class="mt-1 text-sm text-text-muted">{{ displayLabel(depositUser) }}</p>
+              <p class="mt-1 text-sm text-text-muted">
+                {{ displayLabel(depositUser) }}
+              </p>
             </div>
             <button
               type="button"
@@ -306,10 +360,15 @@ async function confirmDeposit() {
                 min="100"
                 step="100"
                 class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
-              />
+              >
             </label>
 
-            <p v-if="depositError" class="text-sm text-danger">{{ depositError }}</p>
+            <p
+              v-if="depositError"
+              class="text-sm text-danger"
+            >
+              {{ depositError }}
+            </p>
 
             <button
               type="button"

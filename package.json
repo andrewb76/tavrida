@@ -6,6 +6,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "lint:fix": "eslint \"{apps,packages,services}/**/src/**/*.{ts,vue}\" --fix",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "generate": "turbo run generate",

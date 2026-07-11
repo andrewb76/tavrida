@@ -47,10 +47,16 @@ const errorMessage = computed(() => {
 
 <template>
   <div class="flex min-h-dvh items-center justify-center px-4">
-    <p v-if="errorMessage" class="text-center text-error">
+    <p
+      v-if="errorMessage"
+      class="text-center text-error"
+    >
       {{ errorMessage }}
     </p>
-    <p v-else class="text-center text-text-muted">
+    <p
+      v-else
+      class="text-center text-text-muted"
+    >
       {{ isLoading ? 'Вход через Logto…' : 'Перенаправление…' }}
     </p>
   </div>

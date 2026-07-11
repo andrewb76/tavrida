@@ -39,29 +39,60 @@ async function submitReply() {
 </script>
 
 <template>
-  <li class="forum-comment" :style="{ marginLeft: `${depth * 1.25}rem` }">
+  <li
+    class="forum-comment"
+    :style="{ marginLeft: `${depth * 1.25}rem` }"
+  >
     <article class="forum-comment__card">
-      <p class="forum-comment__body">{{ node.body }}</p>
+      <p class="forum-comment__body">
+        {{ node.body }}
+      </p>
       <footer class="forum-comment__meta">
         <small>{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</small>
-        <UiButton intent="ghost" size="sm" type="button" @click="showReply = !showReply">
+        <UiButton
+          intent="ghost"
+          size="sm"
+          type="button"
+          @click="showReply = !showReply"
+        >
           {{ showReply ? 'Отмена' : 'Ответить' }}
         </UiButton>
       </footer>
 
-      <form v-if="showReply" class="forum-comment__reply-form" @submit.prevent="submitReply">
+      <form
+        v-if="showReply"
+        class="forum-comment__reply-form"
+        @submit.prevent="submitReply"
+      >
         <label>
           Ответ на комментарий
-          <textarea v-model="replyBody" rows="3" required />
+          <textarea
+            v-model="replyBody"
+            rows="3"
+            required
+          />
         </label>
-        <p v-if="postError" class="forum-comment__error">{{ postError }}</p>
-        <UiButton intent="primary" size="sm" type="submit" :disabled="posting">
+        <p
+          v-if="postError"
+          class="forum-comment__error"
+        >
+          {{ postError }}
+        </p>
+        <UiButton
+          intent="primary"
+          size="sm"
+          type="submit"
+          :disabled="posting"
+        >
           {{ posting ? 'Отправка…' : 'Отправить ответ' }}
         </UiButton>
       </form>
     </article>
 
-    <ul v-if="node.children.length" class="forum-comment__children">
+    <ul
+      v-if="node.children.length"
+      class="forum-comment__children"
+    >
       <ForumCommentNode
         v-for="child in node.children"
         :key="child.id"

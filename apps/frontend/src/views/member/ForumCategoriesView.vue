@@ -196,61 +196,128 @@ async function removeCategory(node: CategoryNode) {
     <header class="forum-categories__header">
       <div>
         <p class="forum-categories__back">
-          <RouterLink to="/forum">← К списку тем</RouterLink>
+          <RouterLink to="/forum">
+            ← К списку тем
+          </RouterLink>
         </p>
         <h1>Разделы форума</h1>
         <p class="forum-categories__lead">
           Дерево категорий. Выберите раздел, чтобы посмотреть темы внутри.
         </p>
       </div>
-      <UiButton v-if="isAdmin" intent="primary" type="button" @click="openCreateRoot">
+      <UiButton
+        v-if="isAdmin"
+        intent="primary"
+        type="button"
+        @click="openCreateRoot"
+      >
         + Корневой раздел
       </UiButton>
     </header>
 
-    <p v-if="isAdmin" class="forum-categories__admin-hint">
+    <p
+      v-if="isAdmin"
+      class="forum-categories__admin-hint"
+    >
       Режим администратора: можно добавлять, редактировать и удалять разделы.
     </p>
 
-    <div v-if="showForm" class="forum-categories__form-panel">
+    <div
+      v-if="showForm"
+      class="forum-categories__form-panel"
+    >
       <h2>{{ form?.mode === 'create' ? 'Новый раздел' : 'Редактирование' }}</h2>
-      <form class="forum-categories__form" @submit.prevent="submitForm">
+      <form
+        class="forum-categories__form"
+        @submit.prevent="submitForm"
+      >
         <label>
           Название
-          <input v-model="form!.title" type="text" maxlength="128" required @input="onTitleInput" />
+          <input
+            v-model="form!.title"
+            type="text"
+            maxlength="128"
+            required
+            @input="onTitleInput"
+          >
         </label>
         <label>
           Slug (URL)
-          <input v-model="form!.slug" type="text" maxlength="64" required />
+          <input
+            v-model="form!.slug"
+            type="text"
+            maxlength="64"
+            required
+          >
         </label>
         <label>
           Описание
-          <textarea v-model="form!.description" rows="3" maxlength="2000" />
+          <textarea
+            v-model="form!.description"
+            rows="3"
+            maxlength="2000"
+          />
         </label>
         <label>
           Порядок сортировки
-          <input v-model.number="form!.sortOrder" type="number" step="1" />
+          <input
+            v-model.number="form!.sortOrder"
+            type="number"
+            step="1"
+          >
         </label>
-        <p v-if="formError" class="forum-categories__error">{{ formError }}</p>
+        <p
+          v-if="formError"
+          class="forum-categories__error"
+        >
+          {{ formError }}
+        </p>
         <div class="forum-categories__form-actions">
-          <UiButton intent="primary" type="submit" :disabled="saving">
+          <UiButton
+            intent="primary"
+            type="submit"
+            :disabled="saving"
+          >
             {{ saving ? 'Сохранение…' : 'Сохранить' }}
           </UiButton>
-          <UiButton intent="secondary" type="button" :disabled="saving" @click="closeForm">
+          <UiButton
+            intent="secondary"
+            type="button"
+            :disabled="saving"
+            @click="closeForm"
+          >
             Отмена
           </UiButton>
         </div>
       </form>
     </div>
 
-    <p v-if="loading" class="forum-categories__status">Загрузка…</p>
-    <p v-else-if="error" class="forum-categories__error">{{ error }}</p>
-    <p v-else-if="tree.length === 0" class="forum-categories__status">
+    <p
+      v-if="loading"
+      class="forum-categories__status"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="forum-categories__error"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-else-if="tree.length === 0"
+      class="forum-categories__status"
+    >
       Пока нет разделов.
-      <template v-if="isAdmin"> Создайте первый корневой раздел.</template>
+      <template v-if="isAdmin">
+        Создайте первый корневой раздел.
+      </template>
     </p>
 
-    <ul v-else class="forum-categories__tree">
+    <ul
+      v-else
+      class="forum-categories__tree"
+    >
       <ForumCategoryTreeNode
         v-for="node in tree"
         :key="node.id"
