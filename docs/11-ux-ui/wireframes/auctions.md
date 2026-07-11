@@ -12,16 +12,25 @@
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Filters | category, status, sort, search | Query params; `searchScope` per tariff |
+| Filters | category, status, sort, search | Query params; scope по тарифу — [catalog-listing](../../05-microservices/auction/requirements/catalog-listing.md) |
 | Grid | Card: img, title, price, badges | Cursor pagination «Ещё» |
 | Badges | Live 🔴, Promoted ↑ | `status=ACTIVE`, `promotedUntil` |
 | FAB | «+» | → `/auctions/new`; hide if daily limit |
 
 **States:** loading · empty · end of list.
 
-**API:** `GET /api/v1/auctions?cursor=&limit=20`
+**API:** `GET /api/v1/auctions?cursor=&limit=20` — см. [catalog-listing](../../05-microservices/auction/requirements/catalog-listing.md).
 
-### ASCII
+### Фильтры (детали)
+
+| Элемент | Компонент | Query param |
+|---------|-----------|-------------|
+| Поиск | `SearchInput` | `q` |
+| Категория | `CategorySelect` | `categoryId` |
+| Статус | `StatusChips` | `status` (default `ACTIVE`) |
+| Сортировка | `SortSelect` | `sort` (default `ENDING_SOON`) |
+| Pro | `AdvancedFiltersDrawer` | `minPrice`, `maxPrice`, `type`, `hasExpertAppraisal` |
+
 
 ```
 ┌─────────────────────────────────────┐

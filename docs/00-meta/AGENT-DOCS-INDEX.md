@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-11 (plan-config / scalar-config rename, registry-keys, ADR-017)
+**Последнее обновление индекса:** 2026-07-12 (auction catalog-listing: фильтры и поиск W02)
 
 ---
 
@@ -28,7 +28,7 @@
 | **Auth / JWT / Logto** | Guards, OIDC, M2M, Keto | [09-security/README.md](../09-security/README.md) → [keto-schema.md](../09-security/keto-schema.md) → [bootstrap-admin.md](../09-security/bootstrap-admin.md) → [logto-setup.md](../14-frontend/logto-setup.md) | [ADR-010](../03-architecture/adr/010-jwt-validation-traefik.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) | `GET /me/roles` · `/admin` UI · bff guards |
 | **Frontend SPA** | Vue routes, API layer, UI | [14-frontend/README.md](../14-frontend/README.md) → [stack-decisions.md](../14-frontend/stack-decisions.md) | [screen-tree.md](../11-ux-ui/screen-tree.md) · [design-tokens.md](../11-ux-ui/design-tokens.md) | `apps/frontend` |
 | **User profile** | Профиль, notes, internal API | [user-profile/README.md](../05-microservices/user-profile/README.md) → [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) | [10-data/README.md](../10-data/README.md) · ADR-001 | `services/user-profile` · scaffold |
-| **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) | [auction/requirements/financial-features.md](../05-microservices/auction/requirements/financial-features.md) | `services/auction` · scaffold |
+| **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) | [catalog-listing.md](../05-microservices/auction/requirements/catalog-listing.md) · [financial-features.md](../05-microservices/auction/requirements/financial-features.md) · [wireframes/auctions.md](../11-ux-ui/wireframes/auctions.md) · S-002 | `services/auction` · scaffold |
 | **Биллинг / кошелёк** | balance, deposit, charges | [billing/README.md](../05-microservices/billing/README.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/billing` v1 · BFF `/api/v1/wallets` · `/wallet` UI |
 | **Тарифы / лимиты** | Free/Basic/Pro, plan variables, sync | [registry-keys.md](../13-maintenance/registry-keys.md) → [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) → [ADR-016](../03-architecture/adr/016-financial-policy-parameter-registration.md) → [plan-config/README.md](../05-microservices/plan-config/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/financial-policy` (legacy dir) · dev seed временный · BFF `/admin/financial` |
 | **Oracle / прогноз дохода** | Admin симулятор | [glossary.md](../05-microservices/oracle/glossary.md) → [overview.md](../05-microservices/oracle/overview.md) → [topic-index.md](../05-microservices/oracle/topic-index.md) → [IMPLEMENTATION-PLAN.md](../05-microservices/oracle/IMPLEMENTATION-PLAN.md) | [topics/](../05-microservices/oracle/topics/) · [ADR-015](../03-architecture/adr/015-monetization-engine.md) · `packages/monetization-engine` · `config/oracle.defaults.yaml` | BFF + `/admin/oracle` UI ✅ · checkpoint 0 |

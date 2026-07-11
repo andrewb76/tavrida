@@ -12,6 +12,7 @@ import { PlansModule } from './modules/plans/plans.module';
 import { ScalarConfigModule } from './modules/scalar-config/scalar-config.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { ForumModule } from './modules/forum/forum.module';
+import { AuctionModule } from './modules/auction/auction.module';
 import { KetoModule } from './modules/keto/keto.module';
 import { LogtoWebhooksModule } from './modules/logto-webhooks/logto-webhooks.module';
 
@@ -34,6 +35,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     PlansModule,
     WalletsModule,
     ForumModule,
+    AuctionModule,
     LogtoWebhooksModule,
   ],
   controllers: [HealthController],

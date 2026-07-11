@@ -182,6 +182,8 @@ Default `rating.contextWeights`:
 | `auction.seller.08promotion.unitPrice` | **price** | 200 | 200 | 200 | Продвижение лота (₽) |
 | `auction.seller.09reservePrice.unitPrice` | **price** | 100 | 100 | 100 | Установка резервной цены (₽) |
 | `auction.seller.10durationPreset.unitPrice` | **price** | 50 | 50 | 50 | Добавить шаблон длительности (₽) |
+| `auction.member.01search.scope` | enum | `TITLE` | `FULL_TEXT` | `FULL_TEXT,FILTERS` | Глубина поиска в каталоге |
+| `auction.member.02search.filtersEnabled` | feature | false | false | true | Расширенные фильтры каталога (Pro) |
 
 > Legacy mapping: [registry-keys.md](../13-maintenance/registry-keys.md).
 

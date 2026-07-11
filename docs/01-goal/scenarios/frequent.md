@@ -38,7 +38,7 @@
 |---|---|
 | **Актор** | Member |
 | **G** | `/auctions` |
-| **W** | Фильтр / pagination |
+| **W** | Фильтр, поиск, pagination |
 | **T** | Карточки: цена, Live, promoted badge |
 | **Компоненты** | BFF → `auction`; guard `requireMember` |
 | **Тест** | E2E smoke; INT list |

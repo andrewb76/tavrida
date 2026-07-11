@@ -110,6 +110,20 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     valueType: 'price',
   },
   {
+    key: 'auction.member.01search.scope',
+    service: 'auction',
+    name: 'Глубина поиска в каталоге',
+    description: 'TITLE | FULL_TEXT | FULL_TEXT,FILTERS',
+    valueType: 'enum',
+  },
+  {
+    key: 'auction.member.02search.filtersEnabled',
+    service: 'auction',
+    name: 'Расширенные фильтры каталога',
+    description: 'Pro-фильтры: цена, тип, экспертиза',
+    valueType: 'feature',
+  },
+  {
     key: 'referralRewards.program.01payout.enabled',
     service: 'referral-rewards',
     name: 'Денежный реферал',
@@ -167,6 +181,18 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { priceAmount: 100, isEnabled: false },
     basic: { priceAmount: 110, isEnabled: false },
     pro: { priceAmount: 100, isEnabled: true },
+  },
+  {
+    variableKey: 'auction.member.01search.scope',
+    free: { enumValues: ['TITLE'] },
+    basic: { enumValues: ['FULL_TEXT'] },
+    pro: { enumValues: ['FULL_TEXT', 'FILTERS'] },
+  },
+  {
+    variableKey: 'auction.member.02search.filtersEnabled',
+    free: { isFeatureEnabled: false },
+    basic: { isFeatureEnabled: false },
+    pro: { isFeatureEnabled: true },
   },
   {
     variableKey: 'referralRewards.program.01payout.enabled',

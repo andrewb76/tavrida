@@ -26,6 +26,7 @@
 | Документ | Описание |
 |----------|----------|
 | [financial-features.md](./requirements/financial-features.md) | Лимиты и платные фичи по планам |
+| [catalog-listing.md](./requirements/catalog-listing.md) | Каталог `/auctions`: фильтры, поиск, сортировка, API list |
 
 ## 🗄️ Сущности
 
@@ -97,7 +98,7 @@ stateDiagram-v2
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/auctions` | Список (filter: category, status, cursor) |
+| GET | `/auctions` | Список лотов — [catalog-listing](./requirements/catalog-listing.md) |
 | GET | `/auctions/{id}` | Детали + текущая цена |
 | POST | `/auctions` | Создание (seller) |
 | PATCH | `/auctions/{id}` | Редактирование (DRAFT / до startsAt) |
@@ -107,6 +108,21 @@ stateDiagram-v2
 | POST | `/auctions/{id}/promote` | Платное продвижение |
 | POST | `/auctions/{id}/expert-appraisals` | Expert only |
 | GET | `/auctions/{id}/expert-appraisals` | Публичный просмотр |
+
+#### `GET /api/v1/auctions` — каталог
+
+Полная спецификация фильтров, поиска и ответа — [catalog-listing.md](./requirements/catalog-listing.md).
+
+| Query | Тип | Default | Описание |
+|-------|-----|---------|----------|
+| `q` | string | — | Поиск (scope по тарифу) |
+| `categoryId` | UUID | — | Категория |
+| `status` | enum | `ACTIVE` | `ACTIVE` \| `ENDING_SOON` \| `SCHEDULED` \| `ENDED` \| `ALL` |
+| `sort` | enum | `ENDING_SOON` | `ENDING_SOON` \| `NEWEST` \| `PRICE_ASC` \| `PRICE_DESC` \| `RELEVANCE` \| `PROMOTED` |
+| `minPrice`, `maxPrice` | number | — | Pro |
+| `type` | enum | — | `ENGLISH` \| `DUTCH`, Pro |
+| `hasExpertAppraisal` | boolean | — | Pro |
+| `cursor`, `limit` | string, number | —, `20` | Cursor pagination ([06-api](../../06-api/README.md)) |
 
 ### Internal (`/internal/v1/`)
 
@@ -234,6 +250,7 @@ FP хранит матрицу; до register auction параметров в а
 ## 📎 Связанные разделы
 
 - [financial-features](./requirements/financial-features.md)
+- [catalog-listing](./requirements/catalog-listing.md)
 - [financial-policy](../financial-policy/README.md)
 - [billing](../billing/README.md)
 - [feedback](../feedback/README.md)
