@@ -38,6 +38,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 
 | Задача | Файл |
 |--------|------|
+| **Навигация по теме (AI)** | [AGENT-DOCS-INDEX.md](./AGENT-DOCS-INDEX.md) |
 | **Roadmap docs → идеал** | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) |
 | Продукт для людей | [platform-for-users.md](../01-goal/platform-for-users.md) |
 | Клуб и инвайты | [club-access.md](../01-goal/club-access.md) |

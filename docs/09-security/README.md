@@ -10,7 +10,7 @@
 
 ## 🛡️ Авторизация
 
-- **Ory Keto** — [keto-schema.md](./keto-schema.md)
+- **Ory Keto** — [keto-schema.md](./keto-schema.md) · bootstrap: [bootstrap-admin.md](./bootstrap-admin.md)
 - Роли UX: [roles.md](../01-goal/roles.md)
 - Модераторы: [moderator-mapping.md](./moderator-mapping.md)
 
@@ -28,6 +28,7 @@
 ## 🔗 Связанные разделы
 
 - [Keto schema](./keto-schema.md)
+- [Bootstrap admin](./bootstrap-admin.md)
 - [API errors](../06-api/README.md)
 - [BFF](../05-microservices/bff/README.md)
 

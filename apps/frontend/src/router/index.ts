@@ -1,4 +1,5 @@
 import { useSessionStore } from '@/stores/session';
+import { refreshPlatformRoles } from '@/services/roles';
 import { createRouter, createWebHistory } from 'vue-router';
 import { routes } from './routes';
 
@@ -8,7 +9,7 @@ export const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const session = useSessionStore();
 
   if (to.name === 'callback') {
@@ -20,6 +21,13 @@ router.beforeEach((to) => {
       name: 'landing',
       query: { redirect: to.fullPath },
     };
+  }
+
+  if (to.meta.requiresAdmin) {
+    await refreshPlatformRoles();
+    if (!session.isAdmin) {
+      return { name: 'member-home' };
+    }
   }
 
   if (to.name === 'landing' && session.isMember) {

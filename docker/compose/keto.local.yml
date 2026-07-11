@@ -1,0 +1,27 @@
+# Ory Keto — local dev only (NOT for production)
+#
+# Read API:  http://localhost:4466
+# Write API: http://localhost:4467
+#
+# Bootstrap first admin (after login — copy Logto sub from /profile/me):
+#   pnpm grant:admin <logto_sub>
+#
+# Start: docker compose -f docker/compose/keto.local.yml up -d
+# Stop:  docker compose -f docker/compose/keto.local.yml down
+#
+# Uses in-memory DSN — tuples are lost on container recreate.
+# For persistence, set DSN to Postgres (see docs/09-security/bootstrap-admin.md).
+
+services:
+  keto:
+    image: oryd/keto:v0.14.0
+    working_dir: /home/ory
+    ports:
+      - '4466:4466'
+      - '4467:4467'
+    command: serve -c keto.yml
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ../keto
+        target: /home/ory

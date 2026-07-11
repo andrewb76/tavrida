@@ -10,6 +10,7 @@ import { setPostAuthRedirect } from '@/services/authRedirect';
 import {
   resolveInvite,
   setPendingInviterId,
+  setPendingInviteCodeId,
   type ResolvedInvite,
 } from '@/services/invite';
 import { useSessionStore } from '@/stores/session';
@@ -20,6 +21,17 @@ export type SignInWithInviteParams = {
   email?: string;
   redirectAfter?: string;
 };
+
+export type SignInOptions = {
+  redirectAfter?: string;
+  /** Open Logto sign-up form (requires registration enabled in Logto Console). */
+  mode?: 'sign-in' | 'register';
+};
+
+function parseSignInArg(arg?: string | SignInOptions): SignInOptions {
+  if (typeof arg === 'string') return { redirectAfter: arg };
+  return arg ?? {};
+}
 
 export function useAuth() {
   const session = useSessionStore();
@@ -35,6 +47,7 @@ export function useAuth() {
     ) {
       if (redirectAfter) setPostAuthRedirect(redirectAfter);
       if (resolved.inviterId) setPendingInviterId(resolved.inviterId);
+      if (resolved.inviteCodeId) setPendingInviteCodeId(resolved.inviteCodeId);
 
       await logto.signIn({
         redirectUri: signInRedirectUri(),
@@ -45,9 +58,18 @@ export function useAuth() {
       });
     }
 
-    async function signIn(redirectAfter?: string) {
+    async function signIn(arg?: string | SignInOptions) {
+      const { redirectAfter, mode = 'sign-in' } = parseSignInArg(arg);
       if (redirectAfter) setPostAuthRedirect(redirectAfter);
-      await logto.signIn(signInRedirectUri());
+
+      await logto.signIn({
+        redirectUri: signInRedirectUri(),
+        ...(mode === 'register' ? { firstScreen: 'register' as const } : {}),
+      });
+    }
+
+    async function signUp(redirectAfter?: string) {
+      await signIn({ redirectAfter, mode: 'register' });
     }
 
     async function signInWithInvite(params: SignInWithInviteParams) {
@@ -70,6 +92,7 @@ export function useAuth() {
       isLoading: logto.isLoading,
       isMember: computed(() => session.isMember),
       signIn,
+      signUp,
       signInWithInvite,
       signOut,
     };
@@ -80,7 +103,12 @@ export function useAuth() {
     isAuthenticated: computed(() => session.isAuthenticated),
     isLoading: computed(() => false),
     isMember: computed(() => session.isMember),
-    signIn: async (redirectAfter?: string) => {
+    signIn: async (arg?: string | SignInOptions) => {
+      session.signInDev();
+      const { redirectAfter } = parseSignInArg(arg);
+      await router.push(redirectAfter ?? { name: 'member-home' });
+    },
+    signUp: async (redirectAfter?: string) => {
       session.signInDev();
       await router.push(redirectAfter ?? { name: 'member-home' });
     },
@@ -92,6 +120,7 @@ export function useAuth() {
           email: params.email,
         });
         if (resolved.inviterId) setPendingInviterId(resolved.inviterId);
+        if (resolved.inviteCodeId) setPendingInviteCodeId(resolved.inviteCodeId);
       }
       session.signInDev();
       await router.push(params.redirectAfter ?? { name: 'member-home' });

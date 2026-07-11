@@ -1,32 +1,43 @@
+import { requireBearerToken } from './apiAuth';
+
 /** Human-readable invite code: TAV-XXXX-XXXX (no ambiguous chars). */
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_PATTERN = /^TAV-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
 export type InviteRecord = {
+  id?: string;
   code: string;
-  token: string;
+  token?: string;
   inviterId?: string;
   email?: string;
   createdAt: string;
   expiresAt: string;
+  link?: string;
+  status?: 'active' | 'redeemed' | 'expired';
+  usesCount?: number;
+  maxUses?: number;
 };
 
 export type ResolvedInvite = {
   token: string;
   email?: string;
   inviterId?: string;
+  inviteCodeId?: string;
   code?: string;
 };
 
 export type CreatedInvite = {
+  id?: string;
   code: string;
   link: string;
   email?: string;
   expiresAt: string;
+  createdAt?: string;
 };
 
 const MOCK_STORE_KEY = 'tavrida.invites.mock';
 const PENDING_INVITER_KEY = 'tavrida.invite.pendingInviter';
+const PENDING_INVITE_CODE_ID_KEY = 'tavrida.invite.pendingInviteCodeId';
 
 function randomPart(length: number): string {
   let out = '';
@@ -46,6 +57,18 @@ export function normalizeInviteCode(raw: string): string {
 
 export function isValidInviteCodeFormat(code: string): boolean {
   return CODE_PATTERN.test(normalizeInviteCode(code));
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  const token = await requireBearerToken();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+function apiBase(): string {
+  return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 }
 
 function readMockStore(): Record<string, InviteRecord> {
@@ -70,6 +93,16 @@ function buildJoinLink(params: { code?: string; token?: string; email?: string }
     if (params.email) url.searchParams.set('email', params.email);
   }
   return url.toString();
+}
+
+function parseErrorBody(body: unknown, fallback: string): string {
+  if (body && typeof body === 'object') {
+    const record = body as { detail?: string; message?: string | string[] };
+    if (record.detail) return record.detail;
+    if (typeof record.message === 'string') return record.message;
+    if (Array.isArray(record.message)) return record.message.join(', ');
+  }
+  return fallback;
 }
 
 /** Parse pasted link or raw TAV- code. */
@@ -107,13 +140,23 @@ export function setPendingInviterId(inviterId: string): void {
   sessionStorage.setItem(PENDING_INVITER_KEY, inviterId);
 }
 
+export function setPendingInviteCodeId(inviteCodeId: string): void {
+  sessionStorage.setItem(PENDING_INVITE_CODE_ID_KEY, inviteCodeId);
+}
+
 export function consumePendingInviterId(): string | null {
   const id = sessionStorage.getItem(PENDING_INVITER_KEY);
   sessionStorage.removeItem(PENDING_INVITER_KEY);
   return id;
 }
 
-/** Create invite — mock until BFF `POST /invites`. */
+export function consumePendingInviteCodeId(): string | null {
+  const id = sessionStorage.getItem(PENDING_INVITE_CODE_ID_KEY);
+  sessionStorage.removeItem(PENDING_INVITE_CODE_ID_KEY);
+  return id;
+}
+
+/** Create invite — `POST /api/v1/invites`. */
 export async function createInvite(options?: {
   email?: string;
   inviterId?: string;
@@ -145,20 +188,19 @@ export async function createInvite(options?: {
     };
   }
 
-  const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
-  const res = await fetch(`${base}/invites`, {
+  const res = await fetch(`${apiBase()}/invites`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({ email }),
   });
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { detail?: string };
-    throw new Error(body.detail ?? `Create invite failed (${res.status})`);
+    const body = await res.json().catch(() => ({}));
+    throw new Error(parseErrorBody(body, `Create invite failed (${res.status})`));
   }
   return res.json() as Promise<CreatedInvite>;
 }
 
-/** Resolve code or validate token params — mock: `GET /invites/resolve`. */
+/** Resolve code or token — `GET /api/v1/invites/resolve`. */
 export async function resolveInvite(params: {
   code?: string;
   token?: string;
@@ -176,7 +218,7 @@ export async function resolveInvite(params: {
       }
       return {
         code,
-        token: record.token,
+        token: record.token!,
         email: record.email ?? params.email,
         inviterId: record.inviterId,
       };
@@ -187,16 +229,32 @@ export async function resolveInvite(params: {
     throw new Error('Укажите код или ссылку приглашения');
   }
 
-  const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
   const qs = new URLSearchParams();
   if (code) qs.set('code', code);
   if (params.token) qs.set('token', params.token);
-  const res = await fetch(`${base}/invites/resolve?${qs}`);
+  const res = await fetch(`${apiBase()}/invites/resolve?${qs}`);
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { detail?: string };
-    throw new Error(body.detail ?? `Resolve failed (${res.status})`);
+    const body = await res.json().catch(() => ({}));
+    throw new Error(parseErrorBody(body, `Resolve failed (${res.status})`));
   }
   return res.json() as Promise<ResolvedInvite>;
+}
+
+/** List member invites — `GET /api/v1/invites`. */
+export async function listInvites(): Promise<InviteRecord[]> {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
+    return listMockInvites();
+  }
+
+  const res = await fetch(`${apiBase()}/invites`, {
+    headers: await authHeaders(),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(parseErrorBody(body, `List invites failed (${res.status})`));
+  }
+  const json = (await res.json()) as { data: InviteRecord[] };
+  return json.data;
 }
 
 export function listMockInvites(): InviteRecord[] {
@@ -205,20 +263,28 @@ export function listMockInvites(): InviteRecord[] {
   );
 }
 
-/** After first sign-in via invite — attribute referral (mock / BFF). */
-export async function claimInviteAttribution(inviterId: string, userId?: string): Promise<void> {
-  if (!inviterId) return;
+/** After first sign-in via invite — `POST /api/v1/invites/claim`. */
+export async function claimInviteAttribution(options: {
+  inviterId?: string;
+  inviteCodeId?: string;
+  userId?: string;
+}): Promise<void> {
+  const { inviterId, inviteCodeId, userId } = options;
+  if (!inviterId && !inviteCodeId) return;
 
   if (import.meta.env.VITE_USE_MOCK !== 'false') {
-    localStorage.setItem('tavrida.invite.lastInviter', inviterId);
+    if (inviterId) localStorage.setItem('tavrida.invite.lastInviter', inviterId);
     if (userId) localStorage.setItem('tavrida.invite.attributedFor', userId);
     return;
   }
 
-  const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
-  await fetch(`${base}/invites/claim`, {
+  const res = await fetch(`${apiBase()}/invites/claim`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ inviterId }),
+    headers: await authHeaders(),
+    body: JSON.stringify({ inviterId, inviteCodeId }),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(parseErrorBody(body, `Claim failed (${res.status})`));
+  }
 }

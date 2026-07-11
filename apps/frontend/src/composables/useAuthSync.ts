@@ -1,6 +1,8 @@
 import { useLogto } from '@logto/vue';
 import { watch } from 'vue';
 import { isLogtoConfigured, logtoApiResource } from '@/config/logto';
+import { syncLogtoProfile } from '@/services/logtoProfile';
+import { resolveBearerToken } from '@/services/logtoToken';
 import { useSessionStore } from '@/stores/session';
 
 /** Sync Logto → Pinia session + register API token getter. Mount once in App.vue. */
@@ -11,14 +13,7 @@ export function useAuthSync() {
   const logto = useLogto();
   const resource = logtoApiResource();
 
-  session.setAccessTokenGetter(async () => {
-    if (!logto.isAuthenticated.value) return undefined;
-    try {
-      return resource ? await logto.getAccessToken(resource) : await logto.getAccessToken();
-    } catch {
-      return undefined;
-    }
-  });
+  session.setAccessTokenGetter(() => resolveBearerToken(logto, resource));
 
   watch(
     () => logto.isLoading.value,
@@ -33,9 +28,7 @@ export function useAuthSync() {
     async (authenticated) => {
       session.setAuthState(authenticated, logto.isLoading.value);
       if (authenticated) {
-        const claims = await logto.getIdTokenClaims();
-        const name = claims?.name ?? claims?.username ?? undefined;
-        session.setProfile(claims?.sub ?? undefined, name ?? undefined);
+        await syncLogtoProfile(logto, session);
       } else {
         session.clearProfile();
       }

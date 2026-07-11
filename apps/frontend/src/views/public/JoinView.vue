@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import PlaceholderPage from '@/components/PlaceholderPage.vue';
 import { UiButton } from '@tavrida/ui';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useClubAccess } from '@/composables/useClubAccess';
 import {
   isValidInviteCodeFormat,
   normalizeInviteCode,
@@ -11,6 +12,7 @@ import {
 } from '@/services/invite';
 
 const auth = useAuth();
+const { inviteOnly } = useClubAccess();
 const router = useRouter();
 const route = useRoute();
 
@@ -18,6 +20,24 @@ const input = ref('');
 const error = ref(typeof route.query.error === 'string' ? route.query.error : '');
 const loading = ref(false);
 const autoStarted = ref(false);
+
+const codeParam = computed(() =>
+  typeof route.query.code === 'string' ? normalizeInviteCode(route.query.code) : undefined,
+);
+const tokenParam = computed(() =>
+  typeof route.query.token === 'string' ? route.query.token : undefined,
+);
+const emailParam = computed(() =>
+  typeof route.query.email === 'string' ? route.query.email : undefined,
+);
+const hasAutoInvite = computed(
+  () =>
+    (codeParam.value && isValidInviteCodeFormat(codeParam.value)) ||
+    Boolean(tokenParam.value),
+);
+const alreadyLoggedIn = computed(
+  () => auth.isAuthenticated.value && !hasAutoInvite.value,
+);
 
 async function beginJoin(params: {
   code?: string;
@@ -49,20 +69,21 @@ async function submit() {
 
 onMounted(async () => {
   if (auth.isAuthenticated.value) {
-    await router.replace(
-      typeof route.query.redirect === 'string' ? route.query.redirect : '/app',
-    );
+    if (hasAutoInvite.value) {
+      await router.replace(
+        typeof route.query.redirect === 'string' ? route.query.redirect : '/app',
+      );
+    }
     return;
   }
 
-  const codeParam =
-    typeof route.query.code === 'string' ? normalizeInviteCode(route.query.code) : undefined;
-  const tokenParam = typeof route.query.token === 'string' ? route.query.token : undefined;
-  const emailParam = typeof route.query.email === 'string' ? route.query.email : undefined;
-
-  if ((codeParam && isValidInviteCodeFormat(codeParam)) || tokenParam) {
+  if (hasAutoInvite.value) {
     autoStarted.value = true;
-    await beginJoin({ code: codeParam, token: tokenParam, email: emailParam });
+    await beginJoin({
+      code: codeParam.value,
+      token: tokenParam.value,
+      email: emailParam.value,
+    });
   }
 });
 </script>
@@ -71,10 +92,25 @@ onMounted(async () => {
   <PlaceholderPage
     wireframe="W11"
     title="Приглашение в клуб"
-    description="Код или ссылка открывают регистрацию в Logto. Уже есть аккаунт — войдите с главной."
+    :description="
+      inviteOnly
+        ? 'Новые участники — только по коду или ссылке от члена клуба. Уже есть аккаунт — войдите ниже.'
+        : 'Код или ссылка ускоряют вход и фиксируют пригласившего. Можно также зарегистрироваться без инвайта.'
+    "
   >
     <div v-if="autoStarted && loading" class="py-8 text-center text-text-muted">
       Открываем вход через Logto…
+    </div>
+
+    <div v-else-if="alreadyLoggedIn" class="space-y-4">
+      <p class="text-sm text-text-muted">
+        Вы уже вошли в клуб. Код приглашения нужен только для <strong>новой</strong> регистрации.
+        Чтобы зарегистрировать другой аккаунт — сначала выйдите.
+      </p>
+      <UiButton intent="primary" @click="router.push({ name: 'member-home' })">
+        В приложение
+      </UiButton>
+      <UiButton intent="ghost" @click="auth.signOut()">Выйти</UiButton>
     </div>
 
     <form v-else class="space-y-4" @submit.prevent="submit">
@@ -101,8 +137,11 @@ onMounted(async () => {
         class="text-primary underline"
         @click="auth.signIn(typeof route.query.redirect === 'string' ? route.query.redirect : '/app')"
       >
-        Войти
+        {{ inviteOnly ? 'Войти (существующий аккаунт)' : 'Войти' }}
       </button>
+      <span v-if="inviteOnly" class="block mt-1 text-xs">
+        Регистрация без инвайта закрыта (club.registration.inviteOnly).
+      </span>
     </p>
   </PlaceholderPage>
 </template>

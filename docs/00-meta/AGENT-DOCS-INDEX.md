@@ -1,0 +1,82 @@
+# 🤖 AGENT-DOCS-INDEX — навигация по документации для AI
+
+> **Назначение:** тематический индекс. Читать **в начале задачи** вместо полного обхода `docs/`.  
+> **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
+> **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
+
+**Последнее обновление индекса:** 2026-07-11 (Oracle)
+
+---
+
+## Как пользоваться
+
+1. Определи **тему задачи** (таблица ниже).
+2. Прочитай только файлы из колонки «Читать» — в указанном порядке.
+3. При необходимости углубись по ссылкам «Дополнительно».
+4. По завершении: обнови docs → обнови строку темы в этом файле (статус, дата, новые пути).
+
+---
+
+## Тематический указатель
+
+| Тема | Когда читать | Читать (обязательно) | Дополнительно | Код / статус |
+|------|--------------|----------------------|---------------|--------------|
+| **Bootstrap / новая сессия** | Любая незнакомая задача | [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | [docs/README.md](../README.md) | — |
+| **Инвайты / клуб / referral** | BFF invites, `/join`, Logto OTT, claim | [club-access.md](../01-goal/club-access.md) → [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) → [invites-api.md](../05-microservices/bff/invites-api.md) → [user-profile/README.md](../05-microservices/user-profile/README.md) | [karma-and-rating.md](../01-goal/karma-and-rating.md) · [logto-setup.md](../14-frontend/logto-setup.md) · [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · [settings/README.md](../05-microservices/settings/README.md) | `services/bff` · `GET /settings/public` · inviteOnly в landing/join |
+| **BFF (общее)** | Новые REST/WS routes, proxy, агрегация | [bff/README.md](../05-microservices/bff/README.md) → [ADR-002](../03-architecture/adr/002-bff-rest-wss.md) → [06-api/README.md](../06-api/README.md) | [event-catalog.md](../03-architecture/event-catalog.md) | `services/bff` · admin settings API |
+| **Settings** | Scalar registry, club.* | [settings/README.md](../05-microservices/settings/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) → [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | [invites-api.md](../05-microservices/bff/invites-api.md) | `services/settings` · BFF `ClubSettingsReader` · admin UI `/admin/settings` |
+| **Auth / JWT / Logto** | Guards, OIDC, M2M, Keto | [09-security/README.md](../09-security/README.md) → [keto-schema.md](../09-security/keto-schema.md) → [bootstrap-admin.md](../09-security/bootstrap-admin.md) → [logto-setup.md](../14-frontend/logto-setup.md) | [ADR-010](../03-architecture/adr/010-jwt-validation-traefik.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) | `GET /me/roles` · `/admin` UI · bff guards |
+| **Frontend SPA** | Vue routes, API layer, UI | [14-frontend/README.md](../14-frontend/README.md) → [stack-decisions.md](../14-frontend/stack-decisions.md) | [screen-tree.md](../11-ux-ui/screen-tree.md) · [design-tokens.md](../11-ux-ui/design-tokens.md) | `apps/frontend` |
+| **User profile** | Профиль, notes, internal API | [user-profile/README.md](../05-microservices/user-profile/README.md) → [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) | [10-data/README.md](../10-data/README.md) · ADR-001 | `services/user-profile` · scaffold |
+| **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) | [auction/requirements/financial-features.md](../05-microservices/auction/requirements/financial-features.md) | `services/auction` · scaffold |
+| **Биллинг / кошелёк** | balance, deposit, charges | [billing/README.md](../05-microservices/billing/README.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/billing` · scaffold |
+| **Тарифы / лимиты** | Free/Basic/Pro, FP limits | [financial-policy/README.md](../05-microservices/financial-policy/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) | [roles.md](../01-goal/roles.md) · [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/financial-policy` · scaffold |
+| **Oracle / прогноз дохода** | Admin симулятор | [glossary.md](../05-microservices/oracle/glossary.md) → [overview.md](../05-microservices/oracle/overview.md) → [topic-index.md](../05-microservices/oracle/topic-index.md) → [IMPLEMENTATION-PLAN.md](../05-microservices/oracle/IMPLEMENTATION-PLAN.md) | [topics/](../05-microservices/oracle/topics/) · [ADR-015](../03-architecture/adr/015-monetization-engine.md) · `packages/monetization-engine` · `config/oracle.defaults.yaml` | engine scaffold v0 · checkpoint 0 |
+| **Форум** | topics, comments, модерация | [forum/README.md](../05-microservices/forum/README.md) → [ADR-005](../03-architecture/adr/005-forum-terminology.md) | [forum/requirements/README.md](../05-microservices/forum/requirements/README.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) | docs only |
+| **Рейтинг / карма** | karma, referral tree | [karma-and-rating.md](../01-goal/karma-and-rating.md) → [rating/README.md](../05-microservices/rating/README.md) | [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) | docs only |
+| **Marketplace** | услуги, заказы | [marketplace/README.md](../05-microservices/marketplace/README.md) | [marketplace/requirements/README.md](../05-microservices/marketplace/requirements/README.md) | docs only |
+| **Уведомления** | Novu, adapter | [notifications/README.md](../05-microservices/notifications/README.md) → [ADR-004](../03-architecture/adr/004-notifications-adapter.md) | [notifications-analysis.md](../03-architecture/notifications-analysis.md) | docs only |
+| **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |
+| **События / messaging** | RabbitMQ, event names | [event-catalog.md](../03-architecture/event-catalog.md) → [messaging.md](../03-architecture/messaging.md) | [03-architecture/README.md](../03-architecture/README.md) | — |
+| **API conventions** | errors, pagination, idempotency | [06-api/README.md](../06-api/README.md) | [bff/README.md](../05-microservices/bff/README.md) | — |
+| **Данные / schema** | entities, ownership | [10-data/README.md](../10-data/README.md) → [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) | [naming.md](../13-maintenance/naming.md) | — |
+| **Локальная разработка** | docker, env, ports | [local-dev.md](../04-deployment/local-dev.md) → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | [bootstrap-admin.md](../09-security/bootstrap-admin.md) · [dev-tools.md](../02-infrastructure/dev-tools.md) · `docker/compose/` | Keto: `keto.local.yml` |
+| **Деплой / CI** | Swarm, migrations, GH Actions | [04-deployment/README.md](../04-deployment/README.md) | [swarm-stacks.md](../04-deployment/swarm-stacks.md) · [github-actions.md](../04-deployment/github-actions.md) | — |
+| **Observability** | logs, metrics, SLO | [07-observability/README.md](../07-observability/README.md) | [slo.md](../07-observability/slo.md) · [sentry-setup.md](../07-observability/sentry-setup.md) | — |
+| **UX / wireframes** | экраны, IA | [11-ux-ui/README.md](../11-ux-ui/README.md) → [screen-tree.md](../11-ux-ui/screen-tree.md) | [wireframes/](../11-ux-ui/wireframes/README.md) | — |
+| **Продукт (для людей)** | PM, onboarding, copy | [platform-for-users.md](../01-goal/platform-for-users.md) | [platform-scenarios.md](../01-goal/platform-scenarios.md) | — |
+| **Роли и права** | RBAC, тарифы | [roles.md](../01-goal/roles.md) | [keto-schema.md](../09-security/keto-schema.md) | — |
+| **Новый микросервис** | scaffold + docs | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) → [naming.md](../13-maintenance/naming.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | — |
+| **Документация (meta)** | структура, roadmap, guidelines | [docs-guidelines.md](../13-maintenance/docs-guidelines.md) → [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | [docs/README.md](../README.md) | — |
+| **Очередь задач (AI)** | backlog, «сделай потом» | [AGENT-TODO.todo](../../AGENT-TODO.todo) (Todo+ sidebar) | `.cursor/rules/agent-tasks.mdc` | — |
+
+---
+
+## Быстрые пути по директориям
+
+| Папка | Содержание |
+|-------|------------|
+| `docs/00-meta/` | Bootstrap, roadmap, **этот индекс** |
+| `docs/01-goal/` | Продукт, сценарии, клуб, роли |
+| `docs/02-infrastructure/` | Env, секреты, SaaS matrix |
+| `docs/03-architecture/` | ADR, events, messaging |
+| `docs/04-deployment/` | Local dev, Swarm, CI |
+| `docs/05-microservices/` | Specs сервисов |
+| `docs/06-api/` | REST/WS conventions |
+| `docs/09-security/` | Auth, Keto, security ops |
+| `docs/11-ux-ui/` | Wireframes, design system |
+| `docs/14-frontend/` | Vue SPA spec |
+
+---
+
+## Чеклист обновления (конец задачи)
+
+- [ ] Продуктовый слой обновлён (если менялась фича): `01-goal/`
+- [ ] Технический spec обновлён: `05-microservices/`, `06-api/`, ADR при необходимости
+- [ ] `PLATFORM-SECRETS` / `local-dev` — если новые env vars
+- [ ] Строка темы в таблице выше: статус, дата, новые пути
+- [ ] `PROJECT-CONTEXT.md` — только если сменилась фаза или ключевое ADR
+
+---
+
+**Версия индекса:** 0.1

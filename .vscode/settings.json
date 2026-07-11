@@ -1,0 +1,6 @@
+{
+  "snyk.advanced.autoSelectOrganization": true,
+  "livePreview.autoRefreshPreview": "OnChangesToPreviewedPage",
+  "livePreview.serverRoot": "",
+  "livePreview.showServerStatusNotifications": false
+}

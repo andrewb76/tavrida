@@ -2,9 +2,11 @@
 import { UiButton } from '@tavrida/ui';
 import { RouterLink, RouterView } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useClubAccess } from '@/composables/useClubAccess';
 import { useThemeStore } from '@/stores/theme';
 
 const auth = useAuth();
+const { inviteOnly } = useClubAccess();
 const theme = useThemeStore();
 </script>
 
@@ -25,6 +27,7 @@ const theme = useThemeStore();
             О клубе
           </RouterLink>
           <RouterLink
+            v-if="inviteOnly"
             to="/join"
             class="hidden rounded-md px-3 py-2 text-sm text-text-muted hover:bg-bg hover:text-text sm:inline"
           >
@@ -34,12 +37,20 @@ const theme = useThemeStore();
             {{ theme.mode === 'light' ? '🌙' : '☀️' }}
           </UiButton>
           <UiButton
+            v-if="!auth.isAuthenticated.value && !inviteOnly"
+            intent="secondary"
+            size="sm"
+            @click="auth.signUp()"
+          >
+            Регистрация
+          </UiButton>
+          <UiButton
             v-if="!auth.isAuthenticated.value"
             intent="primary"
             size="sm"
             @click="auth.signIn()"
           >
-            Войти
+            {{ inviteOnly ? 'Войти' : 'Войти' }}
           </UiButton>
           <RouterLink v-else-if="auth.isMember.value" to="/app">
             <UiButton intent="primary" size="sm">В клуб</UiButton>

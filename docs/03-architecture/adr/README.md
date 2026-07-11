@@ -28,6 +28,7 @@
 | [011](./011-centralized-outbound-webhooks.md) | Централизованный сервис исходящих webhooks | accepted | 2026-07-09 |
 | [012](./012-club-invite-via-logto.md) | Member = Logto; invite = registration + referral | accepted | 2026-07-09 |
 | [013](./013-referral-rewards-service.md) | Денежные реферальные вознаграждения — `referral-rewards` | accepted | 2026-07-10 |
+| [014](./014-oracle-revenue-forecast.md) | Oracle: симулятор дохода (admin) | accepted | 2026-07-11 |
 
 ## 📝 Шаблон ADR
 

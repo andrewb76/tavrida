@@ -1,0 +1,29 @@
+Agent backlog (Tavrida Lot):
+  Общий файл задач для AI + Todo+ sidebar. Правило: .cursor/rules/agent-tasks.mdc
+
+Invites / BFF:
+  ☐ OpenAPI fragment для invites в docs/06-api @bff @docs
+  ☐ E2E: create → resolve → mock signIn → claim @bff
+  ☐ Интеграция club.invitesPerMonth через financial-policy (вместо env) @bff
+
+Oracle (прогноз дохода):
+  ☐ Checkpoint 0: founder review topic-index + oracle.defaults.yaml @oracle
+  ☐ packages/monetization-engine — доработка формул по topics + golden tests @oracle
+  ☐ BFF GET/POST /admin/oracle/* @oracle @bff
+  ☐ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend
+  ☐ services/oracle :3013 — saved scenarios (фаза 3) @oracle
+  ☐ Экспорт CSV/PDF @oracle @docs
+  ☐ Monte Carlo @oracle
+  ☐ settings domain oracle.* @oracle @settings
+
+Docs / workflow:
+  ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
+
+Archive:
+  ✔ Настроить AGENT-DOCS-INDEX + правило docs-workflow @done(26-07-10)
+  ✔ Доделать BFF invites: валидация, 201, admin skip limit @done(26-07-10)
+  ✔ Invites: validityDays + codeType из settings (ClubSettingsReader) @done(26-07-11)
+  ✔ inviteOnly: GET /settings/public + landing/join UI @done(26-07-11)
+  ✔ Oracle spec: monetization-catalog + ADR-014 + oracle README @done(26-07-11)
+  ✔ Oracle config: oracle.defaults.yaml + oracle-config.md (решения founder) @done(26-07-11)
+  ✔ Oracle docs tree: glossary, overview, topic-index, topics/*, IMPLEMENTATION-PLAN @done(26-07-11)

@@ -27,8 +27,8 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `userId` | UUID PK | Logto sub |
-| `inviterId` | UUID nullable | Кто пригласил (после claim по invite) |
+| `userId` | varchar(128) PK | Logto `sub` (opaque id, not UUID) |
+| `inviterId` | varchar(128) nullable | Кто пригласил (после claim по invite) |
 | `invitationAcceptedAt` | timestamptz nullable | Когда зафиксирован реферал (не gate UI) |
 | `displayName` | varchar nullable | Override (optional) |
 | `bio` | text nullable | — |
@@ -56,7 +56,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 |------|-----|----------|
 | `id` | UUID PK | — |
 | `code` | varchar unique | Публичный код |
-| `issuerId` | UUID | Member, создавший код |
+| `issuerId` | varchar(128) | Member (Logto `sub`), создавший код |
 | `maxUses` | int | 1 для SINGLE_USE |
 | `usesCount` | int | — |
 | `expiresAt` | timestamptz | `club.invite.validityDays` |
@@ -66,8 +66,8 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `inviteeId` | UUID PK | Новый member |
-| `inviterId` | UUID | Прямой пригласивший |
+| `inviteeId` | varchar(128) PK | Новый member (Logto `sub`) |
+| `inviterId` | varchar(128) | Прямой пригласивший |
 | `inviteCodeId` | UUID FK | Использованный код |
 | `acceptedAt` | timestamptz | — |
 
@@ -108,7 +108,8 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## ⚙️ Переменные settings
 
-Не владеет domain settings.
+Не владеет domain settings (не регистрирует ключи в `services/settings`).  
+Потребляет `club.*` через BFF и `club.invitesPerMonth` через financial-policy.
 
 ## 💳 Переменные financial-policy
 

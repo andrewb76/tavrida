@@ -197,6 +197,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 
 - [x] Модель модератора форума: главный vs scoped `category|topic|comment:{id}`
 - [x] Promote comment → topic: права и lifecycle tuples
+- [x] Bootstrap первого admin: `pnpm grant:admin`, `docker/keto`, [bootstrap-admin.md](./bootstrap-admin.md)
 - [ ] Финализировать права moderator на auction (hide, cancel, ban bidder)
 - [ ] Expand API: batch check в BFF middleware
 - [ ] Sync Logto custom claims ↔ Keto (optional mirror)
@@ -209,6 +210,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 
 - [roles.md](../01-goal/roles.md)
 - [moderator-mapping.md](./moderator-mapping.md)
+- [bootstrap-admin.md](./bootstrap-admin.md)
 - [BFF](../05-microservices/bff/README.md)
 - [06-api](../06-api/README.md)
 

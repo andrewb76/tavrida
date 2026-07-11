@@ -323,6 +323,7 @@ Default `rating.contextWeights`:
 | [deal_feedback](./deal_feedback/README.md) | ✅ | — | — |
 | [marketplace](./marketplace/README.md) | ✅ | ✅ draft | — |
 | [billing](./billing/README.md) | ✅ | — | — |
+| [bff](./bff/README.md) | ✅ club | — | — |
 | [notifications](./notifications/README.md) | ✅ | — | — |
 
 ---

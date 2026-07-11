@@ -6,6 +6,7 @@ declare module 'vue-router' {
   interface RouteMeta {
     title?: string;
     requiresMember?: boolean;
+    requiresAdmin?: boolean;
     public?: boolean;
   }
 }
@@ -67,9 +68,7 @@ const memberChildren: RouteRecordRaw[] = [
   },
   {
     path: 'invites',
-    name: 'invites',
-    component: () => import('@/views/member/InvitesView.vue'),
-    meta: { title: 'Инвайты', requiresMember: true },
+    redirect: { name: 'profile-me' },
   },
   {
     path: 'wallet',
@@ -100,6 +99,26 @@ const memberChildren: RouteRecordRaw[] = [
     name: 'marketplace-detail',
     component: () => import('@/views/member/MarketplaceDetailView.vue'),
     meta: { title: 'Услуга', requiresMember: true },
+  },
+  {
+    path: 'admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: { title: 'Админ', requiresMember: true, requiresAdmin: true },
+    children: [
+      { path: '', redirect: { name: 'admin-settings' } },
+      {
+        path: 'settings',
+        name: 'admin-settings',
+        component: () => import('@/views/admin/AdminSettingsView.vue'),
+        meta: { title: 'Настройки клуба', requiresMember: true, requiresAdmin: true },
+      },
+      {
+        path: 'roles',
+        name: 'admin-roles',
+        component: () => import('@/views/admin/AdminRolesView.vue'),
+        meta: { title: 'Роли', requiresMember: true, requiresAdmin: true },
+      },
+    ],
   },
 ];
 
@@ -138,6 +157,12 @@ export const routes: RouteRecordRaw[] = [
         name: 'callback',
         component: () => import('@/views/public/CallbackView.vue'),
         meta: { title: 'Auth', public: true },
+      },
+      {
+        path: 'auth/unknown-session',
+        name: 'auth-unknown-session',
+        component: () => import('@/views/public/UnknownSessionView.vue'),
+        meta: { title: 'Сессия входа', public: true },
       },
     ],
   },

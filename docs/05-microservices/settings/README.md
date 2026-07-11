@@ -1,6 +1,6 @@
 # ⚙️ Сервис: settings
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `settings`
+> **Статус:** scaffold v0.1 · **Версия:** 0.2 · **Schema:** `settings`
 
 ## 🎯 Назначение
 
@@ -101,6 +101,7 @@ Admin patch merges partial object; invalidates Redis cache.
 
 | Consumer | Домены |
 |----------|--------|
+| **bff** | `club.*` — инвайты (`ClubSettingsReader`: validityDays, codeType → maxUses) |
 | rating | `rating.*` |
 | auction | `auction.*` |
 | billing | `billing.*` |

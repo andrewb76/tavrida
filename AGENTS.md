@@ -2,7 +2,8 @@
 
 Monorepo: auction/forum platform for finds (Crimea focus). **Docs-first phase** — implementation is scaffold only.
 
-**Start here:** [docs/00-meta/PROJECT-CONTEXT.md](docs/00-meta/PROJECT-CONTEXT.md)
+**Start here:** [docs/00-meta/PROJECT-CONTEXT.md](docs/00-meta/PROJECT-CONTEXT.md)  
+**Per-task docs index (read first):** [docs/00-meta/AGENT-DOCS-INDEX.md](docs/00-meta/AGENT-DOCS-INDEX.md)
 
 Full documentation: [docs/README.md](docs/README.md)  
 **Published docs:** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)
@@ -21,12 +22,15 @@ max-alice/
 │   ├── shared/                @tavrida/shared
 │   ├── graphql/               @tavrida/graphql (+ generate script)
 │   ├── content/               @tavrida/content
+│   ├── monetization-engine/   @tavrida/monetization-engine — pure monetization formulas (ADR-015)
 │   └── ui/                    @tavrida/ui
 ├── services/                  NestJS microservices (@tavrida/*)
+│   ├── bff/                   port 3000
 │   ├── billing/               port 3001
 │   ├── financial-policy/      port 3002
 │   ├── auction/               port 3003
-│   └── subscriptions/       port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
+│   ├── subscriptions/         port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
+│   └── user-profile/          port 3007
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/
@@ -34,7 +38,7 @@ max-alice/
 
 **Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
-**Docs-only services** (`bff`, `forum`, `rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
+**Docs-only services** (`forum`, `rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
 
 ## Commands
 

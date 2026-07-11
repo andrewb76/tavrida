@@ -14,6 +14,7 @@
 | [🌊 platform-for-users](./01-goal/platform-for-users.md) | Функциональность без технического жаргона |
 | [🏛️ club-access](./01-goal/club-access.md) | Клуб: лендинг, инвайт-only |
 | [⭐ karma-and-rating](./01-goal/karma-and-rating.md) | Рейтинг, карма, формулы, referral |
+| [💰 monetization-catalog](./01-goal/monetization-catalog.md) | Доходы, расходы, формулы (Oracle) |
 | [👥 roles](./01-goal/roles.md) | Роли, тарифы, права, матрица доступа |
 
 ---
@@ -22,7 +23,7 @@
 
 | # | Раздел | Описание |
 |---|--------|----------|
-| 00 | [Метаданные](./00-meta/README.md) | PROJECT-CONTEXT, **DOCS-ROADMAP**, правила |
+| 00 | [Метаданные](./00-meta/README.md) | PROJECT-CONTEXT, **AGENT-DOCS-INDEX**, **DOCS-ROADMAP**, правила |
 | 01 | [Цель](./01-goal/README.md) | Миссия · **[для пользователей](./01-goal/platform-for-users.md)** |
 | 02 | [Инфраструктура](./02-infrastructure/README.md) | Окружения, Docker Swarm, хранилища |
 | 03 | [Архитектура](./03-architecture/README.md) | C4, паттерны, ADR, events |

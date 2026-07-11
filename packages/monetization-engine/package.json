@@ -1,0 +1,25 @@
+{
+  "name": "@tavrida/monetization-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Pure deterministic monetization formulas — shared by platform services and Oracle",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "lint": "eslint src",
+    "pretest": "pnpm run build",
+    "test": "node --test dist/index.test.js"
+  },
+  "devDependencies": {
+    "@tavrida/tsconfig": "workspace:*",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}

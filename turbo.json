@@ -15,6 +15,10 @@
       "outputs": [],
       "cache": false
     },
+    "test": {
+      "outputs": [],
+      "cache": false
+    },
     "generate": {
       "outputs": ["packages/graphql/src/generated/**"]
     }

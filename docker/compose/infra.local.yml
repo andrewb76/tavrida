@@ -1,0 +1,79 @@
+# Platform infra — local dev only (NOT for production)
+#
+# Matches repo root `.env.example` defaults:
+#   PostgreSQL  localhost:5432  postgres/postgres  db=tavrida_lot
+#   Redis       localhost:6379
+#   RabbitMQ    localhost:5672  guest/guest
+#   MinIO       localhost:9000  minioadmin/minioadmin
+#
+# Start: docker compose -f docker/compose/infra.local.yml up -d
+# Stop:  docker compose -f docker/compose/infra.local.yml down
+# Logs:  docker compose -f docker/compose/infra.local.yml logs -f postgres
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tavrida_lot
+    volumes:
+      - tavrida_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d tavrida_lot']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - tavrida_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - tavrida_rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - tavrida_minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tavrida_pg_data:
+  tavrida_redis_data:
+  tavrida_rabbitmq_data:
+  tavrida_minio_data:

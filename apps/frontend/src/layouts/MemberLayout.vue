@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
+import { computed, onMounted } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { refreshPlatformRoles } from '@/services/roles';
 import { useSessionStore } from '@/stores/session';
 import { useThemeStore } from '@/stores/theme';
 
@@ -10,12 +12,24 @@ const session = useSessionStore();
 const auth = useAuth();
 const theme = useThemeStore();
 
-const navItems = [
-  { to: '/app', label: 'Home', icon: '🏠' },
-  { to: '/auctions', label: 'Аукционы', icon: '🔨' },
-  { to: '/forum', label: 'Форум', icon: '🗣️' },
-  { to: '/profile/me', label: 'Профиль', icon: '👤' },
-];
+const navItems = computed(() => {
+  const items = [
+    { to: '/app', label: 'Home', icon: '🏠' },
+    { to: '/auctions', label: 'Аукционы', icon: '🔨' },
+    { to: '/forum', label: 'Форум', icon: '🗣️' },
+    { to: '/profile/me', label: 'Профиль', icon: '👤' },
+  ];
+  if (session.isAdmin) {
+    items.push({ to: '/admin/settings', label: 'Админ', icon: '🛡️' });
+  }
+  return items;
+});
+
+onMounted(() => {
+  if (session.isMember) {
+    void refreshPlatformRoles();
+  }
+});
 
 function isActive(path: string) {
   if (path === '/app') return route.path === '/app';
@@ -31,6 +45,14 @@ function isActive(path: string) {
           Tavrida Lot
         </RouterLink>
         <div class="flex items-center gap-1 sm:gap-2">
+          <RouterLink
+            v-if="session.isAdmin"
+            to="/admin/settings"
+            class="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
+            :class="route.path.startsWith('/admin') ? 'bg-primary/10' : ''"
+          >
+            Админ
+          </RouterLink>
           <span
             class="hidden max-w-[8rem] truncate rounded-full bg-bg px-2 py-1 text-xs text-text-muted sm:inline"
             :title="session.displayName"

@@ -97,7 +97,7 @@ sequenceDiagram
 
 | Ключ | Default | Описание |
 |------|---------|----------|
-| `club.registration.inviteOnly` | `true` | Sign-up только по invite link |
+| `club.registration.inviteOnly` | `true` | Sign-up только по invite link — **frontend:** `GET /api/v1/settings/public`, landing/join copy |
 | `club.invite.validityDays` | `14` | TTL кода / token |
 | `club.landing.publicSections` | `about,rules,request` | Блоки лендинга |
 

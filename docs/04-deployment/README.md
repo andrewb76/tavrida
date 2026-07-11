@@ -28,7 +28,7 @@ docker/
     └── Dockerfile.service   # Multi-stage NestJS (shared pattern)
 ```
 
-> Каталог `docker/` — **TODO в коде**; этот документ фиксирует контракт до реализации.
+> `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO. Keto — `keto.local.yml` ([bootstrap-admin](../09-security/bootstrap-admin.md)). Logto — `logto.local.yml` или Logto Cloud.
 
 ## 🔄 CI/CD (целевой pipeline)
 

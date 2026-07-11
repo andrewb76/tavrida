@@ -11,22 +11,19 @@ export function isLogtoConfigured(): boolean {
 export function createLogtoConfig(): LogtoConfig | null {
   if (!isLogtoConfigured()) return null;
 
-  const resource = import.meta.env.VITE_LOGTO_API_RESOURCE?.trim();
   const config: LogtoConfig = {
     endpoint: import.meta.env.VITE_LOGTO_ENDPOINT!,
     appId: import.meta.env.VITE_LOGTO_APP_ID!,
     /**
-     * SDK default (includeReservedScopes=true) always adds `profile`.
-     * Third-party apps must whitelist profile in Console → Permissions;
-     * until then request only core OIDC scopes.
+     * `profile` — name + picture for profile UI (first-party SPA).
+     * Add `email` here if the app requests email in Console → Permissions.
      */
-    scopes: ['openid', 'offline_access'],
+    scopes: ['openid', 'offline_access', 'profile'],
     includeReservedScopes: false,
   };
 
-  if (resource) {
-    config.resources = [resource];
-  }
+  // Do NOT add `resources` here until API Resource exists in Logto Console.
+  // VITE_LOGTO_API_RESOURCE is used only for optional getAccessToken() — ID token fallback covers BFF in dev.
 
   return config;
 }

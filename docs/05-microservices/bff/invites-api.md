@@ -88,7 +88,7 @@ Content-Type: application/json
 
 | Поле | Тип | Обяз. | Описание |
 |------|-----|-------|----------|
-| `email` | string (email) | нет | Если задан — token привязан к email; иначе link-only |
+| `email` | string (email) | нет | Если не задан — BFF генерирует `invite-{id}@invite.tavrida-lot.localhost` (Logto API требует email) |
 
 ### Поведение BFF
 
@@ -104,7 +104,9 @@ Content-Type: application/json
 }
 ```
 
-`expiresIn` = `club.invite.validityDays` × 86400 (default 14 дней).
+`expiresIn` = `club.invite.validityDays` × 86400 (default 14 дней). Источник: **settings** (`ClubSettingsReader`, кэш 30 с); env `CLUB_INVITE_VALIDITY_DAYS` — только fallback.
+
+`maxUses`: `1` при `club.invite.codeType=SINGLE_USE`, `100` при `MULTI_USE`.
 
 5. `POST user-profile /internal/v1/invites`:
 
@@ -113,7 +115,8 @@ Content-Type: application/json
   "issuerId": "uuid",
   "logtoToken": "ott_…",
   "email": "friend@example.com",
-  "expiresAt": "2026-07-23T12:00:00Z"
+  "expiresAt": "2026-07-23T12:00:00Z",
+  "maxUses": 1
 }
 ```
 
@@ -315,7 +318,7 @@ Content-Type: application/json
 | `LOGTO_ENDPOINT` | `https://{tenant}.logto.app` |
 | `LOGTO_M2M_APP_ID` | Machine-to-machine application |
 | `LOGTO_M2M_APP_SECRET` | Client secret |
-| `LOGTO_M2M_RESOURCE` | `https://default.logto.app/api` (Management API) |
+| `LOGTO_M2M_RESOURCE` | `https://{tenant}.logto.app/api` (Cloud) · `https://default.logto.app/api` (OSS) |
 
 Получение token:
 
@@ -361,6 +364,10 @@ Response (пример):
 - [ ] M2M app — Management API scopes
 - [ ] (Опционально) Email connector для писем с invite
 
+### Dev без M2M
+
+Если `LOGTO_M2M_APP_ID` / `LOGTO_M2M_APP_SECRET` пусты, BFF генерирует `dev-*` one-time tokens и сохраняет их в user-profile. Logto Cloud **не примет** такие токены — для полного E2E нужен M2M app.
+
 ---
 
 ## user-profile (internal)
@@ -397,9 +404,13 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 
 ## Bootstrap (день 0)
 
-1. Admin user в Logto Console → первый вход → `profile/ensure` без `inviterId`.
-2. Admin role в Keto → неограниченные `POST /invites`.
-3. Первые invite-ссылки раздаются вручную.
+1. Первый вход через Logto → скопировать `sub` с `/profile/me`.
+2. Keto: `docker compose -f docker/compose/keto.local.yml up -d`.
+3. Admin tuple: `pnpm grant:admin <logto_sub>` — см. [bootstrap-admin.md](../../09-security/bootstrap-admin.md).
+4. Неограниченные `POST /invites` для admin (Keto check в BFF).
+5. Первые invite-ссылки раздаются вручную.
+
+**Без Keto (временно):** `CLUB_INVITES_UNLIMITED_ISSUER_IDS=<sub>` в `.env.local`.
 
 ---
 
@@ -412,17 +423,27 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 | `LOGTO_M2M_RESOURCE` | да | Management API resource |
 | `FRONTEND_ORIGIN` | да | `https://tavrida-lot.ru` — для `link` |
 | `USER_PROFILE_URL` | да | Upstream |
+| `CLUB_INVITE_VALIDITY_DAYS` | нет | **deprecated** — fallback если settings недоступен; источник: `club.invite.validityDays` |
+| `CLUB_INVITES_PER_MONTH` | нет | default `10` (v1 env; позже financial-policy) |
+| `CLUB_INVITES_UNLIMITED_ISSUER_IDS` | нет | CSV Logto `sub` без лимита (fallback без Keto) |
+| `KETO_READ_URL` | нет | `http://localhost:4466` — admin check для invite quota |
+| `KETO_NAMESPACE` | нет | default `TavridaLot` |
+| `KETO_PLATFORM_OBJECT` | нет | default `platform:tavrida-lot` |
+| `KETO_ADMIN_RELATION` | нет | default `admin` |
 
-Добавить в [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md).
+См. [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md) · [bootstrap-admin.md](../../09-security/bootstrap-admin.md).
 
 ---
 
 ## Реализация (чеклист)
 
-- [ ] NestJS `InvitesController` + `LogtoManagementClient`
-- [ ] Rate limiter на `resolve`
-- [ ] Idempotent `claim`
+- [x] NestJS `InvitesController` + `LogtoManagementClient` (`services/bff`)
+- [x] user-profile internal `/internal/v1/invites/*` (`services/user-profile`)
+- [x] Rate limiter на `resolve` (30 req/min per IP)
+- [x] Idempotent `claim`
 - [ ] OpenAPI fragment в `06-api`
+- [x] `club.invite.validityDays` / `club.invite.codeType` — BFF читает из settings (`ClubSettingsReader`)
+- [x] `club.registration.inviteOnly` — `GET /api/v1/settings/public` + landing/join UI
 - [ ] E2E: create → resolve → mock signIn → claim → event
 
 ---

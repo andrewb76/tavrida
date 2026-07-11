@@ -2,6 +2,8 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { isLogtoConfigured } from '@/config/logto';
 
+export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
+
 type AccessTokenGetter = () => Promise<string | undefined>;
 
 export const useSessionStore = defineStore('session', () => {
@@ -11,7 +13,11 @@ export const useSessionStore = defineStore('session', () => {
   const isLoading = ref(false);
   const userId = ref<string | undefined>();
   const displayName = ref('Участник');
+  const email = ref<string | undefined>();
+  const avatarUrl = ref<string | undefined>();
   const balance = ref(1250);
+  const platformRoles = ref<PlatformRole[]>([]);
+  const rolesLoading = ref(false);
 
   /** Dev-only when Logto env is missing */
   const devAuthenticated = ref(false);
@@ -23,6 +29,11 @@ export const useSessionStore = defineStore('session', () => {
     if (logtoEnabled) return isAuthenticated.value;
     return devAuthenticated.value;
   });
+
+  const isAdmin = computed(() => platformRoles.value.includes('admin'));
+  const isModerator = computed(
+    () => isAdmin.value || platformRoles.value.includes('moderator'),
+  );
 
   function setAccessTokenGetter(getter: AccessTokenGetter | null) {
     accessTokenGetter = getter;
@@ -38,14 +49,31 @@ export const useSessionStore = defineStore('session', () => {
     isLoading.value = loading;
   }
 
-  function setProfile(sub?: string, name?: string) {
-    userId.value = sub;
-    if (name) displayName.value = name;
+  function setProfile(profile: {
+    sub?: string;
+    name?: string;
+    email?: string;
+    avatarUrl?: string;
+  }) {
+    userId.value = profile.sub;
+    if (profile.name) displayName.value = profile.name;
+    email.value = profile.email;
+    avatarUrl.value = profile.avatarUrl;
   }
 
   function clearProfile() {
     userId.value = undefined;
     displayName.value = 'Участник';
+    email.value = undefined;
+    avatarUrl.value = undefined;
+  }
+
+  function setPlatformRoles(roles: PlatformRole[]) {
+    platformRoles.value = roles;
+  }
+
+  function setRolesLoading(loading: boolean) {
+    rolesLoading.value = loading;
   }
 
   function signInDev() {
@@ -56,6 +84,7 @@ export const useSessionStore = defineStore('session', () => {
   function signOutDev() {
     devAuthenticated.value = false;
     isAuthenticated.value = false;
+    platformRoles.value = [];
   }
 
   return {
@@ -64,13 +93,21 @@ export const useSessionStore = defineStore('session', () => {
     isMember,
     userId,
     displayName,
+    email,
+    avatarUrl,
     balance,
+    platformRoles,
+    rolesLoading,
+    isAdmin,
+    isModerator,
     logtoEnabled,
     setAccessTokenGetter,
     getAccessToken,
     setAuthState,
     setProfile,
     clearProfile,
+    setPlatformRoles,
+    setRolesLoading,
     signInDev,
     signOutDev,
   };
