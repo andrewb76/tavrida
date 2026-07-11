@@ -6,7 +6,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test --filter=@tavrida/monetization-engine",
+    "test": "turbo run test",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "generate": "turbo run generate",
     "setup:env": "sh scripts/setup-env.sh",
