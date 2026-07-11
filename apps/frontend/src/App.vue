@@ -12,5 +12,8 @@ useRolesSync();
 
 <template>
   <RouterView />
-  <Toaster position="top-center" rich-colors />
+  <Toaster
+    position="top-center"
+    rich-colors
+  />
 </template>

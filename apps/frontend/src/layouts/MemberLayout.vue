@@ -51,7 +51,10 @@ function isActive(path: string) {
   <div class="flex min-h-dvh flex-col bg-bg">
     <header class="sticky top-0 z-40 border-b border-border bg-surface">
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
-        <RouterLink to="/app" class="truncate text-lg font-semibold text-primary">
+        <RouterLink
+          to="/app"
+          class="truncate text-lg font-semibold text-primary"
+        >
           Tavrida Lot
         </RouterLink>
         <div class="flex items-center gap-1 sm:gap-2">
@@ -77,13 +80,27 @@ function isActive(path: string) {
           >
             {{ formatMoney(session.balance, session.balanceCurrency) }}
           </RouterLink>
-          <UiButton intent="ghost" size="sm" title="Inbox (W15 stub)" @click="() => {}">
+          <UiButton
+            intent="ghost"
+            size="sm"
+            title="Inbox (W15 stub)"
+            @click="() => {}"
+          >
             🔔
           </UiButton>
-          <UiButton intent="ghost" size="sm" @click="theme.toggle()">
+          <UiButton
+            intent="ghost"
+            size="sm"
+            @click="theme.toggle()"
+          >
             {{ theme.mode === 'light' ? '🌙' : '☀️' }}
           </UiButton>
-          <UiButton intent="ghost" size="sm" title="Выйти" @click="auth.signOut()">
+          <UiButton
+            intent="ghost"
+            size="sm"
+            title="Выйти"
+            @click="auth.signOut()"
+          >
             ⎋
           </UiButton>
         </div>
@@ -99,7 +116,11 @@ function isActive(path: string) {
       aria-label="Основная навигация"
     >
       <ul class="mx-auto flex max-w-5xl">
-        <li v-for="item in navItems" :key="item.to" class="flex-1">
+        <li
+          v-for="item in navItems"
+          :key="item.to"
+          class="flex-1"
+        >
           <RouterLink
             :to="item.to"
             class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs transition-colors"
@@ -109,7 +130,10 @@ function isActive(path: string) {
                 : 'text-text-muted hover:text-text'
             "
           >
-            <span class="text-lg" aria-hidden="true">{{ item.icon }}</span>
+            <span
+              class="text-lg"
+              aria-hidden="true"
+            >{{ item.icon }}</span>
             {{ item.label }}
           </RouterLink>
         </li>

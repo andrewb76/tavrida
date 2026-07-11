@@ -28,7 +28,7 @@ const step = computed(() => props.spec.step ?? 1);
       :min="min"
       :max="max"
       :step="step"
-    />
+    >
     <input
       v-model.number="model"
       type="number"
@@ -36,7 +36,10 @@ const step = computed(() => props.spec.step ?? 1);
       :min="min"
       :max="max"
       :step="step"
-    />
-    <p v-if="hint" class="mt-0.5 text-xs text-text-muted">{{ hint }}</p>
+    >
+    <p
+      v-if="hint"
+      class="mt-0.5 text-xs text-text-muted"
+    >{{ hint }}</p>
   </label>
 </template>

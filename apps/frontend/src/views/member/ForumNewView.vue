@@ -54,13 +54,29 @@ async function submit() {
   <section class="forum-new">
     <h1>Новая тема</h1>
 
-    <p v-if="loading" class="forum-new__status">Загрузка…</p>
+    <p
+      v-if="loading"
+      class="forum-new__status"
+    >
+      Загрузка…
+    </p>
 
-    <form v-else class="forum-new__form" @submit.prevent="submit">
+    <form
+      v-else
+      class="forum-new__form"
+      @submit.prevent="submit"
+    >
       <label>
         Категория
-        <select v-model="categoryId" required>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+        <select
+          v-model="categoryId"
+          required
+        >
+          <option
+            v-for="cat in categories"
+            :key="cat.id"
+            :value="cat.id"
+          >
             {{ cat.title }}
           </option>
         </select>
@@ -68,17 +84,36 @@ async function submit() {
 
       <label>
         Заголовок
-        <input v-model="title" type="text" maxlength="256" required />
+        <input
+          v-model="title"
+          type="text"
+          maxlength="256"
+          required
+        >
       </label>
 
       <label>
         Текст
-        <textarea v-model="body" rows="8" maxlength="10000" required />
+        <textarea
+          v-model="body"
+          rows="8"
+          maxlength="10000"
+          required
+        />
       </label>
 
-      <p v-if="error" class="forum-new__error">{{ error }}</p>
+      <p
+        v-if="error"
+        class="forum-new__error"
+      >
+        {{ error }}
+      </p>
 
-      <UiButton intent="primary" type="submit" :disabled="saving">
+      <UiButton
+        intent="primary"
+        type="submit"
+        :disabled="saving"
+      >
         {{ saving ? 'Создание…' : 'Опубликовать' }}
       </UiButton>
     </form>

@@ -49,6 +49,7 @@ pnpm install
 pnpm dev          # turbo run dev (all packages)
 pnpm build        # turbo run build
 pnpm lint         # turbo run lint
+pnpm lint:fix     # eslint --fix (Vue formatting)
 pnpm generate     # graphql codegen placeholder
 pnpm docs:dev     # VitePress — docs/ static site
 pnpm docs:build

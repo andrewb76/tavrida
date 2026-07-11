@@ -98,36 +98,64 @@ async function copyInviteLink() {
             class="absolute inset-0 size-full object-cover"
             referrerpolicy="no-referrer"
             @error="avatarLoadFailed = true"
-          />
+          >
         </div>
 
         <div class="min-w-0 flex-1">
-          <p class="truncate text-lg font-semibold text-text">{{ session.displayName }}</p>
-          <p v-if="session.email" class="truncate text-sm text-text-muted">{{ session.email }}</p>
-          <p v-if="session.userId" class="mt-1 truncate font-mono text-xs text-text-muted">
+          <p class="truncate text-lg font-semibold text-text">
+            {{ session.displayName }}
+          </p>
+          <p
+            v-if="session.email"
+            class="truncate text-sm text-text-muted"
+          >
+            {{ session.email }}
+          </p>
+          <p
+            v-if="session.userId"
+            class="mt-1 truncate font-mono text-xs text-text-muted"
+          >
             ID: {{ session.userId }}
           </p>
-          <p class="mt-2 text-xs text-text-muted">Участник клуба</p>
+          <p class="mt-2 text-xs text-text-muted">
+            Участник клуба
+          </p>
         </div>
       </section>
 
       <div class="space-y-4 border-b border-border pb-6">
         <div>
-          <p class="text-sm font-medium text-text">Пригласить в клуб</p>
+          <p class="text-sm font-medium text-text">
+            Пригласить в клуб
+          </p>
           <p class="mt-1 text-sm text-text-muted">
             Создайте ссылку и отправьте другу. После регистрации через Logto он сразу попадёт в клуб.
           </p>
         </div>
 
-        <UiButton intent="primary" :disabled="loading || !canCreateInvite" @click="create">
+        <UiButton
+          intent="primary"
+          :disabled="loading || !canCreateInvite"
+          @click="create"
+        >
           {{ loading ? 'Создаём…' : 'Создать инвайт' }}
         </UiButton>
 
-        <p v-if="isMe && session.isLoading" class="text-sm text-text-muted">
+        <p
+          v-if="isMe && session.isLoading"
+          class="text-sm text-text-muted"
+        >
           Проверяем сессию…
         </p>
-        <p v-else-if="isMe && !session.isMember" class="text-sm text-text-muted">
-          <UiButton intent="ghost" size="sm" @click="auth.signIn('/profile/me')">
+        <p
+          v-else-if="isMe && !session.isMember"
+          class="text-sm text-text-muted"
+        >
+          <UiButton
+            intent="ghost"
+            size="sm"
+            @click="auth.signIn('/profile/me')"
+          >
             Войти, чтобы создавать инвайты
           </UiButton>
         </p>
@@ -136,11 +164,17 @@ async function copyInviteLink() {
           v-if="lastCreated"
           class="space-y-3 rounded-lg border border-border bg-bg p-4"
         >
-          <p class="text-sm font-medium text-text">Ссылка для приглашения</p>
+          <p class="text-sm font-medium text-text">
+            Ссылка для приглашения
+          </p>
           <p class="break-all rounded-md bg-surface px-3 py-2 font-mono text-sm text-text">
             {{ lastCreated.link }}
           </p>
-          <UiButton intent="secondary" size="sm" @click="copyInviteLink">
+          <UiButton
+            intent="secondary"
+            size="sm"
+            @click="copyInviteLink"
+          >
             Копировать ссылку инвайта
           </UiButton>
           <p class="text-xs text-text-muted">
@@ -149,7 +183,10 @@ async function copyInviteLink() {
         </div>
       </div>
 
-      <ul v-if="history.length" class="space-y-2">
+      <ul
+        v-if="history.length"
+        class="space-y-2"
+      >
         <li class="text-xs font-medium uppercase tracking-wide text-text-muted">
           Недавние инвайты
         </li>
@@ -166,6 +203,11 @@ async function copyInviteLink() {
       </ul>
     </template>
 
-    <p v-else class="text-sm text-text-muted">Публичный профиль участника.</p>
+    <p
+      v-else
+      class="text-sm text-text-muted"
+    >
+      Публичный профиль участника.
+    </p>
   </PlaceholderPage>
 </template>

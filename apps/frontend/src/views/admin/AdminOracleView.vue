@@ -67,15 +67,27 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
 <template>
   <section class="space-y-6">
     <div>
-      <h2 class="text-lg font-semibold">Oracle — прогноз дохода</h2>
+      <h2 class="text-lg font-semibold">
+        Oracle — прогноз дохода
+      </h2>
       <p class="text-sm text-text-muted">
         Симулятор для founder/admin. Формулы на BFF (<code class="text-xs">monetization-engine</code>), без записи в
         production.
       </p>
     </div>
 
-    <p v-if="loading" class="text-sm text-text-muted">Загрузка defaults…</p>
-    <p v-else-if="error" class="text-sm text-error">{{ error }}</p>
+    <p
+      v-if="loading"
+      class="text-sm text-text-muted"
+    >
+      Загрузка defaults…
+    </p>
+    <p
+      v-else-if="error"
+      class="text-sm text-error"
+    >
+      {{ error }}
+    </p>
 
     <template v-if="!loading">
       <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -88,7 +100,10 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
         />
 
         <div class="order-2 min-w-0 space-y-4 xl:order-1">
-          <nav class="flex flex-wrap gap-2 border-b border-border pb-3" aria-label="Вкладки Oracle">
+          <nav
+            class="flex flex-wrap gap-2 border-b border-border pb-3"
+            aria-label="Вкладки Oracle"
+          >
             <button
               v-for="tab in tabs"
               :key="tab.id"
@@ -106,7 +121,10 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
           </nav>
 
           <!-- Overview -->
-          <div v-show="activeTab === 'overview'" class="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <div
+            v-show="activeTab === 'overview'"
+            class="grid max-w-2xl gap-4 sm:grid-cols-2"
+          >
             <OracleRangeField
               v-model="form.periodMonths"
               label="Период (мес.)"
@@ -124,16 +142,26 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
               </select>
             </label>
             <label class="flex items-center gap-2 self-end text-sm sm:col-span-2">
-              <input v-model="compareMode" type="checkbox" class="size-4 rounded border-border" />
+              <input
+                v-model="compareMode"
+                type="checkbox"
+                class="size-4 rounded border-border"
+              >
               Сравнить 3 сценария на графике
             </label>
           </div>
 
           <!-- Inflow -->
-          <div v-show="activeTab === 'inflow'" class="grid max-w-lg gap-4">
+          <div
+            v-show="activeTab === 'inflow'"
+            class="grid max-w-lg gap-4"
+          >
             <label class="block text-sm">
               <span class="text-text-muted">Модель роста</span>
-              <select v-model="form.growthModel" class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2">
+              <select
+                v-model="form.growthModel"
+                class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+              >
                 <option value="linear">Линейная</option>
                 <option value="exponential">Экспонента</option>
                 <option value="logistic_s_curve">S-кривая</option>
@@ -206,7 +234,10 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
           </div>
 
           <!-- Activity -->
-          <div v-show="activeTab === 'activity'" class="grid max-w-lg gap-4">
+          <div
+            v-show="activeTab === 'activity'"
+            class="grid max-w-lg gap-4"
+          >
             <OracleRangeField
               v-model="form.auctionsPerUserPerMonth"
               label="Лотов на платящего / мес."
@@ -230,8 +261,13 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
           </div>
 
           <!-- Prices -->
-          <div v-show="activeTab === 'prices'" class="grid max-w-lg gap-4">
-            <h3 class="text-sm font-medium">Подписки</h3>
+          <div
+            v-show="activeTab === 'prices'"
+            class="grid max-w-lg gap-4"
+          >
+            <h3 class="text-sm font-medium">
+              Подписки
+            </h3>
             <OracleRangeField
               v-model="form.basicMonthly"
               label="Базовый, ₽/мес"
@@ -253,14 +289,20 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
               :spec="readRangeSpec((config.subscriptions as Record<string, unknown>)?.pro, 'yearlyPrice')"
             />
 
-            <h3 class="pt-2 text-sm font-medium">Разовые списания</h3>
+            <h3 class="pt-2 text-sm font-medium">
+              Разовые списания
+            </h3>
             <label
               v-for="key in oneTimeKeys"
               :key="key"
               class="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
             >
               <span class="flex items-center gap-2">
-                <input v-model="form.oneTimePrices[key].enabled" type="checkbox" class="size-4 rounded border-border" />
+                <input
+                  v-model="form.oneTimePrices[key].enabled"
+                  type="checkbox"
+                  class="size-4 rounded border-border"
+                >
                 <span>{{ oneTimeLabel(key) }}</span>
               </span>
               <input
@@ -268,14 +310,21 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
                 type="number"
                 min="0"
                 class="w-24 rounded-md border border-border bg-bg px-2 py-1 text-right font-mono text-xs"
-              />
+              >
             </label>
           </div>
 
           <!-- Referral -->
-          <div v-show="activeTab === 'referral'" class="grid max-w-lg gap-4">
+          <div
+            v-show="activeTab === 'referral'"
+            class="grid max-w-lg gap-4"
+          >
             <label class="flex items-center gap-2 text-sm">
-              <input v-model="form.referralProgramEnabled" type="checkbox" class="size-4 rounded border-border" />
+              <input
+                v-model="form.referralProgramEnabled"
+                type="checkbox"
+                class="size-4 rounded border-border"
+              >
               Программа реферала включена
             </label>
 
@@ -286,7 +335,9 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
             />
 
             <div class="space-y-2 rounded-lg border border-border p-3">
-              <p class="text-sm font-medium">Активные модели (комбо)</p>
+              <p class="text-sm font-medium">
+                Активные модели (комбо)
+              </p>
               <label
                 v-for="opt in referralModelOptions"
                 :key="opt.id"
@@ -299,10 +350,13 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
                   :checked="isModelEnabled(opt.id)"
                   :disabled="!form.referralProgramEnabled"
                   @change="toggleModelEnabled(opt.id, ($event.target as HTMLInputElement).checked)"
-                />
+                >
                 {{ opt.label }}
               </label>
-              <p v-if="form.referralProgramEnabled && enabledReferralModels.length === 0" class="text-xs text-text-muted">
+              <p
+                v-if="form.referralProgramEnabled && enabledReferralModels.length === 0"
+                class="text-xs text-text-muted"
+              >
                 Включите хотя бы одну модель для расчёта выплат.
               </p>
             </div>
@@ -314,7 +368,11 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
                 class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
                 :disabled="!form.referralProgramEnabled"
               >
-                <option v-for="opt in referralModelOptions" :key="opt.id" :value="opt.id">
+                <option
+                  v-for="opt in referralModelOptions"
+                  :key="opt.id"
+                  :value="opt.id"
+                >
                   {{ opt.label }}
                 </option>
               </select>
@@ -326,7 +384,7 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
                 type="checkbox"
                 class="size-4 rounded border-border"
                 :disabled="!form.referralProgramEnabled"
-              />
+              >
               Модель «{{ referralModelLabel(form.referralEditModelId) }}» включена
             </label>
 
@@ -342,7 +400,10 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
           </div>
 
           <!-- Costs -->
-          <div v-show="activeTab === 'costs'" class="grid max-w-lg gap-4">
+          <div
+            v-show="activeTab === 'costs'"
+            class="grid max-w-lg gap-4"
+          >
             <OracleRangeField
               v-for="key in costItemKeys"
               :key="key"
@@ -352,12 +413,20 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
             />
 
             <div class="rounded-lg border border-border bg-bg/50 p-3 text-sm">
-              <p class="text-text-muted">Сумма статей затрат</p>
-              <p class="font-semibold">{{ formatRub(totalBurn) }} / мес.</p>
+              <p class="text-text-muted">
+                Сумма статей затрат
+              </p>
+              <p class="font-semibold">
+                {{ formatRub(totalBurn) }} / мес.
+              </p>
             </div>
 
             <label class="flex items-center gap-2 text-sm">
-              <input v-model="form.manualBurnOnly" type="checkbox" class="size-4 rounded border-border" />
+              <input
+                v-model="form.manualBurnOnly"
+                type="checkbox"
+                class="size-4 rounded border-border"
+              >
               Ручной режим расходов (только окупаемость)
             </label>
             <OracleRangeField
@@ -367,7 +436,9 @@ function toggleModelEnabled(modelId: ReferralModelId, enabled: boolean) {
               hint="При ручном режиме статьи затрат не меняются — пересчитывается только месяц окупаемости."
             />
 
-            <h3 class="pt-2 text-sm font-medium">Пополнения (комиссия)</h3>
+            <h3 class="pt-2 text-sm font-medium">
+              Пополнения (комиссия)
+            </h3>
             <OracleRangeField
               v-model="form.avgDepositRub"
               label="Средний депозит ₽"

@@ -52,8 +52,7 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
         session.setPlatformRoles(roles);
         return roles;
       })
-      .catch((error) => {
-        console.warn('[roles] platform roles unavailable', error);
+      .catch(() => {
         session.setPlatformRoles(['member']);
         return ['member'] as PlatformRole[];
       })

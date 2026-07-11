@@ -67,8 +67,18 @@ async function submitTopicComment() {
 
 <template>
   <section class="forum-topic">
-    <p v-if="loading" class="forum-topic__status">Загрузка…</p>
-    <p v-else-if="error" class="forum-topic__error">{{ error }}</p>
+    <p
+      v-if="loading"
+      class="forum-topic__status"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="forum-topic__error"
+    >
+      {{ error }}
+    </p>
 
     <template v-else-if="topic">
       <article class="forum-topic__head">
@@ -76,13 +86,18 @@ async function submitTopicComment() {
         <p class="forum-topic__meta">
           {{ new Date(topic.createdAt).toLocaleString('ru-RU') }}
         </p>
-        <div class="forum-topic__body">{{ topic.body }}</div>
+        <div class="forum-topic__body">
+          {{ topic.body }}
+        </div>
       </article>
 
       <section class="forum-topic__comments">
         <h2>Комментарии ({{ comments.length }})</h2>
 
-        <ul v-if="commentTree.length" class="forum-topic__comment-list">
+        <ul
+          v-if="commentTree.length"
+          class="forum-topic__comment-list"
+        >
           <ForumCommentNode
             v-for="node in commentTree"
             :key="node.id"
@@ -92,15 +107,36 @@ async function submitTopicComment() {
             @created="onCommentCreated"
           />
         </ul>
-        <p v-else class="forum-topic__empty">Пока нет комментариев — будьте первым.</p>
+        <p
+          v-else
+          class="forum-topic__empty"
+        >
+          Пока нет комментариев — будьте первым.
+        </p>
 
-        <form class="forum-topic__form" @submit.prevent="submitTopicComment">
+        <form
+          class="forum-topic__form"
+          @submit.prevent="submitTopicComment"
+        >
           <label>
             Комментарий к теме
-            <textarea v-model="commentBody" rows="4" required />
+            <textarea
+              v-model="commentBody"
+              rows="4"
+              required
+            />
           </label>
-          <p v-if="postError" class="forum-topic__error">{{ postError }}</p>
-          <UiButton intent="primary" type="submit" :disabled="posting">
+          <p
+            v-if="postError"
+            class="forum-topic__error"
+          >
+            {{ postError }}
+          </p>
+          <UiButton
+            intent="primary"
+            type="submit"
+            :disabled="posting"
+          >
             {{ posting ? 'Отправка…' : 'Опубликовать' }}
           </UiButton>
         </form>

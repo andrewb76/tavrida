@@ -29,7 +29,10 @@ async function signInAgain() {
     title="Сессия входа не найдена"
     description="Сессия входа в Logto истекла или страница открыта не через приложение. Если у вас есть ссылка приглашения — откройте её снова. Уже есть аккаунт — войдите. Код без ссылки — введите на странице приглашения."
   >
-    <p v-if="reason" class="mb-4 rounded-md bg-bg px-3 py-2 font-mono text-xs text-text-muted">
+    <p
+      v-if="reason"
+      class="mb-4 rounded-md bg-bg px-3 py-2 font-mono text-xs text-text-muted"
+    >
       {{ reason }}
     </p>
 
@@ -41,7 +44,11 @@ async function signInAgain() {
       >
         В приложение
       </UiButton>
-      <UiButton v-else intent="primary" @click="signInAgain">
+      <UiButton
+        v-else
+        intent="primary"
+        @click="signInAgain"
+      >
         Войти (уже есть аккаунт)
       </UiButton>
       <UiButton
@@ -51,7 +58,10 @@ async function signInAgain() {
       >
         Ввести код приглашения
       </UiButton>
-      <UiButton intent="ghost" @click="router.push({ name: 'landing' })">
+      <UiButton
+        intent="ghost"
+        @click="router.push({ name: 'landing' })"
+      >
         На главную
       </UiButton>
     </div>

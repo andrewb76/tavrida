@@ -59,35 +59,79 @@ function clearCategoryFilter() {
     <header class="forum-list__header">
       <div>
         <h1>Форум</h1>
-        <p class="forum-list__lead">Обсуждения клуба — темы и комментарии.</p>
-        <p v-if="activeCategory" class="forum-list__filter">
+        <p class="forum-list__lead">
+          Обсуждения клуба — темы и комментарии.
+        </p>
+        <p
+          v-if="activeCategory"
+          class="forum-list__filter"
+        >
           Раздел:
           <strong>{{ activeCategory.title }}</strong>
-          <RouterLink :to="clearCategoryFilter()" class="forum-list__filter-clear">× сбросить</RouterLink>
+          <RouterLink
+            :to="clearCategoryFilter()"
+            class="forum-list__filter-clear"
+          >
+            × сбросить
+          </RouterLink>
         </p>
       </div>
       <div class="forum-list__actions">
-        <RouterLink to="/forum/categories" class="forum-list__categories-link">
+        <RouterLink
+          to="/forum/categories"
+          class="forum-list__categories-link"
+        >
           Разделы →
         </RouterLink>
         <RouterLink to="/forum/new">
-          <UiButton intent="primary">+ Новая тема</UiButton>
+          <UiButton intent="primary">
+            + Новая тема
+          </UiButton>
         </RouterLink>
       </div>
     </header>
 
-    <p v-if="loading" class="forum-list__status">Загрузка…</p>
-    <p v-else-if="error" class="forum-list__error">{{ error }}</p>
-    <p v-else-if="topics.length === 0" class="forum-list__status">
-      <template v-if="activeCategory">В этом разделе пока нет тем.</template>
-      <template v-else>Пока нет тем — создайте первую.</template>
+    <p
+      v-if="loading"
+      class="forum-list__status"
+    >
+      Загрузка…
+    </p>
+    <p
+      v-else-if="error"
+      class="forum-list__error"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-else-if="topics.length === 0"
+      class="forum-list__status"
+    >
+      <template v-if="activeCategory">
+        В этом разделе пока нет тем.
+      </template>
+      <template v-else>
+        Пока нет тем — создайте первую.
+      </template>
     </p>
 
-    <ul v-else class="forum-list__items">
-      <li v-for="topic in topics" :key="topic.id">
-        <RouterLink :to="`/forum/topics/${topic.id}`" class="forum-list__item">
+    <ul
+      v-else
+      class="forum-list__items"
+    >
+      <li
+        v-for="topic in topics"
+        :key="topic.id"
+      >
+        <RouterLink
+          :to="`/forum/topics/${topic.id}`"
+          class="forum-list__item"
+        >
           <strong>{{ topic.title }}</strong>
-          <span v-if="topic.isPinned" class="forum-list__pin">📌</span>
+          <span
+            v-if="topic.isPinned"
+            class="forum-list__pin"
+          >📌</span>
           <p>{{ topic.excerpt }}</p>
           <small>{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</small>
         </RouterLink>

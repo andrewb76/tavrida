@@ -16,7 +16,10 @@ const theme = useThemeStore();
       <div
         class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"
       >
-        <RouterLink to="/" class="text-lg font-semibold text-primary">
+        <RouterLink
+          to="/"
+          class="text-lg font-semibold text-primary"
+        >
           Tavrida Lot
         </RouterLink>
         <nav class="flex items-center gap-2">
@@ -33,7 +36,11 @@ const theme = useThemeStore();
           >
             Инвайт
           </RouterLink>
-          <UiButton intent="ghost" size="sm" @click="theme.toggle()">
+          <UiButton
+            intent="ghost"
+            size="sm"
+            @click="theme.toggle()"
+          >
             {{ theme.mode === 'light' ? '🌙' : '☀️' }}
           </UiButton>
           <UiButton
@@ -52,8 +59,16 @@ const theme = useThemeStore();
           >
             {{ inviteOnly ? 'Войти' : 'Войти' }}
           </UiButton>
-          <RouterLink v-else-if="auth.isMember.value" to="/app">
-            <UiButton intent="primary" size="sm">В клуб</UiButton>
+          <RouterLink
+            v-else-if="auth.isMember.value"
+            to="/app"
+          >
+            <UiButton
+              intent="primary"
+              size="sm"
+            >
+              В клуб
+            </UiButton>
           </RouterLink>
           <UiButton
             v-if="auth.isAuthenticated.value"

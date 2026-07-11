@@ -1,0 +1,33 @@
+---
+description: ESLint и стиль Vue/Nest — держать CI lint без предупреждений
+globs: **/*.{ts,vue}
+alwaysApply: false
+---
+
+# Lint и форматирование
+
+Перед завершением задачи с кодом: **`pnpm lint`** (или `pnpm lint:fix` для Vue).
+
+## NestJS bootstrap (`**/main.ts`)
+
+- Не `console.log` — **`Logger.log(message, 'Bootstrap')`** из `@nestjs/common`.
+
+```typescript
+import { Logger } from '@nestjs/common';
+// ...
+await app.listen(port);
+Logger.log(`billing listening on :${port}`, 'Bootstrap');
+```
+
+## Vue SFC
+
+- **2+ атрибута** на теге → каждый с новой строки (`vue/max-attributes-per-line`).
+- Текст в однострочных тегах (`<h1>`, `<p>`) → переносы до/после содержимого.
+- Void-элементы (`<input>`, `<img>`) — **без** self-closing (`<input>` не `<input/>`).
+
+Автоисправление: `pnpm lint:fix` (frontend + ui).
+
+## Прочее
+
+- Не добавлять `console.*` в прод-код; для отладки — удалить перед коммитом.
+- Новые `*.test.ts` — `node:test` + `node:assert/strict`, как в существующих тестах.

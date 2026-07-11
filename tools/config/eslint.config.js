@@ -8,6 +8,7 @@ export default defineConfigWithVueTs(
     ignores: [
       '**/node_modules/',
       '**/dist/',
+      '**/dist-test/',
       '**/.turbo/',
       '**/.vite/',
       '**/.vscode/',
@@ -29,6 +30,17 @@ export default defineConfigWithVueTs(
     rules: {
       'no-console': 'warn',
       'no-debugger': 'warn',
+      // Match vue --fix formatting so new .vue code stays consistent in CI.
+      'vue/max-attributes-per-line': ['warn', { singleline: 3, multiline: 1 }],
+      'vue/singleline-html-element-content-newline': 'warn',
+      'vue/html-self-closing': [
+        'warn',
+        {
+          html: { void: 'never', normal: 'always', component: 'always' },
+          svg: 'always',
+          math: 'always',
+        },
+      ],
     },
   },
 );

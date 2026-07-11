@@ -31,6 +31,8 @@ onMounted(async () => {
 
 <template>
   <div class="flex min-h-dvh items-center justify-center px-4">
-    <p class="text-center text-text-muted">Dev callback — перенаправление…</p>
+    <p class="text-center text-text-muted">
+      Dev callback — перенаправление…
+    </p>
   </div>
 </template>

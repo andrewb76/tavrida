@@ -19,11 +19,18 @@ function isActive(name: string) {
 <template>
   <div class="space-y-6">
     <header>
-      <h1 class="text-2xl font-semibold">Администрирование</h1>
-      <p class="mt-1 text-sm text-text-muted">Пользователи, роли, баланс и платформенные настройки.</p>
+      <h1 class="text-2xl font-semibold">
+        Администрирование
+      </h1>
+      <p class="mt-1 text-sm text-text-muted">
+        Пользователи, роли, баланс и платформенные настройки.
+      </p>
     </header>
 
-    <nav class="flex flex-wrap gap-2 border-b border-border pb-3" aria-label="Разделы админки">
+    <nav
+      class="flex flex-wrap gap-2 border-b border-border pb-3"
+      aria-label="Разделы админки"
+    >
       <RouterLink
         v-for="tab in tabs"
         :key="tab.name"

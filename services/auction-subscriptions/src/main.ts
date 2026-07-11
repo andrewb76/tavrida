@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -10,7 +11,7 @@ async function bootstrap() {
     process.env.AUCTION_SUBSCRIPTIONS_PORT ?? process.env.PORT ?? DEFAULT_PORT,
   );
   await app.listen(port);
-  console.log(`auction-subscriptions listening on :${port}`);
+  Logger.log(`auction-subscriptions listening on :${port}`, 'Bootstrap');
 }
 
 void bootstrap();

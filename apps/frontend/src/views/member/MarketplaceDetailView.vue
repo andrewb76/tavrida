@@ -8,5 +8,9 @@ const id = computed(() => route.params.id as string);
 </script>
 
 <template>
-  <PlaceholderPage wireframe="W09" :title="`Услуга ${id}`" description="Страница услуги v1.1." />
+  <PlaceholderPage
+    wireframe="W09"
+    :title="`Услуга ${id}`"
+    description="Страница услуги v1.1."
+  />
 </template>
