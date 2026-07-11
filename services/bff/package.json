@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "BFF_PORT=3000 nodemon --exec ts-node src/main.ts",
-    "build": "tsc --build",
+    "build": "pnpm --filter @tavrida/monetization-engine run build && tsc --build",
     "lint": "eslint src",
     "pretest": "pnpm run build",
     "test": "node --test dist/**/*.test.js"
