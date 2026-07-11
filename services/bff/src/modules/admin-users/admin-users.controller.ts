@@ -7,7 +7,6 @@ import {
   IsString,
   MaxLength,
   Min,
-  MinLength,
 } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
