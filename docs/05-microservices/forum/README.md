@@ -1,6 +1,6 @@
 # 🗣️ Сервис: forum
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `forum`  
+> **Статус:** scaffold · **Версия:** 0.3 · **Schema:** `forum` · **Порт:** 3009  
 > **Детальные требования:** [requirements/README.md](./requirements/README.md)
 
 ## 🎯 Назначение

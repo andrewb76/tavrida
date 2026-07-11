@@ -20,7 +20,7 @@ pnpm exec turbo run dev --filter=@tavrida/bff --filter=@tavrida/user-profile
 ## ✉️ Invites (BFF + user-profile)
 
 1. PostgreSQL из `docker/compose/infra.local.yml` (schema `user_profile` создаётся автоматически).
-2. Запустить `@tavrida/user-profile` (:3007), `@tavrida/billing` (:3001), `@tavrida/financial-policy` / **plan-config** (:3002), `@tavrida/settings` / **scalar-config** (:3008) и `@tavrida/bff` (:3000).
+2. Запустить `@tavrida/user-profile` (:3007), `@tavrida/billing` (:3001), `@tavrida/plan-config` (:3002), `@tavrida/scalar-config` (:3008), `@tavrida/forum` (:3009) и `@tavrida/bff` (:3000).
 3. В `.env.local`: `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=http://localhost:3000/api/v1`.
 4. `LOGTO_M2M_*` — для реальных one-time tokens; без них BFF отдаёт `dev-*` токены (только локальная отладка).
 5. Spec: [bff/invites-api.md](../05-microservices/bff/invites-api.md).
@@ -53,6 +53,7 @@ docker compose -f docker/compose/infra.local.yml up -d
 | `http://localhost:3001` | billing (internal — debug only) |
 | `http://localhost:3002` | plan-config (legacy: financial-policy — debug only) |
 | `http://localhost:3008` | scalar-config (legacy: settings — debug only) |
+| `http://localhost:3009` | forum (internal — debug only) |
 
 Предпочтительно: **только BFF** с фронта; direct service ports — для отладки.
 
@@ -62,6 +63,7 @@ docker compose -f docker/compose/infra.local.yml up -d
 |----------|---------------|--------|
 | `PLAN_CONFIG_URL` | `http://localhost:3002` | plan-config (тарифы, plan variables) |
 | `SCALAR_CONFIG_URL` | `http://localhost:3008` | scalar-config (скалярные ключи) |
+| `FORUM_URL` | `http://localhost:3009` | forum (темы, комментарии) |
 
 Legacy aliases (удалить после миграции кода): `FINANCIAL_POLICY_URL`, `SETTINGS_URL`.
 
@@ -80,7 +82,8 @@ curl http://localhost:3007/health
 curl http://localhost:3001/health
 curl http://localhost:3002/health
 curl http://localhost:3008/health
-curl http://localhost:3002/internal/v1/plans
+curl http://localhost:3009/health
+curl http://localhost:3000/api/v1/forum/categories
 curl -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/v1/plans
 curl -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/v1/wallets/balance
 pnpm build   # monorepo build gate

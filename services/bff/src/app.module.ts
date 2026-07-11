@@ -10,6 +10,7 @@ import { PlanConfigAdminModule } from './modules/plan-config-admin/plan-config-a
 import { PlansModule } from './modules/plans/plans.module';
 import { ScalarConfigModule } from './modules/scalar-config/scalar-config.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
+import { ForumModule } from './modules/forum/forum.module';
 import { KetoModule } from './modules/keto/keto.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
@@ -29,6 +30,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     ChargesModule,
     PlansModule,
     WalletsModule,
+    ForumModule,
   ],
   controllers: [HealthController],
 })

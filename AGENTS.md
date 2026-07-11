@@ -31,7 +31,8 @@ max-alice/
 │   ├── auction/               port 3003
 │   ├── subscriptions/         port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
 │   ├── user-profile/          port 3007
-│   └── scalar-config/         port 3008 (legacy dir: settings; PG schema: scalar_config)
+│   ├── scalar-config/         port 3008 (legacy dir: settings; PG schema: scalar_config)
+│   └── forum/                 port 3009
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/
@@ -39,7 +40,7 @@ max-alice/
 
 **Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
-**Docs-only services** (`forum`, `rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
+**Docs-only services** (`rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
 
 ## Commands
 
