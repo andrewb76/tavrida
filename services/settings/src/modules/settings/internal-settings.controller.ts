@@ -28,7 +28,8 @@ export class InternalSettingsController {
   ) {
     const updatedBy =
       typeof body.updatedBy === 'string' ? body.updatedBy : undefined;
-    const { updatedBy: _omit, ...patch } = body;
+    const patch = { ...body };
+    delete patch.updatedBy;
     return this.settings.patchDomain(domain, patch, updatedBy);
   }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ name: 'UiButton' });
+
 import { buttonVariants, type ButtonVariants } from './buttonVariants';
 import { cn } from '../../lib/cn';
 
