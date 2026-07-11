@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    ignore:
+      # typescript-eslint / @vue/eslint-config-typescript do not support TS 7 yet (eslint exits 2).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       nestjs:
         patterns:
