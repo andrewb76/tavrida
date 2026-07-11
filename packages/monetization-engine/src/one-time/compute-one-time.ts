@@ -1,5 +1,5 @@
-import { roundRub } from '../money.js';
-import type { ActivitySnapshot, OneTimePriceMap } from '../types.js';
+import { roundRub } from '../money';
+import type { ActivitySnapshot, OneTimePriceMap } from '../types';
 
 /**
  * Sum of enabled one-time charge targets for a month.

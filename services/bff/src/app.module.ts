@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
 import { MeModule } from './modules/me/me.module';
+import { OracleModule } from './modules/oracle/oracle.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { KetoModule } from './modules/keto/keto.module';
 
@@ -19,6 +20,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     MeModule,
     SettingsModule,
     InvitesModule,
+    OracleModule,
   ],
   controllers: [HealthController],
 })

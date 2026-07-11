@@ -8,7 +8,7 @@ import {
   registrationsForMonth,
   roundRub,
   simulate,
-} from './index.js';
+} from './index';
 
 describe('money', () => {
   it('roundRub rounds to kopecks', () => {

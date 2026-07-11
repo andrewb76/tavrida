@@ -1,5 +1,5 @@
-import { roundRub } from '../money.js';
-import type { CostItems } from '../types.js';
+import { roundRub } from '../money';
+import type { CostItems } from '../types';
 
 export type ComputeCostsInput = {
   gross: number;

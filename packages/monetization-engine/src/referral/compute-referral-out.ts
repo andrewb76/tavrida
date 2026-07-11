@@ -1,5 +1,5 @@
-import { roundRub } from '../money.js';
-import type { ReferralParams } from '../types.js';
+import { roundRub } from '../money';
+import type { ReferralParams } from '../types';
 
 export type ReferralOutResult = {
   total: number;

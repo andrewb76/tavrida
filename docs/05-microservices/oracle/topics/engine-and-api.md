@@ -76,7 +76,7 @@ Vue /admin/oracle
 | `sumFixedCosts`, `computeVariableCosts`, `computeMonthlyNet` | `costs/` | scaffold v0 |
 | `findBreakEvenMonth(...)` | `costs/` | scaffold v0 |
 | `registrationsForMonth`, `buildRegistrationsSeries` | `growth/` | scaffold v0 |
-| `loadOracleDefaults(path)` | BFF loader (не в engine) | backlog |
+| `loadOracleDefaults(path)` | BFF loader | ✅ `services/bff/.../load-oracle-defaults.ts` |
 
 ## Нужна ли асинхронность / RabbitMQ?
 

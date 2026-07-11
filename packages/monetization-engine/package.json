@@ -2,11 +2,14 @@
   "name": "@tavrida/monetization-engine",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "description": "Pure deterministic monetization formulas — shared by platform services and Oracle",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },

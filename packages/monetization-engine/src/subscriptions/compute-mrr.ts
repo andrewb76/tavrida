@@ -1,5 +1,5 @@
-import { roundRub } from '../money.js';
-import type { ActivePlansState, PlanPrices } from '../types.js';
+import { roundRub } from '../money';
+import type { ActivePlansState, PlanPrices } from '../types';
 
 export type ComputeMrrInput = {
   active: ActivePlansState;

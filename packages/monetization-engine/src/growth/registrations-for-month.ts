@@ -1,4 +1,4 @@
-import type { GrowthModel } from '../types-growth.js';
+import type { GrowthModel } from '../types-growth';
 
 /** Deterministic registrations count for month t (1-based). */
 export function registrationsForMonth(

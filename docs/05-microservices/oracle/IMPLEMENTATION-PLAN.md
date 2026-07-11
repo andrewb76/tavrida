@@ -29,9 +29,9 @@
 | Шаг | Задача | Выход |
 |-----|--------|-------|
 | 1.1 | Пакет `packages/monetization-engine` | ✅ scaffold v0 ([ADR-015](../../03-architecture/adr/015-monetization-engine.md)); доработка по topics |
-| 1.2 | Загрузчик defaults из YAML | `loadOracleDefaults(path)` |
-| 1.3 | `simulate(input) → OracleResult` | MRR, one-time, net, breakEven |
-| 1.4 | BFF `OracleModule` | `GET /defaults`, `POST /simulate`, `POST /compare` |
+| 1.2 | Загрузчик defaults из YAML | ✅ `loadOracleDefaults()` в BFF |
+| 1.3 | `simulate(input) → OracleResult` | ✅ BFF `POST /admin/oracle/simulate` |
+| 1.4 | BFF `OracleModule` | ✅ `GET /defaults`, `POST /simulate`, `POST /compare` |
 | 1.5 | Overlay FP/settings | цены планов, `referralRewards.globalEnabled` |
 
 **Async / MQ:** не нужны — расчёт синхронный, &lt; 500 ms.

@@ -3,12 +3,12 @@ import {
   computeVariableCosts,
   findBreakEvenMonth,
   sumFixedCosts,
-} from './costs/compute-costs.js';
-import { buildRegistrationsSeries, registrationsForMonth } from './growth/registrations-for-month.js';
-import { computeChargeAmount, computeOneTimeRevenue } from './one-time/compute-one-time.js';
-import { computeReferralOut } from './referral/compute-referral-out.js';
-import { compare, simulate } from './simulate.js';
-import { computeMrr } from './subscriptions/compute-mrr.js';
+} from './costs/compute-costs';
+import { buildRegistrationsSeries, registrationsForMonth } from './growth/registrations-for-month';
+import { computeChargeAmount, computeOneTimeRevenue } from './one-time/compute-one-time';
+import { computeReferralOut } from './referral/compute-referral-out';
+import { compare, simulate } from './simulate';
+import { computeMrr } from './subscriptions/compute-mrr';
 
 /**
  * Static facade — no instances, no state.

@@ -3,18 +3,18 @@ import {
   computeVariableCosts,
   findBreakEvenMonth,
   sumFixedCosts,
-} from './costs/compute-costs.js';
-import { computeOneTimeRevenue } from './one-time/compute-one-time.js';
-import { computeReferralOut } from './referral/compute-referral-out.js';
-import { computeMrr } from './subscriptions/compute-mrr.js';
-import { normalizePlanMix } from './money.js';
+} from './costs/compute-costs';
+import { computeOneTimeRevenue } from './one-time/compute-one-time';
+import { computeReferralOut } from './referral/compute-referral-out';
+import { computeMrr } from './subscriptions/compute-mrr';
+import { normalizePlanMix } from './money';
 import type {
   ActivePlansState,
   MonthlyLedger,
   PlanMix,
   SimulateInput,
   SimulateResult,
-} from './types.js';
+} from './types';
 
 function applyChurn(state: ActivePlansState, churnRatePercent: number): ActivePlansState {
   const keep = 1 - churnRatePercent / 100;
