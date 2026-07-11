@@ -13,6 +13,11 @@ Oracle (прогноз дохода):
   ✔ BFF GET/POST /admin/oracle/* @oracle @bff @done(26-07-11)
   ✔ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend @done(26-07-11)
   ☐ services/oracle :3013 — saved scenarios (фаза 3) @oracle
+
+Financial-policy:
+  ✔ services/financial-policy v1 — plans, limits, subscription scaffold @financial-policy @done(26-07-11)
+  ☐ BFF plans activate + billing charge @financial-policy @billing
+  ☐ CRON автопродление подписок @financial-policy
   ☐ Экспорт CSV/PDF @oracle @docs
   ☐ Monte Carlo @oracle
   ☐ settings domain oracle.* @oracle @settings

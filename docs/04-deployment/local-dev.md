@@ -20,7 +20,7 @@ pnpm exec turbo run dev --filter=@tavrida/bff --filter=@tavrida/user-profile
 ## ✉️ Invites (BFF + user-profile)
 
 1. PostgreSQL из `docker/compose/infra.local.yml` (schema `user_profile` создаётся автоматически).
-2. Запустить `@tavrida/user-profile` (:3007), `@tavrida/settings` (:3008) и `@tavrida/bff` (:3000).
+2. Запустить `@tavrida/user-profile` (:3007), `@tavrida/financial-policy` (:3002), `@tavrida/settings` (:3008) и `@tavrida/bff` (:3000).
 3. В `.env.local`: `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=http://localhost:3000/api/v1`.
 4. `LOGTO_M2M_*` — для реальных one-time tokens; без них BFF отдаёт `dev-*` токены (только локальная отладка).
 5. Spec: [bff/invites-api.md](../05-microservices/bff/invites-api.md).
@@ -49,7 +49,7 @@ docker compose -f docker/compose/infra.local.yml up -d
 | `http://localhost:5173` | Vue frontend |
 | `http://localhost:3000/api/v1` | BFF |
 | `http://localhost:3007` | user-profile (internal — debug only) |
-| `http://localhost:3001` | billing (direct — debug only) |
+| `http://localhost:3002` | financial-policy (internal — debug only) |
 
 Предпочтительно: **только BFF** с фронта; direct service ports — для отладки.
 
@@ -65,8 +65,8 @@ docker compose -f docker/compose/infra.local.yml up -d
 ```bash
 curl http://localhost:3000/health
 curl http://localhost:3007/health
-curl http://localhost:3001/health
-curl http://localhost:3001/health/ready
+curl http://localhost:3002/health
+curl http://localhost:3002/internal/v1/plans
 pnpm build   # monorepo build gate
 ```
 

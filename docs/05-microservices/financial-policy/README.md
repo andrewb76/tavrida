@@ -1,6 +1,6 @@
 # 📋 Сервис: financial-policy
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `financial_policy`
+> **Статус:** v1 scaffold · **Версия:** 0.3 · **Schema:** `financial_policy` · **Код:** `services/financial-policy` :3002
 
 ## 🎯 Назначение
 
