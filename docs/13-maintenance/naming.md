@@ -23,7 +23,7 @@
 
 | Контекст | Формат | Пример |
 |----------|--------|--------|
-| Schema | **snake_case** (имя сервиса) | `auction_subscriptions`, `financial_policy` |
+| Schema | **snake_case** (имя сервиса) | `auction_subscriptions`, `plan_config`, `scalar_config` |
 | Таблицы | **snake_case** | `service_order`, `comment_closure` |
 | Одна БД | `tavrida_lot` | [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) |
 
@@ -31,12 +31,21 @@
 
 ## ⚙️ PLATFORM-REGISTRY keys
 
+Два реестра: **scalar-config** (1 value/key) и **plan-config** (N values per plan).  
+Полные правила: [registry-keys.md](./registry-keys.md) · [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md).
+
 | Контекст | Формат | Пример |
 |----------|--------|--------|
-| Префикс | **snake_case домена** (как schema, без дефисов) | `forum.`, `auction.`, `subscriptions.` |
-| Ключ | `{domain}.{parameterName}` | `subscriptions.auctionCategoriesMax` |
+| Префикс domain | **snake_case домена** (без дефисов) | `forum.`, `auction.`, `subscriptions.` |
+| Scalar key | `{domain}.{group}.{name}` (min 2 сегмента) | `rating.bonus.earlyHours` |
+| Plan variable | `{domain}.{facet}.{NNgroup}.{leaf}` (min **3** сегмента) | `auction.seller.01lot.activeMax` |
+| Facet | `seller`, `bidder`, `author`, `member`, … | роль в домене |
+| NN prefix | `01`–`99` в групповом сегменте | `01lot`, `02bid` — порядок в admin UI |
+| valueType (plan) | `limit` \| `feature` \| `enum` \| `price` | `price` = бывший charge_target |
 
-**Не использовать** дефис в prefix: ~~`auction-subscriptions.categoriesMax`~~ → `subscriptions.auctionCategoriesMax`.
+**Не использовать** дефис в ключе: ~~`auction-subscriptions.categoriesMax`~~ → `subscriptions.member.01auction.categoryMax`.
+
+**Legacy:** ~~`auction.activeAuctions`~~ → `auction.bidder.01participation.activeMax`; ~~`registrationStatus: orphaned`~~ → `syncStatus: stale`.
 
 ---
 
@@ -81,6 +90,13 @@
 | `auction-subscriptions` (service) | `subscriptions` |
 | `auction_subscriptions` (schema/registry) | `subscriptions` |
 | Event `feedback.submitted` | `deal_feedback.submitted` |
+| `settings` / `financial-policy` (service) | `scalar-config` / `plan-config` |
+| `settings` / `financial_policy` (schema) | `scalar_config` / `plan_config` |
+| `parameter`, `Parameter` | plan variable |
+| `registrationStatus: orphaned` | `syncStatus: stale` |
+| `charge_target` + `plan_charge_price` | plan variable `valueType: price` |
+| `auction.activeAuctions` | `auction.bidder.01participation.activeMax` |
+| `auction.sellerActiveLots` | `auction.seller.01lot.activeMax` |
 
 ---
 
@@ -88,4 +104,5 @@
 
 - [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) L39
 - [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md)
+- [registry-keys.md](./registry-keys.md)
 - [10-data/README.md](../10-data/README.md)

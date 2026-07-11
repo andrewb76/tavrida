@@ -4,7 +4,7 @@
 
 ## 🎯 Принципы
 
-1. **Одна schema = один микросервис** — владелец всех таблиц в schema.
+1. **Одна schema = один владелец** — микросервис или инфра-компонент (см. `keto`).
 2. **Нет cross-schema JOIN** — данные других сервисов через HTTP или events.
 3. **Denormalized cache** — только с документированным источником истины и sync-механизмом.
 4. **Миграции** — только владелец schema; backward-compatible expand → contract.
@@ -28,8 +28,8 @@
 | Schema                  | Сервис                | Основные таблицы                                              | Source of truth    |
 | ----------------------- | --------------------- | ------------------------------------------------------------- | ------------------ |
 | `billing`               | billing               | `user_wallet`, `transaction`                                  | Баланс, транзакции |
-| `financial_policy`      | financial-policy      | `plan`, `parameter`, `plan_parameter`, `user_subscription`    | Тарифы, лимиты     |
-| `settings`              | settings              | `setting`                                                     | Скалярные конфиги  |
+| `plan_config`           | plan-config           | `plan`, `plan_variable`, `plan_parameter`, `user_subscription` | Тарифы, plan variables, подписки |
+| `scalar_config`         | scalar-config         | `setting_key`, `setting`                                      | Скалярные конфиги  |
 | `auction`               | auction               | `auction`, `bid`                                              | Лоты, ставки       |
 | `auction_subscriptions` | auction-subscriptions | `subscription`, `digest_preference`                           | Подписки           |
 | `rating`                | rating                | `user_rating`, `vote_log`                                     | Рейтинг, карма     |
@@ -38,6 +38,12 @@
 | `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure` | Контент форума     |
 | `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`          | Маркет услуг       |
 | `notifications`         | notifications-adapter | `notification_log`, `subscriber`                              | Audit уведомлений  |
+| `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
+
+> **Legacy schemas (migration pending):** `financial_policy`, `settings` → `plan_config`, `scalar_config` ([ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md)). Таблицы `charge_target`, `plan_charge_price` сливаются в `plan_parameter.priceAmount` для `valueType: price`.
+
+
+> **Инфраструктура:** `keto` — не NestJS-сервис; таблицы и миграции ведёт `keto migrate up`. Микросервисы обращаются только к Keto HTTP API. При росте нагрузки — отдельная БД (смена DSN).
 
 
 
@@ -59,7 +65,7 @@
 
 | Key pattern                | Owner    | TTL  | Назначение       |
 | -------------------------- | -------- | ---- | ---------------- |
-| `settings:{domain}:latest` | settings | 300s | Кэш конфигов     |
+| `scalar_config:{domain}:latest` | scalar-config | 300s | Кэш scalar конфигов |
 | `auction:{id}:bids`        | auction  | —    | Live bids cache  |
 | `ws:channel:{name}`        | BFF      | —    | Pub/sub relay    |
 | `idempotency:{key}`        | billing  | 24h  | Idempotency keys |

@@ -29,11 +29,13 @@
 | forum | `forum` |
 | marketplace | `marketplace` |
 | notifications | `notifications` |
+| **Ory Keto** (infra) | `keto` |
 
 - Connection string общий: `postgres://...@host:5432/tavrida_lot`
 - TypeORM: `schema: '{name}'` в entity / ormconfig
 - Миграции — в каталоге владельца schema
 - Cross-schema JOIN **запрещены**
+- **Инфраструктура:** schema `keto` в той же БД для Ory Keto (relation tuples); владелец — Keto (`keto migrate`), не NestJS. Доступ микросервисов — только Keto HTTP API. При росте нагрузки — отдельная БД.
 
 ## 🔄 Альтернативы
 

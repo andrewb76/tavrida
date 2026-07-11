@@ -82,7 +82,7 @@ MRR_subscriptions =
 
 ## 2️⃣ Разовые списания (one-time)
 
-Фиксированные цены → `billing.charge` + `target`. Реестр: [PLATFORM-REGISTRY § Разовые](../05-microservices/PLATFORM-REGISTRY.md).
+Фиксированные цены → `financial-policy` (`plan_charge_price` per plan) → `billing.charge` + `target`. Реестр: [PLATFORM-REGISTRY § Разовые](../05-microservices/PLATFORM-REGISTRY.md).
 
 ### auction
 
@@ -172,8 +172,8 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 | Слой | Сервис | Примеры ключей | Редактирует |
 |------|--------|----------------|-------------|
 | **Settings** | `settings` | `billing.minDepositAmount`, `referralRewards.*`, `club.*` | admin |
-| **Plans & limits** | `financial-policy` | `Plan` prices, `auction.activeAuctions`, `club.invitesPerMonth` | admin |
-| **One-time prices** | billing constants + registry | `auction.promotion` = 200 | code + registry |
+| **Plans & plan variables** | `plan-config` | Матрица; ключи через sync от domain | admin `/admin/plan-config` |
+| **Scalar config** | `scalar-config` | Линейный реестр | admin `/admin/scalar-config` |
 | **Assumptions** | **Oracle only** | registrations, mix, churn, attach rates, tree | admin (simulation); defaults: `config/oracle.defaults.yaml` |
 
 ---

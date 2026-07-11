@@ -32,7 +32,7 @@ if ! curl -sf -X PUT "${KETO_WRITE_URL}/admin/relation-tuples" \
   -H 'Content-Type: application/json' \
   -d "$BODY" >/dev/null; then
   echo "Failed to write Keto tuple. Is Keto running?"
-  echo "  docker compose -f docker/compose/keto.local.yml up -d"
+  echo "  pnpm keto:up"
   exit 1
 fi
 

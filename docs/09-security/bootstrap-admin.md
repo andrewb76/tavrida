@@ -23,7 +23,7 @@ flowchart TD
 |-----|----------|
 | 1 | Войти в SPA (Logto) — любой пользователь становится **member** по факту JWT |
 | 2 | Открыть `/profile/me` — скопировать **Logto sub** (например `zox2u6bqqefb`) |
-| 3 | Поднять Keto: `docker compose -f docker/compose/keto.local.yml up -d` |
+| 3 | Поднять Postgres + Keto: `pnpm keto:up` (или infra + `keto.local.yml`) |
 | 4 | Назначить admin: `pnpm grant:admin <logto_sub>` |
 | 5 | Перезапуск BFF не нужен — проверка при каждом `POST /invites` |
 
@@ -45,11 +45,12 @@ subject_id: user:{logtoSub}
 ## Команды
 
 ```bash
-# Инфра (если ещё не поднята)
-docker compose -f docker/compose/infra.local.yml up -d postgres
+# Postgres + Keto (schema keto в tavrida_lot, tuples персистентны)
+pnpm keto:up
 
-# Keto (read :4466, write :4467)
-docker compose -f docker/compose/keto.local.yml up -d
+# Или по шагам:
+# docker compose -f docker/compose/infra.local.yml up -d postgres
+# docker compose -f docker/compose/keto.local.yml up -d
 
 # Первый admin — подставь свой Logto sub
 pnpm grant:admin zox2u6bqqefb
@@ -74,14 +75,27 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 
 ---
 
+## Хранение (PostgreSQL)
+
+| Параметр | Значение |
+|----------|----------|
+| Database | `tavrida_lot` |
+| Schema | `keto` |
+| DSN (docker) | `postgres://postgres:postgres@postgres:5432/tavrida_lot?sslmode=disable&search_path=keto` |
+| Миграции | `keto migrate up` (автоматически в `keto.local.yml`) |
+| Доступ сервисов | **только** Keto Read/Write API — не SQL из микросервисов |
+
+При росте нагрузки — вынести в отдельную БД без смены API (смена DSN).
+
+---
+
 ## Ограничения v0.1
 
 | Тема | Статус |
 |------|--------|
-| Локальный Keto | in-memory DSN — tuples **теряются** при `docker compose down` + recreate |
-| Postgres persistence | TBD — отдельная БД `keto` в `infra.local.yml` |
+| Локальный Keto | ✅ Postgres schema `keto` в `tavrida_lot` |
 | Admin API (`POST /admin/users/{sub}/roles`) | не реализован — только CLI bootstrap |
-| Admin UI | не реализован |
+| Admin UI фаза 2 | назначение moderator/expert через UI — backlog |
 
 ---
 
@@ -89,7 +103,7 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 
 1. **Admin UI фаза 1** — `GET /api/v1/me/roles`, `/admin` во фронте, пункт «Админ» в header ✅
 2. **Admin API** — `POST /api/v1/admin/users/{sub}/roles` (только существующий admin через Keto)
-3. **Keto + Postgres** — персистентные tuples в local dev
+3. **Keto + Postgres** — персистентные tuples в local dev ✅ (`schema keto`)
 4. **Admin UI фаза 2** — назначение moderator/expert/admin через UI
 
 ---

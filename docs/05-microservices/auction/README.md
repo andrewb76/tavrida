@@ -169,18 +169,22 @@ stateDiagram-v2
 
 ## 💳 Переменные financial-policy
 
+Сервис **auction** регистрирует ключи при старте (`POST /internal/v1/parameters/register`).  
+FP хранит матрицу; до register auction параметров в админке не будет.
+
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `auction.activeAuctions` | limit | 5 | 20 | ∞ | Участие в аукционах |
+| `auction.activeAuctions` | limit | 5 | 20 | ∞ | **Bidder:** торгов со ставками одновременно |
+| `auction.sellerActiveLots` | limit | 2 | 5 | ∞ | **Seller:** своих лотов ACTIVE |
 | `auction.bidsPerHour` | limit | 20 | 100 | ∞ | Ставок в час |
-| `auction.auctionsCreatedPerDay` | limit | 3 | 10 | ∞ | Новых лотов / сутки |
+| `auction.auctionsCreatedPerDay` | limit | 3 | 10 | ∞ | **Seller:** новых лотов / сутки |
 | `auction.auctionDurationMaxHours` | limit | 72 | 336 | ∞ | Макс. длительность |
 | `auction.promotionEnabled` | feature | false | false | true | Продвижение (тариф) |
 | `auction.reservePriceEnabled` | feature | false | false | true | Резервная цена |
 
 Платные разовые charge — см. [financial-features.md](./requirements/financial-features.md).
 
-> [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
+> [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md) · [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)
 
 ## 📨 События
 

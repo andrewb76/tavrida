@@ -105,12 +105,18 @@ const memberChildren: RouteRecordRaw[] = [
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { title: 'Админ', requiresMember: true, requiresAdmin: true },
     children: [
-      { path: '', redirect: { name: 'admin-settings' } },
+      { path: '', redirect: { name: 'admin-scalar-config' } },
       {
-        path: 'settings',
-        name: 'admin-settings',
-        component: () => import('@/views/admin/AdminSettingsView.vue'),
-        meta: { title: 'Настройки клуба', requiresMember: true, requiresAdmin: true },
+        path: 'scalar-config',
+        name: 'admin-scalar-config',
+        component: () => import('@/views/admin/AdminScalarConfigView.vue'),
+        meta: { title: 'Конфиг', requiresMember: true, requiresAdmin: true },
+      },
+      {
+        path: 'plan-config',
+        name: 'admin-plan-config',
+        component: () => import('@/views/admin/AdminPlanConfigView.vue'),
+        meta: { title: 'Тарифы', requiresMember: true, requiresAdmin: true },
       },
       {
         path: 'oracle',

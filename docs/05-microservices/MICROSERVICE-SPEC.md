@@ -96,7 +96,8 @@ services/{service-name}/
 
 - Ключ: `{service}.{parameterName}` в camelCase.
 - **Полный реестр:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md) — добавляйте каждую новую переменную туда.
-- При старте сервис **регистрирует** ключи через `POST /api/v1/settings/register`.
+- При старте сервис **регистрирует** ключи через `POST /internal/v1/settings/sync` (рекомендуется) или `register`.
+- Зависшие ключи: см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md).
 - Чтение: `GET /api/v1/settings/{domain}` (internal, через settings SDK или HTTP).
 - Изменение: только admin через BFF.
 
@@ -113,17 +114,22 @@ services/{service-name}/
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `auction.activeAuctions` | limit | 5 | 20 | ∞ | Макс. активных аукционов |
+| `auction.activeAuctions` | limit | 5 | 20 | ∞ | Bidder: торгов со ставками |
+| `auction.sellerActiveLots` | limit | 2 | 5 | ∞ | Seller: своих лотов ACTIVE |
 | `auction.promotionEnabled` | feature | false | false | true | Доступ к продвижению |
 ```
 
 ### Правила
 
 - Ключ: `{service}.{parameterName}` — тот же namespace, что в settings, но **разные реестры**.
-- **Полный реестр:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md).
-- Регистрация: `POST /api/v1/parameters/register` (admin).
-- Проверка лимита: `POST /api/v1/limits/check`.
-- Проверка фичи: `POST /api/v1/features/can-use`.
+- **Каталог проектирования:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md) — документирует все ключи; runtime появляется после register.
+- **Регистрация:** domain-сервис при старте → `POST /internal/v1/plan-variables/sync` (полный манифест).
+- **Зависшие ключи:** отсутствуют в sync → `syncStatus: stale`; **без автоудаления**; admin удаляет вручную.
+- **Seed дефолтов:** `services/{service}/src/config/plan-variable-manifest.ts` (целевая модель), не в plan-config.
+- **Проверка лимита:** domain считает `currentUsage` → `POST /internal/v1/limits/check` (`variableKey`).
+- **Проверка фичи:** `POST /internal/v1/features/can-use`.
+- **Цена (price):** `GET /internal/v1/plan-variables/resolve-price?key=` → `billing.charge`.
+- **Admin:** меняет значения в матрице (BFF `/admin/plan-config`), не создаёт новые ключи.
 - Сервис **не хранит** тарифные значения локально — только запрашивает financial-policy.
 
 ### Разделение settings vs financial-policy

@@ -113,9 +113,13 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 💳 Переменные financial-policy
 
-| Ключ | Описание |
-|------|----------|
-| `club.invitesPerMonth` | Лимит новых кодов |
+**Владелец register:** `user-profile` при старте.
+
+| Ключ | Описание | Дефолты (planValues) |
+|------|----------|----------------------|
+| `club.invitesPerMonth` | Лимит новых кодов | 1 / 3 / −1 |
+
+Целевой файл seed: `services/user-profile/src/config/financial-parameters.ts` (см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)).
 
 > [club-access.md](../../01-goal/club-access.md) · [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
 

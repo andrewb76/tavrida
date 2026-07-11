@@ -6,7 +6,8 @@
     { "path": "./packages/content" },
     { "path": "./packages/ui" },
     { "path": "./services/billing" },
-    { "path": "./services/financial-policy" },
+    { "path": "./services/plan-config" },
+    { "path": "./services/scalar-config" },
     { "path": "./services/auction" },
     { "path": "./services/auction-subscriptions" },
     { "path": "./apps/frontend" }

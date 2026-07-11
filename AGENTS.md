@@ -27,10 +27,11 @@ max-alice/
 ├── services/                  NestJS microservices (@tavrida/*)
 │   ├── bff/                   port 3000
 │   ├── billing/               port 3001
-│   ├── financial-policy/      port 3002
+│   ├── plan-config/           port 3002 (legacy dir: financial-policy; PG schema: plan_config)
 │   ├── auction/               port 3003
 │   ├── subscriptions/         port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
-│   └── user-profile/          port 3007
+│   ├── user-profile/          port 3007
+│   └── scalar-config/         port 3008 (legacy dir: settings; PG schema: scalar_config)
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/

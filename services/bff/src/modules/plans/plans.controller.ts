@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { FinancialPolicyClient } from '../financial-policy/financial-policy.client';
+import { PlanConfigClient } from '../plan-config/plan-config.client';
 
 class ActivatePlanDto {
   @IsString()
@@ -22,20 +22,25 @@ class ActivatePlanDto {
 @Controller('plans')
 @UseGuards(JwtAuthGuard)
 export class PlansController {
-  constructor(private readonly fp: FinancialPolicyClient) {}
+  constructor(private readonly planConfig: PlanConfigClient) {}
 
   @Get()
   list() {
-    return this.fp.listPlans();
+    return this.planConfig.listPlans();
   }
 
   @Get('subscription')
   subscription(@CurrentUser() user: AuthUser) {
-    return this.fp.getSubscription(user.sub);
+    return this.planConfig.getSubscription(user.sub);
   }
 
   @Post('activate')
   activate(@CurrentUser() user: AuthUser, @Body() body: ActivatePlanDto) {
-    return this.fp.activatePlan({ userId: user.sub, ...body });
+    return this.planConfig.activatePlan({ userId: user.sub, ...body });
+  }
+
+  @Post('cancel-auto-renew')
+  cancelAutoRenew(@CurrentUser() user: AuthUser) {
+    return this.planConfig.cancelAutoRenew(user.sub);
   }
 }

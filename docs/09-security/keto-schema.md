@@ -198,6 +198,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 - [x] Модель модератора форума: главный vs scoped `category|topic|comment:{id}`
 - [x] Promote comment → topic: права и lifecycle tuples
 - [x] Bootstrap первого admin: `pnpm grant:admin`, `docker/keto`, [bootstrap-admin.md](./bootstrap-admin.md)
+- [x] Postgres persistence: schema `keto` в `tavrida_lot` ([ADR-001](../03-architecture/adr/001-database-schema-per-service.md))
 - [ ] Финализировать права moderator на auction (hide, cancel, ban bidder)
 - [ ] Expand API: batch check в BFF middleware
 - [ ] Sync Logto custom claims ↔ Keto (optional mirror)

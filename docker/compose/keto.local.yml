@@ -1,27 +1,68 @@
 # Ory Keto — local dev only (NOT for production)
 #
+# Requires Postgres from infra.local.yml on network `tavrida-local`.
+#
 # Read API:  http://localhost:4466
 # Write API: http://localhost:4467
 #
 # Bootstrap first admin (after login — copy Logto sub from /profile/me):
 #   pnpm grant:admin <logto_sub>
 #
-# Start: docker compose -f docker/compose/keto.local.yml up -d
-# Stop:  docker compose -f docker/compose/keto.local.yml down
+# Start:
+#   docker compose -f docker/compose/infra.local.yml up -d postgres
+#   docker compose -f docker/compose/keto.local.yml up -d
+# Or: pnpm keto:up
 #
-# Uses in-memory DSN — tuples are lost on container recreate.
-# For persistence, set DSN to Postgres (see docs/09-security/bootstrap-admin.md).
+# Tuples persist in PostgreSQL schema `keto` (survives container recreate).
+
+networks:
+  tavrida:
+    external: true
+    name: tavrida-local
 
 services:
+  keto-schema-init:
+    image: postgres:17-alpine
+    networks:
+      - tavrida
+    environment:
+      PGPASSWORD: postgres
+    entrypoint: ['sh', '-c']
+    command:
+      - |
+        until pg_isready -h postgres -U postgres -d tavrida_lot; do sleep 1; done
+        psql -h postgres -U postgres -d tavrida_lot -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+    restart: 'no'
+
+  keto-migrate:
+    image: oryd/keto:v0.14.0
+    working_dir: /home/ory
+    networks:
+      - tavrida
+    command: migrate up -y -c keto.yml
+    volumes:
+      - type: bind
+        source: ../keto
+        target: /home/ory
+    depends_on:
+      keto-schema-init:
+        condition: service_completed_successfully
+    restart: 'no'
+
   keto:
     image: oryd/keto:v0.14.0
     working_dir: /home/ory
     ports:
       - '4466:4466'
       - '4467:4467'
+    networks:
+      - tavrida
     command: serve -c keto.yml
     restart: on-failure
     volumes:
       - type: bind
         source: ../keto
         target: /home/ory
+    depends_on:
+      keto-migrate:
+        condition: service_completed_successfully

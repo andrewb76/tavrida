@@ -5,8 +5,11 @@ import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
 import { MeModule } from './modules/me/me.module';
 import { OracleModule } from './modules/oracle/oracle.module';
+import { ChargesModule } from './modules/charges/charges.module';
+import { PlanConfigAdminModule } from './modules/plan-config-admin/plan-config-admin.module';
 import { PlansModule } from './modules/plans/plans.module';
-import { SettingsModule } from './modules/settings/settings.module';
+import { ScalarConfigModule } from './modules/scalar-config/scalar-config.module';
+import { WalletsModule } from './modules/wallets/wallets.module';
 import { KetoModule } from './modules/keto/keto.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
@@ -19,10 +22,13 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     }),
     KetoModule,
     MeModule,
-    SettingsModule,
+    ScalarConfigModule,
     InvitesModule,
     OracleModule,
+    PlanConfigAdminModule,
+    ChargesModule,
     PlansModule,
+    WalletsModule,
   ],
   controllers: [HealthController],
 })

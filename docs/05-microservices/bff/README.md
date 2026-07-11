@@ -45,7 +45,10 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/invites/resolve` | GET | BFF orchestration | public, см. [invites-api.md](./invites-api.md) |
 | `/api/v1/invites/claim` | POST | BFF orchestration | см. [invites-api.md](./invites-api.md) |
 | `/api/v1/me/roles` | GET | BFF + Keto | JWT → platform roles (`member`, `admin`, …) |
-| `/api/v1/admin/settings/club` | GET, PATCH | BFF + settings | Admin: домен `club.*` |
+| `/api/v1/admin/settings/club` | GET, PATCH | BFF + settings | Admin: значения домена `club.*` |
+| `/api/v1/admin/settings/registry` | GET | settings | Реестр ключей (вкл. зависшие) |
+| `/api/v1/admin/settings/keys/:key` | DELETE | settings | Удаление зависшего ключа |
+| `/api/v1/admin/financial/parameters/:key` | DELETE | financial-policy | Удаление зависшего параметра |
 | `/api/v1/admin/oracle/defaults` | GET | BFF + monetization-engine | Admin: YAML ranges + overlay |
 | `/api/v1/admin/oracle/simulate` | POST | BFF + monetization-engine | Admin: revenue forecast |
 | `/api/v1/admin/oracle/compare` | POST | BFF + monetization-engine | Admin: до 3 сценариев |

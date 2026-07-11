@@ -1,8 +1,13 @@
 # 💳 Функции и лимиты аукциона по планам
 
-> **Статус:** draft · **Версия:** 0.1  
-> **Обновлён:** 5 июля 2026  
-> **Ответственный:** `auction`, `financial-policy`
+> **Статус:** draft · **Версия:** 0.2  
+> **Обновлён:** 11 июля 2026  
+> **Владелец register:** `auction` (financial-policy хранит матрицу, не знает ключи до register)
+
+Параметры ниже **документируются здесь** и **регистрируются** сервисом `auction` при старте (`POST /internal/v1/parameters/register`).  
+До подключения auction в runtime матрица FP может не содержать `auction.*` — это ожидаемо.
+
+> Модель: [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)
 
 ---
 
@@ -10,9 +15,10 @@
 
 | Параметр | Free | Basic | Pro | Описание |
 |----------|------|-------|-----|----------|
-| `auction.activeAuctions` | 5 | 20 | ∞ | Количество аукционов, в которых можно участвовать |
-| `auction.bidsPerHour` | 20 | 100 | ∞ | Ставок в час (защита от ботов) |
-| `auction.auctionsCreatedPerDay` | 3 | 10 | ∞ | Новых аукционов в сутки |
+| `auction.activeAuctions` | 5 | 20 | ∞ | **Bidder:** чужих торгов, где одновременно участвуешь ставками |
+| `auction.sellerActiveLots` | 2 | 5 | ∞ | **Seller:** своих лотов ACTIVE на торгах одновременно |
+| `auction.bidsPerHour` | 20 | 100 | ∞ | Ставок в час (антибот) |
+| `auction.auctionsCreatedPerDay` | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
 | `auction.auctionDurationMaxHours` | 72 | 336 | ∞ | Макс. длительность аукциона (часов) |
 | `auction.promotionEnabled` | ❌ | ❌ | ✅ | Возможность «раскрутить» аукцион |
 | `auction.reservePriceEnabled` | ❌ | ❌ | ✅ | Установка резервной цены |
@@ -34,9 +40,21 @@
 
 ## 🔄 Логика проверки
 
-1. **Создание аукциона** → BFF → `financial-policy.check(userId, 'auction.auctionsCreatedPerDay')`
-2. **Вступление в аукцион** → `financial-policy.check(userId, 'auction.activeAuctions')`
-3. **Активация продвижения** → `financial-policy.canUseFeature(userId, 'auction.promotionEnabled')` + `billing.charge()`
+**Счётчики:** auction **сам** считает `currentUsage` (своя БД) и передаёт в `limits/check`. FP не хранит usage ([ADR-016](../../../03-architecture/adr/016-financial-policy-parameter-registration.md) — открытый вопрос для sliding windows).
+
+| Действие | Роль | Параметр | Кто считает usage |
+|----------|------|----------|-------------------|
+| Публикация лота (ACTIVE) | seller | `auction.sellerActiveLots` | auction (COUNT lots ACTIVE) |
+| Создание лота | seller | `auction.auctionsCreatedPerDay` | auction (COUNT created today) |
+| Ставка / вступление в торг | bidder | `auction.activeAuctions` | auction (COUNT active participations) |
+| Продвижение лота | seller | `auction.promotionEnabled` + charge `auction.promotion` | feature check only |
+
+1. **Публикация лота** → `financial-policy.check(userId, 'auction.sellerActiveLots')`
+2. **Создание лота** → `financial-policy.check(userId, 'auction.auctionsCreatedPerDay')`
+3. **Ставка** → `financial-policy.check(userId, 'auction.activeAuctions')`
+4. **Продвижение** → `canUseFeature('auction.promotionEnabled')` → `GET /charges/quote?target=auction.promotion` → `billing.charge()`
+
+> Лимит `−1` в financial-policy = без ограничений.
 
 ---
 

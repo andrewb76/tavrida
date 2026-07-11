@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { FinancialPolicyModule } from '../financial-policy/financial-policy.module';
+import { PlanConfigModule } from '../plan-config/plan-config.module';
 import { PlansController } from './plans.controller';
 
 @Module({
-  imports: [AuthModule, FinancialPolicyModule],
+  imports: [AuthModule, PlanConfigModule],
   controllers: [PlansController],
 })
 export class PlansModule {}

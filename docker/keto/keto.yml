@@ -6,7 +6,9 @@ log:
 namespaces:
   location: file://./namespaces.ts
 
-dsn: memory
+# Postgres schema `keto` in `tavrida_lot` (host `postgres` = service on tavrida-local network).
+# Override with `dsn: memory` only for ephemeral tests without infra.
+dsn: postgres://postgres:postgres@postgres:5432/tavrida_lot?sslmode=disable&search_path=keto
 
 serve:
   read:

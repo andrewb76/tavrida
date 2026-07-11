@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import { KetoService } from '../keto/keto.service';
 import { LogtoManagementService } from '../logto/logto-management.service';
-import { ClubSettingsReader } from '../settings/club-settings.reader';
+import { ClubSettingsReader } from '../scalar-config/club-settings.reader';
 import { UserProfileClient } from '../user-profile/user-profile.client';
 
 const DEFAULT_INVITES_PER_MONTH = 10;

@@ -9,6 +9,13 @@
 # Start: docker compose -f docker/compose/infra.local.yml up -d
 # Stop:  docker compose -f docker/compose/infra.local.yml down
 # Logs:  docker compose -f docker/compose/infra.local.yml logs -f postgres
+#
+# Shared network for app services (Keto, etc.): tavrida-local
+
+networks:
+  tavrida:
+    name: tavrida-local
+    driver: bridge
 
 services:
   postgres:
@@ -21,6 +28,9 @@ services:
       POSTGRES_DB: tavrida_lot
     volumes:
       - tavrida_pg_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - tavrida
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d tavrida_lot']
       interval: 5s
@@ -31,6 +41,8 @@ services:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+    networks:
+      - tavrida
     volumes:
       - tavrida_redis_data:/data
     healthcheck:
@@ -44,6 +56,8 @@ services:
     ports:
       - '5672:5672'
       - '15672:15672'
+    networks:
+      - tavrida
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -61,6 +75,8 @@ services:
     ports:
       - '9000:9000'
       - '9001:9001'
+    networks:
+      - tavrida
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin

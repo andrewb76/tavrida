@@ -1,6 +1,6 @@
 # 💰 Сервис: billing
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `billing`
+> **Статус:** v1 scaffold · **Версия:** 0.3 · **Schema:** `billing` · **Код:** `services/billing` :3001
 
 ## 🎯 Назначение
 

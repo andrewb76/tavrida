@@ -4,7 +4,8 @@ import { RouterLink, RouterView, useRoute } from 'vue-router';
 const route = useRoute();
 
 const tabs = [
-  { name: 'admin-settings', to: '/admin/settings', label: 'Настройки клуба' },
+  { name: 'admin-scalar-config', to: '/admin/scalar-config', label: 'Конфиг' },
+  { name: 'admin-plan-config', to: '/admin/plan-config', label: 'Тарифы' },
   { name: 'admin-oracle', to: '/admin/oracle', label: 'Oracle' },
   { name: 'admin-roles', to: '/admin/roles', label: 'Роли' },
 ];
