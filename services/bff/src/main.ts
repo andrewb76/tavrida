@@ -12,12 +12,12 @@ function parseCorsOrigins(): string[] | boolean {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
   app.enableCors({ origin: parseCorsOrigins(), credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  const port = Number(process.env.PORT ?? process.env.BFF_PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.BFF_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
   console.log(`bff listening on :${port}/api/v1`);
 }

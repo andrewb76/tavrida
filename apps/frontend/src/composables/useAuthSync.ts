@@ -4,6 +4,7 @@ import { isLogtoConfigured, logtoApiResource } from '@/config/logto';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { resolveBearerToken } from '@/services/logtoToken';
 import { useSessionStore } from '@/stores/session';
+import { refreshSessionBalance } from '@/composables/useWalletBalance';
 
 /** Sync Logto → Pinia session + register API token getter. Mount once in App.vue. */
 export function useAuthSync() {
@@ -29,8 +30,10 @@ export function useAuthSync() {
       session.setAuthState(authenticated, logto.isLoading.value);
       if (authenticated) {
         await syncLogtoProfile(logto, session);
+        await refreshSessionBalance();
       } else {
         session.clearProfile();
+        session.setBalance(0);
       }
     },
     { immediate: true },

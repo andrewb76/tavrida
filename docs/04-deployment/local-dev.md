@@ -67,6 +67,21 @@ docker compose -f docker/compose/infra.local.yml up -d
 
 Legacy aliases (удалить после миграции кода): `FINANCIAL_POLICY_URL`, `SETTINGS_URL`.
 
+### Порты (локально)
+
+| Сервис | Env | Порт |
+|--------|-----|------|
+| bff | `BFF_PORT` | **3000** |
+| billing | `BILLING_PORT` | 3001 |
+| plan-config | `PLAN_CONFIG_PORT` | 3002 |
+| auction | `AUCTION_PORT` | 3003 |
+| auction-subscriptions | `AUCTION_SUBSCRIPTIONS_PORT` | 3004 |
+| user-profile | `USER_PROFILE_PORT` | 3007 |
+| scalar-config | `SCALAR_CONFIG_PORT` | 3008 |
+| forum | `FORUM_PORT` | 3009 |
+
+**Не задавайте `PORT=3000` в `.env.local`** — при `pnpm dev` turbo передаёт один env всем процессам, и несколько сервисов попытаются занять один порт (`EADDRINUSE`). Используйте только `*_PORT` или полагайтесь на дефолты в `package.json` dev-скриптах.
+
 ## 🔐 Auth local
 
 - **Logto Cloud** (рекомендуется): [logto-setup.md](../14-frontend/logto-setup.md) — `pnpm setup:env`, заполнить `VITE_LOGTO_*`

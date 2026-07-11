@@ -110,7 +110,23 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 
 ---
 
-## 5. Troubleshooting
+## 6. Webhooks → user-profile
+
+Идентичность пользователя (имя, email, аватар) синхронизируется в **user-profile** через Logto Webhooks.
+
+| | |
+|---|---|
+| Endpoint | `POST /api/v1/webhooks/logto` (BFF, без JWT) |
+| События | `User.Created`, `PostRegister`, `User.Data.Updated`, `User.Deleted`, `User.SuspensionStatus.Updated` |
+| Env | `LOGTO_WEBHOOK_SIGNING_KEY` |
+| Backfill | `pnpm sync:logto-users` |
+| Настройка hook | `pnpm setup:logto-webhook` |
+
+Полная инструкция: [logto-webhooks.md](./logto-webhooks.md).
+
+---
+
+## 7. Troubleshooting
 
 | Симптом | Решение |
 |---------|---------|
@@ -126,4 +142,5 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 ## Связанные документы
 
 - [club-access.md](../01-goal/club-access.md)
+- [logto-webhooks.md](./logto-webhooks.md)
 - [frontend README](./README.md)

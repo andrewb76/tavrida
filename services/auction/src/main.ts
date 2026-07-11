@@ -6,7 +6,9 @@ const DEFAULT_PORT = 3003;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.AUCTION_PORT ?? process.env.PORT ?? DEFAULT_PORT);
+  await app.listen(port);
+  console.log(`auction listening on :${port}`);
 }
 
 void bootstrap();

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec ts-node src/main.ts",
+    "dev": "AUCTION_SUBSCRIPTIONS_PORT=3004 nodemon --exec ts-node src/main.ts",
     "build": "tsc --build",
     "lint": "eslint src",
     "typeorm": "typeorm-ts-node-commonjs"

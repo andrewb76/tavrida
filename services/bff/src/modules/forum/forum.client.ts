@@ -19,6 +19,37 @@ export class ForumClient {
     return this.request<{ data: unknown[] }>('GET', '/internal/v1/categories');
   }
 
+  createCategory(input: {
+    slug: string;
+    title: string;
+    description?: string;
+    parentId?: string | null;
+    sortOrder?: number;
+  }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/categories', input);
+  }
+
+  updateCategory(
+    categoryId: string,
+    input: {
+      slug?: string;
+      title?: string;
+      description?: string;
+      parentId?: string | null;
+      sortOrder?: number;
+    },
+  ) {
+    return this.request<Record<string, unknown>>(
+      'PATCH',
+      `/internal/v1/categories/${categoryId}`,
+      input,
+    );
+  }
+
+  deleteCategory(categoryId: string) {
+    return this.request<{ ok: boolean }>('DELETE', `/internal/v1/categories/${categoryId}`);
+  }
+
   listTopics(query: { categoryId?: string; limit?: number }) {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);

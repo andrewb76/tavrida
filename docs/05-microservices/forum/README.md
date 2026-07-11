@@ -19,7 +19,7 @@
 |--------|----------|
 | **Category** | Дерево разделов |
 | **Topic** | Корневое сообщение темы |
-| **Comment** | Ответ в topic (дерево через closure table) |
+| **Comment** | Ответ в topic; **родитель — topic (корень) или любой comment** любой глубины ([ветки](#-ветки-комментариев)) |
 | **Reaction** | Эмоция на `contentId` + `contentType` |
 | **Promote** | Выделение comment → равноправный topic ([ADR-005](../../03-architecture/adr/005-forum-terminology.md)) |
 
@@ -42,12 +42,35 @@
 | GET | `/forum/categories` | Дерево |
 | GET/POST | `/forum/topics` | Список / создание |
 | GET/PATCH | `/forum/topics/{id}` | Детали / edit window |
-| GET/POST | `/forum/topics/{id}/comments` | Ветка |
+| GET/POST | `/forum/topics/{id}/comments` | Ветка: плоский список с `parentId`; POST — ответ к теме или к comment |
 | POST | `/forum/reactions` | `{ contentId, contentType, emojiKey }` |
 | POST | `/forum/content/report` | Жалоба → `forum.content_reported` |
 | POST | `/internal/.../comments/{id}/promote-to-topic` | Moderator only |
 
 Лимиты UI → [requirements](./requirements/README.md) + [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md).
+
+## 💬 Ветки комментариев
+
+Комментарий можно оставить **не только к теме**, но и **к любому комментарию** в этой теме — на **любой глубине** вложенности.
+
+| Родитель | `parentId` в POST | Пример |
+|----------|-------------------|--------|
+| Тема (корень ветки) | `null` / не передавать | «Спасибо за тему» |
+| Любой comment | UUID комментария | ответ на ответ, 3-й уровень и глубже |
+
+**Модель данных:** `comment.parent_id` → прямой родитель; `comment_closure` — closure table для поддеревьев, promote, модерации по scope.
+
+**GET** `/forum/topics/{id}/comments` — плоский массив `{ data: [{ id, parentId, body, … }] }`. Клиент строит дерево по `parentId` (см. [W06](../../11-ux-ui/wireframes/forum.md)).
+
+**POST** `/forum/topics/{id}/comments` (auth):
+
+```json
+{ "body": "Согласен", "parentId": "comment-uuid" }
+```
+
+Без `parentId` — корневый комментарий к теме. Родитель **обязан** принадлежать той же теме.
+
+**Ограничения по тарифу** (не в scaffold): `forum.author.10reply.nestedEnabled` — вложенные ответы; `forum.author.03thread.depthMax` — макс. глубина. См. [requirements](./requirements/README.md#-ветки-комментариев).
 
 ## ⚙️ Переменные settings
 

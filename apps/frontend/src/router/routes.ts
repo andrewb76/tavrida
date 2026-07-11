@@ -43,6 +43,12 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Форум', requiresMember: true },
   },
   {
+    path: 'forum/categories',
+    name: 'forum-categories',
+    component: () => import('@/views/member/ForumCategoriesView.vue'),
+    meta: { title: 'Разделы форума', requiresMember: true },
+  },
+  {
     path: 'forum/new',
     name: 'forum-new',
     component: () => import('@/views/member/ForumNewView.vue'),

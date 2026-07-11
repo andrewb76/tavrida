@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  const port = Number(process.env.PORT ?? process.env.BILLING_PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.BILLING_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
   console.log(`billing listening on :${port}`);
 }

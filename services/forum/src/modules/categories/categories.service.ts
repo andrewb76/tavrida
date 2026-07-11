@@ -1,25 +1,151 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { CategoryEntity } from '../../entities/category.entity';
+import { TopicEntity } from '../../entities/topic.entity';
 
 export type CategoryNode = {
   id: string;
   slug: string;
   title: string;
   description: string;
+  parentId: string | null;
+  sortOrder: number;
   children: CategoryNode[];
 };
+
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(CategoryEntity)
     private readonly categories: Repository<CategoryEntity>,
+    @InjectRepository(TopicEntity)
+    private readonly topics: Repository<TopicEntity>,
   ) {}
 
   async listTree() {
     const rows = await this.categories.find({ order: { sortOrder: 'ASC', title: 'ASC' } });
+    return { data: this.buildTree(rows) };
+  }
+
+  async create(input: {
+    slug: string;
+    title: string;
+    description?: string;
+    parentId?: string | null;
+    sortOrder?: number;
+  }) {
+    const slug = this.normalizeSlug(input.slug);
+    const title = input.title.trim();
+    if (!title) {
+      throw new BadRequestException({ type: 'validation_error', detail: 'Title is required' });
+    }
+
+    const parentId = input.parentId ?? null;
+    if (parentId) {
+      await this.requireCategory(parentId);
+    }
+
+    await this.ensureSlugAvailable(slug);
+
+    const row = this.categories.create({
+      id: randomUUID(),
+      parentId,
+      slug,
+      title,
+      description: (input.description ?? '').trim(),
+      policy: { allowComments: true },
+      sortOrder: input.sortOrder ?? 0,
+    });
+    await this.categories.save(row);
+    return this.toRecord(row);
+  }
+
+  async update(
+    categoryId: string,
+    input: {
+      slug?: string;
+      title?: string;
+      description?: string;
+      parentId?: string | null;
+      sortOrder?: number;
+    },
+  ) {
+    const row = await this.requireCategory(categoryId);
+
+    if (input.slug != null) {
+      const slug = this.normalizeSlug(input.slug);
+      await this.ensureSlugAvailable(slug, categoryId);
+      row.slug = slug;
+    }
+
+    if (input.title != null) {
+      const title = input.title.trim();
+      if (!title) {
+        throw new BadRequestException({ type: 'validation_error', detail: 'Title is required' });
+      }
+      row.title = title;
+    }
+
+    if (input.description != null) {
+      row.description = input.description.trim();
+    }
+
+    if (input.sortOrder != null) {
+      row.sortOrder = input.sortOrder;
+    }
+
+    if (input.parentId !== undefined) {
+      const parentId = input.parentId;
+      if (parentId === categoryId) {
+        throw new BadRequestException({
+          type: 'validation_error',
+          detail: 'Category cannot be its own parent',
+        });
+      }
+      if (parentId) {
+        await this.requireCategory(parentId);
+        await this.ensureNoCycle(categoryId, parentId);
+      }
+      row.parentId = parentId;
+    }
+
+    await this.categories.save(row);
+    return this.toRecord(row);
+  }
+
+  async remove(categoryId: string) {
+    const row = await this.requireCategory(categoryId);
+
+    const childCount = await this.categories.count({ where: { parentId: categoryId } });
+    if (childCount > 0) {
+      throw new ConflictException({
+        type: 'category_has_children',
+        detail: 'Remove or move child categories first',
+      });
+    }
+
+    const topicCount = await this.topics.count({ where: { categoryId } });
+    if (topicCount > 0) {
+      throw new ConflictException({
+        type: 'category_has_topics',
+        detail: 'Move or delete topics in this category first',
+      });
+    }
+
+    await this.categories.remove(row);
+    return { ok: true };
+  }
+
+  private buildTree(rows: CategoryEntity[]): CategoryNode[] {
     const byParent = new Map<string | null, CategoryEntity[]>();
 
     for (const row of rows) {
@@ -35,9 +161,68 @@ export class CategoriesService {
         slug: row.slug,
         title: row.title,
         description: row.description,
+        parentId: row.parentId,
+        sortOrder: row.sortOrder,
         children: build(row.id),
       }));
 
-    return { data: build(null) };
+    return build(null);
+  }
+
+  private toRecord(row: CategoryEntity) {
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      parentId: row.parentId,
+      sortOrder: row.sortOrder,
+    };
+  }
+
+  private normalizeSlug(raw: string): string {
+    const slug = raw.trim().toLowerCase();
+    if (!slug || slug.length > 64 || !SLUG_RE.test(slug)) {
+      throw new BadRequestException({
+        type: 'validation_error',
+        detail: 'Slug must be 1–64 lowercase letters, digits, and hyphens',
+      });
+    }
+    return slug;
+  }
+
+  private async requireCategory(categoryId: string): Promise<CategoryEntity> {
+    const row = await this.categories.findOne({ where: { id: categoryId } });
+    if (!row) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Category ${categoryId} not found`,
+      });
+    }
+    return row;
+  }
+
+  private async ensureSlugAvailable(slug: string, excludeId?: string) {
+    const existing = await this.categories.findOne({ where: { slug } });
+    if (existing && existing.id !== excludeId) {
+      throw new ConflictException({
+        type: 'slug_taken',
+        detail: `Slug "${slug}" is already used`,
+      });
+    }
+  }
+
+  private async ensureNoCycle(categoryId: string, parentId: string) {
+    let current: string | null = parentId;
+    while (current) {
+      if (current === categoryId) {
+        throw new BadRequestException({
+          type: 'validation_error',
+          detail: 'Parent would create a cycle in the category tree',
+        });
+      }
+      const parent = await this.categories.findOne({ where: { id: current } });
+      current = parent?.parentId ?? null;
+    }
   }
 }

@@ -22,12 +22,14 @@ function createHarness(rows: UserProfileEntity[]) {
           filtered = filtered.slice(0, limit);
           return api;
         },
-        andWhere: (_clause: string, params: { q: string }) => {
-          const needle = params.q.replace(/%/g, '').toLowerCase();
+        andWhere: (clause: string, params?: { q: string }) => {
+          if (clause.includes('deletedAt')) return api;
+          const needle = (params?.q ?? '').replace(/%/g, '').toLowerCase();
           filtered = filtered.filter(
             (row) =>
               row.userId.toLowerCase().includes(needle) ||
-              (row.displayName ?? '').toLowerCase().includes(needle),
+              (row.displayName ?? '').toLowerCase().includes(needle) ||
+              (row.email ?? '').toLowerCase().includes(needle),
           );
           return api;
         },
@@ -58,6 +60,13 @@ describe('UsersService', () => {
       {
         userId: 'user-a',
         displayName: 'Alice',
+        email: 'alice@example.com',
+        username: null,
+        avatarUrl: null,
+        primaryPhone: null,
+        isSuspended: false,
+        deletedAt: null,
+        logtoSyncedAt: null,
         inviterId: null,
         invitationAcceptedAt: null,
         createdAt: new Date('2026-01-01'),
@@ -76,5 +85,22 @@ describe('UsersService', () => {
     const result = await service.ensure('new-user');
     assert.equal(result.userId, 'new-user');
     assert.equal(store.length, 1);
+  });
+
+  it('syncFromLogto upserts identity fields', async () => {
+    const { service, store } = createHarness([]);
+    const result = await service.syncFromLogto({
+      userId: 'logto-1',
+      name: 'Bob',
+      primaryEmail: 'bob@example.com',
+      avatar: 'https://cdn.example/avatar.png',
+    });
+
+    assert.equal(result.userId, 'logto-1');
+    assert.equal(result.displayName, 'Bob');
+    assert.equal(result.email, 'bob@example.com');
+    assert.equal(result.avatarUrl, 'https://cdn.example/avatar.png');
+    assert.equal(store.length, 1);
+    assert.ok(store[0]?.logtoSyncedAt);
   });
 });

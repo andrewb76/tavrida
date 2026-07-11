@@ -15,7 +15,8 @@ export const useSessionStore = defineStore('session', () => {
   const displayName = ref('Участник');
   const email = ref<string | undefined>();
   const avatarUrl = ref<string | undefined>();
-  const balance = ref(1250);
+  const balance = ref(0);
+  const balanceCurrency = ref('RUB');
   const platformRoles = ref<PlatformRole[]>([]);
   const rolesLoading = ref(false);
 
@@ -68,6 +69,11 @@ export const useSessionStore = defineStore('session', () => {
     avatarUrl.value = undefined;
   }
 
+  function setBalance(amount: number, currency = 'RUB') {
+    balance.value = amount;
+    balanceCurrency.value = currency;
+  }
+
   function setPlatformRoles(roles: PlatformRole[]) {
     platformRoles.value = roles;
   }
@@ -96,6 +102,7 @@ export const useSessionStore = defineStore('session', () => {
     email,
     avatarUrl,
     balance,
+    balanceCurrency,
     platformRoles,
     rolesLoading,
     isAdmin,
@@ -106,6 +113,7 @@ export const useSessionStore = defineStore('session', () => {
     setAuthState,
     setProfile,
     clearProfile,
+    setBalance,
     setPlatformRoles,
     setRolesLoading,
     signInDev,

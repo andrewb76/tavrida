@@ -30,9 +30,15 @@
 | `userId` | varchar(128) PK | Logto `sub` (opaque id, not UUID) |
 | `inviterId` | varchar(128) nullable | Кто пригласил (после claim по invite) |
 | `invitationAcceptedAt` | timestamptz nullable | Когда зафиксирован реферал (не gate UI) |
-| `displayName` | varchar nullable | Override (optional) |
-| `bio` | text nullable | — |
-| `avatarUrl` | varchar nullable | MinIO `avatars` |
+| `displayName` | varchar nullable | Имя из Logto (`name` / `username`) |
+| `email` | varchar nullable | `primaryEmail` (sync webhook) |
+| `username` | varchar nullable | Logto username |
+| `avatarUrl` | varchar nullable | Logto `avatar` (URL) |
+| `primaryPhone` | varchar nullable | Logto phone |
+| `isSuspended` | boolean | Logto suspension |
+| `deletedAt` | timestamptz nullable | Soft delete (`User.Deleted`) |
+| `logtoSyncedAt` | timestamptz nullable | Последний webhook/backfill |
+| `bio` | text nullable | — (ручной override, позже) |
 | `rating` | decimal | Cache from rating |
 | `verifiedSales`, `pendingSales` | int | Cache |
 | `lastSyncedAt` | timestamptz | Event sync marker |
@@ -101,9 +107,11 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/internal/v1/invites` | Список по issuerId |
 | GET | `/internal/v1/invites/resolve` | Lookup |
 | POST | `/internal/v1/invites/claim` | invitation + inviterId |
+| GET | `/internal/v1/users` | Список профилей (admin BFF) |
+| POST | `/internal/v1/users/sync-logto` | Upsert из Logto webhook/backfill |
+| POST | `/internal/v1/users/ensure` | Пустой профиль (lazy) |
+| POST | `/internal/v1/users/{userId}/mark-deleted` | Soft delete |
 | GET | `/internal/v1/users/{userId}/ancestor-chain` | Цепочка inviter → … (для referral-rewards, rating) |
-| POST | `/internal/v1/profile/sync-rating` | Admin/reconcile |
-| POST | `/internal/v1/profile/ensure` | Create empty profile on first login |
 | GET | `/health`, `/health/ready` | — |
 
 ## ⚙️ Переменные settings
@@ -140,7 +148,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | referral-rewards | ancestor-chain HTTP | referral-rewards → user-profile |
 | BFF | aggregation `/profile/me` |
 | MinIO | avatars bucket |
-| Logto | displayName fallback from JWT claims |
+| Logto | webhooks → BFF → `sync-logto`; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
 
 ## 🔒 Безопасность
 

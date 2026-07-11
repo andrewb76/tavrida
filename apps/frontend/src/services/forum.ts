@@ -1,12 +1,23 @@
 import { requireBearerToken } from './apiAuth';
+import {
+  buildCommentTree,
+  type CommentTreeNode,
+  type ForumComment,
+} from './forum-tree';
+
+export { buildCommentTree, type CommentTreeNode, type ForumComment };
 
 export type CategoryNode = {
   id: string;
   slug: string;
   title: string;
   description: string;
+  parentId: string | null;
+  sortOrder: number;
   children: CategoryNode[];
 };
+
+export type CategoryRecord = Omit<CategoryNode, 'children'>;
 
 export type TopicSummary = {
   id: string;
@@ -21,17 +32,6 @@ export type TopicSummary = {
 
 export type TopicDetail = TopicSummary & {
   body: string;
-};
-
-export type ForumComment = {
-  id: string;
-  topicId: string;
-  authorId: string;
-  parentId: string | null;
-  body: string;
-  promotedTopicId: string | null;
-  createdAt: string;
-  updatedAt: string;
 };
 
 function apiBase(): string {
@@ -117,4 +117,61 @@ export function flattenCategories(nodes: CategoryNode[]): CategoryNode[] {
   };
   walk(nodes);
   return out;
+}
+
+export type CategoryFormInput = {
+  slug: string;
+  title: string;
+  description: string;
+  parentId: string | null;
+  sortOrder: number;
+};
+
+export async function createCategory(input: CategoryFormInput): Promise<CategoryRecord> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/admin/forum/categories`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось создать категорию');
+  }
+  return (await res.json()) as CategoryRecord;
+}
+
+export async function updateCategory(
+  categoryId: string,
+  input: Partial<CategoryFormInput>,
+): Promise<CategoryRecord> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось обновить категорию');
+  }
+  return (await res.json()) as CategoryRecord;
+}
+
+export async function deleteCategory(categoryId: string): Promise<void> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось удалить категорию');
+  }
 }

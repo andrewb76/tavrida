@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { refreshSessionBalance } from '@/composables/useWalletBalance';
 import { cancelAutoRenew, getSubscription } from '@/services/plans';
 import {
   deposit,
@@ -58,6 +59,7 @@ async function confirmDeposit() {
   try {
     const result = await deposit(depositAmount.value);
     balance.value = result.balanceAfter;
+    await refreshSessionBalance();
     transactions.value = await listTransactions();
     depositOpen.value = false;
   } catch (e) {

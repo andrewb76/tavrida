@@ -8,6 +8,8 @@
     "build": "vue-tsc -b && pnpm exec vite build",
     "preview": "pnpm exec vite preview",
     "lint": "eslint src",
+    "pretest": "tsc -p tsconfig.test.json",
+    "test": "node --test dist-test/**/*.test.js",
     "check:logto": "node ../../scripts/check-logto-env.mjs"
   },
   "dependencies": {
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@tavrida/tsconfig": "workspace:*",
+    "@types/node": "^20.14.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "tailwindcss": "^4.0.0",

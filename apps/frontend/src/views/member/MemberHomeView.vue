@@ -18,6 +18,12 @@ onMounted(async () => {
       <p class="text-xs font-medium uppercase text-accent">W01</p>
       <h1 class="text-3xl font-semibold">Home</h1>
       <p class="mt-2 text-text-muted">Live-аукционы и teaser форума (mock)</p>
+      <RouterLink
+        to="/plans"
+        class="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-medium text-primary shadow-card hover:bg-bg"
+      >
+        Тарифы и подписка →
+      </RouterLink>
     </div>
 
     <div>

@@ -30,7 +30,16 @@ export class AdminUsersService {
         ]);
 
         return {
-          ...row,
+          userId: row.userId,
+          displayName: row.displayName,
+          email: row.email,
+          username: row.username,
+          avatarUrl: row.avatarUrl,
+          isSuspended: row.isSuspended,
+          inviterId: row.inviterId,
+          invitationAcceptedAt: row.invitationAcceptedAt,
+          logtoSyncedAt: row.logtoSyncedAt,
+          createdAt: row.createdAt,
           roles,
           balance: balance.balance,
           currency: balance.currency,

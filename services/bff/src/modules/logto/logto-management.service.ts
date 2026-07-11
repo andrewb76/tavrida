@@ -34,6 +34,15 @@ type CachedM2MToken = {
   expiresAt: number;
 };
 
+type LogtoUserRow = {
+  id: string;
+  username: string | null;
+  primaryEmail: string | null;
+  name: string | null;
+  avatar: string | null;
+  createdAt: number;
+};
+
 @Injectable()
 export class LogtoManagementService {
   private cached: CachedM2MToken | null = null;
@@ -145,5 +154,33 @@ export class LogtoManagementService {
       expiresAt: Date.now() + json.expires_in * 1000,
     };
     return json.access_token;
+  }
+
+  async listUsers(options?: { page?: number; pageSize?: number; search?: string }) {
+    if (!this.isConfigured) return [];
+
+    const endpoint = this.config.get<string>('LOGTO_ENDPOINT')!.replace(/\/$/, '');
+    const accessToken = await this.getM2MToken();
+    const qs = new URLSearchParams({
+      page: String(options?.page ?? 1),
+      page_size: String(options?.pageSize ?? 100),
+    });
+    if (options?.search?.trim()) {
+      qs.set('search', `%${options.search.trim()}%`);
+    }
+
+    const res = await fetch(`${endpoint}/api/users?${qs}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new ServiceUnavailableException({
+        type: 'upstream-error',
+        detail: `Logto list users failed: ${res.status} ${detail}`,
+      });
+    }
+
+    return (await res.json()) as LogtoUserRow[];
   }
 }

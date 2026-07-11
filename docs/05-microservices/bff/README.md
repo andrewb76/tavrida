@@ -56,6 +56,8 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/forum/categories` | GET | forum | `/internal/v1/forum/categories` |
 | `/api/v1/forum/topics` | GET, POST | forum | `/internal/v1/forum/topics` |
 | `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
+| `/api/v1/webhooks/logto` | POST | BFF → user-profile | Logto inbound; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
+| `/api/v1/admin/users` | GET, PATCH, POST | BFF + user-profile + Keto + billing | Admin user list / roles / deposit |
 | `/api/v1/rating/{userId}` | GET | rating | `/internal/v1/rating/{userId}` |
 | `/api/v1/feedback` | POST, GET | feedback | `/internal/v1/feedback` |
 | `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |

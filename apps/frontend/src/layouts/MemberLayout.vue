@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { refreshSessionBalance } from '@/composables/useWalletBalance';
 import { refreshPlatformRoles } from '@/services/roles';
+import { formatMoney } from '@/services/wallet';
 import { useSessionStore } from '@/stores/session';
 import { useThemeStore } from '@/stores/theme';
 
@@ -28,8 +30,16 @@ const navItems = computed(() => {
 onMounted(() => {
   if (session.isMember) {
     void refreshPlatformRoles();
+    void refreshSessionBalance();
   }
 });
+
+watch(
+  () => session.isMember,
+  (member) => {
+    if (member) void refreshSessionBalance();
+  },
+);
 
 function isActive(path: string) {
   if (path === '/app') return route.path === '/app';
@@ -59,12 +69,14 @@ function isActive(path: string) {
           >
             {{ session.displayName }}
           </span>
-          <span
-            class="hidden rounded-full bg-bg px-2 py-1 text-xs text-text-muted sm:inline"
-            title="Mock balance"
+          <RouterLink
+            v-if="session.isMember"
+            to="/wallet"
+            class="hidden rounded-full bg-bg px-2 py-1 text-xs tabular-nums text-text-muted hover:text-text sm:inline"
+            title="Кошелёк"
           >
-            {{ session.balance }} ₽
-          </span>
+            {{ formatMoney(session.balance, session.balanceCurrency) }}
+          </RouterLink>
           <UiButton intent="ghost" size="sm" title="Inbox (W15 stub)" @click="() => {}">
             🔔
           </UiButton>

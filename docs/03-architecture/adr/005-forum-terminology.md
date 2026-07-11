@@ -14,7 +14,7 @@
 |----------|---------|----------|
 | **Category** | `category` | Дерево разделов форума |
 | **Topic** | `topic` | Корень обсуждения (заголовок + первый пост) |
-| **Comment** | `comment` | Ответ в ветке; иерархия через closure table |
+| **Comment** | `comment` | Ответ в ветке topic; родитель — **тема** (`parentId: null`) или **любой comment** (любая глубина); иерархия — closure table |
 | **Reaction** | `reaction` | Эмодзи-реакция на topic **или** comment |
 | **TopicClosure** | `comment_closure` | Родство comment → ancestor (closure table) |
 

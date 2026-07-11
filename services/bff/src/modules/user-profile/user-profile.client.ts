@@ -91,12 +91,39 @@ export class UserProfileClient {
       data: Array<{
         userId: string;
         displayName: string | null;
+        email: string | null;
+        username: string | null;
+        avatarUrl: string | null;
+        primaryPhone: string | null;
+        isSuspended: boolean;
         inviterId: string | null;
         invitationAcceptedAt: string | null;
+        deletedAt: string | null;
+        logtoSyncedAt: string | null;
         createdAt: string;
+        updatedAt: string;
       }>;
       pagination: { offset: number; limit: number; total: number };
     }>('GET', `/internal/v1/users${suffix}`);
+  }
+
+  async syncFromLogto(body: {
+    userId: string;
+    name?: string | null;
+    username?: string | null;
+    primaryEmail?: string | null;
+    primaryPhone?: string | null;
+    avatar?: string | null;
+    isSuspended?: boolean;
+  }) {
+    return this.request<{ userId: string; synced: boolean }>('POST', '/internal/v1/users/sync-logto', body);
+  }
+
+  async markDeleted(userId: string) {
+    return this.request<{ userId: string; deleted: boolean }>(
+      'POST',
+      `/internal/v1/users/${encodeURIComponent(userId)}/mark-deleted`,
+    );
   }
 
   async ensureUser(userId: string) {

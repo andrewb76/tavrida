@@ -11,6 +11,8 @@
     "generate": "turbo run generate",
     "setup:env": "sh scripts/setup-env.sh",
     "check:logto": "node scripts/check-logto-env.mjs",
+    "setup:logto-webhook": "node scripts/setup-logto-webhook.mjs",
+    "sync:logto-users": "node scripts/sync-logto-users.mjs",
     "grant:admin": "sh scripts/grant-admin.sh",
     "keto:up": "docker compose -f docker/compose/infra.local.yml up -d postgres && docker compose -f docker/compose/keto.local.yml up -d",
     "docs:dev": "pnpm --filter @tavrida/docs-site dev",

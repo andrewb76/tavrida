@@ -20,6 +20,27 @@ export class UserProfileEntity {
   @Column('varchar', { name: 'display_name', nullable: true })
   displayName!: string | null;
 
+  @Column('varchar', { nullable: true })
+  email!: string | null;
+
+  @Column('varchar', { nullable: true })
+  username!: string | null;
+
+  @Column('varchar', { name: 'avatar_url', nullable: true })
+  avatarUrl!: string | null;
+
+  @Column('varchar', { name: 'primary_phone', nullable: true })
+  primaryPhone!: string | null;
+
+  @Column('boolean', { name: 'is_suspended', default: false })
+  isSuspended!: boolean;
+
+  @Column('timestamptz', { name: 'deleted_at', nullable: true })
+  deletedAt!: Date | null;
+
+  @Column('timestamptz', { name: 'logto_synced_at', nullable: true })
+  logtoSyncedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

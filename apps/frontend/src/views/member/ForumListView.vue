@@ -1,22 +1,57 @@
 <script setup lang="ts">
-import { listTopics, type TopicSummary } from '@/services/forum';
+import { listCategories, listTopics, type CategoryNode, type TopicSummary } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
-import { onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+
+const route = useRoute();
 
 const topics = ref<TopicSummary[]>([]);
+const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-onMounted(async () => {
+const categoryId = computed(() => {
+  const raw = route.query.categoryId;
+  return typeof raw === 'string' && raw ? raw : undefined;
+});
+
+const activeCategory = computed(() => {
+  if (!categoryId.value) return null;
+  const walk = (nodes: CategoryNode[]): CategoryNode | null => {
+    for (const node of nodes) {
+      if (node.id === categoryId.value) return node;
+      const found = walk(node.children);
+      if (found) return found;
+    }
+    return null;
+  };
+  return walk(categories.value);
+});
+
+async function load() {
+  loading.value = true;
+  error.value = null;
   try {
-    topics.value = await listTopics();
+    const [topicList, categoryTree] = await Promise.all([
+      listTopics(categoryId.value),
+      categories.value.length ? Promise.resolve(categories.value) : listCategories(),
+    ]);
+    topics.value = topicList;
+    if (!categories.value.length) categories.value = categoryTree;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
     loading.value = false;
   }
-});
+}
+
+onMounted(load);
+watch(categoryId, load);
+
+function clearCategoryFilter() {
+  return { path: '/forum' };
+}
 </script>
 
 <template>
@@ -25,15 +60,28 @@ onMounted(async () => {
       <div>
         <h1>Форум</h1>
         <p class="forum-list__lead">Обсуждения клуба — темы и комментарии.</p>
+        <p v-if="activeCategory" class="forum-list__filter">
+          Раздел:
+          <strong>{{ activeCategory.title }}</strong>
+          <RouterLink :to="clearCategoryFilter()" class="forum-list__filter-clear">× сбросить</RouterLink>
+        </p>
       </div>
-      <RouterLink to="/forum/new">
-        <UiButton intent="primary">+ Новая тема</UiButton>
-      </RouterLink>
+      <div class="forum-list__actions">
+        <RouterLink to="/forum/categories" class="forum-list__categories-link">
+          Разделы →
+        </RouterLink>
+        <RouterLink to="/forum/new">
+          <UiButton intent="primary">+ Новая тема</UiButton>
+        </RouterLink>
+      </div>
     </header>
 
     <p v-if="loading" class="forum-list__status">Загрузка…</p>
     <p v-else-if="error" class="forum-list__error">{{ error }}</p>
-    <p v-else-if="topics.length === 0" class="forum-list__status">Пока нет тем — создайте первую.</p>
+    <p v-else-if="topics.length === 0" class="forum-list__status">
+      <template v-if="activeCategory">В этом разделе пока нет тем.</template>
+      <template v-else>Пока нет тем — создайте первую.</template>
+    </p>
 
     <ul v-else class="forum-list__items">
       <li v-for="topic in topics" :key="topic.id">
@@ -61,9 +109,38 @@ onMounted(async () => {
   gap: 1rem;
 }
 
+.forum-list__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.forum-list__categories-link {
+  font-size: 0.9rem;
+  color: var(--color-primary, #2563eb);
+  text-decoration: none;
+}
+
+.forum-list__categories-link:hover {
+  text-decoration: underline;
+}
+
 .forum-list__lead {
   margin: 0.25rem 0 0;
   color: var(--color-text-muted, #666);
+}
+
+.forum-list__filter {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #666);
+}
+
+.forum-list__filter-clear {
+  margin-left: 0.5rem;
+  color: var(--color-primary, #2563eb);
+  text-decoration: none;
 }
 
 .forum-list__status,

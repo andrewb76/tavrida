@@ -33,7 +33,7 @@
 | Функция в UI | Free | Basic | Pro | Ключ FP / settings |
 |--------------|------|-------|-----|-------------------|
 | Создание тем, комментарии | ✅ | ✅ | ✅ | `forum.postsPerDay`¹, `forum.commentsPerPost` |
-| Вложенные ответы | ❌ | ✅ | ✅ | `forum.nestedRepliesEnabled` |
+| Вложенные ответы | ❌ | ✅ | ✅ | `forum.author.10reply.nestedEnabled` (ответ на **любой** comment, не только на тему) |
 | Редактирование (10 мин) | ✅ | ✅ | ✅ | `forum.editWindowMinutes` (settings) |
 | Like/dislike, базовые реакции | ✅ | ✅ | ✅ | — |
 | Прикреплённые темы (свои) | ❌ | ✅ | ✅ | `forum.pinnedTopicsMax` |
@@ -49,6 +49,45 @@
 | Вложения, медиа, длина | см. реестр | см. реестр | см. реестр | `forum.attachments*`, `forum.embeddedMedia`, `forum.postLengthMax` |
 
 ¹ `forum.postsPerDay` — лимит **topic + comment** в сутки (префикс `forum.`, не сущность `post`; см. ADR-005).
+
+---
+
+## 🌳 Ветки комментариев
+
+> **Ключевое правило:** пользователь может ответить **на тему** или **на любой комментарий** в этой теме — вложенность **не ограничена одним уровнем** (ограничение только тарифом `forum.author.03thread.depthMax`, когда включено в plan-config).
+
+### Модель
+
+```text
+Topic
+├── Comment A          parentId = null
+│   ├── Comment B      parentId = A
+│   │   └── Comment C  parentId = B
+│   └── Comment D      parentId = A
+└── Comment E          parentId = null
+```
+
+- **Topic** — корневое сообщение (заголовок + тело); к нему нельзя «ответить» через `parentId` (только новый comment с `parentId: null`).
+- **Comment** — узел ветки; прямой родитель — либо тема (`parentId: null`), либо другой comment (`parentId: <uuid>`).
+- **Closure table** (`comment_closure`) хранит все пары предок–потомок для быстрых запросов поддерева, promote, scoped-модерации.
+
+### API (BFF)
+
+| Действие | Тело POST | Результат |
+|----------|-----------|-----------|
+| Комментарий к теме | `{ "body": "…" }` | `parentId: null` |
+| Ответ на comment | `{ "body": "…", "parentId": "<commentId>" }` | новый узел под выбранным comment |
+
+Список комментариев — **плоский** массив с полем `parentId`; UI собирает дерево (рекурсивный `CommentNode`, [W06](../../11-ux-ui/wireframes/forum.md)).
+
+### Тарифы (plan-config, не scaffold)
+
+| Возможность | Free | Basic | Pro | Ключ |
+|-------------|------|-------|-----|------|
+| Вложенные ответы (ответ на comment) | ❌ | ✅ | ✅ | `forum.author.10reply.nestedEnabled` |
+| Макс. глубина ветки | 2 | 5 | ∞ | `forum.author.03thread.depthMax` |
+
+На Free допустимы только корневые комментарии к теме (`parentId: null`). Ответ на comment — 403, если `nestedEnabled = false` или превышен `depthMax`.
 
 ---
 

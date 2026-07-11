@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
 import {
+  buildCommentTree,
   createComment,
   getTopic,
   listComments,
@@ -17,6 +19,8 @@ const topic = ref<TopicDetail | null>(null);
 const comments = ref<ForumComment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const commentTree = computed(() => buildCommentTree(comments.value));
 
 const commentBody = ref('');
 const posting = ref(false);
@@ -41,13 +45,17 @@ async function load() {
   }
 }
 
-async function submitComment() {
+function onCommentCreated(created: ForumComment) {
+  comments.value = [...comments.value, created];
+}
+
+async function submitTopicComment() {
   if (!commentBody.value.trim()) return;
   posting.value = true;
   postError.value = null;
   try {
     const created = await createComment(topicId.value, { body: commentBody.value.trim() });
-    comments.value = [...comments.value, created];
+    onCommentCreated(created);
     commentBody.value = '';
   } catch (e) {
     postError.value = e instanceof Error ? e.message : 'Не удалось отправить';
@@ -73,21 +81,27 @@ async function submitComment() {
 
       <section class="forum-topic__comments">
         <h2>Комментарии ({{ comments.length }})</h2>
-        <ul class="forum-topic__comment-list">
-          <li v-for="comment in comments" :key="comment.id">
-            <p>{{ comment.body }}</p>
-            <small>{{ new Date(comment.createdAt).toLocaleString('ru-RU') }}</small>
-          </li>
-        </ul>
 
-        <form class="forum-topic__form" @submit.prevent="submitComment">
+        <ul v-if="commentTree.length" class="forum-topic__comment-list">
+          <ForumCommentNode
+            v-for="node in commentTree"
+            :key="node.id"
+            :node="node"
+            :topic-id="topicId"
+            :depth="0"
+            @created="onCommentCreated"
+          />
+        </ul>
+        <p v-else class="forum-topic__empty">Пока нет комментариев — будьте первым.</p>
+
+        <form class="forum-topic__form" @submit.prevent="submitTopicComment">
           <label>
-            Ваш комментарий
+            Комментарий к теме
             <textarea v-model="commentBody" rows="4" required />
           </label>
           <p v-if="postError" class="forum-topic__error">{{ postError }}</p>
           <UiButton intent="primary" type="submit" :disabled="posting">
-            {{ posting ? 'Отправка…' : 'Ответить' }}
+            {{ posting ? 'Отправка…' : 'Опубликовать' }}
           </UiButton>
         </form>
       </section>
@@ -122,6 +136,10 @@ async function submitComment() {
   padding: 0;
   display: grid;
   gap: 0.75rem;
+}
+
+.forum-topic__empty {
+  color: var(--color-text-muted, #666);
 }
 
 .forum-topic__form {

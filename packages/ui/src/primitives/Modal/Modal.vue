@@ -24,13 +24,13 @@ const open = defineModel<boolean>('open', { required: true });
   <DialogRoot v-model:open="open">
     <DialogPortal>
       <DialogOverlay
-        :class="cn('fixed inset-0 z-50 bg-black/50')"
+        :class="cn('fixed inset-0 z-[100] bg-black/50')"
       />
       <DialogContent
         :class="
           cn(
-            'fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2',
-            'rounded-lg border border-border bg-surface p-6 shadow-card',
+            'fixed left-1/2 top-1/2 z-[101] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2',
+            'pointer-events-auto rounded-lg border border-border bg-surface p-6 shadow-card',
           )
         "
       >

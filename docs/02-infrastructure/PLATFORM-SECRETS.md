@@ -57,6 +57,8 @@
 | `LOGTO_M2M_APP_ID` | **да** | bff | — | M2M app для Management API (invites) |
 | `LOGTO_M2M_APP_SECRET` | **да** | bff | — | M2M client secret |
 | `LOGTO_M2M_RESOURCE` | нет | bff | `https://default.logto.app/api` | Management API resource |
+| `LOGTO_WEBHOOK_SIGNING_KEY` | **да** (prod) | bff | — | HMAC key из Logto Console → Webhooks |
+| `LOGTO_WEBHOOK_ENDPOINT_URL` | нет | setup script | — | Публичный URL для `pnpm setup:logto-webhook` |
 | `KETO_READ_URL` | нет | bff, domain services | `http://localhost:4466` | Ory Keto read API |
 | `KETO_WRITE_URL` | нет | bff, admin flows | `http://localhost:4467` | Ory Keto write API |
 | `NOVU_API_KEY` | **да** | notifications | — | Secret key Novu Cloud ([ADR-004](../03-architecture/adr/004-notifications-adapter.md)) |

@@ -5,8 +5,13 @@ export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 export type AdminUserRow = {
   userId: string;
   displayName: string | null;
+  email: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  isSuspended: boolean;
   inviterId: string | null;
   invitationAcceptedAt: string | null;
+  logtoSyncedAt: string | null;
   createdAt: string;
   roles: PlatformRole[];
   balance: number;
