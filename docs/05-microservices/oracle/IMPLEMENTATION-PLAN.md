@@ -48,12 +48,12 @@
 
 | Шаг | Задача | Выход |
 |-----|--------|-------|
-| 2.1 | Route `/admin/oracle`, вкладки по [topic-index](./topic-index.md) | Vue |
-| 2.2 | Ползунки из defaults API | min/max/step |
-| 2.3 | График gross/net, break-even marker | chart lib |
-| 2.4 | До 3 сценариев overlay | compare API |
-| 2.5 | Реферал: tree depth chart | отдельная вкладка |
-| 2.6 | Costs UX: items → total; manual total → BE only | см. oracle-config |
+| 2.1 | Route `/admin/oracle`, вкладки по [topic-index](./topic-index.md) | ✅ Vue `AdminOracleView` |
+| 2.2 | Ползунки из defaults API | ✅ `OracleRangeField` + `GET /defaults` |
+| 2.3 | График gross/net, break-even marker | ✅ bar chart net (v0) |
+| 2.4 | До 3 сценариев overlay | ✅ compare mode (base/opt/pess) |
+| 2.5 | Реферал: tree depth chart | ✅ bar по depth (v0) |
+| 2.6 | Costs UX: items → total; manual total → BE only | ✅ manual burn toggle |
 
 ### 🔶 Checkpoint 2
 

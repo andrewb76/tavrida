@@ -10,7 +10,7 @@ Oracle (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + oracle.defaults.yaml @oracle
   ☐ packages/monetization-engine — доработка формул по topics + golden tests @oracle
   ✔ BFF GET/POST /admin/oracle/* @oracle @bff @done(26-07-11)
-  ☐ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend
+  ✔ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend @done(26-07-11)
   ☐ services/oracle :3013 — saved scenarios (фаза 3) @oracle
   ☐ Экспорт CSV/PDF @oracle @docs
   ☐ Monte Carlo @oracle

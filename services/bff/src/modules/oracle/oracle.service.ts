@@ -9,6 +9,7 @@ import {
   type OneTimePriceMap,
   type PlanMix,
   type PlanPrices,
+  type ReferralModelInstance,
   type ReferralParams,
   type SimulateInput,
   type SimulateResult,
@@ -195,9 +196,25 @@ export class OracleService {
   private resolveReferral(referral: ReferralDto | undefined, defaults: OracleDefaults): ReferralParams {
     const yaml = defaults.referral as Record<string, unknown>;
     const tree = yaml.tree as { payoutDistributionByDepth?: { default?: number[] } };
+    const yamlModels = yaml.models as Record<string, Record<string, RangeDefault>> | undefined;
+    const modelOptions = (
+      yaml.calculationModelId as { options?: { id: string }[] } | undefined
+    )?.options;
     const depthCoefficients = (yaml.depthCoefficients as { default?: number[] })?.default ?? [1, 0.3, 0.1];
     const payoutDistributionByDepth =
       tree?.payoutDistributionByDepth?.default ?? [70, 20, 10];
+
+    const defaultModels: ReferralModelInstance[] = (modelOptions ?? []).map((opt) => ({
+      modelId: opt.id as ReferralModelInstance['modelId'],
+      enabled: false,
+      params: this.readModelParamsFromYaml(yamlModels?.[opt.id]),
+    }));
+
+    const requestModels = referral?.models?.map((row) => ({
+      modelId: row.modelId,
+      enabled: row.enabled,
+      params: row.params ?? {},
+    }));
 
     return {
       programEnabled:
@@ -211,7 +228,21 @@ export class OracleService {
         referral?.maxDepth ?? this.readNestedDefault(yaml as Record<string, RangeDefault>, 'maxDepth', 1),
       depthCoefficients,
       payoutDistributionByDepth,
+      models: requestModels?.length ? requestModels : defaultModels,
     };
+  }
+
+  private readModelParamsFromYaml(
+    section: Record<string, RangeDefault> | undefined,
+  ): Record<string, number> {
+    if (!section) return {};
+    const params: Record<string, number> = {};
+    for (const [key, row] of Object.entries(section)) {
+      if (typeof row.default === 'number') {
+        params[key] = row.default;
+      }
+    }
+    return params;
   }
 
   private resolveCostItems(costs: CostsDto | undefined, defaults: OracleDefaults): Record<string, number> {

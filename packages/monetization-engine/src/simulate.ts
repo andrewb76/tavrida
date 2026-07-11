@@ -55,6 +55,7 @@ export function simulate(input: SimulateInput): SimulateResult {
   const months: MonthlyLedger[] = [];
   let cumulativeNet = 0;
   let referralByDepth: { depth: number; payout: number }[] = [];
+  let referralByModel: { modelId: string; payout: number }[] = [];
 
   for (let i = 0; i < input.periodMonths; i++) {
     const registrations = input.registrationsByMonth[i] ?? 0;
@@ -76,8 +77,12 @@ export function simulate(input: SimulateInput): SimulateResult {
     const oneTime = computeOneTimeRevenue(activity, input.oneTimePrices);
     const gross = mrr + oneTime;
 
-    const referral = computeReferralOut(gross, input.referral);
+    const referral = computeReferralOut(gross, input.referral, {
+      registrations,
+      planMix: input.planMix,
+    });
     referralByDepth = referral.byDepth;
+    referralByModel = referral.byModel;
 
     const deposits = input.depositsVolumeByMonth?.[i] ?? 0;
     const netBeforeTax = gross - referral.total - fixed;
@@ -107,7 +112,7 @@ export function simulate(input: SimulateInput): SimulateResult {
 
   const breakEvenMonth = findBreakEvenMonth(months.map((m) => m.cumulativeNet));
 
-  return { months, breakEvenMonth, referralByDepth };
+  return { months, breakEvenMonth, referralByDepth, referralByModel };
 }
 
 export function compare(inputs: SimulateInput[]): SimulateResult[] {

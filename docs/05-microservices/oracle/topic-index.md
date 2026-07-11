@@ -39,7 +39,7 @@
 
 | # | Тема | Простыми словами | Файл |
 |---|------|------------------|------|
-| D1 | **Реферальная программа** | Выплаты пригласившим; дерево по глубине; по умолчанию выкл. | [topics/referral-forecast.md](./topics/referral-forecast.md) |
+| D1 | **Реферальная программа** | Выплаты пригласившим; выбор модели расчёта; дерево по глубине; по умолчанию выкл. | [topics/referral-forecast.md](./topics/referral-forecast.md) · [каталог моделей](../referral-rewards/requirements/referral-models-catalog.md) |
 | D2 | **Затраты и окупаемость** | Хостинг, ЗП, налоги; общий ползунок = burn; месяц окупаемости. | [topics/costs-breakeven.md](./topics/costs-breakeven.md) |
 | D3 | **Пополнения баланса** | Деньги на кошелёк — не выручка, но влияют на комиссию эквайринга. | [topics/deposits-cashflow.md](./topics/deposits-cashflow.md) |
 

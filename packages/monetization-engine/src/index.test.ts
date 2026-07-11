@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import {
   computeMrr,
   computeOneTimeRevenue,
+  computeReferralOut,
   findBreakEvenMonth,
   registrationsForMonth,
   roundRub,
@@ -76,6 +77,13 @@ describe('simulate', () => {
         maxDepth: 3,
         depthCoefficients: [0.1, 0.05, 0.02],
         payoutDistributionByDepth: [50, 30, 20],
+        models: [
+          {
+            modelId: 'revshare_single',
+            enabled: false,
+            params: { percentOfCharge: 10 },
+          },
+        ],
       },
       costItems: { hosting: 1000 },
       paymentProcessorPercent: 0,
@@ -86,6 +94,28 @@ describe('simulate', () => {
     assert.equal(result.months[0].oneTime, 50);
     assert.equal(result.months[0].mrr, 1000);
     assert.equal(result.breakEvenMonth, 1);
+  });
+});
+
+describe('computeReferralOut combo', () => {
+  it('sums enabled models', () => {
+    const result = computeReferralOut(
+      10000,
+      {
+        programEnabled: true,
+        attachRatePercent: 100,
+        maxDepth: 2,
+        depthCoefficients: [1, 0.5],
+        payoutDistributionByDepth: [100, 50],
+        models: [
+          { modelId: 'revshare_single', enabled: true, params: { percentOfCharge: 10 } },
+          { modelId: 'cpa_first_charge', enabled: true, params: { fixedAmountRub: 100 } },
+        ],
+      },
+      { registrations: 5, planMix: { free: 0, basic: 100, pro: 0 } },
+    );
+    assert.ok(result.total > 0);
+    assert.equal(result.byModel.length, 2);
   });
 });
 

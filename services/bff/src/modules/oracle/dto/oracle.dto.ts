@@ -131,6 +131,17 @@ export class ActivityDto {
   customPresetAttachRatePercent?: number;
 }
 
+export class ReferralModelDto {
+  @IsIn(['revshare_single', 'revshare_multi_decay', 'cpa_first_charge', 'bilateral_first_sub'])
+  modelId!: 'revshare_single' | 'revshare_multi_decay' | 'cpa_first_charge' | 'bilateral_first_sub';
+
+  @IsBoolean()
+  enabled!: boolean;
+
+  @IsObject()
+  params!: Record<string, number>;
+}
+
 export class ReferralDto {
   @IsOptional()
   @IsBoolean()
@@ -147,6 +158,12 @@ export class ReferralDto {
   @Min(1)
   @Max(5)
   maxDepth?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReferralModelDto)
+  models?: ReferralModelDto[];
 }
 
 export class CostsDto {

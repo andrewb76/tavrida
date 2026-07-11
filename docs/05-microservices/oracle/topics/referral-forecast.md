@@ -17,7 +17,9 @@
 | Ключ | Описание |
 |------|----------|
 | `referral.programEnabled` | default **false** |
-| `referral.attachRatePercent` | % gross-eligible с inviter |
+| `referral.calculationModelId` | активная модель — см. [каталог](../../referral-rewards/requirements/referral-models-catalog.md) |
+| `referral.models.<id>.*` | параметры выбранной модели |
+| `referral.attachRatePercent` | % gross-eligible с inviter (прогноз) |
 | `referral.maxDepth` | глубина выплат (как settings) |
 | `referral.depthCoefficients` | множители по уровням |
 | `referral.tree.avgInviteesPerInviterPerMonth` | fan-out |
@@ -34,7 +36,8 @@ referralOut[t] = Σ_d payout[d,t] + inviteeBonusEvents[t]
 
 ## Prod
 
-- settings `referralRewards.*`
+- settings `referralRewards.*` — см. [каталог моделей](../../referral-rewards/requirements/referral-models-catalog.md)
+- `calculationModelId` + `modelParams` (фаза 3) или `rules[]` (сейчас)
 - credit: `billing` `referral.reward:*`
 
 ## API response
@@ -47,4 +50,7 @@ referralOut[t] = Σ_d payout[d,t] + inviteeBonusEvents[t]
 
 ## 🔶 Checkpoint
 
-- [ ] Синхронизировать `rules` из referral-rewards README в engine v2?
+- [x] Каталог моделей и схема `calculationModelId` — [referral-models-catalog.md](../../referral-rewards/requirements/referral-models-catalog.md)
+- [x] Select модели + условные поля в Oracle UI (комбо, `referral.models[]`)
+- [x] Engine v2: `computeReferralOut` по `models[]` с суммированием
+- [ ] Синхронизировать `rules` из referral-rewards README в engine

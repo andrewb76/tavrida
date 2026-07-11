@@ -1,3 +1,5 @@
+import type { ReferralModelId } from './referral/referral-model-ids';
+
 /** Plan identifiers aligned with financial-policy. */
 export type PlanId = 'free' | 'basic' | 'pro';
 
@@ -24,12 +26,28 @@ export type ActivitySnapshot = {
   forumReactionEvents: Record<string, number>;
 };
 
+export type ReferralModelParams = {
+  percentOfCharge?: number;
+  maxDepth?: number;
+  fixedAmountRub?: number;
+  inviterBonusRub?: number;
+  inviteeBonusRub?: number;
+};
+
+export type ReferralModelInstance = {
+  modelId: ReferralModelId;
+  enabled: boolean;
+  params: ReferralModelParams;
+};
+
 export type ReferralParams = {
   programEnabled: boolean;
   attachRatePercent: number;
+  /** Fallback depth for multi_decay when model omits maxDepth. */
   maxDepth: number;
   depthCoefficients: number[];
   payoutDistributionByDepth: number[];
+  models: ReferralModelInstance[];
 };
 
 export type CostItems = Record<string, number>;
@@ -66,4 +84,5 @@ export type SimulateResult = {
   months: MonthlyLedger[];
   breakEvenMonth: number | null;
   referralByDepth: { depth: number; payout: number }[];
+  referralByModel: { modelId: string; payout: number }[];
 };

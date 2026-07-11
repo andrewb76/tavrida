@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-11 (Oracle)
+**Последнее обновление индекса:** 2026-07-11 (Oracle UI labels, referral models catalog)
 
 ---
 
@@ -31,9 +31,10 @@
 | **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) | [auction/requirements/financial-features.md](../05-microservices/auction/requirements/financial-features.md) | `services/auction` · scaffold |
 | **Биллинг / кошелёк** | balance, deposit, charges | [billing/README.md](../05-microservices/billing/README.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/billing` · scaffold |
 | **Тарифы / лимиты** | Free/Basic/Pro, FP limits | [financial-policy/README.md](../05-microservices/financial-policy/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) | [roles.md](../01-goal/roles.md) · [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/financial-policy` · scaffold |
-| **Oracle / прогноз дохода** | Admin симулятор | [glossary.md](../05-microservices/oracle/glossary.md) → [overview.md](../05-microservices/oracle/overview.md) → [topic-index.md](../05-microservices/oracle/topic-index.md) → [IMPLEMENTATION-PLAN.md](../05-microservices/oracle/IMPLEMENTATION-PLAN.md) | [topics/](../05-microservices/oracle/topics/) · [ADR-015](../03-architecture/adr/015-monetization-engine.md) · `packages/monetization-engine` · `config/oracle.defaults.yaml` | BFF `/admin/oracle/*` ✅ · frontend backlog |
+| **Oracle / прогноз дохода** | Admin симулятор | [glossary.md](../05-microservices/oracle/glossary.md) → [overview.md](../05-microservices/oracle/overview.md) → [topic-index.md](../05-microservices/oracle/topic-index.md) → [IMPLEMENTATION-PLAN.md](../05-microservices/oracle/IMPLEMENTATION-PLAN.md) | [topics/](../05-microservices/oracle/topics/) · [ADR-015](../03-architecture/adr/015-monetization-engine.md) · `packages/monetization-engine` · `config/oracle.defaults.yaml` | BFF + `/admin/oracle` UI ✅ · checkpoint 0 |
 | **Форум** | topics, comments, модерация | [forum/README.md](../05-microservices/forum/README.md) → [ADR-005](../03-architecture/adr/005-forum-terminology.md) | [forum/requirements/README.md](../05-microservices/forum/requirements/README.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) | docs only |
 | **Рейтинг / карма** | karma, referral tree | [karma-and-rating.md](../01-goal/karma-and-rating.md) → [rating/README.md](../05-microservices/rating/README.md) | [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) | docs only |
+| **Реферальные выплаты** | referral-rewards, модели CPA/CPS, Oracle реферал | [referral-rewards/requirements/analysis.md](../05-microservices/referral-rewards/requirements/analysis.md) → [referral-models-catalog.md](../05-microservices/referral-rewards/requirements/referral-models-catalog.md) → [referral-rewards/README.md](../05-microservices/referral-rewards/README.md) | [referral-forecast.md](../05-microservices/oracle/topics/referral-forecast.md) · [charge-categories.md](../05-microservices/referral-rewards/requirements/charge-categories.md) | docs · engine v0 |
 | **Marketplace** | услуги, заказы | [marketplace/README.md](../05-microservices/marketplace/README.md) | [marketplace/requirements/README.md](../05-microservices/marketplace/requirements/README.md) | docs only |
 | **Уведомления** | Novu, adapter | [notifications/README.md](../05-microservices/notifications/README.md) → [ADR-004](../03-architecture/adr/004-notifications-adapter.md) | [notifications-analysis.md](../03-architecture/notifications-analysis.md) | docs only |
 | **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |

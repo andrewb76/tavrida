@@ -73,6 +73,9 @@
 
 ## 4. Рекомендуемая модель для v1
 
+> **Каталог preset-моделей и параметры по модели:** [referral-models-catalog.md](./referral-models-catalog.md)  
+> Ниже — rule engine и консервативный default (`revshare_single`).
+
 ### 4.1. Разделение каналов
 
 ```mermaid
@@ -205,6 +208,7 @@ sequenceDiagram
 
 ## 🔗 Связанные документы
 
+- [referral-models-catalog.md](./referral-models-catalog.md)
 - [referral-rewards README](../README.md)
 - [charge-categories.md](./charge-categories.md)
 - [legal-scope.md](./legal-scope.md)

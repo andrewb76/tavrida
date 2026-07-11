@@ -113,6 +113,12 @@ const memberChildren: RouteRecordRaw[] = [
         meta: { title: 'Настройки клуба', requiresMember: true, requiresAdmin: true },
       },
       {
+        path: 'oracle',
+        name: 'admin-oracle',
+        component: () => import('@/views/admin/AdminOracleView.vue'),
+        meta: { title: 'Oracle', requiresMember: true, requiresAdmin: true },
+      },
+      {
         path: 'roles',
         name: 'admin-roles',
         component: () => import('@/views/admin/AdminRolesView.vue'),

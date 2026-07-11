@@ -5,6 +5,7 @@ const route = useRoute();
 
 const tabs = [
   { name: 'admin-settings', to: '/admin/settings', label: 'Настройки клуба' },
+  { name: 'admin-oracle', to: '/admin/oracle', label: 'Oracle' },
   { name: 'admin-roles', to: '/admin/roles', label: 'Роли' },
 ];
 
