@@ -7,6 +7,7 @@ import { InviteCodeEntity } from './entities/invite-code.entity';
 import { UserProfileEntity } from './entities/user-profile.entity';
 import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
+import { UsersModule } from './modules/users/users.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -28,6 +29,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     InvitesModule,
+    UsersModule,
   ],
   controllers: [HealthController],
 })

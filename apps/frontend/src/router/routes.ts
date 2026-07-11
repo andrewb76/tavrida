@@ -105,7 +105,13 @@ const memberChildren: RouteRecordRaw[] = [
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { title: 'Админ', requiresMember: true, requiresAdmin: true },
     children: [
-      { path: '', redirect: { name: 'admin-scalar-config' } },
+      { path: '', redirect: { name: 'admin-users' } },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('@/views/admin/AdminUsersView.vue'),
+        meta: { title: 'Пользователи', requiresMember: true, requiresAdmin: true },
+      },
       {
         path: 'scalar-config',
         name: 'admin-scalar-config',

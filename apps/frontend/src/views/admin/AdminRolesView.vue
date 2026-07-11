@@ -20,7 +20,7 @@ const roleLabels: Record<string, string> = {
 <template>
   <section class="space-y-4">
     <div>
-      <h2 class="text-lg font-semibold">Ваши роли</h2>
+      <h2 class="text-lg font-semibold">Мои роли</h2>
       <p class="text-sm text-text-muted">Источник: Keto (platform:tavrida-lot).</p>
     </div>
 

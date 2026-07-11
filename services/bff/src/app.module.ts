@@ -5,6 +5,7 @@ import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
 import { MeModule } from './modules/me/me.module';
 import { OracleModule } from './modules/oracle/oracle.module';
+import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ChargesModule } from './modules/charges/charges.module';
 import { PlanConfigAdminModule } from './modules/plan-config-admin/plan-config-admin.module';
 import { PlansModule } from './modules/plans/plans.module';
@@ -27,6 +28,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     InvitesModule,
     OracleModule,
     PlanConfigAdminModule,
+    AdminUsersModule,
     ChargesModule,
     PlansModule,
     WalletsModule,

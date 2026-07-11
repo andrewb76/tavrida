@@ -1,16 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  buildPlatformTuple,
+  buildPlatformTupleQuery,
+  type PlatformRelation,
+} from './keto-platform';
 
 const DEFAULT_NAMESPACE = 'TavridaLot';
 const DEFAULT_PLATFORM_OBJECT = 'platform:tavrida-lot';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
-const PLATFORM_RELATIONS: Array<Exclude<PlatformRole, 'member'>> = [
-  'admin',
-  'moderator',
-  'expert',
-];
+const PLATFORM_RELATIONS: PlatformRelation[] = ['admin', 'moderator', 'expert'];
 
 @Injectable()
 export class KetoService {
@@ -34,19 +35,63 @@ export class KetoService {
     return roles;
   }
 
-  private async hasPlatformRelation(
-    userId: string,
-    relation: Exclude<PlatformRole, 'member'>,
-  ): Promise<boolean> {
+  async grantPlatformRole(userId: string, relation: PlatformRelation): Promise<void> {
+    const writeUrl = this.requireWriteUrl();
+    const body = buildPlatformTuple(this.tupleConfig(), userId, relation);
+
+    const response = await fetch(`${writeUrl}/admin/relation-tuples`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException({
+        type: 'keto_write_failed',
+        detail: `Failed to grant ${relation}: ${response.status} ${response.statusText}`,
+      });
+    }
+  }
+
+  async revokePlatformRole(userId: string, relation: PlatformRelation): Promise<void> {
+    const writeUrl = this.requireWriteUrl();
+    const params = buildPlatformTupleQuery(this.tupleConfig(), userId, relation);
+
+    const response = await fetch(`${writeUrl}/admin/relation-tuples?${params}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException({
+        type: 'keto_write_failed',
+        detail: `Failed to revoke ${relation}: ${response.status} ${response.statusText}`,
+      });
+    }
+  }
+
+  private tupleConfig() {
+    return {
+      namespace: this.config.get<string>('KETO_NAMESPACE') ?? DEFAULT_NAMESPACE,
+      object: this.config.get<string>('KETO_PLATFORM_OBJECT') ?? DEFAULT_PLATFORM_OBJECT,
+    };
+  }
+
+  private requireWriteUrl(): string {
+    const writeUrl = this.config.get<string>('KETO_WRITE_URL')?.replace(/\/$/, '');
+    if (!writeUrl) {
+      throw new ServiceUnavailableException({
+        type: 'keto_not_configured',
+        detail: 'KETO_WRITE_URL is not configured',
+      });
+    }
+    return writeUrl;
+  }
+
+  private async hasPlatformRelation(userId: string, relation: PlatformRelation): Promise<boolean> {
     const readUrl = this.config.get<string>('KETO_READ_URL')?.replace(/\/$/, '');
     if (!readUrl) return false;
 
-    const params = new URLSearchParams({
-      namespace: this.config.get<string>('KETO_NAMESPACE') ?? DEFAULT_NAMESPACE,
-      object: this.config.get<string>('KETO_PLATFORM_OBJECT') ?? DEFAULT_PLATFORM_OBJECT,
-      relation,
-      subject_id: `user:${userId}`,
-    });
+    const params = buildPlatformTupleQuery(this.tupleConfig(), userId, relation);
 
     try {
       const response = await fetch(`${readUrl}/relation-tuples/check?${params}`);

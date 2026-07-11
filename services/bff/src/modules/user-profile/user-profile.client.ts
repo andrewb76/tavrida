@@ -81,6 +81,30 @@ export class UserProfileClient {
     }>('POST', '/internal/v1/invites/claim', body);
   }
 
+  async listUsers(params: { offset?: number; limit?: number; q?: string }) {
+    const qs = new URLSearchParams();
+    if (params.offset != null) qs.set('offset', String(params.offset));
+    if (params.limit != null) qs.set('limit', String(params.limit));
+    if (params.q) qs.set('q', params.q);
+    const suffix = qs.size ? `?${qs.toString()}` : '';
+    return this.request<{
+      data: Array<{
+        userId: string;
+        displayName: string | null;
+        inviterId: string | null;
+        invitationAcceptedAt: string | null;
+        createdAt: string;
+      }>;
+      pagination: { offset: number; limit: number; total: number };
+    }>('GET', `/internal/v1/users${suffix}`);
+  }
+
+  async ensureUser(userId: string) {
+    return this.request<{ userId: string; ensured: boolean }>('POST', '/internal/v1/users/ensure', {
+      userId,
+    });
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,

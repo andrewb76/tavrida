@@ -4,10 +4,11 @@ import { RouterLink, RouterView, useRoute } from 'vue-router';
 const route = useRoute();
 
 const tabs = [
+  { name: 'admin-users', to: '/admin/users', label: 'Пользователи' },
   { name: 'admin-scalar-config', to: '/admin/scalar-config', label: 'Конфиг' },
   { name: 'admin-plan-config', to: '/admin/plan-config', label: 'Тарифы' },
   { name: 'admin-oracle', to: '/admin/oracle', label: 'Oracle' },
-  { name: 'admin-roles', to: '/admin/roles', label: 'Роли' },
+  { name: 'admin-roles', to: '/admin/roles', label: 'Мои роли' },
 ];
 
 function isActive(name: string) {
@@ -19,7 +20,7 @@ function isActive(name: string) {
   <div class="space-y-6">
     <header>
       <h1 class="text-2xl font-semibold">Администрирование</h1>
-      <p class="mt-1 text-sm text-text-muted">Платформенные настройки и роли (Keto).</p>
+      <p class="mt-1 text-sm text-text-muted">Пользователи, роли, баланс и платформенные настройки.</p>
     </header>
 
     <nav class="flex flex-wrap gap-2 border-b border-border pb-3" aria-label="Разделы админки">

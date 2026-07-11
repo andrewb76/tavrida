@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/main.ts",
     "build": "tsc --build",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "pretest": "pnpm run build",
+    "test": "node --test dist/**/*.test.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

@@ -20,7 +20,7 @@ const navItems = computed(() => {
     { to: '/profile/me', label: 'Профиль', icon: '👤' },
   ];
   if (session.isAdmin) {
-    items.push({ to: '/admin/scalar-config', label: 'Админ', icon: '🛡️' });
+    items.push({ to: '/admin/users', label: 'Админ', icon: '🛡️' });
   }
   return items;
 });
@@ -47,7 +47,7 @@ function isActive(path: string) {
         <div class="flex items-center gap-1 sm:gap-2">
           <RouterLink
             v-if="session.isAdmin"
-            to="/admin/scalar-config"
+            to="/admin/users"
             class="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
             :class="route.path.startsWith('/admin') ? 'bg-primary/10' : ''"
           >
