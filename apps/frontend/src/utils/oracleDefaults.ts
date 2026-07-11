@@ -30,6 +30,12 @@ export function formatRub(value: number, currency = 'RUB'): string {
   return String(Math.round(value));
 }
 
+/** Cost keys that are rates (%) — not summed into fixed burn. */
+export const VARIABLE_COST_KEYS = ['payment_processor_percent', 'tax_percent_of_net'] as const;
+
 export function sumCostItems(items: Record<string, number>): number {
-  return Object.values(items).reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0);
+  return Object.entries(items).reduce((sum, [key, n]) => {
+    if (VARIABLE_COST_KEYS.includes(key as (typeof VARIABLE_COST_KEYS)[number])) return sum;
+    return sum + (Number.isFinite(n) ? n : 0);
+  }, 0);
 }

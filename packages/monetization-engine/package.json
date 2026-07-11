@@ -18,7 +18,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "lint": "eslint src",
     "pretest": "pnpm run build",
-    "test": "node --test dist/index.test.js"
+    "test": "node --test dist/*.test.js"
   },
   "devDependencies": {
     "@tavrida/tsconfig": "workspace:*",

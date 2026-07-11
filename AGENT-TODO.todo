@@ -2,13 +2,14 @@ Agent backlog (Tavrida Lot):
   Общий файл задач для AI + Todo+ sidebar. Правило: .cursor/rules/agent-tasks.mdc
 
 Invites / BFF:
+  ✔ OpenAPI fragment Oracle в docs/06-api/oracle-admin-api.md @oracle @docs @done(26-07-11)
   ☐ OpenAPI fragment для invites в docs/06-api @bff @docs
   ☐ E2E: create → resolve → mock signIn → claim @bff
   ☐ Интеграция club.invitesPerMonth через financial-policy (вместо env) @bff
 
 Oracle (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + oracle.defaults.yaml @oracle
-  ☐ packages/monetization-engine — доработка формул по topics + golden tests @oracle
+  ✔ packages/monetization-engine — MRR/costs fixes + golden tests @oracle @done(26-07-11)
   ✔ BFF GET/POST /admin/oracle/* @oracle @bff @done(26-07-11)
   ✔ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend @done(26-07-11)
   ☐ services/oracle :3013 — saved scenarios (фаза 3) @oracle

@@ -97,4 +97,4 @@ Oracle **не** подписывается на `billing.charge_completed` в v1
 ## 🔶 Checkpoint
 
 - [ ] Engine в BFF process или сразу отдельный контейнер?
-- [ ] OpenAPI fragment в `docs/06-api` после checkpoint 1
+- [x] OpenAPI fragment — [oracle-admin-api.md](../../../06-api/oracle-admin-api.md)

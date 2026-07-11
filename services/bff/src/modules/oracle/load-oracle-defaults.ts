@@ -26,12 +26,18 @@ export function loadOracleDefaults(path = resolveOracleDefaultsPath()): OracleDe
 
 export function buildOracleOverlay(defaults: OracleDefaults): Record<string, unknown> {
   const subscriptions = defaults.subscriptions as Record<string, Record<string, { default?: number }>> | undefined;
-  const referral = defaults.referral as { programEnabled?: { default?: boolean } } | undefined;
+  const referral = defaults.referral as {
+    programEnabled?: { default?: boolean };
+    calculationModelId?: { default?: string };
+  } | undefined;
 
   return {
     'subscriptions.basic.monthlyPrice': subscriptions?.basic?.monthlyPrice?.default ?? null,
+    'subscriptions.basic.yearlyPrice': subscriptions?.basic?.yearlyPrice?.default ?? null,
     'subscriptions.pro.monthlyPrice': subscriptions?.pro?.monthlyPrice?.default ?? null,
+    'subscriptions.pro.yearlyPrice': subscriptions?.pro?.yearlyPrice?.default ?? null,
     'referralRewards.globalEnabled': referral?.programEnabled?.default ?? false,
+    'referralRewards.defaultModelId': referral?.calculationModelId?.default ?? 'revshare_single',
   };
 }
 

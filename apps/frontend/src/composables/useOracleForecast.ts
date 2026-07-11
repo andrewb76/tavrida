@@ -2,7 +2,7 @@ import { useDebounceFn } from '@vueuse/core';
 import { computed, onMounted, ref, watch } from 'vue';
 import { compareOracle, fetchOracleDefaults, simulateOracle } from '@/services/oracle';
 import type { OracleFormState, OracleSimulateRequest, ReferralModelId, SimulateResult } from '@/services/oracle.types';
-import { readBoolDefault, readRange, readRangeSpec } from '@/utils/oracleDefaults';
+import { readBoolDefault, readRange, readRangeSpec, sumCostItems } from '@/utils/oracleDefaults';
 import { initReferralModelsFromConfig, parseReferralModelOptions } from '@/utils/oracleReferralModels';
 
 export function useOracleForecast() {
@@ -59,9 +59,7 @@ export function useOracleForecast() {
   const costItemKeys = computed(() => Object.keys(form.value.costItems).sort());
   const oneTimeKeys = computed(() => Object.keys(form.value.oneTimePrices).sort());
 
-  const totalBurn = computed(() =>
-    Object.values(form.value.costItems).reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0),
-  );
+  const totalBurn = computed(() => sumCostItems(form.value.costItems));
 
   const lastMonth = computed(() => {
     const months = result.value?.months ?? [];

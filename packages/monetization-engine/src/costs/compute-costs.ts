@@ -1,6 +1,9 @@
 import { roundRub } from '../money';
 import type { CostItems } from '../types';
 
+/** Keys stored as rates in costItems but applied in computeVariableCosts. */
+export const VARIABLE_COST_KEYS = ['payment_processor_percent', 'tax_percent_of_net'] as const;
+
 export type ComputeCostsInput = {
   gross: number;
   netBeforeTax: number;
@@ -12,7 +15,9 @@ export type ComputeCostsInput = {
 
 export function sumFixedCosts(items: CostItems): number {
   return roundRub(
-    Object.values(items).reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0),
+    Object.entries(items)
+      .filter(([key]) => !VARIABLE_COST_KEYS.includes(key as (typeof VARIABLE_COST_KEYS)[number]))
+      .reduce((sum, [, value]) => sum + (Number.isFinite(value) ? value : 0), 0),
   );
 }
 

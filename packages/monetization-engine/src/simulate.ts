@@ -26,6 +26,15 @@ function applyChurn(state: ActivePlansState, churnRatePercent: number): ActivePl
   };
 }
 
+function splitBillingMode(
+  count: number,
+  yearlyShare: number,
+): { monthly: number; yearly: number } {
+  if (count <= 0) return { monthly: 0, yearly: 0 };
+  const yearly = Math.round(count * yearlyShare);
+  return { monthly: count - yearly, yearly };
+}
+
 function addNewSubs(
   state: ActivePlansState,
   registrations: number,
@@ -36,12 +45,14 @@ function addNewSubs(
   const yearlyShare = yearlyBillingSharePercent / 100;
   const basicNew = Math.round(registrations * mix.basic);
   const proNew = Math.round(registrations * mix.pro);
+  const basicSplit = splitBillingMode(basicNew, yearlyShare);
+  const proSplit = splitBillingMode(proNew, yearlyShare);
 
   return {
-    basic: state.basic + Math.round(basicNew * (1 - yearlyShare)),
-    pro: state.pro + Math.round(proNew * (1 - yearlyShare)),
-    basicYearly: state.basicYearly + Math.round(basicNew * yearlyShare),
-    proYearly: state.proYearly + Math.round(proNew * yearlyShare),
+    basic: state.basic + basicSplit.monthly,
+    pro: state.pro + proSplit.monthly,
+    basicYearly: state.basicYearly + basicSplit.yearly,
+    proYearly: state.proYearly + proSplit.yearly,
   };
 }
 

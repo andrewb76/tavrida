@@ -5,6 +5,7 @@ export {
   computeVariableCosts,
   findBreakEvenMonth,
   sumFixedCosts,
+  VARIABLE_COST_KEYS,
 } from './costs/compute-costs';
 export { buildRegistrationsSeries, registrationsForMonth } from './growth/registrations-for-month';
 export { computeChargeAmount, computeOneTimeRevenue } from './one-time/compute-one-time';

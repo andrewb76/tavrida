@@ -4,23 +4,21 @@ import type { ActivePlansState, PlanPrices } from '../types';
 export type ComputeMrrInput = {
   active: ActivePlansState;
   prices: PlanPrices;
+  /** Kept for API compat; cohort state already splits monthly vs yearly buckets. */
   yearlyBillingSharePercent: number;
 };
 
 /**
  * Monthly recurring revenue from active subscriptions.
- * Pure — caller tracks cohort state.
+ * `active.basic` / `active.pro` — monthly billing; `*Yearly` — annual plans (amortized).
  */
 export function computeMrr(input: ComputeMrrInput): number {
-  const share = input.yearlyBillingSharePercent / 100;
-  const monthlyShare = 1 - share;
-
   const basicMonthly =
-    input.active.basic * monthlyShare * input.prices.basic.monthly +
+    input.active.basic * input.prices.basic.monthly +
     input.active.basicYearly * (input.prices.basic.yearly / 12);
 
   const proMonthly =
-    input.active.pro * monthlyShare * input.prices.pro.monthly +
+    input.active.pro * input.prices.pro.monthly +
     input.active.proYearly * (input.prices.pro.yearly / 12);
 
   return roundRub(basicMonthly + proMonthly);

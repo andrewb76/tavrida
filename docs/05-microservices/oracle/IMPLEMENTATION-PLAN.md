@@ -32,15 +32,15 @@
 | 1.2 | Загрузчик defaults из YAML | ✅ `loadOracleDefaults()` в BFF |
 | 1.3 | `simulate(input) → OracleResult` | ✅ BFF `POST /admin/oracle/simulate` |
 | 1.4 | BFF `OracleModule` | ✅ `GET /defaults`, `POST /simulate`, `POST /compare` |
-| 1.5 | Overlay FP/settings | цены планов, `referralRewards.globalEnabled` |
+| 1.5 | Overlay FP/settings | ✅ цены планов, `referralRewards.globalEnabled`, default model |
 
 **Async / MQ:** не нужны — расчёт синхронный, &lt; 500 ms.
 
 ### 🔶 Checkpoint 1
 
-- [ ] Пример JSON request/response на реальных defaults
-- [ ] Сверка одного месяца вручную (Excel) vs engine
-- [ ] Реферал off/on даёт ожидаемую delta
+- [x] Пример JSON request/response — [oracle-admin-api.md](../../06-api/oracle-admin-api.md)
+- [x] Golden tests `packages/monetization-engine/src/golden.test.ts`
+- [x] Реферал off/on даёт ожидаемую delta (golden test)
 
 ---
 
