@@ -35,10 +35,41 @@ export class AuctionClient {
     return this.request<AuctionListResponse>('GET', `/internal/v1/auctions${suffix}`);
   }
 
-  private async request<T>(method: string, path: string): Promise<T> {
+  getAuction(auctionId: string) {
+    return this.request<Record<string, unknown>>('GET', `/internal/v1/auctions/${auctionId}`);
+  }
+
+  listBids(auctionId: string) {
+    return this.request<{ data: unknown[] }>('GET', `/internal/v1/auctions/${auctionId}/bids`);
+  }
+
+  listExpertAppraisals(auctionId: string) {
+    return this.request<{ data: unknown[] }>(
+      'GET',
+      `/internal/v1/auctions/${auctionId}/expert-appraisals`,
+    );
+  }
+
+  getSellerMeta(sellerId: string) {
+    const qs = new URLSearchParams({ sellerId });
+    return this.request<{ sellerId: string; lotsCreatedToday: number }>(
+      'GET',
+      `/internal/v1/auctions/meta/seller?${qs}`,
+    );
+  }
+
+  createAuction(body: Record<string, unknown>) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/auctions', body);
+  }
+
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     let response: Response;
     try {
-      response = await fetch(`${this.baseUrl()}${path}`, { method });
+      response = await fetch(`${this.baseUrl()}${path}`, {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
     } catch {
       throw new ServiceUnavailableException({
         type: 'upstream_unavailable',

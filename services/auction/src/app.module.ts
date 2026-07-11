@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { resolve } from 'node:path';
 import { AuctionEntity } from './entities/auction.entity';
+import { BidEntity } from './entities/bid.entity';
+import { ExpertAppraisalEntity } from './entities/expert-appraisal.entity';
 import { AuctionsModule } from './modules/auctions/auctions.module';
 import { HealthController } from './modules/health/health.controller';
 import { SeedModule } from './modules/seed/seed.module';
@@ -23,7 +25,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME ?? 'tavrida_lot',
       schema: 'auction',
-      entities: [AuctionEntity],
+      entities: [AuctionEntity, BidEntity, ExpertAppraisalEntity],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     AuctionsModule,

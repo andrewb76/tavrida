@@ -49,6 +49,51 @@ export type AuctionListResponse = {
   };
 };
 
+export type AuctionDetail = {
+  id: string;
+  title: string;
+  description: string;
+  sellerId: string;
+  categoryId: string | null;
+  type: string;
+  status: string;
+  startingPrice: number;
+  currentPrice: number;
+  bidIncrement: number;
+  currency: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  promotedUntil: string | null;
+  reservePrice: number | null;
+  images: string[];
+  bidCount: number;
+  hasExpertAppraisal: boolean;
+  isLive: boolean;
+  isPromoted: boolean;
+  minNextBid: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuctionBid = {
+  id: string;
+  bidderId: string;
+  amount: number;
+  currency: string;
+  placedAt: string;
+  isWinning: boolean;
+};
+
+export type ExpertAppraisal = {
+  id: string;
+  expertId: string;
+  summary: string;
+  estimatedValueMin: number | null;
+  estimatedValueMax: number | null;
+  currency: string;
+  createdAt: string;
+};
+
 function apiBase(): string {
   return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 }
@@ -75,4 +120,84 @@ export async function listAuctions(
     throw new Error(err?.detail ?? 'Не удалось загрузить каталог');
   }
   return (await res.json()) as AuctionListResponse;
+}
+
+async function authGet<T>(path: string): Promise<T> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Ошибка запроса');
+  }
+  return (await res.json()) as T;
+}
+
+export async function getAuction(auctionId: string): Promise<AuctionDetail> {
+  return authGet<AuctionDetail>(`/auctions/${encodeURIComponent(auctionId)}`);
+}
+
+export async function listAuctionBids(auctionId: string): Promise<AuctionBid[]> {
+  const json = await authGet<{ data: AuctionBid[] }>(
+    `/auctions/${encodeURIComponent(auctionId)}/bids`,
+  );
+  return json.data;
+}
+
+export async function listExpertAppraisals(auctionId: string): Promise<ExpertAppraisal[]> {
+  const json = await authGet<{ data: ExpertAppraisal[] }>(
+    `/auctions/${encodeURIComponent(auctionId)}/expert-appraisals`,
+  );
+  return json.data;
+}
+
+export type AuctionCreateOptions = {
+  planId: string;
+  allowedTypes: Array<'ENGLISH' | 'DUTCH'>;
+  maxDurationHours: number | null;
+  promotionEnabled: boolean;
+  reserveEnabled: boolean;
+  dailyLimit: { limit: number | null; used: number; remaining: number | null };
+  promotionUnitPrice: number;
+  reserveUnitPrice: number;
+};
+
+export type CreateAuctionInput = {
+  title: string;
+  description: string;
+  categoryId?: string;
+  type: 'ENGLISH' | 'DUTCH';
+  startingPrice: number;
+  bidIncrement: number;
+  startsAt: string;
+  endsAt: string;
+  images?: string[];
+  reservePrice?: number;
+  promote?: boolean;
+};
+
+async function authPost<T>(path: string, body: unknown): Promise<T> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string; message?: string } | null;
+    throw new Error(err?.detail ?? err?.message ?? 'Ошибка запроса');
+  }
+  return (await res.json()) as T;
+}
+
+export async function getAuctionCreateOptions(): Promise<AuctionCreateOptions> {
+  return authGet<AuctionCreateOptions>('/auctions/create-options');
+}
+
+export async function createAuction(input: CreateAuctionInput): Promise<AuctionDetail> {
+  return authPost<AuctionDetail>('/auctions', input);
 }

@@ -23,6 +23,7 @@ export type SeedPlanVariable = {
 export type TierSeed = {
   limitValue?: number | null;
   isFeatureEnabled?: boolean;
+  enumValues?: string[] | null;
   priceAmount?: number | null;
   isEnabled?: boolean;
 };

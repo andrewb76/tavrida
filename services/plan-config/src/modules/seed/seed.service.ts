@@ -72,7 +72,7 @@ export class SeedService implements OnModuleInit {
             variableKey: row.variableKey,
             limitValue: values.limitValue ?? null,
             isFeatureEnabled: values.isFeatureEnabled ?? false,
-            enumValues: null,
+            enumValues: values.enumValues ?? null,
             priceAmount:
               values.priceAmount != null ? values.priceAmount.toFixed(2) : null,
             isEnabled: values.isEnabled ?? true,
@@ -128,7 +128,7 @@ export class SeedService implements OnModuleInit {
               variableKey: variable.key,
               limitValue: values.limitValue ?? null,
               isFeatureEnabled: values.isFeatureEnabled ?? false,
-              enumValues: null,
+              enumValues: values.enumValues ?? null,
               priceAmount:
                 values.priceAmount != null ? values.priceAmount.toFixed(2) : null,
               isEnabled: values.isEnabled ?? true,
