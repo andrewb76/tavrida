@@ -16,7 +16,7 @@
 | Дерево сохраняется навсегда | Можно строить multi-level, но нужны **жёсткие лимиты глубины** |
 | Платформа зарабатывает на подписках и разовых charge | Триггер — `billing.charge_completed`, не P2P между участниками |
 | Billing не escrow сделок аукциона | Комиссия с **сделки между buyer/seller** — отдельная фаза (marketplace fee) |
-| Два реестра конфигурации | Формулы и правила → **settings**; лимиты/фичи по тарифу → **financial-policy** |
+| Два реестра конфигурации | Формулы и правила → **scalar-config**; лимиты/фичи по тарифу → **plan-config** |
 
 ---
 
@@ -105,7 +105,7 @@ flowchart TB
 
 ### 4.2. Движок правил (Rule Engine)
 
-Правила — **JSON-массив** в settings `referralRewards.rules` (версионируется snapshot при accrual).  
+Правила — **JSON-массив** в scalar-config `referralRewards.rules` (версионируется snapshot при accrual).  
 Каждое правило описывает:
 
 - **trigger** — тип события (`billing.charge_completed`, `invitation.redeemed`, …)
@@ -115,9 +115,9 @@ flowchart TB
 - **calculation** — `FIXED` \| `PERCENT` \| `TIERED_PERCENT`
 - **caps** — на событие, на бенефициара/месяц, глобальный бюджет
 - **holdDays** — задержка перед выплатой
-- **qualifiers** — min amount, min effectiveRating inviter, feature flag FP
+- **qualifiers** — min amount, min effectiveRating inviter, feature flag plan-config
 
-**financial-policy** задаёт **потолки и множители по тарифу** пригласившего:
+**plan-config** задаёт **потолки и множители по тарифу** пригласившего:
 
 - `referralRewards.programEnabled` — участвует ли тариф в программе
 - `referralRewards.payoutMultiplier` — множитель к расчётной сумме
@@ -129,9 +129,9 @@ flowchart TB
 
 | Параметр | Default | Где |
 |----------|---------|-----|
-| Глубина | `maxDepth = 1`, `depthCoefficients = [1.0]` | settings |
-| Категории | `enabledChargeCategories = ["SUBSCRIPTION"]` | settings |
-| Invitee bonus | `inviteeBonus.enabled = false` | settings |
+| Глубина | `maxDepth = 1`, `depthCoefficients = [1.0]` | scalar-config |
+| Категории | `enabledChargeCategories = ["SUBSCRIPTION"]` | scalar-config |
+| Invitee bonus | `inviteeBonus.enabled = false` | scalar-config |
 | GMV сделок | **запрещено** | [legal-scope.md](./legal-scope.md) |
 
 При включении — один rule `subscription-share`: 10% от подписки, depth из global settings.
@@ -153,13 +153,13 @@ sequenceDiagram
     participant R as referral-rewards
     participant UP as user-profile
     participant S as settings
-    participant FP as financial-policy
+    participant plan-config as plan-config
 
     B->>R: billing.charge_completed
     R->>S: referralRewards.rules + globalEnabled
     R->>UP: GET ancestor chain (invitee)
     loop each matching rule × ancestor
-        R->>FP: plan + limits (beneficiary)
+        R->>PC: plan + limits (beneficiary)
         R->>R: calculate + caps → RewardAccrual HELD
     end
     Note over R: CRON after holdDays
@@ -176,7 +176,7 @@ sequenceDiagram
 |---------|------------|
 | В `rating` | Смешение репутации и денег; разные формулы и lifecycle |
 | В `billing` | Billing = ledger; правила и граф — другой домен |
-| В `financial-policy` | FP проверяет лимиты, не ведёт accrual ledger |
+| В `plan-config` | plan-config проверяет лимиты, не ведёт accrual ledger |
 | В `user-profile` | Профиль хранит ребро графа, не расчёты |
 
 ---
@@ -188,7 +188,7 @@ sequenceDiagram
 - [x] Глубину дерева и коэффициенты уровней (`maxDepth`, `depthCoefficients`)
 - [x] Двусторонний бонус invitee (`inviteeBonus.*`)
 - [x] Набор категорий платежей (`enabledChargeCategories`)
-- [ ] Вкл/выкл программу глобально и по тарифу (FP)
+- [ ] Вкл/выкл программу глобально и по тарифу (plan-config)
 - [ ] % / фикс в `rules`
 - [ ] Hold period и caps
 

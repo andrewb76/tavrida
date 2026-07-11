@@ -6,7 +6,7 @@
 
 **Route:** `/profile/integrations` · **ID:** W17 · **MVP:** ⏳ (Basic+)
 
-> Доступ: `webhooks.member.03userScope.enabled`. Лимит hooks: `webhooks.member.01endpoint.max`. Спека: [webhooks](../../05-microservices/webhooks/README.md).
+> Доступ: `webhooks.member.userScope.enabled`. Лимит hooks: `webhooks.member.endpoint.max`. Спека: [webhooks](../../05-microservices/webhooks/README.md).
 
 ### Содержание экрана
 
@@ -21,7 +21,7 @@
 | Form: secret | Read-only после create; кнопка «Скопировать» / rotate | Secret один раз при создании |
 | Form: advanced (collapsible) | Per-event timeout overrides | Опционально |
 | Delivery log | Таб / ссылка с карточки hook | `GET /webhooks/{id}/deliveries` — redacted preview |
-| Replay | Кнопка на failed delivery | Лимит `webhooks.member.02replay.dailyMax` |
+| Replay | Кнопка на failed delivery | Лимит `webhooks.member.replay.dailyMax` |
 
 **States:** loading · empty · paywall (Free) · limit reached · validation errors (URL, no events selected).
 

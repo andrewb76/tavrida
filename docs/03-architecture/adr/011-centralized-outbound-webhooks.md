@@ -26,7 +26,7 @@
 | Retry, учёт попыток, журнал | `webhooks` |
 | Redaction payload перед HTTP | `webhooks.redactWebhookPayload()` + rules при register |
 | USER filter (auction) | `AUCTION_PARTICIPANT` — только лоты, где user участник (любая роль) |
-| Таймауты | per-event → per-user default → global (`settings`) |
+| Таймауты | per-event → per-user default → global (`scalar-config`) |
 | Auto-disable после DEAD | `webhooks.autoDisableOnDead` (bool, default **true**) |
 
 Доменные сервисы **не** делают HTTP наружу — только публикуют в [event-catalog](../event-catalog.md). Fan-out: [messaging.md](../messaging.md).
@@ -62,4 +62,4 @@ sequenceDiagram
 
 ---
 
-**Связано:** [settings](../05-microservices/settings/README.md) · [ADR-003](./003-settings-vs-financial-policy.md)
+**Связано:** [scalar-config](../05-microservices/scalar-config/README.md) · [ADR-003](./003-settings-vs-financial-policy.md)

@@ -19,7 +19,7 @@
 1. **Нет** consume `auction.completed`, `marketplace.order_completed` в referral-rewards.
 2. **Нет** категории `DEAL_GMV` / `ORDER_PAYMENT` — только whitelist [charge-categories.md](./charge-categories.md), incl. `MARKETPLACE_SERVICES` (платформе, не заказ).
 3. Deny-list target: `marketplace.orderPayment:*`, `*.deal.*`, escrow, P2P.
-4. Даже при ручном редактировании `referralRewards.rules` в settings — валидатор отклоняет триггеры/категории вне whitelist.
+4. Даже при ручном редактировании `referralRewards.rules` в scalar-config — валидатор отклоняет триггеры/категории вне whitelist.
 
 ## Репутация vs деньги
 

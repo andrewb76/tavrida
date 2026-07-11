@@ -52,7 +52,7 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `userId` | UUID PK | — |
-| `emailDigestEnabled` | boolean | Pro via FP |
+| `emailDigestEnabled` | boolean | Pro via plan-config |
 | `pushEnabled` | boolean | — |
 | `digestFrequency` | enum | `DAILY` \| `WEEKLY` |
 | `quietHours` | jsonb nullable | `{ start, end, tz }` |
@@ -79,7 +79,7 @@
 }
 ```
 
-**Pre-check:** `financial-policy` → `subscriptions.*` limits.
+**Pre-check:** `plan-config` → `subscriptions.*` limits.
 
 ### Internal
 
@@ -91,7 +91,7 @@
 
 > **Fan-out contract:** producer event → subscriptions `match` → HTTP trigger `notifications`.
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
@@ -119,7 +119,7 @@
 
 | Сервис | Протокол |
 |--------|----------|
-| financial-policy | limits |
+| plan-config | limits |
 | auction, forum, marketplace | RMQ events |
 | notifications | HTTP trigger, digest templates |
 | BFF | public CRUD |

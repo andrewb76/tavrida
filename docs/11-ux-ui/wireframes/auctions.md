@@ -188,7 +188,7 @@ BidModal:
 |------|----------|-----------|
 | Step 1 | Photo upload | MinIO presign |
 | Step 2 | Title, description, category | Validation |
-| Step 3 | Type (English / Dutch per plan) | FP check |
+| Step 3 | Type (English / Dutch per plan) | plan-config check |
 | Step 4 | Start price, increment, schedule | |
 | Step 5 | Reserve (Pro+100₽), promote checkbox | Optional charges |
 | Submit | Create | Show `auctionsCreatedPerDay` remaining |

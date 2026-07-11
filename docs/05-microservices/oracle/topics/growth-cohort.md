@@ -34,7 +34,7 @@ activeBasic[t] = activeBasic[t-1] × (1 - churn) + newBasic[t] - downgrades
 
 ## Prod-связь
 
-- Реальные планы: `financial-policy` `UserSubscription`
+- Реальные планы: `plan-config` `UserSubscription`
 - Регистрации: Logto (фаза 4 — факт из analytics)
 
 ## API

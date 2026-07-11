@@ -227,14 +227,14 @@ AboutPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Summary | Выдано / лимит FP | `GET /invites/quota` |
+| Summary | Выдано / лимит plan-config | `GET /invites/quota` |
 | List | Код, статус, дата, redeem by | Copy to clipboard |
 | Actions | «Создать инвайт» | Disabled at limit |
 | Share | Copy link, native share (mobile) | `tavrida-lot.ru/invite?code=` |
 
 **States:** loading · empty (нет выданных) · limit reached · error.
 
-**Roles:** Member only (`invitesPerMonth` per FP).
+**Roles:** Member only (`invitesPerMonth` per plan-config).
 
 **API:** `GET /invites`, `POST /invites`
 

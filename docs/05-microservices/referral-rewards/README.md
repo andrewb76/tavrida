@@ -10,7 +10,7 @@
 
 - Слушает события **billing** (списания / возвраты) и **user-profile** (новый member по инвайту)
 - Читает цепочку `inviterId` → предки (не хранит граф как SoT)
-- Применяет **настраиваемые правила** из `settings` + лимиты из `financial-policy`
+- Применяет **настраиваемые правила** из `scalar-config` + лимиты из `plan-config`
 - Выплачивает на баланс клуба через **billing credit** (internal)
 
 > **Не путать** с репутационным referral в `rating` (`rating.referral.*`, `referralKarma`). Там — карма и рейтинг; здесь — ₽.
@@ -34,7 +34,7 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID PK | — |
-| `ruleId` | varchar | Id правила из settings snapshot |
+| `ruleId` | varchar | Id правила из scalar-config snapshot |
 | `rulesSnapshotVersion` | varchar | Хеш/версия rules на момент расчёта |
 | `sourceEventId` | UUID | `eventId` из RMQ envelope |
 | `sourceEventType` | varchar | `billing.charge_completed`, … |
@@ -153,7 +153,7 @@ Settings: **массив объектов**. Пример:
 6. `GET ancestor-chain?maxDepth=referralRewards.maxDepth` → user-profile.  
 7. Для каждого rule × beneficiary на глубине d:  
    - коэффициент = `referralRewards.depthCoefficients[d-1]`  
-   - FP: `programEnabled`, `payoutMultiplier`, `maxEarnedPerMonth`  
+   - plan-config: `programEnabled`, `payoutMultiplier`, `maxEarnedPerMonth`  
    - rating: `effectiveRating` ≥ qualifier  
    - gross → multiplier → caps → accrual `HELD`  
 8. `billing.refund_completed` → reverse по `sourceTransactionId`.
@@ -199,7 +199,7 @@ Settings: **массив объектов**. Пример:
 
 > Если endpoint ещё нет — добавить в user-profile spec (обход по `inviterId`).
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Тип | Default | Описание |
 |------|-----|---------|----------|
@@ -244,7 +244,7 @@ Settings: **массив объектов**. Пример:
 }
 ```
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
@@ -289,8 +289,8 @@ Settings: **массив объектов**. Пример:
 |--------|---------------|----------|
 | billing | consume charge/refund; POST credit | RMQ + HTTP |
 | user-profile | ancestor chain | HTTP internal |
-| settings | rules, global flags | HTTP internal |
-| financial-policy | limits, multiplier | HTTP internal |
+| scalar-config | rules, global flags | HTTP internal |
+| plan-config | limits, multiplier | HTTP internal |
 | rating | effectiveRating (qualifier) | HTTP internal или cache event |
 | notifications | consume reward_paid | RMQ |
 | BFF | public summary | HTTP |
@@ -299,8 +299,8 @@ Settings: **массив объектов**. Пример:
 flowchart LR
     BILL[billing] -->|charge_completed| RR[referral-rewards]
     UP[user-profile] -->|ancestor-chain| RR
-    SET[settings] --> RR
-    FP[financial-policy] --> RR
+    SET[scalar-config] --> RR
+    PC[plan-config] --> RR
     RR -->|credit| BILL
     RR -->|reward_paid| NOTIF[notifications]
     BFF --> RR
@@ -322,8 +322,8 @@ flowchart LR
 | `RABBITMQ_URL` | да | Consumer + producer | amqp://… |
 | `USER_PROFILE_URL` | да | Internal base URL | http://user-profile:3020 |
 | `BILLING_URL` | да | Credit API | http://billing:3001 |
-| `SETTINGS_URL` | да | Rules | http://settings:… |
-| `FINANCIAL_POLICY_URL` | да | Tariff limits | http://financial-policy:3002 |
+| `SCALAR_CONFIG_URL` | да | Rules | http://settings:… |
+| `PLAN_CONFIG_URL` | да | Tariff limits | http://plan-config:3002 |
 | `PORT` | нет | HTTP | `3012` |
 
 ## 📋 Зависимости (до реализации)
@@ -332,7 +332,7 @@ flowchart LR
 |--------|--------|
 | `POST /internal/v1/wallets/credit` + `billing.credit_completed` | billing |
 | `GET /internal/v1/users/{id}/ancestor-chain` | user-profile |
-| Ключи в PLATFORM-REGISTRY | settings, financial-policy registration |
+| Ключи в PLATFORM-REGISTRY | settings, plan-config registration |
 
 ## 📎 Связанные разделы
 

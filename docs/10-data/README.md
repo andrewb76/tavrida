@@ -40,7 +40,7 @@
 | `notifications`         | notifications-adapter | `notification_log`, `subscriber`                              | Audit уведомлений  |
 | `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
 
-> **Legacy schemas (migration pending):** `financial_policy`, `settings` → `plan_config`, `scalar_config` ([ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md)). Таблицы `charge_target`, `plan_charge_price` сливаются в `plan_parameter.priceAmount` для `valueType: price`.
+> **Legacy schemas (migration pending):** `plan_config`, `scalar-config` → `plan_config`, `scalar_config` ([ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md)). Таблицы `charge_target`, `plan_charge_price` сливаются в `plan_parameter.priceAmount` для `valueType: price`.
 
 
 > **Инфраструктура:** `keto` — не NestJS-сервис; таблицы и миграции ведёт `keto migrate up`. Микросервисы обращаются только к Keto HTTP API. При росте нагрузки — отдельная БД (смена DSN).

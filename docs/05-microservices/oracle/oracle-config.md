@@ -9,7 +9,7 @@
 | # | Решение |
 |---|---------|
 | 1 | Аудитория: **только founder/admin**. Экспорт PDF/CSV → backlog |
-| 2 | Defaults: **YAML в репо**; на совещании правим руками; позже — централизованно в `settings` domain `oracle.*` или admin Oracle |
+| 2 | Defaults: **YAML в репо**; на совещании правим руками; позже — централизованно в `scalar-config` domain `oracle.*` или admin Oracle |
 | 3 | **Максимум вариативности**: рост, активность, продажи, attach rates; **сценарии** (base / optimistic / pessimistic) + модели роста |
 | 4 | **Затраты**: line items → сумма → общий ползунок; ручной общий ползунок → только **месяц окупаемости** |
 | 5 | **Реферал**: по умолчанию **выкл**; отдельная вкладка; дерево + распределение по глубине ветки |
@@ -30,10 +30,10 @@
 **Жизненный цикл:**
 
 1. **Сейчас** — git-tracked YAML, правки на совещании → commit.
-2. **Фаза 2** — BFF `GET /admin/oracle/defaults` читает YAML (+ overlay из FP/settings где есть факт).
-3. **Фаза 4** — domain `oracle.*` в `settings` или presets в `services/oracle` (admin UI «Сохранить как default»).
+2. **Фаза 2** — BFF `GET /admin/oracle/defaults` читает YAML (+ overlay из plan-config/scalar-config где есть факт).
+3. **Фаза 4** — domain `oracle.*` в `scalar-config` или presets в `services/oracle` (admin UI «Сохранить как default»).
 
-> Не путать с production: `club.*`, `referralRewards.*` в settings — это **боевые** ключи. Oracle YAML — **только симуляция**, пока не промотируем значения осознанно.
+> Не путать с production: `club.*`, `referralRewards.*` в scalar-config — это **боевые** ключи. Oracle YAML — **только симуляция**, пока не промотируем значения осознанно.
 
 ---
 
@@ -100,7 +100,7 @@ flowchart LR
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/admin/oracle/defaults` | Парсит `config/oracle.defaults.yaml` + live overlay FP/settings |
+| GET | `/admin/oracle/defaults` | Парсит `config/oracle.defaults.yaml` + live overlay plan-config/scalar-config |
 | POST | `/admin/oracle/simulate` | `{ assumptions, costs, referral, scenarios[], period }` |
 | POST | `/admin/oracle/compare` | До 3 сценариев → overlay time series |
 

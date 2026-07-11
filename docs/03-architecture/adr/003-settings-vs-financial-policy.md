@@ -81,7 +81,7 @@ flowchart LR
 
 - ✅ [MICROSERVICE-SPEC](../../05-microservices/MICROSERVICE-SPEC.md) — обязательные секции ⚙️ и 💳
 - ✅ Убрать hardcoded JSON из rating README → ссылка на scalar-config
-- ✅ forum: `bannedWordsList` → scalar-config; `author.01post.dailyMax` → plan-config
+- ✅ forum: `bannedWordsList` → scalar-config; `author.post.dailyMax` → plan-config
 - ✅ plan-config **не** хранит формулы голосования
 - ✅ scalar-config **не** хранит лимиты по тарифам
 - ✅ Регистрация plan variables — только от domain-сервисов ([ADR-016](./016-financial-policy-parameter-registration.md))

@@ -52,7 +52,7 @@ sequenceDiagram
 
 | Слой | Делает |
 |------|--------|
-| **BFF** | JWT check, лимиты FP, вызов Logto M2M, compose `link`, resolve/claim |
+| **BFF** | JWT check, лимиты plan-config, вызов Logto M2M, compose `link`, resolve/claim |
 | **Logto M2M** | `POST /api/one-time-tokens` |
 | **user-profile** | Хранит `invite_code`, `invitation`, `inviterId` |
 | **Frontend** | `/join`, `signIn({ extraParams: { one_time_token } })` |
@@ -94,7 +94,7 @@ Content-Type: application/json
 
 1. Validate JWT → `issuerId = sub`.
 2. Check Keto: caller is member (JWT достаточен в v1).
-3. Check `club.invitesPerMonth` via financial-policy (admin — skip limit).
+3. Check `club.invitesPerMonth` via plan-config (admin — skip limit).
 4. `POST {LOGTO_ENDPOINT}/api/one-time-tokens` (M2M token):
 
 ```json
@@ -424,7 +424,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 | `FRONTEND_ORIGIN` | да | `https://tavrida-lot.ru` — для `link` |
 | `USER_PROFILE_URL` | да | Upstream |
 | `CLUB_INVITE_VALIDITY_DAYS` | нет | **deprecated** — fallback если settings недоступен; источник: `club.invite.validityDays` |
-| `CLUB_INVITES_PER_MONTH` | нет | default `10` (v1 env; позже financial-policy) |
+| `CLUB_INVITES_PER_MONTH` | нет | default `10` (v1 env; позже plan-config) |
 | `CLUB_INVITES_UNLIMITED_ISSUER_IDS` | нет | CSV Logto `sub` без лимита (fallback без Keto) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` — admin check для invite quota |
 | `KETO_NAMESPACE` | нет | default `TavridaLot` |
@@ -442,7 +442,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 - [x] Rate limiter на `resolve` (30 req/min per IP)
 - [x] Idempotent `claim`
 - [ ] OpenAPI fragment в `06-api`
-- [x] `club.invite.validityDays` / `club.invite.codeType` — BFF читает из settings (`ClubSettingsReader`)
+- [x] `club.invite.validityDays` / `club.invite.codeType` — BFF читает из scalar-config (`ClubSettingsReader`)
 - [x] `club.registration.inviteOnly` — `GET /api/v1/settings/public` + landing/join UI
 - [ ] E2E: create → resolve → mock signIn → claim → event
 

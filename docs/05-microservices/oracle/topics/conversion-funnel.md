@@ -29,7 +29,7 @@ upgradesToPro[t]   = activeFree[t] × freeToProRate + activeBasic[t] × basicToP
 
 ## Prod
 
-`POST /api/v1/plans/activate` → FP → billing charge.
+`POST /api/v1/plans/activate` → plan-config → billing charge.
 
 ## API
 

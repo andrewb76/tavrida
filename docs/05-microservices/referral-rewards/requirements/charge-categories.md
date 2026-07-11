@@ -15,7 +15,7 @@
 
 | ID | Описание | `billing.target` (prefix / pattern) | Default в программе |
 |----|----------|-------------------------------------|---------------------|
-| `SUBSCRIPTION` | Активация и продление тарифа Basic/Pro | `financial-policy.activate-plan:` · `financial-policy.renew-plan:` | ✅ если программа вкл. |
+| `SUBSCRIPTION` | Активация и продление тарифа Basic/Pro | `plan-config.activate-plan:` · `plan-config.renew-plan:` | ✅ если программа вкл. |
 | `AUCTION_SERVICES` | Платные услуги платформы по лоту (не цена лота) | `auction.promotion` · `auction.reservePrice` · `auction.customDurationPreset` | ❌ |
 | `MARKETPLACE_SERVICES` | Платные услуги платформы по маркету (не цена заказа) | `marketplace.listingPromotion` · `marketplace.featuredPlacement` · `marketplace.listingActivation` · `marketplace.platformFee` | ❌ |
 | `FORUM_REACTIONS` | Платные реакции в темах | `forum.reaction.` | ❌ |
@@ -61,7 +61,7 @@
 
 | chargeCategory | patterns |
 |----------------|----------|
-| `SUBSCRIPTION` | `financial-policy.activate-plan:*`, `financial-policy.renew-plan:*` |
+| `SUBSCRIPTION` | `plan-config.activate-plan:*`, `plan-config.renew-plan:*` |
 | `AUCTION_SERVICES` | `auction.promotion`, `auction.reservePrice`, `auction.customDurationPreset` |
 | `MARKETPLACE_SERVICES` | `marketplace.listingPromotion`, `marketplace.featuredPlacement`, `marketplace.listingActivation`, `marketplace.platformFee` |
 | `FORUM_REACTIONS` | `forum.reaction.*` |

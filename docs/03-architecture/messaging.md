@@ -34,7 +34,7 @@ flowchart TB
         Q2["queue: rating.events"]
         Q3["queue: notifications.events"]
         Q4["queue: webhooks.events"]
-        Q5["queue: financial-policy.events"]
+        Q5["queue: plan-config.events"]
     end
 
     A -->|"publish routing_key=auction.completed"| EX
@@ -50,7 +50,7 @@ flowchart TB
     Q2 --> R[rating]
     Q3 --> N[notifications]
     Q4 --> W[webhooks]
-    Q5 --> FP[financial-policy]
+    Q5 --> PC[plan-config]
 ```
 
 ### Правило: очередь на сервис, не на событие
@@ -162,7 +162,7 @@ flowchart LR
 | `rating.events` | rating | `auction.completed`, `feedback.submitted`, … |
 | `notifications.events` | notifications | `auction.*`, `billing.*`, `webhooks.delivery_failed`, … |
 | `webhooks.events` | webhooks | whitelist из `EventTypeRegistration` |
-| `financial-policy.events` | financial-policy | `billing.deposit_completed`, `subscription.activated` |
+| `plan-config.events` | plan-config | `billing.deposit_completed`, `subscription.activated` |
 | `bff.events` | BFF (optional) | агрегация для WS, если не Redis | 
 
 > Точный список — [event-catalog](./event-catalog.md) (матрица producer → consumer).

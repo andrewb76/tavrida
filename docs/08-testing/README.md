@@ -16,7 +16,7 @@
 
 - Colocate: `*.spec.ts` рядом с модулем
 - Mock: repositories, HTTP clients, RMQ
-- **Обязательно:** billing charge idempotency, rating formula, financial-policy limit check
+- **Обязательно:** billing charge idempotency, rating formula, plan-config limit check
 
 ```bash
 pnpm exec turbo run test --filter=@tavrida/billing
@@ -50,7 +50,7 @@ it('charge deducts balance atomically', async () => { … })
 | # | Сценарий | Services |
 |---|----------|----------|
 | 1 | Create auction → bid → complete → feedback | auction, feedback, rating |
-| 2 | Activate Pro plan → charge → subscription | FP, billing |
+| 2 | Activate Pro plan → charge → subscription | plan-config, billing |
 | 3 | Insufficient balance → 402 | billing, BFF |
 | 4 | Forum topic + comment + reaction karma | forum, rating |
 | 5 | Idempotent charge retry | billing |

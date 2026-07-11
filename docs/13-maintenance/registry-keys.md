@@ -55,7 +55,7 @@
 **Минимум 3 сегмента.** Каждый ключ — **plan variable** (ранее «parameter»).
 
 ```
-{domain}.{facet}.{orderedGroup}.{leafName}
+{domain}.{facet}.{group}.{leafName}
 ```
 
 ### Facet (роль / сторона)
@@ -77,39 +77,37 @@ referralRewards.program.enabled
 referralRewards.earning.monthlyMax
 ```
 
-### Numeric ordering prefix
+### Групповой сегмент (семантика, без цифр)
 
-Третий сегмент (или групповой) начинается с **двузначного числового префикса** для сортировки в admin UI:
+Третий сегмент — **смысловая группа** (`lot`, `search`, `promotion`, `invite`), не порядковый номер.
 
-| Префикс | Пример | Зачем |
-|---------|--------|-------|
-| `01…` | `auction.seller.01lot.activeMax` | Первая группа seller/lot |
-| `02…` | `auction.seller.02lot.dailyCreateMax` | Вторая группа seller |
-| `08…` | `auction.seller.08promotion.unitPrice` | Разовая цена (price) |
+| Пример | Описание |
+|--------|----------|
+| `auction.seller.lot.activeMax` | Лимиты seller по лотам |
+| `auction.seller.lot.dailyCreateMax` | Тот же домен, другой leaf |
+| `auction.seller.promotion.unitPrice` | Разовая цена promotion |
 
-Правила:
+**Порядок в admin UI** — не в ключе. При `register` / `sync` передаётся опциональное поле **`sortOrder`** (int) в метаданных plan variable; admin сортирует по нему.
 
-- Префикс **01–99** в начале группового сегмента (`01lot`, `02bid`, `03auctionTypes`).
-- Порядок отражает логику onboarding в admin (лимиты → фичи → цены).
-- При добавлении новой переменной — выбрать свободный номер в facet, **не переиспользовать** удалённые без миграции docs.
+> ~~Numeric prefix `01lot`, `02bid`~~ — **отклонено** (2026-07-12): цифры в ключах не используем.
 
 ### Примеры auction (canonical)
 
 | Ключ | valueType | Free / Basic / Pro | Было (legacy) |
 |------|-----------|-------------------|---------------|
-| `auction.seller.01lot.activeMax` | limit | 2 / 5 / ∞ | `auction.sellerActiveLots` |
-| `auction.seller.02lot.dailyCreateMax` | limit | 3 / 10 / ∞ | `auction.auctionsCreatedPerDay` |
-| `auction.seller.03lot.durationMaxHours` | limit | 72 / 336 / ∞ | `auction.auctionDurationMaxHours` |
-| `auction.bidder.01participation.activeMax` | limit | 5 / 20 / ∞ | `auction.activeAuctions` |
-| `auction.bidder.02bid.hourlyMax` | limit | 20 / 100 / ∞ | `auction.bidsPerHour` |
-| `auction.seller.04promotion.enabled` | feature | false / false / true | `auction.promotionEnabled` |
-| `auction.seller.05reservePrice.enabled` | feature | false / false / true | `auction.reservePriceEnabled` |
-| `auction.seller.06durationPreset.customEnabled` | feature | false / false / true | `auction.customDurationPresets` |
-| `auction.seller.07analytics.dashboardEnabled` | feature | false / false / true | `auction.analyticsDashboard` |
-| `auction.bidder.03auctionTypes.allowed` | enum | `ENGLISH` / `ENGLISH,DUTCH` / `all` | `auction.auctionTypes` |
-| `auction.seller.08promotion.unitPrice` | **price** | — / — / 200 ₽ | charge `auction.promotion` |
-| `auction.seller.09reservePrice.unitPrice` | **price** | — / — / 100 ₽ | charge `auction.reservePrice` |
-| `auction.seller.10durationPreset.unitPrice` | **price** | — / — / 50 ₽ | charge `auction.customDurationPreset` |
+| `auction.seller.lot.activeMax` | limit | 2 / 5 / ∞ | `auction.sellerActiveLots` |
+| `auction.seller.lot.dailyCreateMax` | limit | 3 / 10 / ∞ | `auction.auctionsCreatedPerDay` |
+| `auction.seller.lot.durationMaxHours` | limit | 72 / 336 / ∞ | `auction.auctionDurationMaxHours` |
+| `auction.bidder.participation.activeMax` | limit | 5 / 20 / ∞ | `auction.activeAuctions` |
+| `auction.bidder.bid.hourlyMax` | limit | 20 / 100 / ∞ | `auction.bidsPerHour` |
+| `auction.seller.promotion.enabled` | feature | false / false / true | `auction.promotionEnabled` |
+| `auction.seller.reservePrice.enabled` | feature | false / false / true | `auction.reservePriceEnabled` |
+| `auction.seller.durationPreset.customEnabled` | feature | false / false / true | `auction.customDurationPresets` |
+| `auction.seller.analytics.dashboardEnabled` | feature | false / false / true | `auction.analyticsDashboard` |
+| `auction.bidder.auctionTypes.allowed` | enum | `ENGLISH` / `ENGLISH,DUTCH` / `all` | `auction.auctionTypes` |
+| `auction.seller.promotion.unitPrice` | **price** | — / — / 200 ₽ | charge `auction.promotion` |
+| `auction.seller.reservePrice.unitPrice` | **price** | — / — / 100 ₽ | charge `auction.reservePrice` |
+| `auction.seller.durationPreset.unitPrice` | **price** | — / — / 50 ₽ | charge `auction.customDurationPreset` |
 
 > **∞** в матрице = `limitValue: -1`.
 
@@ -169,7 +167,7 @@ Domain-сервис при старте отправляет **полный ма
 ## Чеклист: новая переменная
 
 1. Выбрать реестр: scalar vs plan ([ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md)).
-2. Собрать ключ по правилам выше (facet, numeric prefix для plan).
+2. Собрать ключ по правилам выше (facet, семантическая group; `sortOrder` — отдельно).
 3. Добавить строку в [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md).
 4. Добавить в sync-манифест владельца (`config/plan-variables.ts` или `config/scalar-keys.ts`).
 5. Секция ⚙️ / 💳 в README domain-сервиса.
@@ -180,13 +178,14 @@ Domain-сервис при старте отправляет **полный ма
 
 | Legacy | Canonical |
 |--------|-----------|
-| `settings` / `financial-policy` | `scalar-config` / `plan-config` |
+| `scalar-config` / `plan-config` | `scalar-config` / `plan-config` |
 | `parameter`, `Parameter` | **plan variable** |
 | `registrationStatus: orphaned` | `syncStatus: stale` |
 | `charge_target` + `plan_charge_price` | plan variable `valueType: price` |
-| `auction.activeAuctions` | `auction.bidder.01participation.activeMax` |
-| `auction.sellerActiveLots` | `auction.seller.01lot.activeMax` |
-| `auction.promotion` (charge target) | `auction.seller.08promotion.unitPrice` |
+| `auction.activeAuctions` | `auction.bidder.participation.activeMax` |
+| `auction.sellerActiveLots` | `auction.seller.lot.activeMax` |
+| `auction.seller.01lot.activeMax` (numeric draft) | `auction.seller.lot.activeMax` |
+| `auction.promotion` (charge target) | `auction.seller.promotion.unitPrice` |
 
 ---
 

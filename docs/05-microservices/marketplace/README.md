@@ -175,7 +175,7 @@ PATCH /api/v1/marketplace/listings/{id}
 DELETE /api/v1/marketplace/listings/{id}
 ```
 
-Перед созданием: `financial-policy` → `marketplace.listingsMax`.
+Перед созданием: `plan-config` → `marketplace.listingsMax`.
 
 ```http
 POST /api/v1/marketplace/listings/{id}/portfolio
@@ -250,7 +250,7 @@ Authorization: Bearer {expert-token}
 
 ---
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Default | Описание |
 |------|---------|----------|
@@ -262,7 +262,7 @@ Authorization: Bearer {expert-token}
 
 ---
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
@@ -289,7 +289,7 @@ Authorization: Bearer {expert-token}
 
 | Сервис | Взаимодействие |
 |--------|----------------|
-| financial-policy | `limits/check` при создании listing/order |
+| plan-config | `limits/check` при создании listing/order |
 | feedback | `marketplace.order_completed` → PendingFeedback |
 | rating | через feedback |
 | user-profile | provider profile, portfolio links |
@@ -310,7 +310,7 @@ Authorization: Bearer {expert-token}
 | `DATABASE_URL` | да | schema `marketplace` |
 | `MINIO_*` | да | bucket `marketplace-portfolio` |
 | `RABBITMQ_URL` | да | order events |
-| `FINANCIAL_POLICY_URL` | да | Limits |
+| `PLAN_CONFIG_URL` | да | Limits |
 | `PORT` | нет | HTTP |
 
 ## 📋 Открытые вопросы

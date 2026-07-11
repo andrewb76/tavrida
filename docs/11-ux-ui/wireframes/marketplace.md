@@ -94,7 +94,7 @@ ServiceDetailPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| List | Own listings CRUD | FP `listingsMax` |
+| List | Own listings CRUD | plan-config `listingsMax` |
 | Upload | Portfolio per listing | MinIO |
 
 ### ASCII

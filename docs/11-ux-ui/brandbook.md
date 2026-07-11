@@ -233,7 +233,7 @@ Fallback: `Unbounded, "Segoe UI", system-ui, sans-serif` · `Onest, "Segoe UI", 
 
 ### Правила набора
 
-- Заголовки: `font-display`, tracking чуть уплотнённый на display (`-0.02em`).  
+- Заголовки: `font-display`, tracking чуть уплотнённый на display (`-0.em`).  
 - Body: `font-sans` (Onest), tracking нормальный.  
 - Цены и таймеры: `font-variant-numeric: tabular-nums`.  
 - Макс. ширина текста: ~65 ch на статьях/правилах; на лоте описание может быть уже из-за колонки фото.  

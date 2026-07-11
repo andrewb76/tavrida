@@ -29,7 +29,7 @@
 ### Registry keys `forum.postsPerDay` и т.п.
 
 Префикс `forum.` в [PLATFORM-REGISTRY](../../05-microservices/PLATFORM-REGISTRY.md) — **имя домена**, не имя сущности.  
-Переименование ключей (`forum.topicsPerDay`) **не делаем** без миграции FP — в README сервиса явно указать: «postsPerDay = лимит создания topic + comment».
+Переименование ключей (`forum.topicsPerDay`) **не делаем** без миграции plan-config — в README сервиса явно указать: «postsPerDay = лимит создания topic + comment».
 
 ### Promote comment → topic
 

@@ -4,7 +4,7 @@
 
 ## 🎯 Контекст
 
-`feedback`, `auction-subscriptions`, `forum`, `billing`, `financial-policy` требуют email, push, in-app и digest-уведомления. Писать notification engine с нуля — дорого. Рассматривались Novu (cloud/self-host), Knock, Resend+FCM.
+`feedback`, `auction-subscriptions`, `forum`, `billing`, `plan-config` требуют email, push, in-app и digest-уведомления. Писать notification engine с нуля — дорого. Рассматривались Novu (cloud/self-host), Knock, Resend+FCM.
 
 ## ✅ Решение
 

@@ -39,7 +39,7 @@ describe('LimitsService', () => {
     const service = createLimitsHarness({ limitValue: -1 });
     const result = await service.checkLimit({
       userId: 'user-1',
-      variableKey: 'auction.bidder.01participation.activeMax',
+      variableKey: 'auction.bidder.participation.activeMax',
       requestedValue: 100,
       currentUsage: 50,
     });
@@ -53,7 +53,7 @@ describe('LimitsService', () => {
     const service = createLimitsHarness({ limitValue: 5 });
     const result = await service.checkLimit({
       userId: 'user-1',
-      variableKey: 'auction.bidder.01participation.activeMax',
+      variableKey: 'auction.bidder.participation.activeMax',
       requestedValue: 2,
       currentUsage: 4,
     });
@@ -81,7 +81,7 @@ describe('LimitsService', () => {
     const disabled = createLimitsHarness({ isFeatureEnabled: false });
 
     assert.equal(
-      (await enabled.canUseFeature({ userId: 'user-1', featureKey: 'auction.seller.04promotion.enabled' }))
+      (await enabled.canUseFeature({ userId: 'user-1', featureKey: 'auction.seller.promotion.enabled' }))
         .allowed,
       true,
     );
@@ -89,7 +89,7 @@ describe('LimitsService', () => {
       (
         await disabled.canUseFeature({
           userId: 'user-1',
-          featureKey: 'auction.seller.04promotion.enabled',
+          featureKey: 'auction.seller.promotion.enabled',
         })
       ).allowed,
       false,

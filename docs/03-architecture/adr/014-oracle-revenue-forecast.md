@@ -4,7 +4,7 @@
 
 ## 🎯 Контекст
 
-Монетизация размазана по `billing`, `financial-policy`, domain-сервисам и [PLATFORM-REGISTRY](../../05-microservices/PLATFORM-REGISTRY.md). Founder/admin нужен **один экран** для «что если» (регистрации, mix планов, цены, затраты) без ручного Excel.
+Монетизация размазана по `billing`, `plan-config`, domain-сервисам и [PLATFORM-REGISTRY](../../05-microservices/PLATFORM-REGISTRY.md). Founder/admin нужен **один экран** для «что если» (регистрации, mix планов, цены, затраты) без ручного Excel.
 
 Риск без ADR: дублирование формул в UI и в production charge paths.
 
@@ -17,7 +17,7 @@
 5. **Деплой по фазам:**
    - Фаза 1: BFF + `packages/monetization-engine` + `config/oracle.defaults.yaml`.
    - Фаза 3: `services/oracle` :3013 при saved scenarios.
-6. **Конфиг:** [`config/oracle.defaults.yaml`](../../config/oracle.defaults.yaml) — ranges для совещаний; позже `oracle.*` в settings.
+6. **Конфиг:** [`config/oracle.defaults.yaml`](../../config/oracle.defaults.yaml) — ranges для совещаний; позже `oracle.*` в scalar-config.
 7. **Аудитория:** founder/admin only; export → backlog.
 8. **Реферал в прогнозе:** default off; отдельная вкладка с деревом.
 9. **Затраты:** line items → total burn; manual total → только breakEvenMonth.
@@ -30,8 +30,8 @@
 
 | Вариант | Почему нет |
 |---------|------------|
-| Формулы только во фронте | Расхождение с billing/FP |
-| Писать assumptions в settings | Загрязнение production config |
+| Формулы только во фронте | Расхождение с billing/plan-config |
+| Писать assumptions в scalar-config | Загрязнение production config |
 | Сразу отдельный сервис | Overhead до появления сохранённых сценариев |
 | Использовать billing history как SoT прогноза | History = факт; прогноз = assumptions (разные задачи; merge в фазе 4) |
 

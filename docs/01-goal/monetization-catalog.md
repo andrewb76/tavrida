@@ -54,8 +54,8 @@ flowchart TB
 
 | Источник | planId | Где хранится цена | Алгоритм списания | Событие |
 |----------|--------|-------------------|-------------------|---------|
-| Активация плана | `basic`, `pro` | `financial_policy.plan.monthlyPrice` / `yearlyPrice` | FP → `billing.charge` target `financial-policy.activate-plan:{planId}` | `subscription.activated` |
-| Автопродление | тот же | то же | CRON FP: `expiresAt <= now` ∧ `autoRenew` → charge → extend | `subscription.activated` или `subscription.expired` |
+| Активация плана | `basic`, `pro` | `plan_config.plan.monthlyPrice` / `yearlyPrice` | plan-config → `billing.charge` target `plan-config.activate-plan:{planId}` | `subscription.activated` |
+| Автопродление | тот же | то же | CRON plan-config: `expiresAt <= now` ∧ `autoRenew` → charge → extend | `subscription.activated` или `subscription.expired` |
 
 **Oracle assumptions (входные ползунки):**
 
@@ -76,13 +76,13 @@ MRR_subscriptions =
 + yearly_amortized (yearlyPrice/12 × count_yearly)
 ```
 
-Детали: [financial-policy/README](../05-microservices/financial-policy/README.md).
+Детали: [plan-config/README](../05-microservices/plan-config/README.md).
 
 ---
 
 ## 2️⃣ Разовые списания (one-time)
 
-Фиксированные цены → `financial-policy` (`plan_charge_price` per plan) → `billing.charge` + `target`. Реестр: [PLATFORM-REGISTRY § Разовые](../05-microservices/PLATFORM-REGISTRY.md).
+Фиксированные цены → `plan-config` (`plan_charge_price` per plan) → `billing.charge` + `target`. Реестр: [PLATFORM-REGISTRY § Разовые](../05-microservices/PLATFORM-REGISTRY.md).
 
 ### auction
 
@@ -110,7 +110,7 @@ MRR_subscriptions =
 
 | Параметр | Описание |
 |----------|----------|
-| `auctionsCreatedPerUserPerMonth` | по плану (из FP limits × activity) |
+| `auctionsCreatedPerUserPerMonth` | по плану (из plan-config limits × activity) |
 | `promotionAttachRate` | % лотов с promotion среди Pro |
 | `forumPaidReactionRate` | % тем с платной реакцией / месяц |
 | `marketplaceAttachRate` | TBD до утверждения цен |
@@ -142,7 +142,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 | Категория charge | Триггер | Настройки |
 |------------------|---------|-----------|
-| `SUBSCRIPTION` | `billing.charge_completed` | `referralRewards.*` в settings |
+| `SUBSCRIPTION` | `billing.charge_completed` | `referralRewards.*` в scalar-config |
 | `AUCTION_SERVICES` | promotion и др. | [charge-categories](../05-microservices/referral-rewards/requirements/charge-categories.md) |
 | `MARKETPLACE_SERVICES` | platform charges | то же |
 
@@ -171,7 +171,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 | Слой | Сервис | Примеры ключей | Редактирует |
 |------|--------|----------------|-------------|
-| **Settings** | `settings` | `billing.minDepositAmount`, `referralRewards.*`, `club.*` | admin |
+| **Settings** | `scalar-config` | `billing.minDepositAmount`, `referralRewards.*`, `club.*` | admin |
 | **Plans & plan variables** | `plan-config` | Матрица; ключи через sync от domain | admin `/admin/plan-config` |
 | **Scalar config** | `scalar-config` | Линейный реестр | admin `/admin/scalar-config` |
 | **Assumptions** | **Oracle only** | registrations, mix, churn, attach rates, tree | admin (simulation); defaults: `config/oracle.defaults.yaml` |
@@ -182,7 +182,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 | Сервис | Доход | Расход | Документ |
 |--------|-------|--------|----------|
-| financial-policy | подписки | — | [README](../05-microservices/financial-policy/README.md) |
+| plan-config | подписки | — | [README](../05-microservices/plan-config/README.md) |
 | billing | исполнение charge/deposit | referral credit | [README](../05-microservices/billing/README.md) |
 | auction | promotion, reserve, preset | — | [financial-features](../05-microservices/auction/requirements/financial-features.md) |
 | forum | paid reactions | — | [requirements](../05-microservices/forum/requirements/README.md) |
@@ -195,7 +195,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 ## 🔄 Обновление каталога
 
 1. Новая платная фича → строка в §2 + `billing.target` + PLATFORM-REGISTRY.
-2. Новая подписка / цена → `financial_policy.plan` + §1.
+2. Новая подписка / цена → `plan_config.plan` + §1.
 3. Новая формула Oracle → [oracle/README](../05-microservices/oracle/README.md) + `config/oracle.defaults.yaml` + `@tavrida/monetization-engine`.
 
 ---

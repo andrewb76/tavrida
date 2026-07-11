@@ -101,7 +101,7 @@ Idempotency-Key: {uuid}
 |-------|-------|--------|
 | Anonymous | 30 req/min | `X-RateLimit-Remaining` |
 | Authenticated | 120 req/min | |
-| Bids | `auction.bidsPerHour` via financial-policy | |
+| Bids | `auction.bidsPerHour` via plan-config | |
 
 ## 📡 WebSocket Protocol
 
@@ -143,7 +143,7 @@ Idempotency-Key: {uuid}
 |--------|---------|----------|
 | `/auctions` | CRUD, bids | auction |
 | `/wallets` | deposit, balance, transactions | billing |
-| `/plans` | list, activate, subscription | financial-policy |
+| `/plans` | list, activate, subscription | plan-config |
 | `/profile` | get, notes | user-profile |
 | `/invites` | create, list, resolve, claim | BFF + Logto M2M — [spec](../05-microservices/bff/invites-api.md) |
 | `/forum/*` | topics, comments, reactions | forum |
@@ -151,7 +151,7 @@ Idempotency-Key: {uuid}
 | `/feedback` | submit, status | feedback |
 | `/marketplace/*` | listings, orders | marketplace |
 | `/auction-subscriptions` | CRUD | auction-subscriptions |
-| `/settings` | get (public subset) | settings |
+| `/settings` | get (public subset) | scalar-config |
 
 > OpenAPI spec: TODO `06-api/openapi.yaml` (генерация из NestJS decorators)
 

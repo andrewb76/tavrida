@@ -35,7 +35,7 @@
 | Стандарт | Частые | Средние | Редкие |
 |----------|--------|---------|--------|
 | **BDD (E2E)** | Smoke на каждый PR; полный набор nightly | Перед релизом; happy path обязателен | При поставке фичи mod/admin |
-| **TDD (UNIT)** | Обязателен для изменённой domain-логики | Обязателен для billing/FP/charge | Keto/authz, penalty math |
+| **TDD (UNIT)** | Обязателен для изменённой domain-логики | Обязателен для billing/plan-config/charge | Keto/authz, penalty math |
 | **Integration** | Bid, feedback chain, WS | Payment saga, subscribe fan-out | Mod promote, ban CRON |
 | **SLO** | [Строгие](../07-observability/slo.md) p95/p99 | Стандартные | Best-effort |
 | **Perf (k6)** | Ставки, каталог | — | — |
@@ -57,8 +57,8 @@ flowchart LR
     A -->|completed| FB[feedback]
     FB --> R[rating]
     R --> UP[user-profile]
-    A --> FP[financial-policy]
-    FP --> BL[billing]
+    A --> PC[plan-config]
+    plan-config --> BL[billing]
 ```
 
 Позвоночник событий: `auction.completed` → `feedback.submitted` → `rating.updated` → `billing.charge_completed`.

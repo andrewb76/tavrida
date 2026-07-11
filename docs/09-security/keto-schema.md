@@ -4,7 +4,7 @@
 > **Связано:** [roles.md](../01-goal/roles.md) · [09-security](./README.md)
 
 Namespace: `TavridaLot` (Ory Keto v0.11+).  
-**Лимиты тарифов** — через financial-policy, **не** через Keto.
+**Лимиты тарифов** — через plan-config, **не** через Keto.
 
 ---
 
@@ -157,8 +157,8 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 | Edit own comment | `comment:{id}#owner@user:{id}` | 403 |
 | Edit auction (seller) | `auction:{id}#owner@user:{id}` | 403 |
 | Add expert appraisal | `platform:tavrida-lot#expert@user:{id}` + not `auction:{id}#owner` | 403 |
-| Place bid | `platform:tavrida-lot#member@user:{id}` + financial-policy limits + rating ban | 403/402 |
-| Create auction | `platform:tavrida-lot#member@user:{id}` + FP limits | 403 |
+| Place bid | `platform:tavrida-lot#member@user:{id}` + plan-config limits + rating ban | 403/402 |
+| Create auction | `platform:tavrida-lot#member@user:{id}` + plan-config limits | 403 |
 
 > **Moderator + аукционы:** может просматривать жалобы на лоты, скрывать/восстанавливать лот, блокировать ставки пользователя на конкретном лоте. Не может менять баланс, тарифы, назначать admin. *(уточняется)*
 
@@ -168,9 +168,9 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 
 | Проверка | Где |
 |----------|-----|
-| `forum.postsPerDay`, `auction.activeAuctions` | financial-policy `limits/check` |
+| `forum.postsPerDay`, `auction.activeAuctions` | plan-config `limits/check` |
 | Рейтинговый бан | rating `check-ban` |
-| Pro-фичи | financial-policy `features/can-use` |
+| Pro-фичи | plan-config `features/can-use` |
 | Достаточно баланса | billing |
 
 ---

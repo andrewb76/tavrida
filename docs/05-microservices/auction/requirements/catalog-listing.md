@@ -124,7 +124,7 @@ Member открывает `/auctions` и:
 
 ### MVP (PostgreSQL)
 
-| Тариф | Scope (`auction.member.01search.scope`) | Поля |
+| Тариф | Scope (`auction.member.search.scope`) | Поля |
 |-------|----------------------------------------|------|
 | **Free** | `TITLE` | `title ILIKE %q%` |
 | **Basic** | `FULL_TEXT` | `title` + `description` |
@@ -136,7 +136,7 @@ Member открывает `/auctions` и:
 
 BFF перед проксированием в `auction`:
 
-1. Резолвит план пользователя → `financial-policy GET /features/effective`.
+1. Резолвит план пользователя → `plan-config GET /features/effective`.
 2. Обрезает/отклоняет поля запроса вне scope (Pro-filters → strip для Free/Basic).
 
 ### Post-MVP
@@ -147,12 +147,12 @@ BFF перед проксированием в `auction`:
 
 ## 🎚️ Расширенные фильтры (Pro)
 
-Доступны при `auction.member.02search.filtersEnabled = true` (Pro) **и** scope содержит `FILTERS`.
+Доступны при `auction.member.search.filtersEnabled = true` (Pro) **и** scope содержит `FILTERS`.
 
 | Param | UI control | Валидация |
 |-------|------------|-----------|
 | `minPrice` / `maxPrice` | Range slider или два input | `minPrice <= maxPrice`; ≥ 0 |
-| `type` | Checkbox group | Значения из `auction.bidder.03auctionTypes.allowed` плана **продавца не проверяем** — фильтр по типу лота |
+| `type` | Checkbox group | Значения из `auction.bidder.auctionTypes.allowed` плана **продавца не проверяем** — фильтр по типу лота |
 | `hasExpertAppraisal` | Toggle | `EXISTS expert_appraisal` |
 
 ---
@@ -163,9 +163,9 @@ BFF перед проксированием в `auction`:
 
 | Функция в UI | Free | Basic | Pro | Ключ plan-config |
 |--------------|------|-------|-----|------------------|
-| Поиск по названию | ✅ | ✅ | ✅ | `auction.member.01search.scope` |
+| Поиск по названию | ✅ | ✅ | ✅ | `auction.member.search.scope` |
 | Поиск по описанию | ❌ | ✅ | ✅ | ↑ |
-| Расширенные фильтры (цена, тип, экспертиза) | ❌ | ❌ | ✅ | `auction.member.02search.filtersEnabled` |
+| Расширенные фильтры (цена, тип, экспертиза) | ❌ | ❌ | ✅ | `auction.member.search.filtersEnabled` |
 
 ---
 

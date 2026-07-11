@@ -169,21 +169,21 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `auction.seller.01lot.activeMax` | limit | 2 | 5 | ∞ | **Seller:** макс. **своих** лотов ACTIVE |
-| `auction.seller.02lot.dailyCreateMax` | limit | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
-| `auction.seller.03lot.durationMaxHours` | limit | 72 | 336 | ∞ | Макс. длительность (часы) |
-| `auction.bidder.01participation.activeMax` | limit | 5 | 20 | ∞ | **Bidder:** чужих торгов со ставками одновременно |
-| `auction.bidder.02bid.hourlyMax` | limit | 20 | 100 | ∞ | Ставок в час (антибот) |
-| `auction.seller.04promotion.enabled` | feature | false | false | true | Доступ к продвижению (тариф) |
-| `auction.seller.05reservePrice.enabled` | feature | false | false | true | Резервная цена (тариф) |
-| `auction.seller.06durationPreset.customEnabled` | feature | false | false | true | Свои шаблоны длительности |
-| `auction.seller.07analytics.dashboardEnabled` | feature | false | false | true | Статистика по лотам |
-| `auction.bidder.03auctionTypes.allowed` | enum | `ENGLISH` | `ENGLISH,DUTCH` | `all` | Доступные типы аукционов |
-| `auction.seller.08promotion.unitPrice` | **price** | 200 | 200 | 200 | Продвижение лота (₽) |
-| `auction.seller.09reservePrice.unitPrice` | **price** | 100 | 100 | 100 | Установка резервной цены (₽) |
-| `auction.seller.10durationPreset.unitPrice` | **price** | 50 | 50 | 50 | Добавить шаблон длительности (₽) |
-| `auction.member.01search.scope` | enum | `TITLE` | `FULL_TEXT` | `FULL_TEXT,FILTERS` | Глубина поиска в каталоге |
-| `auction.member.02search.filtersEnabled` | feature | false | false | true | Расширенные фильтры каталога (Pro) |
+| `auction.seller.lot.activeMax` | limit | 2 | 5 | ∞ | **Seller:** макс. **своих** лотов ACTIVE |
+| `auction.seller.lot.dailyCreateMax` | limit | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
+| `auction.seller.lot.durationMaxHours` | limit | 72 | 336 | ∞ | Макс. длительность (часы) |
+| `auction.bidder.participation.activeMax` | limit | 5 | 20 | ∞ | **Bidder:** чужих торгов со ставками одновременно |
+| `auction.bidder.bid.hourlyMax` | limit | 20 | 100 | ∞ | Ставок в час (антибот) |
+| `auction.seller.promotion.enabled` | feature | false | false | true | Доступ к продвижению (тариф) |
+| `auction.seller.reservePrice.enabled` | feature | false | false | true | Резервная цена (тариф) |
+| `auction.seller.durationPreset.customEnabled` | feature | false | false | true | Свои шаблоны длительности |
+| `auction.seller.analytics.dashboardEnabled` | feature | false | false | true | Статистика по лотам |
+| `auction.bidder.auctionTypes.allowed` | enum | `ENGLISH` | `ENGLISH,DUTCH` | `all` | Доступные типы аукционов |
+| `auction.seller.promotion.unitPrice` | **price** | 200 | 200 | 200 | Продвижение лота (₽) |
+| `auction.seller.reservePrice.unitPrice` | **price** | 100 | 100 | 100 | Установка резервной цены (₽) |
+| `auction.seller.durationPreset.unitPrice` | **price** | 50 | 50 | 50 | Добавить шаблон длительности (₽) |
+| `auction.member.search.scope` | enum | `TITLE` | `FULL_TEXT` | `FULL_TEXT,FILTERS` | Глубина поиска в каталоге |
+| `auction.member.search.filtersEnabled` | feature | false | false | true | Расширенные фильтры каталога (Pro) |
 
 > Legacy mapping: [registry-keys.md](../13-maintenance/registry-keys.md).
 
@@ -191,17 +191,17 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `forum.author.01post.dailyMax` | limit | 10 | 50 | ∞ | Постов в сутки |
-| `forum.author.02comment.perTopicMax` | limit | 10 | 50 | ∞ | Комментариев к одной теме |
-| `forum.admin.01category.depthMax` | limit | 3 | 5 | ∞ | Уровней категорий |
-| `forum.author.03thread.depthMax` | limit | 2 | 5 | ∞ | Глубина вложенных ответов |
-| `forum.author.04attachment.countMax` | limit | 1 | 3 | ∞ | Файлов на пост |
-| `forum.author.05attachment.sizeMaxMb` | limit | 2 | 5 | 20 | Размер одного файла (MB) |
-| `forum.author.06tag.countMax` | limit | 3 | 10 | ∞ | Тегов на тему |
-| `forum.author.07topic.pinnedMax` | limit | 0 | 1 | 3 | Прикреплённых тем (своих) |
-| `forum.author.08media.embeddedEnabled` | feature | false | false | true | Встроенное медиа |
-| `forum.author.09post.anonymousEnabled` | feature | false | false | true | Анонимные посты |
-| `forum.author.10reply.nestedEnabled` | feature | false | true | true | Вложенные ответы |
+| `forum.author.post.dailyMax` | limit | 10 | 50 | ∞ | Постов в сутки |
+| `forum.author.comment.perTopicMax` | limit | 10 | 50 | ∞ | Комментариев к одной теме |
+| `forum.admin.category.depthMax` | limit | 3 | 5 | ∞ | Уровней категорий |
+| `forum.author.thread.depthMax` | limit | 2 | 5 | ∞ | Глубина вложенных ответов |
+| `forum.author.attachment.countMax` | limit | 1 | 3 | ∞ | Файлов на пост |
+| `forum.author.attachment.sizeMaxMb` | limit | 2 | 5 | 20 | Размер одного файла (MB) |
+| `forum.author.tag.countMax` | limit | 3 | 10 | ∞ | Тегов на тему |
+| `forum.author.topic.pinnedMax` | limit | 0 | 1 | 3 | Прикреплённых тем (своих) |
+| `forum.author.media.embeddedEnabled` | feature | false | false | true | Встроенное медиа |
+| `forum.author.post.anonymousEnabled` | feature | false | false | true | Анонимные посты |
+| `forum.author.reply.nestedEnabled` | feature | false | true | true | Вложенные ответы |
 | `forum.author.11notify.pushEnabled` | feature | false | false | true | Push при ответах |
 | `forum.author.12notify.emailDigestEnabled` | feature | false | false | true | Email-дайджест по теме |
 | `forum.author.13topic.chatEnabled` | feature | false | false | true | Чат внутри темы |
@@ -211,15 +211,15 @@ Default `rating.contextWeights`:
 | `forum.author.17topic.customFieldsEnabled` | feature | false | false | true | Кастомные поля темы |
 | `forum.author.18tag.priorityEnabled` | feature | false | false | true | Теги с приоритетами |
 | `forum.author.19topic.auctionLinkEnabled` | feature | false | false | true | Тема «Обсуждение лота #N» |
-| `forum.reaction.01celebrate.unitPrice` | price | 50 | 50 | 50 | Реакция 🎉 |
-| `forum.reaction.02laugh.unitPrice` | price | 50 | 50 | 50 | Реакция 😄 |
-| `forum.reaction.03smile.unitPrice` | price | 50 | 50 | 50 | Реакция 😊 |
-| `forum.reaction.04clap.unitPrice` | price | 50 | 50 | 50 | Реакция 👏 |
-| `forum.reaction.05eyes.unitPrice` | price | 50 | 50 | 50 | Реакция 👀 |
-| `forum.reaction.06rocket.unitPrice` | price | 100 | 100 | 100 | Реакция 🚀 |
-| `forum.reaction.07fire.unitPrice` | price | 100 | 100 | 100 | Реакция 🔥 |
-| `forum.reaction.08handshake.unitPrice` | price | 100 | 100 | 100 | Реакция 🤝 |
-| `forum.reaction.09brain.unitPrice` | price | 100 | 100 | 100 | Реакция 🧠 |
+| `forum.reaction.celebrate.unitPrice` | price | 50 | 50 | 50 | Реакция 🎉 |
+| `forum.reaction.laugh.unitPrice` | price | 50 | 50 | 50 | Реакция 😄 |
+| `forum.reaction.smile.unitPrice` | price | 50 | 50 | 50 | Реакция 😊 |
+| `forum.reaction.clap.unitPrice` | price | 50 | 50 | 50 | Реакция 👏 |
+| `forum.reaction.eyes.unitPrice` | price | 50 | 50 | 50 | Реакция 👀 |
+| `forum.reaction.rocket.unitPrice` | price | 100 | 100 | 100 | Реакция 🚀 |
+| `forum.reaction.fire.unitPrice` | price | 100 | 100 | 100 | Реакция 🔥 |
+| `forum.reaction.handshake.unitPrice` | price | 100 | 100 | 100 | Реакция 🤝 |
+| `forum.reaction.brain.unitPrice` | price | 100 | 100 | 100 | Реакция 🧠 |
 
 > `forum.reaction.pin` — только модератор, бесплатно ([roles](../01-goal/roles.md)).
 
@@ -227,15 +227,15 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `rating.member.01pending.dealMax` | limit | 3 | 5 | 10 | Pending-сделок до штрафа |
-| `rating.member.02auction.activeWhenLimitedMax` | limit | 2 | 3 | 5 | Лимит аукционов при низком рейтинге |
+| `rating.member.pending.dealMax` | limit | 3 | 5 | 10 | Pending-сделок до штрафа |
+| `rating.member.auction.activeWhenLimitedMax` | limit | 2 | 3 | 5 | Лимит аукционов при низком рейтинге |
 
 ### club
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `club.member.01invite.monthlyMax` | limit | 1 | 3 | 10 | Новых инвайт-кодов в месяц |
-| `club.member.02referral.influenceEnabled` | feature | true | true | true | Учитывать referral tree в effective karma/rating |
+| `club.member.invite.monthlyMax` | limit | 1 | 3 | 10 | Новых инвайт-кодов в месяц |
+| `club.member.referral.influenceEnabled` | feature | true | true | true | Учитывать referral tree в effective karma/rating |
 
 ### referralRewards
 
@@ -249,12 +249,12 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `subscriptions.member.01auction.categoryMax` | limit | 3 | 10 | ∞ | Подписок на категории аукциона |
-| `subscriptions.member.02auction.lotMax` | limit | 5 | 20 | ∞ | Подписок на лоты |
-| `subscriptions.member.03forum.categoryMax` | limit | 5 | 15 | ∞ | Подписок на категории форума |
-| `subscriptions.member.04forum.topicMax` | limit | 10 | 50 | ∞ | Подписок на темы |
-| `subscriptions.member.05tag.max` | limit | 3 | 10 | ∞ | Подписок на теги |
-| `subscriptions.member.06notify.emailDigestEnabled` | feature | false | false | true | Email digest |
+| `subscriptions.member.auction.categoryMax` | limit | 3 | 10 | ∞ | Подписок на категории аукциона |
+| `subscriptions.member.auction.lotMax` | limit | 5 | 20 | ∞ | Подписок на лоты |
+| `subscriptions.member.forum.categoryMax` | limit | 5 | 15 | ∞ | Подписок на категории форума |
+| `subscriptions.member.forum.topicMax` | limit | 10 | 50 | ∞ | Подписок на темы |
+| `subscriptions.member.tag.max` | limit | 3 | 10 | ∞ | Подписок на теги |
+| `subscriptions.member.notify.emailDigestEnabled` | feature | false | false | true | Email digest |
 
 > Legacy: `auction_subscriptions.*` → migrate ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
 
@@ -262,9 +262,9 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `webhooks.member.01endpoint.max` | limit | 0 | 2 | 10 | USER webhook endpoints на аккаунт |
-| `webhooks.member.02replay.dailyMax` | limit | 0 | 5 | 50 | Ручных replay доставки / сутки |
-| `webhooks.member.03userScope.enabled` | feature | false | true | true | Пользовательские webhooks |
+| `webhooks.member.endpoint.max` | limit | 0 | 2 | 10 | USER webhook endpoints на аккаунт |
+| `webhooks.member.replay.dailyMax` | limit | 0 | 5 | 50 | Ручных replay доставки / сутки |
+| `webhooks.member.userScope.enabled` | feature | false | true | true | Пользовательские webhooks |
 
 > Platform endpoints (`scope=PLATFORM`) — только admin, не лимитируются plan-config.
 
@@ -272,11 +272,11 @@ Default `rating.contextWeights`:
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
-| `marketplace.seller.01listing.activeMax` | limit | **0** | 3 | ∞ | Активных объявлений (0 = только заказывать) |
-| `marketplace.buyer.01order.monthlyMax` | limit | 2 | 10 | ∞ | Заказов в месяц (заказчик) |
-| `marketplace.seller.02portfolio.itemMax` | limit | — | 5 | 20 | Фото в портфолио на услугу |
-| `marketplace.seller.03listing.promotionUnitPrice` | price | TBD | TBD | TBD | Продвижение в каталоге |
-| `marketplace.seller.04listing.featuredUnitPrice` | price | TBD | TBD | TBD | Закрепление в категории |
+| `marketplace.seller.listing.activeMax` | limit | **0** | 3 | ∞ | Активных объявлений (0 = только заказывать) |
+| `marketplace.buyer.order.monthlyMax` | limit | 2 | 10 | ∞ | Заказов в месяц (заказчик) |
+| `marketplace.seller.portfolio.itemMax` | limit | — | 5 | 20 | Фото в портфолио на услугу |
+| `marketplace.seller.listing.promotionUnitPrice` | price | TBD | TBD | TBD | Продвижение в каталоге |
+| `marketplace.seller.listing.featuredUnitPrice` | price | TBD | TBD | TBD | Закрепление в категории |
 
 > **Запрещено** для referral: GMV между users — [legal-scope](./referral-rewards/requirements/legal-scope.md).
 

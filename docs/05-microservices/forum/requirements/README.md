@@ -19,7 +19,7 @@
 >
 > - `rating` → голоса за посты/комментарии = карма
 > - `billing` → премиум-темы, уведомления, аналитика
-> - `financial-policy` → лимиты постов, тегов, размера
+> - `plan-config` → лимиты постов, тегов, размера
 > - `user-profile` → профиль, репутация, заметки
 
 ---
@@ -30,10 +30,10 @@
 
 ### 🔹 Маппинг функций → ключи реестра
 
-| Функция в UI | Free | Basic | Pro | Ключ FP / settings |
+| Функция в UI | Free | Basic | Pro | Ключ plan-config / settings |
 |--------------|------|-------|-----|-------------------|
 | Создание тем, комментарии | ✅ | ✅ | ✅ | `forum.postsPerDay`¹, `forum.commentsPerPost` |
-| Вложенные ответы | ❌ | ✅ | ✅ | `forum.author.10reply.nestedEnabled` (ответ на **любой** comment, не только на тему) |
+| Вложенные ответы | ❌ | ✅ | ✅ | `forum.author.reply.nestedEnabled` (ответ на **любой** comment, не только на тему) |
 | Редактирование (10 мин) | ✅ | ✅ | ✅ | `forum.editWindowMinutes` (settings) |
 | Like/dislike, базовые реакции | ✅ | ✅ | ✅ | — |
 | Прикреплённые темы (свои) | ❌ | ✅ | ✅ | `forum.pinnedTopicsMax` |
@@ -54,7 +54,7 @@
 
 ## 🌳 Ветки комментариев
 
-> **Ключевое правило:** пользователь может ответить **на тему** или **на любой комментарий** в этой теме — вложенность **не ограничена одним уровнем** (ограничение только тарифом `forum.author.03thread.depthMax`, когда включено в plan-config).
+> **Ключевое правило:** пользователь может ответить **на тему** или **на любой комментарий** в этой теме — вложенность **не ограничена одним уровнем** (ограничение только тарифом `forum.author.thread.depthMax`, когда включено в plan-config).
 
 ### Модель
 
@@ -84,8 +84,8 @@ Topic
 
 | Возможность | Free | Basic | Pro | Ключ |
 |-------------|------|-------|-----|------|
-| Вложенные ответы (ответ на comment) | ❌ | ✅ | ✅ | `forum.author.10reply.nestedEnabled` |
-| Макс. глубина ветки | 2 | 5 | ∞ | `forum.author.03thread.depthMax` |
+| Вложенные ответы (ответ на comment) | ❌ | ✅ | ✅ | `forum.author.reply.nestedEnabled` |
+| Макс. глубина ветки | 2 | 5 | ∞ | `forum.author.thread.depthMax` |
 
 На Free допустимы только корневые комментарии к теме (`parentId: null`). Ответ на comment — 403, если `nestedEnabled = false` или превышен `depthMax`.
 
@@ -184,7 +184,7 @@ Authorization: Bearer {token}
 - Голоса за посты/комменты влияют на `verifiedSales` (например, если пост «рекомендация по покупке» — это «транзакция»)
 - Карма влияет на лимиты: при низкой карме — лимит постов/комментов, проверка модерацией
 
-### 🔹 `billing` / `financial-policy`
+### 🔹 `billing` / `plan-config`
 
 Pro-возможности форума и лимиты — через ключи `forum.*` в [PLATFORM-REGISTRY.md](../../PLATFORM-REGISTRY.md).  
 Платные реакции — раздел «Разовые платежи» (`forum.reaction.*`).
@@ -285,7 +285,7 @@ parentId: string  // был commentId, стал topicId для прямых де
 | Функция | Применение |
 |--------|------------|
 | **Автофильтр матов** | `forum.bannedWordsList` (settings), проверка при создании topic/comment |
-| **Rate-limiting** | `forum.postsPerDay` (financial-policy) |
+| **Rate-limiting** | `forum.postsPerDay` (plan-config) |
 | **Анонимность** | `authorId = null` + `signedBy: UUID`, не виден другим |
 | **Жалобы** | `forum.content_reported` → [notifications](../../notifications/README.md) |
 | **Автомодерация** | `rating < 0.3` → topic/comment проходят ручную модерацию |
@@ -300,10 +300,10 @@ parentId: string  // был commentId, стал topicId для прямых де
 - ✅ **Markdown** в topic/comment — [knowledge-base.md](./knowledge-base.md)
 - ✅ **Справочник клуба** на том же движке + политики категорий
 - ✅ **Теги** — [tags.md](./tags.md)
-- ✅ **Интеграция**: `rating`, `billing`, `financial-policy`, `user-profile`, `subscriptions`
+- ✅ **Интеграция**: `rating`, `billing`, `plan-config`, `user-profile`, `subscriptions`
 - ✅ **Базовые функции**: темы, комменты, голоса, категории
 - ✅ **Расширенные**: теги, анонимность, уведомления, интеграция с аукционом
-- ✅ **Гибкая система лимитов**: настраиваемые в `financial-policy`
+- ✅ **Гибкая система лимитов**: настраиваемые в `plan-config`
 - ✅ **Closure table** или `materialized path` для вложенных комментов
 - ✅ **Встроенный фильтр** и модерация (главный + областной `Модератор:<Тип:ID>`)
 - ✅ **Выделение комментария в топик** — равноправные ветки

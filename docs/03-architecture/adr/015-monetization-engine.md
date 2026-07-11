@@ -4,7 +4,7 @@
 
 ## 🎯 Контекст
 
-Деньги в Tavrida Lot считаются в нескольких местах: `billing` (списание), `financial-policy` (цена плана), domain-сервисы (когда charge), **Oracle** (прогноз). Дублирование формул в сервисах и UI ведёт к расхождению: «в Оракуле 48k, в отчёте 41k».
+Деньги в Tavrida Lot считаются в нескольких местах: `billing` (списание), `plan-config` (цена плана), domain-сервисы (когда charge), **Oracle** (прогноз). Дублирование формул в сервисах и UI ведёт к расхождению: «в Оракуле 48k, в отчёте 41k».
 
 Нужно **чётко разделить ответственность** и вынести математику в один stateless-модуль.
 
@@ -14,7 +14,7 @@
 
 - **Только чистые функции** (детерминированные: одинаковый вход → одинаковый выход).
 - **Без состояния**: нет БД, HTTP, env, singleton с кэшем.
-- **Без I/O**: не читает settings/FP; caller передаёт числа и конфиг как аргументы.
+- **Без I/O**: не читает scalar-config/plan-config; caller передаёт числа и конфиг как аргументы.
 - Доступен **и платформе, и Oracle** до появления `services/oracle`.
 
 ### Класс-фасад (опционально)
@@ -31,7 +31,7 @@ MonetizationMath.computeMrr(state, prices) // то же, что computeMrr(...)
 |-----------|-------------|----------------|
 | **monetization-engine** | Формулы: MRR, one-time сумма, referral out, net, break-even, рост регистраций | Хранение, auth, HTTP |
 | **billing** | Баланс, `Transaction`, идемпотентность, **вызов** `computeChargeAmount` перед charge | Формула цены promotion |
-| **financial-policy** | Планы, лимиты, **хранение** `monthlyPrice` | Прогноз когорт |
+| **plan-config** | Планы, лимиты, **хранение** `monthlyPrice` | Прогноз когорт |
 | **referral-rewards** | Orchestration выплат, hold, cron | Процент по глубине (берёт из engine + settings) |
 | **Oracle / BFF** | Assumptions, YAML defaults, **вызов** `simulate()` | Свои формулы в UI |
 | **Frontend** | Ползунки, графики | Любая математика кроме отображения |
@@ -47,8 +47,8 @@ flowchart TB
     F4[simulate]
   end
 
-  FP[financial-policy] -->|prices, limits| BFF
-  Settings[settings] -->|referral rules| BFF
+  PC[plan-config] -->|prices, limits| BFF
+  SC[scalar-config] -->|referral rules| BFF
   BFF -->|params| F2
   Auction[auction] -->|before charge| F2
   OracleUI[Oracle UI] -->|assumptions| BFF

@@ -27,7 +27,7 @@
 |---------|-----------------|-----------|
 | bff | 3000 | via Traefik |
 | billing | 3001 | no |
-| financial-policy | 3002 | no |
+| plan-config | 3002 | no |
 | auction | 3003 | no |
 | auction-subscriptions | 3004 | no |
 | … domain services | 3005+ | no |

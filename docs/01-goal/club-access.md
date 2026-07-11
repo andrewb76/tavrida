@@ -82,7 +82,7 @@ sequenceDiagram
 
 | Правило | Значение |
 |---------|----------|
-| Кто выдаёт | Member (лимит per plan — FP) |
+| Кто выдаёт | Member (лимит per plan — plan-config) |
 | Код | `TAV-XXXX-XXXX`, alias magic link |
 | Срок | `club.invite.validityDays` (default 14) |
 | Admin | Без лимита; audit log |
@@ -101,7 +101,7 @@ sequenceDiagram
 | `club.invite.validityDays` | `14` | TTL кода / token |
 | `club.landing.publicSections` | `about,rules,request` | Блоки лендинга |
 
-### financial-policy (per plan)
+### plan-config (per plan)
 
 | Ключ | Free | Basic | Pro |
 |------|------|-------|-----|

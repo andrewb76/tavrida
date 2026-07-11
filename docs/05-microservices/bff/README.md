@@ -36,9 +36,9 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/wallets/balance` | GET | billing | `/internal/v1/wallets/balance` |
 | `/api/v1/wallets/transactions` | GET | billing | `/internal/v1/wallets/transactions` |
 | `/api/v1/wallets/deposit` | POST | billing | `/internal/v1/wallets/deposit` |
-| `/api/v1/plans` | GET | financial-policy | `/internal/v1/plans` |
-| `/api/v1/plans/subscription` | GET | financial-policy | `/internal/v1/subscription` |
-| `/api/v1/plans/activate` | POST | financial-policy | `/internal/v1/plans/activate` |
+| `/api/v1/plans` | GET | plan-config | `/internal/v1/plans` |
+| `/api/v1/plans/subscription` | GET | plan-config | `/internal/v1/subscription` |
+| `/api/v1/plans/activate` | POST | plan-config | `/internal/v1/plans/activate` |
 | `/api/v1/profile` | GET, PATCH | user-profile | `/internal/v1/profile` |
 | `/api/v1/profile/notes` | GET, POST | user-profile | `/internal/v1/profile/notes` |
 | `/api/v1/invites` | GET, POST | BFF orchestration | [invites-api.md](./invites-api.md) |
@@ -46,9 +46,9 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/invites/claim` | POST | BFF orchestration | см. [invites-api.md](./invites-api.md) |
 | `/api/v1/me/roles` | GET | BFF + Keto | JWT → platform roles (`member`, `admin`, …) |
 | `/api/v1/admin/settings/club` | GET, PATCH | BFF + settings | Admin: значения домена `club.*` |
-| `/api/v1/admin/settings/registry` | GET | settings | Реестр ключей (вкл. зависшие) |
-| `/api/v1/admin/settings/keys/:key` | DELETE | settings | Удаление зависшего ключа |
-| `/api/v1/admin/financial/parameters/:key` | DELETE | financial-policy | Удаление зависшего параметра |
+| `/api/v1/admin/settings/registry` | GET | scalar-config | Реестр ключей (вкл. зависшие) |
+| `/api/v1/admin/settings/keys/:key` | DELETE | scalar-config | Удаление зависшего ключа |
+| `/api/v1/admin/financial/parameters/:key` | DELETE | plan-config | Удаление зависшего параметра |
 | `/api/v1/admin/oracle/defaults` | GET | BFF + monetization-engine | Admin: YAML ranges + overlay |
 | `/api/v1/admin/oracle/simulate` | POST | BFF + monetization-engine | Admin: revenue forecast |
 | `/api/v1/admin/oracle/compare` | POST | BFF + monetization-engine | Admin: до 3 сценариев |
@@ -62,7 +62,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/feedback` | POST, GET | feedback | `/internal/v1/feedback` |
 | `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |
 | `/api/v1/auction-subscriptions` | GET, POST, DELETE | auction-subscriptions | `/internal/v1/subscriptions` |
-| `/api/v1/settings/public` | GET | settings | `/internal/v1/settings/public` |
+| `/api/v1/settings/public` | GET | scalar-config | `/internal/v1/settings/public` |
 | `/api/v1/webhooks` | GET, POST | webhooks | `/internal/v1/webhooks` |
 | `/api/v1/webhooks/{id}` | GET, PATCH, DELETE | webhooks | `/internal/v1/webhooks/{id}` |
 | `/api/v1/webhooks/{id}/deliveries` | GET | webhooks | `/internal/v1/webhooks/{id}/deliveries` |
@@ -77,7 +77,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 |----------|-----------|---------------|
 | `GET /profile/me` | user-profile + rating | `{ profile, rating, subscription }` |
 | `GET /auctions/{id}` | auction + expert-appraisals (parallel) | merged JSON |
-| `GET /plans` | financial-policy | pass-through |
+| `GET /plans` | plan-config | pass-through |
 
 Параллельные вызовы — `Promise.all`; partial failure → 207 или degrade field (document per endpoint).
 
@@ -136,7 +136,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 - Internal services — private network (Swarm overlay)
 - Rate limit: 120 req/min auth, 30 anonymous ([06-api](../../06-api/README.md))
 - CORS: `*.tavrida-lot.ru`, localhost dev
-- `Idempotency-Key` — proxy на billing/financial-policy без изменения
+- `Idempotency-Key` — proxy на billing/plan-config без изменения
 - Admin routes — Keto `platform:tavrida-lot#admin`
 
 ## ⚙️ Окружение
@@ -151,12 +151,12 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `REDIS_URL` | да | WS relay |
 | `AUCTION_URL` | да | Upstream |
 | `BILLING_URL` | да | Upstream |
-| `FINANCIAL_POLICY_URL` | да | Upstream |
+| `PLAN_CONFIG_URL` | да | Upstream |
 | `FORUM_URL` | нет | Upstream |
 | `RATING_URL` | нет | Upstream |
 | `FEEDBACK_URL` | нет | Upstream |
 | `USER_PROFILE_URL` | нет | Upstream |
-| `SETTINGS_URL` | нет | Upstream |
+| `SCALAR_CONFIG_URL` | нет | Upstream |
 | `PORT` | нет | default `3000` |
 | `CORS_ORIGINS` | нет | comma-separated |
 

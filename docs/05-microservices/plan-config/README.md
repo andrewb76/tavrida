@@ -1,6 +1,6 @@
 # 📋 Сервис: plan-config
 
-> **Статус:** v1 scaffold · **Версия:** 0.4 · **Schema:** `plan_config` · **Код (legacy dir):** `services/financial-policy` :3002 · **billing:** wired ✅  
+> **Статус:** v1 scaffold · **Версия:** 0.4 · **Schema:** `plan_config` · **Код:** `services/plan-config` :3002 · **billing:** wired ✅  
 > **Legacy name:** financial-policy · [ADR-017](../../03-architecture/adr/017-plan-config-scalar-config-rename.md)
 
 ## 🎯 Назначение
@@ -23,7 +23,7 @@
 Plan variables попадают в БД **только** через sync/register от domain-сервисов при старте.  
 Каталог проектирования: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md). Формат ключей: [registry-keys.md](../../13-maintenance/registry-keys.md).
 
-> **Временный dev-bootstrap:** `services/financial-policy/src/config/default-seed.ts` — до переноса seeds в domain-сервисы.
+> **Временный dev-bootstrap:** `services/plan-config/src/config/default-seed.ts` — до переноса seeds в domain-сервисы.
 
 ## 📖 Термины
 
@@ -54,7 +54,7 @@ Plan variables попадают в БД **только** через sync/registe
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `key` | varchar unique | `auction.seller.01lot.activeMax` |
+| `key` | varchar unique | `auction.seller.lot.activeMax` |
 | `service` | varchar | Домен-владелец |
 | `name`, `description` | text | Admin UI |
 | `valueType` | enum | `limit` \| `feature` \| `enum` \| `price` |
@@ -109,7 +109,7 @@ Plan variables попадают в БД **только** через sync/registe
 ```json
 {
   "userId": "user-uuid",
-  "planVariableKey": "auction.bidder.01participation.activeMax",
+  "planVariableKey": "auction.bidder.participation.activeMax",
   "requestedValue": 1,
   "currentUsage": 4
 }

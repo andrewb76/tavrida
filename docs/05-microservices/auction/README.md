@@ -7,7 +7,7 @@
 Управление **аукционами** Tavrida Lot: лоты, ставки, завершение сделок, экспертные оценки.
 
 - Типы аукционов (English, Dutch, … — по тарифу)
-- Проверка лимитов через financial-policy
+- Проверка лимитов через plan-config
 - Платные фичи через billing (promotion, reserve price)
 - События в RabbitMQ + Redis pub/sub для live UI
 
@@ -135,8 +135,8 @@ stateDiagram-v2
 
 **Pre-checks (BFF или auction):**
 
-1. `financial-policy POST /limits/check` — `auction.auctionsCreatedPerDay`
-2. `financial-policy POST /features/can-use` — `auction.auctionTypes` (тип лота)
+1. `plan-config POST /limits/check` — `auction.auctionsCreatedPerDay`
+2. `plan-config POST /features/can-use` — `auction.auctionTypes` (тип лота)
 3. `rating` — ban check (HTTP или cached)
 
 ```json
@@ -172,10 +172,10 @@ stateDiagram-v2
 ### `POST /api/v1/auctions/{id}/promote`
 
 1. `features/can-use` → `auction.promotionEnabled`
-2. `billing.charge` — `target: auction.promotion`, amount из registry/ settings
+2. `billing.charge` — `target: auction.promotion`, amount из registry / scalar-config
 3. Set `promotedUntil`
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Тип | Default | Описание |
 |------|-----|---------|----------|
@@ -183,10 +183,10 @@ stateDiagram-v2
 | `auction.minStartingPrice` | number | `1` | Мин. стартовая цена |
 | `auction.expertAppraisalBoost` | number | `1.2` | Множитель значимости с экспертизой |
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
-Сервис **auction** регистрирует ключи при старте (`POST /internal/v1/parameters/register`).  
-FP хранит матрицу; до register auction параметров в админке не будет.
+Сервис **auction** регистрирует ключи при старте (`POST /internal/v1/plan-variables/register`).  
+plan-config хранит матрицу; до register auction параметров в админке не будет.
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
@@ -218,7 +218,7 @@ FP хранит матрицу; до register auction параметров в а
 
 | Сервис | Взаимодействие | Протокол |
 |--------|----------------|----------|
-| financial-policy | limits, features | HTTP internal |
+| plan-config | limits, features | HTTP internal |
 | billing | charge (promotion, reserve) | HTTP internal |
 | feedback, rating | `auction.completed` | RabbitMQ |
 | notifications | bid, completed | RabbitMQ |
@@ -240,7 +240,7 @@ FP хранит матрицу; до register auction параметров в а
 | `DATABASE_URL` | да | schema `auction` | postgres://… |
 | `RABBITMQ_URL` | да | Events | amqp://… |
 | `REDIS_URL` | да | Live bids pub/sub | redis://… |
-| `FINANCIAL_POLICY_URL` | да | Limits | http://financial-policy:3002 |
+| `PLAN_CONFIG_URL` | да | Limits | http://plan-config:3002 |
 | `BILLING_URL` | да | Charges | http://billing:3001 |
 | `MINIO_*` | да | Images bucket `auction-images` | — |
 | `PORT` | нет | HTTP | `3003` |
@@ -251,7 +251,7 @@ FP хранит матрицу; до register auction параметров в а
 
 - [financial-features](./requirements/financial-features.md)
 - [catalog-listing](./requirements/catalog-listing.md)
-- [financial-policy](../financial-policy/README.md)
+- [plan-config](../plan-config/README.md)
 - [billing](../billing/README.md)
 - [feedback](../feedback/README.md)
 - [06-api — auctions](../../06-api/README.md)

@@ -123,8 +123,8 @@ Logto/Keto mapping: [moderator-mapping.md](../09-security/moderator-mapping.md).
 
 | Область | Возможности |
 |---------|-------------|
-| **Тарифы и лимиты** | Регистрация параметров, значения Free/Basic/Pro ([financial-policy](../05-microservices/financial-policy/README.md)) |
-| **Настройки** | Скалярные параметры платформы ([settings](../05-microservices/settings/README.md), [реестр](../05-microservices/PLATFORM-REGISTRY.md)) |
+| **Тарифы и лимиты** | Регистрация параметров, значения Free/Basic/Pro ([plan-config](../05-microservices/plan-config/README.md)) |
+| **Настройки** | Скалярные параметры платформы ([scalar-config](../05-microservices/scalar-config/README.md), [реестр](../05-microservices/PLATFORM-REGISTRY.md)) |
 | **Пользователи** | Назначение и снятие **всех модераторов** (главных и областных), назначение **экспертов**, перманентный бан, просмотр audit |
 | **Контент** | Полная модерация, скрытие лотов |
 | **Планы** | Цены подписок, активация/отмена в исключительных случаях |
@@ -153,7 +153,7 @@ Logto/Keto mapping: [moderator-mapping.md](../09-security/moderator-mapping.md).
 | **Basic** | Активные участники | Больше лимитов, голландский аукцион, вложенные ответы |
 | **Pro** | Продавцы, лидеры мнений | Почти без лимитов, продвижение, аналитика, расширенный форум |
 
-Пользователь **всегда** имеет роль User; тариф хранится в `UserSubscription` (financial-policy).
+Пользователь **всегда** имеет роль User; тариф хранится в `UserSubscription` (plan-config).
 
 ---
 
@@ -204,7 +204,7 @@ Logto/Keto mapping: [moderator-mapping.md](../09-security/moderator-mapping.md).
 
 - **Logto** — JWT, `sub` = userId
 - **Ory Keto** — роли и ownership: **[moderator-mapping.md](../09-security/moderator-mapping.md)**, [keto-schema.md](../09-security/keto-schema.md)
-- **financial-policy** — лимиты тарифов (не Keto)
+- **plan-config** — лимиты тарифов (не Keto)
 - **rating** — баны и штрафы (не Keto)
 
 ### TODO
@@ -222,7 +222,7 @@ Logto/Keto mapping: [moderator-mapping.md](../09-security/moderator-mapping.md).
 - [club-access.md](./club-access.md) — лендинг, инвайты
 - [karma-and-rating.md](./karma-and-rating.md) — рейтинг, карма, реферальное дерево
 - [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) — лимиты по тарифам
-- [financial-policy](../05-microservices/financial-policy/README.md)
+- [plan-config](../05-microservices/plan-config/README.md)
 - [keto-schema.md](../09-security/keto-schema.md)
 - [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md)
 

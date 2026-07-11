@@ -12,7 +12,7 @@
 |------|------|
 | `@tavrida/monetization-engine` | **Только math** — pure functions, без state (ADR-015) |
 | BFF / `services/oracle` | YAML defaults, auth, HTTP; вызывает `simulate()` |
-| `billing`, domain-сервисы | Charge в БД; сумму берут из `computeChargeAmount` / FP |
+| `billing`, domain-сервисы | Charge в БД; сумму берут из `computeChargeAmount` / plan-config |
 | Frontend `/admin/oracle` | Ползунки и графики; **без формул** |
 
 `MonetizationMath` — static-only фасад; в тестах предпочтительны named exports.

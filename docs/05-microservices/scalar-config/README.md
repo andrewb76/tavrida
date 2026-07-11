@@ -1,7 +1,7 @@
 # ⚙️ Сервис: scalar-config
 
 > **Статус:** scaffold v0.1 · **Версия:** 0.4 · **Schema:** `scalar_config`  
-> **Legacy name:** settings · **Код (legacy dir):** `services/settings` :3008 · [ADR-017](../../03-architecture/adr/017-plan-config-scalar-config-rename.md)
+> **Legacy name:** settings · **Код:** `services/scalar-config` :3008 · [ADR-017](../../03-architecture/adr/017-plan-config-scalar-config-rename.md)
 
 ## 🎯 Назначение
 

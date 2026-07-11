@@ -1,11 +1,11 @@
 # ADR-016: Plan-config — планы, матрица и регистрация plan variables
 
 > **Статус:** accepted · **Дата:** 2026-07-11 · **Обновлено:** 2026-07-11  
-> **Сервис (canonical):** `plan-config` · **Legacy:** financial-policy ([ADR-017](./017-plan-config-scalar-config-rename.md))
+> **Сервис (canonical):** `plan-config` · **Legacy:** `financial-policy` ([ADR-017](./017-plan-config-scalar-config-rename.md))
 
 ## 🎯 Контекст
 
-В ранней реализации `plan-config` (legacy: `financial-policy`) plan variables (`auction.*`, `club.*`) попадали в БД через **центральный seed** (`default-seed.ts`). Это создавало ложное впечатление, что сервис «знает» доменные ключи и владеет их семантикой.
+В ранней реализации `financial-policy` (каталог `services/financial-policy`, ныне `plan-config`) plan variables (`auction.*`, `club.*`) попадали в БД через **центральный seed** (`default-seed.ts`). Это создавало ложное впечатление, что сервис «знает» доменные ключи и владеет их семантикой.
 
 Нужна чёткая граница:
 
@@ -29,7 +29,7 @@
 | **Цены** | plan variables `valueType: price` — resolve для billing (было `charge_target`) |
 | **Админка** | BFF → list/patch матрицы; CRUD планов |
 
-Plan-config **не содержит в коде** перечень доменных ключей (`auction.seller.01lot.activeMax`, …).  
+Plan-config **не содержит в коде** перечень доменных ключей (`auction.seller.lot.activeMax`, …).  
 Пустая матрица до первой регистрации — нормальное состояние.
 
 ### Что plan-config не знает
@@ -50,7 +50,7 @@ POST /internal/v1/plan-variables/register
 
 ```json
 {
-  "key": "auction.seller.01lot.activeMax",
+  "key": "auction.seller.lot.activeMax",
   "service": "auction",
   "name": "Своих лотов на торгах (seller)",
   "description": "Макс. собственных лотов ACTIVE. −1 = без лимита.",
@@ -67,7 +67,7 @@ POST /internal/v1/plan-variables/register
 
 ```json
 {
-  "key": "auction.seller.08promotion.unitPrice",
+  "key": "auction.seller.promotion.unitPrice",
   "service": "auction",
   "name": "Продвижение лота",
   "valueType": "price",
@@ -131,18 +131,18 @@ POST /internal/v1/plan-variables/sync
 {
   "service": "auction",
   "planVariables": [
-    { "key": "auction.seller.01lot.activeMax", "valueType": "limit", "planValues": { … } }
+    { "key": "auction.seller.lot.activeMax", "valueType": "limit", "planValues": { … } }
   ]
 }
 ```
 
-Ответ: `{ "synced": 2, "stale": ["auction.seller.03lot.durationMaxHours"] }`.
+Ответ: `{ "synced": 2, "stale": ["auction.seller.lot.durationMaxHours"] }`.
 
 **Тот же принцип для `scalar-config`:** линейный реестр `setting_key` + `setting`; `POST /internal/v1/settings/sync`; `syncStatus: stale` для ключей вне манифеста; admin `/admin/settings/registry` + удаление stale ключей.
 
 ### Временный dev-bootstrap (текущее состояние)
 
-`services/financial-policy/src/config/default-seed.ts` — **временный** локальный bootstrap для пустой БД и админки до переноса регистрации в `user-profile`, `auction`, …  
+`services/plan-config/src/config/default-seed.ts` — **временный** локальный bootstrap для пустой БД и админки до переноса регистрации в `user-profile`, `auction`, …  
 
 **Не является** целевой архитектурой. Удалить после переноса seeds в domain-сервисы.
 

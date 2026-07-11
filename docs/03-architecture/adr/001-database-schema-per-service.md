@@ -10,7 +10,7 @@
 - одна БД, schema на сервис (компромисс для MVP);
 - одна shared БД (просто, но coupling).
 
-В ранних черновиках billing и financial-policy указывали один `DATABASE_URL` → `tavrida_lot` без разделения.
+В ранних черновиках billing и plan-config указывали один `DATABASE_URL` → `tavrida_lot` без разделения.
 
 ## ✅ Решение
 
@@ -19,13 +19,13 @@
 | Сервис | Schema |
 |--------|--------|
 | billing | `billing` |
-| financial-policy | `financial_policy` |
+| plan-config | `plan_config` |
 | auction | `auction` |
 | auction-subscriptions | `auction_subscriptions` |
 | rating | `rating` |
 | feedback | `feedback` |
 | user-profile | `user_profile` |
-| settings | `settings` |
+| scalar-config | `scalar-config` |
 | forum | `forum` |
 | marketplace | `marketplace` |
 | notifications | `notifications` |

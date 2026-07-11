@@ -67,7 +67,7 @@ function createPlanVariablesHarness(seed: {
 }
 
 const promotionVariable: PlanVariableEntity = {
-  key: 'auction.seller.08promotion.unitPrice',
+  key: 'auction.seller.promotion.unitPrice',
   service: 'auction',
   name: 'Promotion',
   description: '',
@@ -112,13 +112,13 @@ describe('PlanVariablesService', () => {
           {
             ...promotionVariable,
             valueType: 'limit',
-            key: 'auction.bidder.01participation.activeMax',
+            key: 'auction.bidder.participation.activeMax',
           },
         ],
       });
 
       await assert.rejects(
-        () => service.resolvePrice('pro', 'auction.bidder.01participation.activeMax'),
+        () => service.resolvePrice('pro', 'auction.bidder.participation.activeMax'),
         NotFoundException,
       );
     });
@@ -173,7 +173,7 @@ describe('PlanVariablesService', () => {
       const { service, variables } = createPlanVariablesHarness({
         variables: [
           {
-            key: 'auction.seller.08promotion.unitPrice',
+            key: 'auction.seller.promotion.unitPrice',
             service: 'auction',
             name: 'Promotion',
             description: '',
@@ -184,7 +184,7 @@ describe('PlanVariablesService', () => {
             syncStatus: 'active',
           },
           {
-            key: 'auction.seller.09reserve.unitPrice',
+            key: 'auction.seller.reserve.unitPrice',
             service: 'auction',
             name: 'Reserve',
             description: '',
@@ -201,7 +201,7 @@ describe('PlanVariablesService', () => {
         service: 'auction',
         variables: [
           {
-            key: 'auction.seller.08promotion.unitPrice',
+            key: 'auction.seller.promotion.unitPrice',
             service: 'auction',
             name: 'Promotion',
             valueType: 'price',
@@ -210,13 +210,13 @@ describe('PlanVariablesService', () => {
       });
 
       assert.equal(result.synced, 1);
-      assert.deepEqual(result.stale, ['auction.seller.09reserve.unitPrice']);
+      assert.deepEqual(result.stale, ['auction.seller.reserve.unitPrice']);
       assert.equal(
-        variables.find((row) => row.key === 'auction.seller.09reserve.unitPrice')?.syncStatus,
+        variables.find((row) => row.key === 'auction.seller.reserve.unitPrice')?.syncStatus,
         'stale',
       );
       assert.equal(
-        variables.find((row) => row.key === 'auction.seller.08promotion.unitPrice')?.syncStatus,
+        variables.find((row) => row.key === 'auction.seller.promotion.unitPrice')?.syncStatus,
         'active',
       );
     });

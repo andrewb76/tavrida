@@ -65,7 +65,7 @@ docker compose -f docker/compose/infra.local.yml up -d
 | `SCALAR_CONFIG_URL` | `http://localhost:3008` | scalar-config (скалярные ключи) |
 | `FORUM_URL` | `http://localhost:3009` | forum (темы, комментарии) |
 
-Legacy aliases (удалить после миграции кода): `FINANCIAL_POLICY_URL`, `SETTINGS_URL`.
+Legacy aliases (удалить после миграции кода): `PLAN_CONFIG_URL`, `SCALAR_CONFIG_URL`.
 
 ### Порты (локально)
 

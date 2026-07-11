@@ -62,7 +62,7 @@
 | PUT | `/forum/topics/{id}/tags` | Заменить набор тегов topic |
 | PUT | `/auctions/{id}/tags` | BFF → auction internal (mirror ContentTag) |
 
-Лимиты: `forum.tagCountMax` (FP) на один объект.
+Лимиты: `forum.tagCountMax` (plan-config) на один объект.
 
 ---
 

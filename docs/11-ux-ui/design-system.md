@@ -314,7 +314,7 @@ Headless: **Reka UI**. Стили — CVA + токены темы.
 | **BidModal** | W03 | Шаг ставки, min next bid, confirm |
 | **AuctionStatus** | W02–W03 | Badge из §6.2 + текст |
 | **TopicRow** | W05 | Заголовок `text-h3`; карма badge; без лишних панелей |
-| **CommentThread** | W06 | Вложенность по FP; markdown sanitize |
+| **CommentThread** | W06 | Вложенность по plan-config; markdown sanitize |
 | **WalletRow** | W08 | Сумма `tabular-nums`; тип операции текстом |
 | **PlanCard** | W08 | Таблица Free/Basic/Pro; без glitter |
 | **InviteRow** | W13 | Код + copy; срок действия `caption` |
@@ -396,8 +396,8 @@ Headless: **Reka UI**. Стили — CVA + токены темы.
 ```css
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.ms !important;
+    transition-duration: 0.ms !important;
   }
 }
 ```

@@ -104,7 +104,7 @@
 | **G** | ACTIVE lot; not seller; not banned; limits OK |
 | **W** | Bid ≥ current + increment |
 | **T** | 201; WS; `auction.bid_placed` |
-| **Компоненты** | `auction`, FP, `rating`, Redis/WS |
+| **Компоненты** | `auction`, plan-config, `rating`, Redis/WS |
 | **Тест** | **E2E + UNIT increment** |
 
 ### S-012 · Создать аукцион
@@ -114,7 +114,7 @@
 | **G** | `auctionsCreatedPerDay` OK |
 | **W** | Publish form |
 | **T** | `auction.created`; in catalog |
-| **Компоненты** | `auction`, FP, MinIO |
+| **Компоненты** | `auction`, plan-config, MinIO |
 | **Тест** | E2E; INT limit |
 
 ### S-013 · Topic / comment
@@ -124,7 +124,7 @@
 | **G** | `forum.postsPerDay` OK |
 | **W** | POST content |
 | **T** | Visible; WS `message.new` |
-| **Компоненты** | `forum`, FP, `settings`, `rating` |
+| **Компоненты** | `forum`, plan-config, `scalar-config`, `rating` |
 | **Тест** | E2E; INT filter |
 
 ### S-014 · Реакция

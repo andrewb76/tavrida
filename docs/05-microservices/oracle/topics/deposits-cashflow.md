@@ -17,7 +17,7 @@
 | `deposits.avgAmountRub` | Средний deposit |
 | `deposits.eventsPerPayingUserPerMonth` | Пополнений на платящего |
 | `deposits.shareOfUsersDepositingPercent` | % users с deposit в месяц |
-| `billing.minDepositAmount` | overlay из settings (min) |
+| `billing.minDepositAmount` | overlay из scalar-config (min) |
 
 ## Формула
 

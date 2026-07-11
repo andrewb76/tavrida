@@ -2,10 +2,10 @@
 
 > **Статус:** draft · **Версия:** 0.2  
 > **Обновлён:** 11 июля 2026  
-> **Владелец register:** `auction` (financial-policy хранит матрицу, не знает ключи до register)
+> **Владелец register:** `auction` (plan-config хранит матрицу, не знает ключи до register)
 
-Параметры ниже **документируются здесь** и **регистрируются** сервисом `auction` при старте (`POST /internal/v1/parameters/register`).  
-До подключения auction в runtime матрица FP может не содержать `auction.*` — это ожидаемо.
+Параметры ниже **документируются здесь** и **регистрируются** сервисом `auction` при старте (`POST /internal/v1/plan-variables/register`).  
+До подключения auction в runtime матрица plan-config может не содержать `auction.*` — это ожидаемо.
 
 > Модель: [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)
 
@@ -40,7 +40,7 @@
 
 ## 🔄 Логика проверки
 
-**Счётчики:** auction **сам** считает `currentUsage` (своя БД) и передаёт в `limits/check`. FP не хранит usage ([ADR-016](../../../03-architecture/adr/016-financial-policy-parameter-registration.md) — открытый вопрос для sliding windows).
+**Счётчики:** auction **сам** считает `currentUsage` (своя БД) и передаёт в `limits/check`. plan-config не хранит usage ([ADR-016](../../../03-architecture/adr/016-financial-policy-parameter-registration.md) — открытый вопрос для sliding windows).
 
 | Действие | Роль | Параметр | Кто считает usage |
 |----------|------|----------|-------------------|
@@ -49,12 +49,12 @@
 | Ставка / вступление в торг | bidder | `auction.activeAuctions` | auction (COUNT active participations) |
 | Продвижение лота | seller | `auction.promotionEnabled` + charge `auction.promotion` | feature check only |
 
-1. **Публикация лота** → `financial-policy.check(userId, 'auction.sellerActiveLots')`
-2. **Создание лота** → `financial-policy.check(userId, 'auction.auctionsCreatedPerDay')`
-3. **Ставка** → `financial-policy.check(userId, 'auction.activeAuctions')`
+1. **Публикация лота** → `plan-config.check(userId, 'auction.sellerActiveLots')`
+2. **Создание лота** → `plan-config.check(userId, 'auction.auctionsCreatedPerDay')`
+3. **Ставка** → `plan-config.check(userId, 'auction.activeAuctions')`
 4. **Продвижение** → `canUseFeature('auction.promotionEnabled')` → `GET /charges/quote?target=auction.promotion` → `billing.charge()`
 
-> Лимит `−1` в financial-policy = без ограничений.
+> Лимит `−1` в plan-config = без ограничений.
 
 ---
 
@@ -88,7 +88,7 @@ POST /api/v1/features/can-use
 
 - [auction](../auction/README.md)
 - [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
-- [financial-policy](../../financial-policy/README.md)
+- [plan-config](../../plan-config/README.md)
 - [billing](../../billing/README.md)
 
 ---

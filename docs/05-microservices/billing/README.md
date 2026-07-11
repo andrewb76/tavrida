@@ -17,7 +17,7 @@
 |--------|----------|
 | **Лицевой счёт (UserWallet)** | Баланс пользователя в валюте платформы |
 | **Transaction** | Неизменяемая запись операции (`DEPOSIT`, `CHARGE`, `REFUND`) |
-| **target** | Структурированный идентификатор назначения списания (`auction.promotion`, `financial-policy.activate-plan:pro`) |
+| **target** | Структурированный идентификатор назначения списания (`auction.promotion`, `plan-config.activate-plan:pro`) |
 | **Idempotency-Key** | UUID; повтор charge с тем же ключом → тот же результат |
 
 ## 🗄️ Сущности
@@ -75,9 +75,9 @@ stateDiagram-v2
 
 | Method | Path | Caller | Описание |
 |--------|------|--------|----------|
-| GET | `/wallets/balance?userId=` | financial-policy, BFF | Баланс по userId |
-| POST | `/wallets/charge` | financial-policy, auction | Списание с Idempotency-Key |
-| POST | `/wallets/refund` | admin, financial-policy | Возврат по `transactionId` |
+| GET | `/wallets/balance?userId=` | plan-config, BFF | Баланс по userId |
+| POST | `/wallets/charge` | plan-config, auction | Списание с Idempotency-Key |
+| POST | `/wallets/refund` | admin, plan-config | Возврат по `transactionId` |
 | POST | `/wallets/credit` | referral-rewards, admin | Platform credit (реферальные выплаты, компенсации) |
 | GET | `/health` | orchestrator | Liveness |
 | GET | `/health/ready` | orchestrator | DB + RabbitMQ |
@@ -106,7 +106,7 @@ Content-Type: application/json
 {
   "userId": "user-uuid",
   "amount": 200,
-  "target": "financial-policy.activate-plan:pro",
+  "target": "plan-config.activate-plan:pro",
   "description": "Pro-подписка (1 мес.)"
 }
 ```
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 **Ответ:** как у charge — `{ transactionId, status, balanceAfter }`.
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Тип | Default | Scope | Описание |
 |------|-----|---------|-------|----------|
@@ -161,7 +161,7 @@ Content-Type: application/json
 
 > Полный реестр: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 Не применимо — billing не зависит от тарифа.
 
@@ -181,7 +181,7 @@ Content-Type: application/json
 
 | Сервис | Взаимодействие | Протокол | Направление |
 |--------|---------------|----------|-------------|
-| financial-policy | balance, charge | HTTP internal | FP → billing |
+| plan-config | balance, charge | HTTP internal | plan-config → billing |
 | auction | charge (promotion, reserve) | HTTP internal | auction → billing |
 | referral-rewards | credit (payout) | HTTP internal | referral-rewards → billing |
 | BFF | proxy public + deposit webhook | HTTP | BFF ↔ billing |
@@ -193,7 +193,7 @@ Content-Type: application/json
 - Атомарность: `SELECT … FOR UPDATE` на `user_wallet` или advisory lock per `userId`
 - Idempotency: уникальный индекс `(userId, idempotencyKey)` для charge
 - Audit: все `Transaction` immutable после `COMPLETED`
-- Минимальный deposit — из settings
+- Минимальный deposit — из scalar-config
 
 ## ⚙️ Окружение
 
@@ -208,7 +208,7 @@ Content-Type: application/json
 
 ## 📎 Связанные разделы
 
-- [financial-policy](../financial-policy/README.md)
+- [plan-config](../plan-config/README.md)
 - [06-api — wallets](../../06-api/README.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
 - [Event catalog](../../03-architecture/event-catalog.md)

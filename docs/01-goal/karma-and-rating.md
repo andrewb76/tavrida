@@ -41,7 +41,7 @@
 В **закрытом клубе** инвайт — act of trust: пригласивший разделяет ответственность за качество сети. Поэтому:
 
 - рейтинг/карма **приглашённых** на глубине **1…N** влияют на **реферальный вклад** пригласившего;
-- **N** и коэффициенты — **настраиваемые** ([settings](#-10-справочник-переменных), [financial-policy](#-10-справочник-переменных));
+- **N** и коэффициенты — **настраиваемые** ([scalar-config](#-10-справочник-переменных), [plan-config](#-10-справочник-переменных));
 - открытая регистрация не даёт «нулевой» репутации обойти клубный фильтр.
 
 Подробнее о доступе: [club-access.md](./club-access.md).
@@ -77,7 +77,7 @@
 
 1. **Раздельные каналы** — сделки (rating) vs форум (karma) vs сеть (referral).
 2. **Source of truth один** — сервис `rating`; profile только cache.
-3. **Параметры снаружи кода** — коэффициенты в `settings` / `financial-policy`, не hardcode.
+3. **Параметры снаружи кода** — коэффициенты в `scalar-config` / `plan-config`, не hardcode.
 4. **Прозрачность для member** — в профиле видны `totalRating`, `karma`, `referral*` и **почему** ограничен доступ (если ограничен).
 5. **Graduated response** — сначала soft limit, потом penalty, потом ban ([§9](#-9-штрафы-ограничения-и-бан)).
 6. **Referral depth capped** — вклад уровня `d` затухает; `d > N` не учитывается.
@@ -90,12 +90,12 @@
 | Ситуация | Метрика | Порог / правило | Эффект |
 |----------|---------|-----------------|--------|
 | Ставка на аукционе | `effectiveRating`, ban | `check-ban`, pending limit | 403 / блок |
-| Создание лота | pending, daily limits | FP + `rating.maxActiveAuctionsWhenLimited` | 403 |
+| Создание лота | pending, daily limits | plan-config + `rating.maxActiveAuctionsWhenLimited` | 403 |
 | Пост на форуме | karma (display), ban | `check-ban` | 403 |
 | Вес реакции автора | karma автора | `forum.reaction.karmaWeights` | ±karma |
 | Выдача инвайтов | `effectiveRating`, plan | `club.invitesPerMonth` | cap codes |
 | Сортировка лотов / trust badge | seller `effectiveRating` | `auction.expertAppraisalBoost` settings | UI rank |
-| Pro paywall | — | FP feature flags | не rating |
+| Pro paywall | — | plan-config feature flags | не rating |
 | Публичный профиль | all public aggregates | — | display only |
 
 ---
@@ -253,19 +253,19 @@ karma(u) += Σ delta_reaction
 
 | Условие | Эффект |
 |---------|--------|
-| `pendingSales > maxPendingBeforePenalty` (FP) | `totalRating *= penaltyDecayFactor` |
+| `pendingSales > maxPendingBeforePenalty` (plan-config) | `totalRating *= penaltyDecayFactor` |
 | `pendingSales >= banThreshold` (settings) | `banUntil = now + banDurationDays` |
 
 | Key | Default | Реестр |
 |-----|---------|--------|
-| `penaltyDecayFactor` | 0.9 | settings |
-| `banThreshold` | 10 | settings |
-| `banDurationDays` | 7 | settings |
-| `maxPendingBeforePenalty` | 3/5/10 | financial-policy per plan |
+| `penaltyDecayFactor` | 0.9 | scalar-config |
+| `banThreshold` | 10 | scalar-config |
+| `banDurationDays` | 7 | scalar-config |
+| `maxPendingBeforePenalty` | 3/5/10 | plan-config per plan |
 
 ### 9.2 Ограничение участия
 
-При penalty: `isLimited = true`, `maxActiveAuctionsWhenLimited` (FP) — cap одновременных аукционов.
+При penalty: `isLimited = true`, `maxActiveAuctionsWhenLimited` (plan-config) — cap одновременных аукционов.
 
 ### 9.3 События
 
@@ -275,7 +275,7 @@ karma(u) += Σ delta_reaction
 
 ## 10. Справочник переменных
 
-### 10.1 settings (`settings` service)
+### 10.1 settings (`scalar-config` service)
 
 | Key | Тип | Default | § |
 |-----|-----|---------|---|
@@ -296,7 +296,7 @@ karma(u) += Σ delta_reaction
 
 > Полный дубль: [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md)
 
-### 10.2 financial-policy (per plan)
+### 10.2 plan-config (per plan)
 
 | Key | Описание | § |
 |-----|----------|---|
@@ -313,7 +313,7 @@ karma(u) += Σ delta_reaction
 
 1. Аукцион завершился → обе стороны получают задачу оставить отзыв.
 2. Каждая оценка 1–5 **подмешивается** в среднее `totalRating`.
-3. Быстро, с фото, с обеих сторон — **бонусы** из settings.
+3. Быстро, с фото, с обеих сторон — **бонусы** из scalar-config.
 4. Не оставил отзыв — растёт `pendingSales`; много pending — **рейтинг множится на 0.9**, потом **бан**.
 
 ### Карма на форуме
@@ -340,7 +340,7 @@ karma(u) += Σ delta_reaction
 | **forum** | Триггер delta karma |
 | **user-profile** | `inviterId`, cache для UI |
 | **settings** | Коэффициенты формул |
-| **financial-policy** | Лимиты pending, invites |
+| **plan-config** | Лимиты pending, invites |
 | **auction / forum** | `check-ban`, enforce limits |
 
 | Event | Эффект |

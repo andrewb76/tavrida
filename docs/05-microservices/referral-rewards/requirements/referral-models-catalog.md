@@ -44,7 +44,7 @@
 | `category_mixed` | Смешанные категории | Разные % по `SUBSCRIPTION`, `AUCTION_SERVICES`, … | ✅ | Сложность UI | Когда хотим стимулировать не только подписки |
 | `deposit_rebate` | % с депозита | Rebate от пополнения кошелька | ❌ | Отмывание, плохой триггер | Не для нас |
 
-**Итог для v1:** включить в каталог **четыре** модели с полной поддержкой Oracle + settings:
+**Итог для v1:** включить в каталог **четыре** модели с полной поддержкой Oracle + scalar-config:
 
 1. `revshare_single` — default production и Oracle  
 2. `revshare_multi_decay` — опционально после legal  
@@ -59,7 +59,7 @@
 
 Общие поля **всех** денежных моделей (глобальные, не зависят от preset):
 
-| Параметр | settings ключ | Oracle YAML | Описание |
+| Параметр | scalar-config ключ | Oracle YAML | Описание |
 |----------|---------------|-------------|----------|
 | Вкл. программа | `globalEnabled` | `programEnabled` | Kill switch |
 | Доля реферального трафика | — (прогноз) | `attachRatePercent` | % gross с inviter (только Oracle) |
@@ -77,7 +77,7 @@
 |----------|-----|---------|----------|
 | `percentOfCharge` | number % | 10 | % от суммы charge (после фильтра категории) |
 | `maxPayoutPerEvent` | number ₽ | null | Cap на одно событие |
-| `maxEarnedPerMonth` | number ₽ | FP limit | Cap на inviter / месяц |
+| `maxEarnedPerMonth` | number ₽ | plan-config limit | Cap на inviter / месяц |
 
 **Формула Oracle (месяц t):**
 
@@ -101,7 +101,7 @@ payout = eligibleGross × percentOfCharge / 100
 | `maxDepth` | number | 3 | Уровни 1…N |
 | `depthCoefficients` | number[] | `[1.0, 0.3, 0.1]` | Множитель уровня d |
 | `payoutDistributionByDepth` | number[] % | `[70, 20, 10]` | Доля выплат по уровням (сумма ≤ 100) — для Oracle UI / дерева |
-| `maxEarnedPerMonth` | number ₽ | FP | Cap на бенефициара |
+| `maxEarnedPerMonth` | number ₽ | plan-config | Cap на бенефициара |
 
 **Формула Oracle:**
 
@@ -203,7 +203,7 @@ referralOut = newSubsReferral × (inviterBonus + inviteeBonus)   // если sta
 }
 ```
 
-При смене `calculationModelId` BFF/settings **валидирует** `modelParams` по JSON Schema preset (лишние ключи отклоняются).  
+При смене `calculationModelId` BFF/scalar-config **валидирует** `modelParams` по JSON Schema preset (лишние ключи отклоняются).  
 Опционально: кнопка «Сгенерировать rules из модели» заполняет `rules[]` для прозрачности в audit.
 
 ### 4.2. Oracle (`config/oracle.defaults.yaml`)
@@ -259,7 +259,7 @@ function computeReferralOut(
 
 ---
 
-## 5. UI: вкладка «Реферал» (Oracle и admin settings)
+## 5. UI: вкладка «Реферал» (Oracle и admin scalar-config)
 
 1. Чекбокс «Программа включена».  
 2. **Select «Модель расчёта»** — список из `calculationModelId.options`.  
@@ -276,7 +276,7 @@ function computeReferralOut(
 | 0 | Этот каталог + согласование с founder | **сейчас** |
 | 1 | `revshare_single` в engine + Oracle UI (текущие ползунки + % charge) | частично (engine v0) |
 | 2 | Select модели + условные поля в Oracle | backlog |
-| 3 | `calculationModelId` в settings + валидатор `modelParams` | backlog |
+| 3 | `calculationModelId` в scalar-config + валидатор `modelParams` | backlog |
 | 4 | `referral-rewards` service: preset → rules compiler | backlog |
 | 5 | `revshare_multi_decay`, `cpa_*`, `bilateral_*` + golden tests | backlog |
 

@@ -70,7 +70,7 @@ ProfilePage:
 
 **States:** low balance warning · charge failed · WS `balance.updated`.
 
-**API:** billing, financial-policy; activate → charge → toast.
+**API:** billing, plan-config; activate → charge → toast.
 
 ### ASCII
 
@@ -115,7 +115,7 @@ PlansPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Presets | 500 / 1000 / 2000 / custom ₽ | Min amount from FP |
+| Presets | 500 / 1000 / 2000 / custom ₽ | Min amount from plan-config |
 | Summary | Итого к оплате | |
 | Confirm | «Перейти к оплате» | Redirect payment provider |
 | Cancel | Закрыть | |
@@ -157,7 +157,7 @@ DepositModal:
 |------|----------|-----------|
 | Plan | Выбранный тариф, цена, период | From PlanCard |
 | Balance | Списание с кошелька | Show remainder |
-| Auto-renew | Checkbox default on | FP setting |
+| Auto-renew | Checkbox default on | plan-config setting |
 | Confirm | «Активировать» | Charge billing |
 
 **States:** insufficient balance → link deposit · success toast.

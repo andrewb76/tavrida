@@ -35,7 +35,7 @@ promotionRevenue[t] = promotionEvents[t] × price(auction.promotion)
 
 ## Prod
 
-- Лимиты создания: `financial-policy` `auction.auctionsCreatedPerDay`
+- Лимиты создания: `plan-config` `auction.auctionsCreatedPerDay`
 - Списание: `billing` target `auction.promotion`
 
 ## 🔶 Checkpoint

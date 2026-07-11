@@ -46,7 +46,7 @@ flowchart TB
         BFF[BFF\nREST + WSS]
         subgraph core [Core Services]
             billing
-            fp[financial-policy]
+            fp[plan-config]
             settings
         end
         subgraph domain [Domain Services]
@@ -92,11 +92,11 @@ flowchart TB
 
 | Паттерн | Когда | Пример |
 |---------|-------|--------|
-| **Sync HTTP** | Нужен немедленный ответ | BFF → `financial-policy.limits/check` |
+| **Sync HTTP** | Нужен немедленный ответ | BFF → `plan-config.limits/check` |
 | **Async event** | Side effects, fan-out | `auction.completed` → feedback, rating, webhooks — [messaging](./messaging.md) |
 | **WS relay** | Realtime UI | auction → Redis pub/sub → BFF → client |
 | **Denormalized cache** | Частое чтение агрегата | user-profile ← rating |
-| **Saga (choreography)** | Мulti-step без оркестратора | activate plan: FP → billing.charge → FP.subscription |
+| **Saga (choreography)** | Мulti-step без оркестратора | activate plan: plan-config → billing.charge → plan-config.subscription |
 
 ### Синхронный flow: создание аукциона
 
@@ -104,12 +104,12 @@ flowchart TB
 sequenceDiagram
     participant C as Client
     participant B as BFF
-    participant FP as financial-policy
+    participant plan-config as plan-config
     participant A as auction
 
     C->>B: POST /api/v1/auctions
-    B->>FP: POST /limits/check
-    FP-->>B: allowed
+    B->>PC: POST /limits/check
+    PC-->>B: allowed
     B->>A: POST /internal/v1/auctions
     A-->>B: 201 Created
     B-->>C: 201 Created

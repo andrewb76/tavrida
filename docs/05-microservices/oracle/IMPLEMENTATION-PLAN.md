@@ -32,7 +32,7 @@
 | 1.2 | Загрузчик defaults из YAML | ✅ `loadOracleDefaults()` в BFF |
 | 1.3 | `simulate(input) → OracleResult` | ✅ BFF `POST /admin/oracle/simulate` |
 | 1.4 | BFF `OracleModule` | ✅ `GET /defaults`, `POST /simulate`, `POST /compare` |
-| 1.5 | Overlay FP/settings | ✅ цены планов, `referralRewards.globalEnabled`, default model |
+| 1.5 | Overlay plan-config/scalar-config | ✅ цены планов, `referralRewards.globalEnabled`, default model |
 
 **Async / MQ:** не нужны — расчёт синхронный, &lt; 500 ms.
 
@@ -87,7 +87,7 @@
 | 4.1 | Billing aggregates «план vs факт» |
 | 4.2 | Экспорт CSV/PDF |
 | 4.3 | Monte Carlo по min/max YAML |
-| 4.4 | Промоция YAML → `settings` domain `oracle.*` |
+| 4.4 | Промоция YAML → `scalar-config` domain `oracle.*` |
 
 ---
 

@@ -52,8 +52,8 @@ services/{service-name}/
 | 4 | Сущности (TypeORM) | 🗄️ | ✅ если есть БД |
 | 5 | API (HTTP) | 🔌 | ✅ |
 | 6 | WebSocket (если есть) | 📡 | ⚪ |
-| 7 | **Переменные settings** | ⚙️ | ✅ регистрация в settings |
-| 8 | **Переменные financial-policy** | 💳 | ✅ если влияет на тариф/лимит |
+| 7 | **Переменные scalar-config** | ⚙️ | ✅ регистрация в scalar-config |
+| 8 | **Переменные plan-config** | 💳 | ✅ если влияет на тариф/лимит |
 | 9 | События (produce/consume) | 📨 | ✅ если есть RabbitMQ |
 | 10 | Взаимодействие | 🔗 | ✅ |
 | 11 | Безопасность | 🔒 | ✅ |
@@ -77,14 +77,14 @@ services/{service-name}/
 
 ---
 
-## ⚙️ Раздел «Переменные settings»
+## ⚙️ Раздел «Переменные scalar-config»
 
-**Settings** хранит **одно значение** на ключ (глобально или per-user).
+**scalar-config** хранит **одно значение** на ключ (глобально или per-user).
 
 ### Формат в README сервиса
 
 ```markdown
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Тип | Default | Scope | Описание |
 |------|-----|---------|-------|----------|
@@ -98,19 +98,19 @@ services/{service-name}/
 - **Полный реестр:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md) — добавляйте каждую новую переменную туда.
 - При старте сервис **регистрирует** ключи через `POST /internal/v1/settings/sync` (рекомендуется) или `register`.
 - Зависшие ключи: см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md).
-- Чтение: `GET /api/v1/settings/{domain}` (internal, через settings SDK или HTTP).
-- Изменение: только admin через BFF.
+- Чтение: `GET /internal/v1/settings/{domain}` (internal HTTP; API path legacy).
+- Изменение: только admin через BFF → scalar-config.
 
 ---
 
-## 💳 Раздел «Переменные financial-policy»
+## 💳 Раздел «Переменные plan-config»
 
 **Financial-policy** хранит **пакет значений по тарифам** (Free/Basic/Pro) для переменных, влияющих на **стоимость, лимиты или доступность фич**.
 
 ### Формат в README сервиса
 
 ```markdown
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Тип | Free | Basic | Pro | Описание |
 |------|-----|------|-------|-----|----------|
@@ -121,7 +121,7 @@ services/{service-name}/
 
 ### Правила
 
-- Ключ: `{service}.{parameterName}` — тот же namespace, что в settings, но **разные реестры**.
+- Ключ: `{service}.{parameterName}` — тот же namespace, что в scalar-config, но **разные реестры**.
 - **Каталог проектирования:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md) — документирует все ключи; runtime появляется после register.
 - **Регистрация:** domain-сервис при старте → `POST /internal/v1/plan-variables/sync` (полный манифест).
 - **Зависшие ключи:** отсутствуют в sync → `syncStatus: stale`; **без автоудаления**; admin удаляет вручную.
@@ -130,11 +130,11 @@ services/{service-name}/
 - **Проверка фичи:** `POST /internal/v1/features/can-use`.
 - **Цена (price):** `GET /internal/v1/plan-variables/resolve-price?key=` → `billing.charge`.
 - **Admin:** меняет значения в матрице (BFF `/admin/plan-config`), не создаёт новые ключи.
-- Сервис **не хранит** тарифные значения локально — только запрашивает financial-policy.
+- Сервис **не хранит** тарифные значения локально — только запрашивает plan-config.
 
-### Разделение settings vs financial-policy
+### Разделение settings vs plan-config
 
-| Критерий | settings | financial-policy |
+| Критерий | scalar-config | plan-config |
 |----------|----------|------------------|
 | Значений на ключ | 1 (или per-user) | N (по числу тарифов) |
 | Влияет на цену/лимит | ❌ | ✅ |
@@ -167,7 +167,7 @@ services/{service-name}/
 
 ## 🗄️ Требования к данным
 
-- Schema PostgreSQL = имя сервиса (`billing`, `financial_policy` — snake_case).
+- Schema PostgreSQL = имя сервиса (`billing`, `plan_config` — snake_case).
 - Миграции: TypeORM migrations в каталоге сервиса.
 - **Запрещено:** JOIN между schema других сервисов.
 - **Разрешено:** denormalized cache с явным источником истины (см. user-profile ← rating).
@@ -188,7 +188,7 @@ services/{service-name}/
 
 - [ ] `docs/05-microservices/{name}/README.md` по шаблону выше
 - [ ] Строка в [docs/README.md](../README.md) и [05-microservices/README.md](./README.md)
-- [ ] Переменные settings и/или financial-policy зарегистрированы в [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md)
+- [ ] Переменные scalar-config и/или plan-config зарегистрированы в [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md)
 - [ ] Runtime env зарегистрированы в [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) и [`.env.example`](../../.env.example)
 - [ ] События добавлены в [event-catalog](../03-architecture/event-catalog.md)
 - [ ] Data ownership в [10-data/README.md](../10-data/README.md)

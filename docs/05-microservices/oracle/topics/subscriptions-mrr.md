@@ -1,6 +1,6 @@
 # 💳 Подписки (MRR)
 
-> **Группа:** B · **YAML:** `subscriptions` · **Prod:** `financial-policy`
+> **Группа:** B · **YAML:** `subscriptions` · **Prod:** `plan-config`
 
 ## Простыми словами
 
@@ -35,7 +35,7 @@ mrr[t] =
 ## Prod flow
 
 1. User `POST /plans/activate`
-2. FP charge `financial-policy.activate-plan:{id}`
+2. plan-config charge `plan-config.activate-plan:{id}`
 3. Event `subscription.activated`
 
 ## API / engine
@@ -46,7 +46,7 @@ computeMrr(activePlans, prices, yearlyShare): number
 
 ## Async
 
-Автопродление в prod — CRON FP (не Oracle). Oracle **моделирует** тот же CRON формулой.
+Автопродление в prod — CRON plan-config (не Oracle). Oracle **моделирует** тот же CRON формулой.
 
 ## 🔶 Checkpoint
 

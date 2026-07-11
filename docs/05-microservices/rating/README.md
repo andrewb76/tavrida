@@ -10,7 +10,7 @@
 - Формула с учётом авторитета голосующего и контекста (auction / forum / marketplace)
 - **Referral tree:** effective karma/rating inviter от invitees до `rating.referral.maxDepth`
 - Штрафы за неоценённые сделки; бан → блокировка в auction/forum
-- Параметры формул — из `settings`; лимиты pending и инвайтов — из financial-policy
+- Параметры формул — из `scalar-config`; лимиты pending и инвайтов — из plan-config
 
 > **Канонический продуктовый справочник:** [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 
@@ -32,7 +32,7 @@
 
 ## 🌳 Реферальное дерево
 
-При `club.referralInfluenceEnabled` (FP) и redeem инвайта (`user-profile.invitation`):
+При `club.referralInfluenceEnabled` (plan-config) и redeem инвайта (`user-profile.invitation`):
 
 ```
 referralKarma(I) = Σ_{d=1..N} α_d × Σ_{u ∈ L(d)} K(u)
@@ -145,7 +145,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 → `{ "banned": false }` или `{ "banned": true, "until": "2026-07-15T00:00:00Z" }`
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Default | Описание |
 |------|---------|----------|
@@ -166,7 +166,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 > [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md) · [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
@@ -192,8 +192,8 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 | Сервис | Протокол |
 |--------|----------|
-| settings | HTTP GET settings/rating |
-| financial-policy | limits для pending |
+| scalar-config | HTTP GET settings/rating |
+| plan-config | limits для pending |
 | feedback | bonuses/apply, votes |
 | forum | karma от реакций |
 | user-profile | invitation edges, consume `rating.updated` → cache |
@@ -211,8 +211,8 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `rating` |
 | `RABBITMQ_URL` | да | Events |
-| `SETTINGS_URL` | да | Формулы |
-| `FINANCIAL_POLICY_URL` | да | Лимиты pending |
+| `SCALAR_CONFIG_URL` | да | Формулы |
+| `PLAN_CONFIG_URL` | да | Лимиты pending |
 | `PORT` | нет | HTTP |
 
 > [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
@@ -222,7 +222,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 - [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 - [club-access.md](../../01-goal/club-access.md)
 - [feedback](../feedback/README.md)
-- [settings](../settings/README.md)
+- [scalar-config](../scalar-config/README.md)
 - [Event catalog](../../03-architecture/event-catalog.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
 

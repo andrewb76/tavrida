@@ -16,7 +16,7 @@
 
 ## 👤 Модель для пользователя
 
-У каждого участника может быть **несколько hooks** (лимит по тарифу — см. [financial-policy](#-переменные-financial-policy)). Один hook = одна интеграция «куда слать».
+У каждого участника может быть **несколько hooks** (лимит по тарифу — см. [plan-config](#-переменные-plan-config)). Один hook = одна интеграция «куда слать».
 
 | Поле hook (MVP UI) | Обязательно | Описание |
 |--------------------|-------------|----------|
@@ -195,7 +195,7 @@ flowchart LR
 | # | Источник | Пример |
 |---|----------|--------|
 | 1 | `endpoint.eventTimeouts[eventType]` | 5 с только для `auction.completed` |
-| 2 | `settings` scope `user:{ownerId}` → `webhooks.user.defaultTimeoutMs` | 15 с для всех hooks пользователя |
+| 2 | `scalar-config` scope `user:{ownerId}` → `webhooks.user.defaultTimeoutMs` | 15 с для всех hooks пользователя |
 | 3 | `webhooks.delivery.timeoutMs` (global) | 10 с платформа |
 
 ## 🔌 API
@@ -210,8 +210,8 @@ flowchart LR
 | PATCH | `/webhooks/{id}` | URL, `eventTypes[]` (чекбоксы), `eventTimeouts`, `enabled` |
 | DELETE | `/webhooks/{id}` | — |
 | GET | `/webhooks/{id}/deliveries` | Журнал (**redacted** preview) |
-| POST | `/webhooks/{id}/deliveries/{deliveryId}/replay` | Replay (лимит FP) |
-| PATCH | `/webhooks/preferences` | `userDefaultTimeoutMs` → settings user scope |
+| POST | `/webhooks/{id}/deliveries/{deliveryId}/replay` | Replay (лимит plan-config) |
+| PATCH | `/webhooks/preferences` | `userDefaultTimeoutMs` → scalar-config user scope |
 
 ### Public — Admin
 
@@ -261,9 +261,9 @@ X-Tavrida-Timestamp: 1730000000
 | Event | Когда |
 |-------|-------|
 | `webhooks.delivery_failed` | Статус `DEAD` |
-| `webhooks.endpoint_disabled` | Auto-disable (если включено в settings) |
+| `webhooks.endpoint_disabled` | Auto-disable (если включено в scalar-config) |
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Default | Scope | Описание |
 |------|---------|-------|----------|
@@ -278,13 +278,13 @@ X-Tavrida-Timestamp: 1730000000
 | `webhooks.autoDisable.deadStreak` | 10 | global | Подряд DEAD до disable |
 | `webhooks.ssrf.allowPrivateIPs` | false | global | Запрет private IP в URL |
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
-| `webhooks.member.01endpoint.max` | 0 | 2 | 10 | Hooks (endpoints) на аккаунт |
-| `webhooks.member.02replay.dailyMax` | 0 | 5 | 50 | Ручных replay / сутки |
-| `webhooks.member.03userScope.enabled` | false | true | true | USER hooks доступны |
+| `webhooks.member.endpoint.max` | 0 | 2 | 10 | Hooks (endpoints) на аккаунт |
+| `webhooks.member.replay.dailyMax` | 0 | 5 | 50 | Ручных replay / сутки |
+| `webhooks.member.userScope.enabled` | false | true | true | USER hooks доступны |
 
 > Канонические ключи — [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md#webhooks-1).
 
@@ -293,8 +293,8 @@ X-Tavrida-Timestamp: 1730000000
 | Сервис | Роль |
 |--------|------|
 | генераторы (producers) | register event types + RMQ publish |
-| settings | timeouts, retry, autoDisable |
-| financial-policy | лимиты endpoints |
+| scalar-config | timeouts, retry, autoDisable |
+| plan-config | лимиты endpoints |
 | notifications | опционально alert на `delivery_failed` |
 | subscriptions | параллельно: подписка → human notify, не webhook |
 
@@ -321,8 +321,8 @@ X-Tavrida-Timestamp: 1730000000
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `webhooks` |
 | `RABBITMQ_URL` | да | Consumer `webhooks.events` |
-| `SETTINGS_URL` | да | — |
-| `FINANCIAL_POLICY_URL` | да | — |
+| `SCALAR_CONFIG_URL` | да | — |
+| `PLAN_CONFIG_URL` | да | — |
 | `PORT` | нет | `3011` |
 
 ## 📎 Связанные разделы

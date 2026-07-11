@@ -66,7 +66,7 @@
 | | |
 |---|---|
 | **T** | `subscription.expired`; Free limits |
-| **Компоненты** | `financial-policy`, `billing` |
+| **Компоненты** | `plan-config`, `billing` |
 | **Тест** | INT |
 
 ### S-036 · 402 / 403 / 429 (negative)
@@ -76,8 +76,8 @@
 | **G** | Limit / balance / rate |
 | **W** | Mutating action from **частых** сценариев |
 | **T** | RFC 7807; UI paywall |
-| **Компоненты** | BFF, FP, `billing` |
-| **Тест** | E2E negative; UNIT FP — **включать в MVP gate** |
+| **Компоненты** | BFF, plan-config, `billing` |
+| **Тест** | E2E negative; UNIT plan-config — **включать в MVP gate** |
 
 ### S-037 · Спор маркета (draft)
 

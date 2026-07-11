@@ -70,14 +70,14 @@
 
 **Flow:** ensureSubscriber → `novu.trigger` → log pending → webhook updates status → in_app → Redis → BFF `notification.new`
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Default | Описание |
 |------|---------|----------|
 | `notifications.feedbackReminderDays` | [1, 3, 7] | Интервалы feedback CRON |
 | `notifications.digestHourUtc` | 9 | Час digest (UTC) |
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 Не применимо.
 

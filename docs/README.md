@@ -50,7 +50,7 @@
 | [content-brief](./01-goal/content-brief.md) | **Контент:** ТЗ справочника |
 | [legal-documents](./01-goal/legal-documents.md) | **Legal:** документы платформы |
 | [club-access](./01-goal/club-access.md) | **Продукт:** закрытый клуб |
-| [PLATFORM-REGISTRY](./05-microservices/PLATFORM-REGISTRY.md) | **Конфиг:** settings + financial-policy + цены |
+| [PLATFORM-REGISTRY](./05-microservices/PLATFORM-REGISTRY.md) | **Конфиг:** scalar-config + plan-config + цены |
 | [PLATFORM-SECRETS](./02-infrastructure/PLATFORM-SECRETS.md) | **Секреты:** env vars для Bitwarden / runtime |
 | [PROJECT-CONTEXT](./00-meta/PROJECT-CONTEXT.md) | **Bootstrap:** краткий контекст для новой сессии |
 | [keto-schema](./09-security/keto-schema.md) | **Auth:** Ory Keto namespace |
@@ -73,14 +73,14 @@
 |--------|--------|----------|
 | 🌐 BFF | ✅ spec ready | [bff](./05-microservices/bff/README.md) |
 | 💰 billing | ✅ spec ready | [billing](./05-microservices/billing/README.md) |
-| 📋 financial-policy | ✅ spec ready | [financial-policy](./05-microservices/financial-policy/README.md) |
+| 📋 plan-config | ✅ spec ready | [plan-config](./05-microservices/plan-config/README.md) |
 | 🔨 auction | ✅ spec ready | [auction](./05-microservices/auction/README.md) |
 | 🔔 subscriptions | ✅ spec ready | [subscriptions](./05-microservices/subscriptions/README.md) |
 | ⭐ rating | ✅ spec ready | [rating](./05-microservices/rating/README.md) |
 | 💬 deal-feedback | ✅ spec ready | [deal_feedback](./05-microservices/deal_feedback/README.md) |
 | 🗣️ forum | ✅ spec ready | [forum](./05-microservices/forum/README.md) · [requirements](./05-microservices/forum/requirements/README.md) |
 | 👤 user-profile | ✅ spec ready | [user-profile](./05-microservices/user-profile/README.md) |
-| ⚙️ settings | ✅ spec ready | [settings](./05-microservices/settings/README.md) |
+| ⚙️ scalar-config | ✅ spec ready | [scalar-config](./05-microservices/scalar-config/README.md) |
 | 📬 notifications | ✅ spec ready | [notifications](./05-microservices/notifications/README.md) |
 | 🔗 webhooks | ✅ spec ready | [webhooks](./05-microservices/webhooks/README.md) |
 | 🛒 marketplace | ✅ spec ready | [marketplace](./05-microservices/marketplace/README.md) |

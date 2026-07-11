@@ -112,7 +112,7 @@ describe('WalletsService', () => {
         service.charge({
           userId: 'user-1',
           amount: 0,
-          target: 'auction.seller.08promotion.unitPrice',
+          target: 'auction.seller.promotion.unitPrice',
           description: 'Promotion',
         }),
       (error: unknown) => {
@@ -128,7 +128,7 @@ describe('WalletsService', () => {
     const result = await service.charge({
       userId: 'user-1',
       amount: 200,
-      target: 'auction.seller.08promotion.unitPrice',
+      target: 'auction.seller.promotion.unitPrice',
       description: 'Promotion',
     });
 
@@ -144,7 +144,7 @@ describe('WalletsService', () => {
         service.charge({
           userId: 'user-1',
           amount: 200,
-          target: 'auction.seller.08promotion.unitPrice',
+          target: 'auction.seller.promotion.unitPrice',
           description: 'Promotion',
         }),
       (error: unknown) => {
@@ -168,7 +168,7 @@ describe('WalletsService', () => {
     const first = await service.charge({
       userId: 'user-1',
       amount: 200,
-      target: 'auction.seller.08promotion.unitPrice',
+      target: 'auction.seller.promotion.unitPrice',
       description: 'Promotion',
       idempotencyKey: 'idem-1',
     });
@@ -176,7 +176,7 @@ describe('WalletsService', () => {
     const second = await service.charge({
       userId: 'user-1',
       amount: 200,
-      target: 'auction.seller.08promotion.unitPrice',
+      target: 'auction.seller.promotion.unitPrice',
       description: 'Promotion',
       idempotencyKey: 'idem-1',
     });

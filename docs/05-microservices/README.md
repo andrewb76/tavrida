@@ -12,14 +12,14 @@
 |--------|------|-------------|------|----------|
 | 🌐 bff | 3000 | 📝 | ✅ spec | [bff](./bff/README.md) |
 | 💰 billing | 3001 | 🚧 | ✅ spec | [billing](./billing/README.md) |
-| 📋 financial-policy | 3002 | 🚧 | ✅ spec | [financial-policy](./financial-policy/README.md) |
+| 📋 plan-config | 3002 | 🚧 | ✅ spec | [plan-config](./plan-config/README.md) |
 | 🔨 auction | 3003 | 🚧 | ✅ spec | [auction](./auction/README.md) |
 | 🔔 subscriptions | 3004 | 🚧 | ✅ spec | [subscriptions](./subscriptions/README.md) |
 | ⭐ rating | — | 📝 | ✅ spec | [rating](./rating/README.md) |
 | 💬 deal-feedback | — | 📝 | ✅ spec | [deal_feedback](./deal_feedback/README.md) |
 | 🗣️ forum | — | 📝 | ✅ spec | [forum](./forum/README.md) |
 | 👤 user-profile | — | 📝 | ✅ spec | [user-profile](./user-profile/README.md) |
-| ⚙️ settings | — | 📝 | ✅ spec | [settings](./settings/README.md) |
+| ⚙️ scalar-config | — | 📝 | ✅ spec | [scalar-config](./scalar-config/README.md) |
 | 📬 notifications | 3010 | 📝 | ✅ spec | [notifications](./notifications/README.md) |
 | 🔗 webhooks | 3011 | 📝 | ✅ spec | [webhooks](./webhooks/README.md) |
 | 🛒 marketplace | — | 📝 | ✅ spec | [marketplace](./marketplace/README.md) |
@@ -30,9 +30,9 @@
 
 ## 🔗 Общие паттерны
 
-- Проверка лимитов → `financial-policy` (`POST /limits/check`)
+- Проверка лимитов → `plan-config` (`POST /limits/check`)
 - Списание средств → `billing` (`POST /wallets/charge`)
-- Настройки формул → `settings` (`GET /settings/{domain}`)
+- Настройки формул → `scalar-config` (`GET /settings/{domain}`)
 - Исходящие webhooks → `webhooks` (события RMQ → HTTP callback)
 - Доступ к сервисам — только через **BFF** (кроме внутренних HTTP/RabbitMQ)
 

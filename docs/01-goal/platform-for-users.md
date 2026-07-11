@@ -436,7 +436,7 @@
 | Отзывы после сделок      | [feedback](../05-microservices/feedback/README.md)                                                                                     |
 | Профиль                  | [user-profile](../05-microservices/user-profile/README.md)                                                                             |
 | Баланс и платежи         | [billing](../05-microservices/billing/README.md)                                                                                       |
-| Подписки Free/Basic/Pro  | [financial-policy](../05-microservices/financial-policy/README.md), [реестр](../05-microservices/PLATFORM-REGISTRY.md)                 |
+| Подписки Free/Basic/Pro  | [plan-config](../05-microservices/plan-config/README.md), [реестр](../05-microservices/PLATFORM-REGISTRY.md)                 |
 | Роли и права             | [roles](./roles.md)                                                                                                                    |
 | Уведомления              | [notifications](../05-microservices/notifications/README.md)                                                                           |
 | Интеграции (Webhooks)    | [webhooks](../05-microservices/webhooks/README.md)                                                                                     |

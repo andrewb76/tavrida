@@ -66,7 +66,7 @@ NotificationInbox:
 |------|----------|-----------|
 | Icon | Lock / Pro badge | Context from trigger |
 | Title | «Нужен тариф Pro» (или Basic) | Dynamic per feature |
-| Body | Что даёт upgrade, текущий лимит | FP key + human copy |
+| Body | Что даёт upgrade, текущий лимит | plan-config key + human copy |
 | CTA primary | «Посмотреть тарифы» | → `/plans` |
 | CTA secondary | «Закрыть» | Dismiss |
 | Balance hint | Low balance warning | Link `/wallet` if relevant |
@@ -105,7 +105,7 @@ PaywallModal:
 
 ### 🔗 Docs
 
-- [financial-policy](../../05-microservices/financial-policy/README.md)
+- [plan-config](../../05-microservices/plan-config/README.md)
 - [design-tokens — Modal](../design-tokens.md)
 
 ---

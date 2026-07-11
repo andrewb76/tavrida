@@ -11,7 +11,7 @@
 |---|------------|
 | E2E | Happy path перед релизом (не блокер каждого PR) |
 | UNIT | Idempotency charge, plan price calc, subscribe limits |
-| INT | **Обязателен** для billing ↔ financial-policy ↔ domain |
+| INT | **Обязателен** для billing ↔ plan-config ↔ domain |
 | SLO | Стандартные; алерт на failed charge rate |
 | Registry | Каждый сценарий ↔ ключ [PLATFORM-REGISTRY](../../05-microservices/PLATFORM-REGISTRY.md) |
 
@@ -34,7 +34,7 @@
 | **G** | Balance ≥ price |
 | **W** | `/plans` activate |
 | **T** | Charge; ACTIVE sub; `subscription.activated` |
-| **Компоненты** | `financial-policy` → `billing`; RMQ |
+| **Компоненты** | `plan-config` → `billing`; RMQ |
 | **Тест** | **INT saga**; E2E plans |
 
 ### S-022 · Продвижение лота (200 ₽)
@@ -44,7 +44,7 @@
 | **G** | Own lot; `promotionEnabled` or pay |
 | **W** | Promote |
 | **T** | Charge `auction.promotion`; badge in catalog |
-| **Компоненты** | `auction`, `billing`, FP |
+| **Компоненты** | `auction`, `billing`, plan-config |
 | **Тест** | INT |
 
 ### S-023 · Подписка на категорию / лот

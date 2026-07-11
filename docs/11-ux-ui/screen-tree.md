@@ -65,7 +65,7 @@ Tavrida Lot (SPA + landing)
 │    ├── Профиль участника (/profile/:userId)
 │    │     Публичная визитка: рейтинг, сделки, форум; private note.           📐 W07
 │    └── Инвайты (/invites)
-│          Выдача и управление кодами приглашений (лимит FP).                 📐 W13
+│          Выдача и управление кодами приглашений (лимит plan-config).                 📐 W13
 │
 ├─── 💳 Деньги и тариф
 │    ├── Кошелёк (/wallet)
@@ -105,7 +105,7 @@ Tavrida Lot (SPA + landing)
      ├── Назначение модераторов / экспертов (admin)                           ⬜
      │     Keto mapping, scoped forum/auction.
      ├── Настройки платформы (admin-ui TBD)                                    ⬜
-     │     settings, FP, registry — отдельное app или BFF /admin.
+     │     settings, plan-config, registry — отдельное app или BFF /admin.
      └── Tools subdomain (*.tools.tavrida-lot.ru)                              ⬜
            Portainer, Grafana links — вне SPA.
 ```

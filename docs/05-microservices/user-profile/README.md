@@ -114,12 +114,12 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/internal/v1/users/{userId}/ancestor-chain` | Цепочка inviter → … (для referral-rewards, rating) |
 | GET | `/health`, `/health/ready` | — |
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
-Не владеет domain settings (не регистрирует ключи в `services/settings`).  
-Потребляет `club.*` через BFF и `club.invitesPerMonth` через financial-policy.
+Не владеет domain settings (не регистрирует ключи в `services/scalar-config`).  
+Потребляет `club.*` через BFF и `club.invitesPerMonth` через plan-config.
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 **Владелец register:** `user-profile` при старте.
 
@@ -127,7 +127,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 |------|----------|----------------------|
 | `club.invitesPerMonth` | Лимит новых кодов | 1 / 3 / −1 |
 
-Целевой файл seed: `services/user-profile/src/config/financial-parameters.ts` (см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)).
+Целевой файл seed: `services/user-profile/src/config/plan-variables.ts` (см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)).
 
 > [club-access.md](../../01-goal/club-access.md) · [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
 

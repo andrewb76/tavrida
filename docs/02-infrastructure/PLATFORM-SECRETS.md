@@ -6,7 +6,7 @@
 **Шаблон для импорта:** [`.env.example`](../../.env.example) в корне репозитория.
 
 **Не путать с:**
-- [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) — бизнес-настройки (settings / financial-policy), хранятся в БД
+- [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) — бизнес-настройки (scalar-config / plan-config), хранятся в БД
 - Этот документ — **инфраструктурные** переменные (DSN, API keys, URLs)
 
 ---
@@ -43,7 +43,7 @@
 | `DB_USER` | **да** | scaffold | `postgres` | Пользователь БД |
 | `DB_PASSWORD` | **да** | scaffold | `postgres` | Пароль БД |
 | `DB_NAME` | нет | scaffold | `tavrida_lot` | Имя базы |
-| `REDIS_URL` | **да** | bff, notifications, settings, auction | `redis://localhost:6379` | Кэш, pub/sub WS relay |
+| `REDIS_URL` | **да** | bff, notifications, scalar-config, auction | `redis://localhost:6379` | Кэш, pub/sub WS relay |
 | `RABBITMQ_URL` | **да** | billing, auction, feedback, rating, forum, marketplace, notifications | `amqp://guest:guest@localhost:5672` | Async events ([event-catalog](../03-architecture/event-catalog.md)) |
 | `MINIO_ENDPOINT` | нет | auction, forum, user-profile, feedback, marketplace | `localhost` | S3-compatible endpoint |
 | `MINIO_PORT` | нет | ↑ | `9000` | Порт MinIO |
@@ -84,13 +84,13 @@
 | `REDIS_URL` | **да** | см. платформа | WS pub/sub relay |
 | `CORS_ORIGINS` | нет | `https://app.tavrida-lot.localhost` | Разрешённые origins (через запятую) |
 | `BILLING_URL` | нет | `http://localhost:3001` | Upstream billing |
-| `FINANCIAL_POLICY_URL` | нет | `http://localhost:3002` | Upstream financial-policy |
+| `PLAN_CONFIG_URL` | нет | `http://localhost:3002` | Upstream plan-config |
 | `AUCTION_URL` | нет | `http://localhost:3003` | Upstream auction |
 | `AUCTION_SUBSCRIPTIONS_URL` | нет | `http://localhost:3004` | Upstream auction-subscriptions |
 | `RATING_URL` | нет | `http://localhost:3005` | Upstream rating |
 | `FEEDBACK_URL` | нет | `http://localhost:3006` | Upstream feedback |
 | `USER_PROFILE_URL` | нет | `http://localhost:3007` | Upstream user-profile |
-| `SETTINGS_URL` | нет | `http://localhost:3008` | Upstream settings |
+| `SCALAR_CONFIG_URL` | нет | `http://localhost:3008` | Upstream settings |
 | `FORUM_URL` | нет | `http://localhost:3009` | Upstream forum |
 | `NOTIFICATIONS_URL` | нет | `http://localhost:3010` | Upstream notifications |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
@@ -113,17 +113,17 @@
 | `PORT` | нет | — | `3001` | HTTP |
 | `DATABASE_URL` | **да** | `billing` | см. платформа | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | см. платформа | Events: `billing.*` |
-| `FINANCIAL_POLICY_URL` | нет | — | `http://localhost:3002` | Проверка тарифов |
+| `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Проверка тарифов |
 | `SENTRY_DSN` | **да** | — | — | Опционально |
 
 ---
 
-## 📋 financial-policy (`services/financial-policy`) — порт 3002
+## 📋 plan-config (`services/plan-config`) — порт 3002
 
 | Переменная | Секрет | Schema | Default | Описание |
 |------------|--------|--------|---------|----------|
 | `PORT` | нет | — | `3002` | HTTP |
-| `DATABASE_URL` | **да** | `financial_policy` | см. платформа | PostgreSQL |
+| `DATABASE_URL` | **да** | `plan_config` | см. платформа | PostgreSQL |
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Списания / подписки |
 | `SENTRY_DSN` | **да** | — | — | Опционально |
 
@@ -137,7 +137,7 @@
 | `DATABASE_URL` | **да** | `auction` | см. платформа | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | см. платформа | `auction.completed`, `bid.placed` |
 | `REDIS_URL` | **да** | — | см. платформа | Live bids cache |
-| `FINANCIAL_POLICY_URL` | нет | — | `http://localhost:3002` | Лимиты / фичи |
+| `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты / фичи |
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Платные фичи (promotion) |
 | `RATING_URL` | нет | — | `http://localhost:3005` | Проверка бана |
 | `MINIO_*` | см. платформа | bucket `auction-images` | — | Фото лотов |
@@ -152,7 +152,7 @@
 | `PORT` | нет | — | `3004` | HTTP |
 | `DATABASE_URL` | **да** | `auction_subscriptions` | см. платформа | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | см. платформа | События auction |
-| `FINANCIAL_POLICY_URL` | нет | — | `http://localhost:3002` | Лимиты подписок |
+| `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты подписок |
 | `NOTIFICATIONS_URL` | нет | — | `http://localhost:3010` | Триггер уведомлений |
 | `SENTRY_DSN` | **да** | — | — | Опционально |
 
@@ -165,7 +165,7 @@
 | `PORT` | нет | — | `3005` |
 | `DATABASE_URL` | **да** | `rating` | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | `rating.updated`, `feedback.submitted` |
-| `SETTINGS_URL` | нет | — | Параметры формулы рейтинга |
+| `SCALAR_CONFIG_URL` | нет | — | Параметры формулы рейтинга |
 
 ---
 
@@ -191,12 +191,12 @@
 
 ---
 
-## ⚙️ settings — порт 3008 _(docs)_
+## ⚙️ scalar-config — порт 3008 _(docs)_
 
 | Переменная | Секрет | Schema | Описание |
 |------------|--------|--------|----------|
 | `PORT` | нет | — | `3008` |
-| `DATABASE_URL` | **да** | `settings` | PostgreSQL |
+| `DATABASE_URL` | **да** | `scalar-config` | PostgreSQL |
 | `REDIS_URL` | **да** | — | Кэш `settings:{domain}:latest` |
 
 ---
@@ -235,7 +235,7 @@
 | `PORT` | нет | — | `3011` |
 | `DATABASE_URL` | **да** | `marketplace` | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | Order events |
-| `FINANCIAL_POLICY_URL` | нет | — | Лимиты |
+| `PLAN_CONFIG_URL` | нет | — | Лимиты |
 | `BILLING_URL` | нет | — | Оплата |
 | `MINIO_*` | **да** | bucket `marketplace-portfolio` | Портфолио |
 

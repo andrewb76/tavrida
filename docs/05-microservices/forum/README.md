@@ -10,7 +10,7 @@
 - Сущности: `topic`, `comment` ([ADR-005](../../03-architecture/adr/005-forum-terminology.md))
 - **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
 - **Теги:** [tags.md](./tags.md)
-- Интеграция: rating (karma), billing (Pro-реакции), financial-policy (лимиты)
+- Интеграция: rating (karma), billing (Pro-реакции), plan-config (лимиты)
 - Realtime: Redis → BFF WS `forum:{topicId}`
 
 ## 📖 Термины
@@ -70,9 +70,9 @@
 
 Без `parentId` — корневый комментарий к теме. Родитель **обязан** принадлежать той же теме.
 
-**Ограничения по тарифу** (не в scaffold): `forum.author.10reply.nestedEnabled` — вложенные ответы; `forum.author.03thread.depthMax` — макс. глубина. См. [requirements](./requirements/README.md#-ветки-комментариев).
+**Ограничения по тарифу** (не в scaffold): `forum.author.reply.nestedEnabled` — вложенные ответы; `forum.author.thread.depthMax` — макс. глубина. См. [requirements](./requirements/README.md#-ветки-комментариев).
 
-## ⚙️ Переменные settings
+## ⚙️ Переменные scalar-config
 
 | Ключ | Описание |
 |------|----------|
@@ -80,7 +80,7 @@
 | `forum.editWindowMinutes` | Окно редактирования |
 | `forum.reaction.karmaWeights` | Веса для rating karma |
 
-## 💳 Переменные financial-policy
+## 💳 Переменные plan-config
 
 См. registry секция `forum` — `postsPerDay`, `nestedRepliesEnabled`, `pushNotifications`, …
 
@@ -98,7 +98,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 
 | Сервис | Протокол |
 |--------|----------|
-| financial-policy | limits, features |
+| plan-config | limits, features |
 | billing | платные реакции |
 | rating | karma, check-ban |
 | notifications | replies, digest |
@@ -119,7 +119,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 | `DATABASE_URL` | да | schema `forum` |
 | `RABBITMQ_URL` | да | Events |
 | `REDIS_URL` | да | WS fan-out |
-| `FINANCIAL_POLICY_URL` | да | Limits |
+| `PLAN_CONFIG_URL` | да | Limits |
 | `BILLING_URL` | да | Pro reactions |
 | `RATING_URL` | да | check-ban, karma |
 | `MINIO_*` | да | forum-attachments |

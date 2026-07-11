@@ -38,14 +38,16 @@
 |----------|--------|--------|
 | Префикс domain | **snake_case домена** (без дефисов) | `forum.`, `auction.`, `subscriptions.` |
 | Scalar key | `{domain}.{group}.{name}` (min 2 сегмента) | `rating.bonus.earlyHours` |
-| Plan variable | `{domain}.{facet}.{NNgroup}.{leaf}` (min **3** сегмента) | `auction.seller.01lot.activeMax` |
+| Plan variable | `{domain}.{facet}.{group}.{leaf}` (min **3** сегмента) | `auction.seller.lot.activeMax` |
 | Facet | `seller`, `bidder`, `author`, `member`, … | роль в домене |
-| NN prefix | `01`–`99` в групповом сегменте | `01lot`, `02bid` — порядок в admin UI |
+| Admin order | `sortOrder` в register/sync | не в ключе |
 | valueType (plan) | `limit` \| `feature` \| `enum` \| `price` | `price` = бывший charge_target |
 
-**Не использовать** дефис в ключе: ~~`auction-subscriptions.categoriesMax`~~ → `subscriptions.member.01auction.categoryMax`.
+**Не использовать** дефис в ключе: ~~`auction-subscriptions.categoriesMax`~~ → `subscriptions.member.auction.categoryMax`.
 
-**Legacy:** ~~`auction.activeAuctions`~~ → `auction.bidder.01participation.activeMax`; ~~`registrationStatus: orphaned`~~ → `syncStatus: stale`.
+**Не использовать** числовой префикс в ключе: ~~`auction.seller.01lot.activeMax`~~ → `auction.seller.lot.activeMax`.
+
+**Legacy:** ~~`auction.activeAuctions`~~ → `auction.bidder.participation.activeMax`; ~~`registrationStatus: orphaned`~~ → `syncStatus: stale`.
 
 ---
 
@@ -95,8 +97,9 @@
 | `parameter`, `Parameter` | plan variable |
 | `registrationStatus: orphaned` | `syncStatus: stale` |
 | `charge_target` + `plan_charge_price` | plan variable `valueType: price` |
-| `auction.activeAuctions` | `auction.bidder.01participation.activeMax` |
-| `auction.sellerActiveLots` | `auction.seller.01lot.activeMax` |
+| `auction.activeAuctions` | `auction.bidder.participation.activeMax` |
+| `auction.sellerActiveLots` | `auction.seller.lot.activeMax` |
+| `auction.seller.01lot.activeMax` (numeric draft) | `auction.seller.lot.activeMax` |
 
 ---
 

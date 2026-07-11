@@ -144,7 +144,7 @@ wss://{host}/ws/v1?token={jwt}
 - **Вход** через **Logto** (OIDC, Authorization Code + PKCE), SDK `@logto/vue`.
 - JWT хранится и обновляется SDK; для API берётся `getAccessToken()`.
 - Настройка Cloud / self-host: [logto-setup.md](./logto-setup.md).
-- Router-guard'ы: `requireMember` (нет JWT → лендинг), `requireAuth`, проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [financial-policy](../05-microservices/financial-policy/README.md)).
+- Router-guard'ы: `requireMember` (нет JWT → лендинг), `requireAuth`, проверка тарифа для Pro-фич (мягкая — UI показывает upgrade-подсказку, авторитетная проверка на бэке через [plan-config](../05-microservices/plan-config/README.md)).
 - CORS/rate-limit — на стороне BFF; фронт корректно обрабатывает `429`.
 - Клиент **не** содержит бизнес-лимитов как источника правды — только UX-подсказки; ограничения enforce'ит бэк.
 
