@@ -3,8 +3,9 @@ import AttachmentBadge from '@/components/media/AttachmentBadge.vue';
 import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
+import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
-import { createComment, type CommentTreeNode, type ForumComment } from '@/services/forum';
+import { createComment, forumAuthorLabel, type CommentTreeNode, type ForumComment } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
 import { ref } from 'vue';
 
@@ -54,6 +55,28 @@ async function submitReply() {
     :style="{ marginLeft: `${depth * 1.25}rem` }"
   >
     <article class="forum-comment__card">
+      <header class="forum-comment__header">
+        <UserAvatar
+          :avatar-url="node.author.avatarUrl"
+          :label="forumAuthorLabel(node.author)"
+          :user-id="node.author.userId"
+          size="sm"
+        />
+        <div class="forum-comment__header-text">
+          <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
+          <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
+        </div>
+        <UiButton
+          intent="ghost"
+          size="sm"
+          type="button"
+          class="forum-comment__reply-btn"
+          @click="showReply = !showReply"
+        >
+          {{ showReply ? 'Отмена' : 'Ответить' }}
+        </UiButton>
+      </header>
+
       <MarkdownBody :body="node.body" />
       <AttachmentBadge
         v-if="node.attachments?.length"
@@ -63,17 +86,6 @@ async function submitReply() {
           <AttachmentList :attachments="node.attachments" />
         </template>
       </AttachmentBadge>
-      <footer class="forum-comment__meta">
-        <small>{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</small>
-        <UiButton
-          intent="ghost"
-          size="sm"
-          type="button"
-          @click="showReply = !showReply"
-        >
-          {{ showReply ? 'Отмена' : 'Ответить' }}
-        </UiButton>
-      </footer>
 
       <form
         v-if="showReply"
@@ -157,13 +169,33 @@ async function submitReply() {
   background: var(--color-surface, #fff);
 }
 
-.forum-comment__meta {
+.forum-comment__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.forum-comment__header-text {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.forum-comment__author {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
+.forum-comment__time {
+  font-size: 0.75rem;
   color: var(--color-text-muted, #666);
-  margin-top: 0.5rem;
+}
+
+.forum-comment__reply-btn {
+  margin-left: auto;
 }
 
 .forum-comment__children {

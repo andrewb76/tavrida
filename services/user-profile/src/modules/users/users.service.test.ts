@@ -103,4 +103,35 @@ describe('UsersService', () => {
     assert.equal(store.length, 1);
     assert.ok(store[0]?.logtoSyncedAt);
   });
+
+  it('getPublicProfile returns public fields only', async () => {
+    const { service } = createHarness([
+      {
+        userId: 'user-public',
+        displayName: 'Alice',
+        email: 'secret@example.com',
+        username: 'alice',
+        avatarUrl: 'https://cdn.example/a.png',
+        primaryPhone: '+7999',
+        isSuspended: false,
+        deletedAt: null,
+        logtoSyncedAt: new Date('2026-01-01'),
+        inviterId: null,
+        invitationAcceptedAt: null,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-02'),
+      } as UserProfileEntity,
+    ]);
+
+    const result = await service.getPublicProfile('user-public');
+    assert.deepEqual(result, {
+      userId: 'user-public',
+      displayName: 'Alice',
+      username: 'alice',
+      avatarUrl: 'https://cdn.example/a.png',
+      isSuspended: false,
+      memberSince: '2026-01-01T00:00:00.000Z',
+    });
+    assert.equal('email' in result, false);
+  });
 });

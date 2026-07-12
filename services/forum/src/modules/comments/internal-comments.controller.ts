@@ -82,9 +82,7 @@ export class InternalCommentsController {
   create(@Param('topicId') topicId: string, @Body() body: CreateCommentRequestDto) {
     return this.comments.create({
       topicId,
-      authorId: body.authorId,
-      body: body.body,
-      parentId: body.parentId,
+      ...body,
     });
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 
 export type LogtoUserSyncInput = {
@@ -38,6 +38,17 @@ export class UsersService {
     };
   }
 
+  private toPublicDto(row: UserProfileEntity) {
+    return {
+      userId: row.userId,
+      displayName: row.displayName,
+      username: row.username,
+      avatarUrl: row.avatarUrl,
+      isSuspended: row.isSuspended,
+      memberSince: row.createdAt.toISOString(),
+    };
+  }
+
   async list(input: { offset?: number; limit?: number; q?: string; includeDeleted?: boolean }) {
     const offset = Math.max(input.offset ?? 0, 0);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 100);
@@ -72,6 +83,27 @@ export class UsersService {
     const row = await this.profiles.findOne({ where: { userId } });
     if (!row) return null;
     return this.toDto(row);
+  }
+
+  async getPublicProfile(userId: string) {
+    const row = await this.profiles.findOne({ where: { userId } });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ type: 'not-found', detail: `User ${userId} not found` });
+    }
+    return this.toPublicDto(row);
+  }
+
+  async lookupByIds(userIds: string[]) {
+    const ids = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))].slice(0, 100);
+    if (!ids.length) {
+      return { data: [] as ReturnType<UsersService['toDto']>[] };
+    }
+
+    const rows = await this.profiles.find({
+      where: { userId: In(ids), deletedAt: IsNull() },
+    });
+
+    return { data: rows.map((row) => this.toDto(row)) };
   }
 
   async ensure(userId: string) {

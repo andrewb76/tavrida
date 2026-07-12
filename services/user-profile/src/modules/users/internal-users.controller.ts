@@ -1,5 +1,8 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsOptional,
   IsString,
@@ -27,6 +30,14 @@ class EnsureUserBody {
   @IsString()
   @MinLength(1)
   userId!: string;
+}
+
+class LookupUsersBody {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  ids!: string[];
 }
 
 class SyncLogtoBody {
@@ -76,6 +87,16 @@ export class InternalUsersController {
   @Post('ensure')
   ensure(@Body() body: EnsureUserBody) {
     return this.users.ensure(body.userId);
+  }
+
+  @Post('lookup')
+  lookup(@Body() body: LookupUsersBody) {
+    return this.users.lookupByIds(body.ids);
+  }
+
+  @Get(':userId/public')
+  getPublic(@Param('userId') userId: string) {
+    return this.users.getPublicProfile(userId);
   }
 
   @Get(':userId')

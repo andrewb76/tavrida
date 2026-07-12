@@ -9,6 +9,7 @@ import { OracleModule } from './modules/oracle/oracle.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ChargesModule } from './modules/charges/charges.module';
 import { PlanConfigAdminModule } from './modules/plan-config-admin/plan-config-admin.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { ScalarConfigModule } from './modules/scalar-config/scalar-config.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
@@ -47,6 +48,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     AdminUsersModule,
     ChargesModule,
     PlansModule,
+    ProfileModule,
     WalletsModule,
     ForumModule,
     AuctionModule,

@@ -6,6 +6,7 @@ import {
   SEED_PLAN_VARIABLES,
   SEED_PLAN_VARIABLE_TIERS,
 } from '../../config/default-seed';
+import { LEGACY_PLAN_VARIABLE_KEY_ALIASES } from '../../config/legacy-plan-variable-keys';
 import { PlanVariableEntity } from '../../entities/plan-variable.entity';
 import { PlanVariableTierEntity } from '../../entities/plan-variable-tier.entity';
 import { PlanEntity } from '../../entities/plan.entity';
@@ -26,6 +27,7 @@ export class SeedService implements OnModuleInit {
   async onModuleInit() {
     await this.seedPlansAndVariables();
     await this.syncVariableCatalog();
+    await this.purgeLegacyPlanVariableKeys();
   }
 
   private async seedPlansAndVariables() {
@@ -142,6 +144,33 @@ export class SeedService implements OnModuleInit {
 
     if (added > 0 || updated > 0) {
       this.logger.log(`Plan variable catalog sync: +${added} new, ~${updated} labels updated`);
+    }
+  }
+
+  /** Remove numeric-prefix draft keys once canonical keys exist. */
+  private async purgeLegacyPlanVariableKeys() {
+    let removed = 0;
+
+    for (const [legacyKey, canonicalKey] of Object.entries(LEGACY_PLAN_VARIABLE_KEY_ALIASES)) {
+      const legacy = await this.variables.findOne({ where: { key: legacyKey } });
+      if (!legacy) continue;
+
+      const canonical = await this.variables.findOne({ where: { key: canonicalKey } });
+      if (canonical) {
+        await this.tiers.delete({ variableKey: legacyKey });
+        await this.variables.delete({ key: legacyKey });
+        removed += 1;
+        continue;
+      }
+
+      legacy.key = canonicalKey;
+      await this.variables.save(legacy);
+      await this.tiers.update({ variableKey: legacyKey }, { variableKey: canonicalKey });
+      removed += 1;
+    }
+
+    if (removed > 0) {
+      this.logger.log(`Purged ${removed} legacy plan variable key(s)`);
     }
   }
 }

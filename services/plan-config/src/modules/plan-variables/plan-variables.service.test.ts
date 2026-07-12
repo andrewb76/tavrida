@@ -168,6 +168,66 @@ describe('PlanVariablesService', () => {
     });
   });
 
+  describe('patchMatrix', () => {
+    it('updates tier values by plan id', async () => {
+      const variableKey = 'forum.author.attachment.countMax';
+      const { service, tiers } = createPlanVariablesHarness({
+        variables: [
+          {
+            key: variableKey,
+            service: 'forum',
+            name: 'Attachments',
+            description: '',
+            valueType: 'limit',
+            minValue: null,
+            defaultValue: null,
+            maxValue: null,
+            syncStatus: 'active',
+          },
+        ],
+        tiers: [
+          {
+            planId: 'free',
+            variableKey,
+            limitValue: 1,
+            isFeatureEnabled: false,
+            enumValues: null,
+            priceAmount: null,
+            isEnabled: true,
+          },
+          {
+            planId: 'basic',
+            variableKey,
+            limitValue: 3,
+            isFeatureEnabled: false,
+            enumValues: null,
+            priceAmount: null,
+            isEnabled: true,
+          },
+          {
+            planId: 'pro',
+            variableKey,
+            limitValue: -1,
+            isFeatureEnabled: false,
+            enumValues: null,
+            priceAmount: null,
+            isEnabled: true,
+          },
+        ],
+      });
+
+      await service.patchMatrix(variableKey, {
+        free: { limitValue: 2 },
+        basic: { limitValue: 4 },
+        pro: { limitValue: 10 },
+      });
+
+      assert.equal(tiers.find((row) => row.planId === 'free')?.limitValue, 2);
+      assert.equal(tiers.find((row) => row.planId === 'basic')?.limitValue, 4);
+      assert.equal(tiers.find((row) => row.planId === 'pro')?.limitValue, 10);
+    });
+  });
+
   describe('sync', () => {
     it('marks variables missing from manifest as stale', async () => {
       const { service, variables } = createPlanVariablesHarness({

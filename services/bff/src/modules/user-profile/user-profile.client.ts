@@ -132,6 +132,95 @@ export class UserProfileClient {
     });
   }
 
+  async lookupByIds(userIds: string[]) {
+    if (!userIds.length) {
+      return [];
+    }
+    const res = await this.request<{
+      data: Array<{
+        userId: string;
+        displayName: string | null;
+        avatarUrl: string | null;
+      }>;
+    }>('POST', '/internal/v1/users/lookup', { ids: userIds });
+    return res.data;
+  }
+
+  async getPublicProfile(userId: string) {
+    return this.request<{
+      userId: string;
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+      isSuspended: boolean;
+      memberSince: string;
+    }>('GET', `/internal/v1/users/${encodeURIComponent(userId)}/public`);
+  }
+
+  async getRatingStats(userId: string) {
+    return this.request<{
+      userId: string;
+      totalRating: number;
+      karma: number;
+      referralKarma: number;
+      referralRating: number;
+      effectiveKarma: number;
+      effectiveRating: number;
+      verifiedSales: number;
+      pendingSales: number;
+      feedbackCoverage: number | null;
+    }>('GET', `/internal/v1/ratings/${encodeURIComponent(userId)}`);
+  }
+
+  async adjustRating(
+    userId: string,
+    body: { karmaDelta?: number; ratingDelta?: number },
+  ) {
+    return this.request<{
+      userId: string;
+      totalRating: number;
+      karma: number;
+      referralKarma: number;
+      referralRating: number;
+      effectiveKarma: number;
+      effectiveRating: number;
+      verifiedSales: number;
+      pendingSales: number;
+      feedbackCoverage: number | null;
+    }>('POST', `/internal/v1/ratings/${encodeURIComponent(userId)}/adjust`, body);
+  }
+
+  async getProfileNote(ownerId: string, authorId: string) {
+    const qs = new URLSearchParams({ ownerId, authorId });
+    return this.request<{
+      id: string;
+      ownerId: string;
+      authorId: string;
+      text: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null>('GET', `/internal/v1/profile-notes?${qs}`);
+  }
+
+  async upsertProfileNote(input: { ownerId: string; authorId: string; text: string }) {
+    return this.request<{
+      id: string;
+      ownerId: string;
+      authorId: string;
+      text: string;
+      createdAt: string;
+      updatedAt: string;
+    }>('POST', '/internal/v1/profile-notes', input);
+  }
+
+  async deleteProfileNote(noteId: string, authorId: string) {
+    const qs = new URLSearchParams({ authorId });
+    return this.request<{ id: string; deleted: boolean }>(
+      'DELETE',
+      `/internal/v1/profile-notes/${encodeURIComponent(noteId)}?${qs}`,
+    );
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,

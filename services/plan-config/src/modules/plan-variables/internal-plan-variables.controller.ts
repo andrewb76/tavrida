@@ -76,8 +76,6 @@ class RegisterPlanVariableDto {
 
   @IsOptional()
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => TierValueDto)
   tierValues?: Record<string, TierValueDto>;
 }
 
@@ -96,8 +94,6 @@ class SyncPlanVariablesDto {
 
 class PatchPlanVariableMatrixDto {
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => TierValueDto)
   tierValues!: Record<string, TierValueDto>;
 }
 

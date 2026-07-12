@@ -33,9 +33,9 @@ const variableForms = reactive<
     Record<
       string,
       {
-        limitValue: string;
+        limitValue: string | number;
         isFeatureEnabled: boolean;
-        priceAmount: string;
+        priceAmount: string | number;
         isEnabled: boolean;
       }
     >
@@ -88,9 +88,9 @@ function syncVariableForms(rows: PlanVariable[]) {
     const entry: Record<
       string,
       {
-        limitValue: string;
+        limitValue: string | number;
         isFeatureEnabled: boolean;
-        priceAmount: string;
+        priceAmount: string | number;
         isEnabled: boolean;
       }
     > = {};
@@ -186,7 +186,7 @@ async function saveVariable(variable: PlanVariable) {
           isEnabled: cell.isEnabled,
         };
       } else {
-        const raw = cell.limitValue.trim();
+        const raw = String(cell.limitValue ?? '').trim();
         tierValues[planId] = {
           limitValue: raw === '' ? null : Number(raw),
         };
@@ -371,32 +371,47 @@ onMounted(() => {
         </nav>
 
         <div
-          v-for="{ group, rows } in groupedVariables"
-          :key="group"
-          class="space-y-2"
+          v-if="groupedVariables.length"
+          class="overflow-x-auto rounded-lg border border-border"
         >
-          <h4 class="text-sm font-medium text-text-muted">
-            {{ group }}
-          </h4>
-
-          <div class="overflow-x-auto rounded-lg border border-border">
-            <table class="min-w-full text-sm">
-              <thead class="bg-bg text-left text-text-muted">
-                <tr>
-                  <th class="px-3 py-2 font-medium">
-                    Переменная
-                  </th>
-                  <th
-                    v-for="col in planColumns"
-                    :key="col.id"
-                    class="px-3 py-2 font-medium"
+          <table class="w-full table-fixed text-sm">
+            <colgroup>
+              <col class="w-[40%]">
+              <col
+                v-for="col in planColumns"
+                :key="`col-${col.id}`"
+                class="w-[14%]"
+              >
+              <col class="w-[8rem]">
+            </colgroup>
+            <thead class="bg-bg text-left text-text-muted">
+              <tr>
+                <th class="px-3 py-2 font-medium">
+                  Переменная
+                </th>
+                <th
+                  v-for="col in planColumns"
+                  :key="col.id"
+                  class="px-3 py-2 font-medium"
+                >
+                  {{ col.title }}
+                </th>
+                <th class="px-3 py-2 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              <template
+                v-for="{ group, rows } in groupedVariables"
+                :key="group"
+              >
+                <tr class="border-t border-border bg-bg/70">
+                  <td
+                    :colspan="planColumns.length + 2"
+                    class="px-3 py-1.5 text-xs font-medium tracking-wide text-text-muted"
                   >
-                    {{ col.title }}
-                  </th>
-                  <th class="px-3 py-2 font-medium" />
+                    {{ group }}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
                 <tr
                   v-for="variable in rows"
                   :key="variable.key"
@@ -414,7 +429,7 @@ onMounted(() => {
                         Зависший
                       </span>
                     </div>
-                    <div class="font-mono text-xs text-text-muted">
+                    <div class="truncate font-mono text-xs text-text-muted">
                       {{ variable.key }}
                     </div>
                     <div class="text-xs text-text-muted">
@@ -446,7 +461,7 @@ onMounted(() => {
                           type="number"
                           min="0"
                           step="1"
-                          class="w-24 rounded-md border border-border bg-bg px-2 py-1"
+                          class="w-full max-w-24 rounded-md border border-border bg-bg px-2 py-1"
                         >
                         <label class="flex items-center gap-1 text-xs text-text-muted">
                           <input
@@ -462,7 +477,7 @@ onMounted(() => {
                       <input
                         v-model="variableForms[variable.key][col.id].limitValue"
                         type="number"
-                        class="w-24 rounded-md border border-border bg-bg px-2 py-1"
+                        class="w-full max-w-24 rounded-md border border-border bg-bg px-2 py-1"
                         :placeholder="formatLimitValue(null)"
                       >
                     </template>
@@ -487,13 +502,13 @@ onMounted(() => {
                     </UiButton>
                   </td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
+              </template>
+            </tbody>
+          </table>
         </div>
 
         <p
-          v-if="!groupedVariables.length"
+          v-else
           class="text-sm text-text-muted"
         >
           Нет plan variables для выбранного сервиса.

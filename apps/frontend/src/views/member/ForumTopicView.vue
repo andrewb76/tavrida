@@ -4,10 +4,12 @@ import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   buildCommentTree,
   createComment,
+  forumAuthorLabel,
   getTopic,
   listComments,
   type ForumComment,
@@ -94,10 +96,19 @@ async function submitTopicComment() {
 
     <template v-else-if="topic">
       <article class="forum-topic__head">
+        <header class="forum-topic__author-row">
+          <UserAvatar
+            :avatar-url="topic.author.avatarUrl"
+            :label="forumAuthorLabel(topic.author)"
+            :user-id="topic.author.userId"
+            size="md"
+          />
+          <div class="forum-topic__author-text">
+            <span class="forum-topic__author-name">{{ forumAuthorLabel(topic.author) }}</span>
+            <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
+          </div>
+        </header>
         <h1>{{ topic.title }}</h1>
-        <p class="forum-topic__meta">
-          {{ new Date(topic.createdAt).toLocaleString('ru-RU') }}
-        </p>
         <MarkdownBody :body="topic.body" />
         <AttachmentBadge
           v-if="topic.attachments?.length"
@@ -200,8 +211,27 @@ async function submitTopicComment() {
   padding: 1rem;
 }
 
+.forum-topic__author-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.forum-topic__author-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.forum-topic__author-name {
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
 .forum-topic__meta {
   color: var(--color-text-muted, #666);
+  font-size: 0.875rem;
 }
 
 .forum-topic__comment-list {

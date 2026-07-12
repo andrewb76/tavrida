@@ -8,7 +8,6 @@ import {
   IsString,
   Min,
   MinLength,
-  ValidateNested,
 } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -67,8 +66,6 @@ class TierValueBodyDto {
 
 class PatchVariableBodyDto {
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => TierValueBodyDto)
   tierValues!: Record<string, TierValueBodyDto>;
 }
 

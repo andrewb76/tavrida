@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { ForumClient } from './forum.client';
+import { ForumAuthorsService } from './forum-authors.service';
 
 class MediaAttachmentDto {
   @IsString()
@@ -99,6 +100,7 @@ class UpsertReactionDto {
 export class ForumController {
   constructor(
     private readonly forum: ForumClient,
+    private readonly authors: ForumAuthorsService,
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
   ) {}
@@ -149,8 +151,9 @@ export class ForumController {
   }
 
   @Get('topics/:id')
-  getTopic(@Param('id') id: string) {
-    return this.forum.getTopic(id);
+  async getTopic(@Param('id') id: string) {
+    const topic = await this.forum.getTopic(id);
+    return this.authors.enrichOne(topic as { authorId: string });
   }
 
   @Post('topics')
@@ -158,17 +161,21 @@ export class ForumController {
   async createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
-    return this.forum.createTopic({
-      ...body,
-      authorId: user.sub,
-      maxAttachmentCount: limits.countMax,
-      maxAttachmentSizeBytes: limits.sizeMaxBytes,
-    });
+    return this.authors.enrichOne(
+      await this.forum.createTopic({
+        ...body,
+        authorId: user.sub,
+        maxAttachmentCount: limits.countMax,
+        maxAttachmentSizeBytes: limits.sizeMaxBytes,
+      }) as { authorId: string },
+    );
   }
 
   @Get('topics/:id/comments')
-  listComments(@Param('id') topicId: string) {
-    return this.forum.listComments(topicId);
+  async listComments(@Param('id') topicId: string) {
+    const res = await this.forum.listComments(topicId);
+    const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
+    return { data };
   }
 
   @Post('topics/:id/comments')
@@ -180,12 +187,14 @@ export class ForumController {
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
-    return this.forum.createComment(topicId, {
-      ...body,
-      authorId: user.sub,
-      maxAttachmentCount: limits.countMax,
-      maxAttachmentSizeBytes: limits.sizeMaxBytes,
-    });
+    return this.authors.enrichOne(
+      await this.forum.createComment(topicId, {
+        ...body,
+        authorId: user.sub,
+        maxAttachmentCount: limits.countMax,
+        maxAttachmentSizeBytes: limits.sizeMaxBytes,
+      }) as { authorId: string },
+    );
   }
 
   @Get('reactions')

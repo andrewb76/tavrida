@@ -1,13 +1,15 @@
 import { requireBearerToken } from './apiAuth';
 import {
   buildCommentTree,
+  forumAuthorLabel,
   type CommentTreeNode,
+  type ForumAuthor,
   type ForumComment,
 } from './forum-tree';
 
 import type { MediaAttachment } from './media';
 
-export { buildCommentTree, type CommentTreeNode, type ForumComment };
+export { buildCommentTree, forumAuthorLabel, type CommentTreeNode, type ForumAuthor, type ForumComment };
 
 export type CategoryNode = {
   id: string;
@@ -35,6 +37,7 @@ export type TopicSummary = {
 export type TopicDetail = TopicSummary & {
   body: string;
   attachments: MediaAttachment[];
+  author: ForumAuthor;
 };
 
 function apiBase(): string {

@@ -6,9 +6,11 @@ import { buildCommentTree, type ForumComment } from './forum-tree.js';
 function comment(
   partial: Partial<ForumComment> & Pick<ForumComment, 'id' | 'body'>,
 ): ForumComment {
+  const authorId = partial.authorId ?? 'user-1';
   return {
     topicId: 'topic-1',
-    authorId: 'user-1',
+    authorId,
+    author: partial.author ?? { userId: authorId, displayName: 'Участник', avatarUrl: null },
     parentId: null,
     attachments: [],
     promotedTopicId: null,
