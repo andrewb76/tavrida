@@ -5,6 +5,7 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { MediaAttachment } from '@tavrida/object-storage';
 
 @Entity({ schema: 'forum', name: 'comment' })
 export class CommentEntity {
@@ -22,6 +23,9 @@ export class CommentEntity {
 
   @Column('text')
   body!: string;
+
+  @Column('jsonb', { default: () => "'[]'" })
+  attachments!: MediaAttachment[];
 
   @Column('uuid', { name: 'promoted_topic_id', nullable: true })
   promotedTopicId!: string | null;

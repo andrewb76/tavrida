@@ -1,15 +1,48 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import {
+  assertMarkdownMediaUrlsAllowed,
+  assertMediaAttachmentsAllowed,
+  type MediaAttachment,
+} from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { MediaLimitsService } from '../media/media-limits.service';
+import { MediaStorageService } from '../media/media-storage.service';
 import { ForumClient } from './forum.client';
+
+class MediaAttachmentDto {
+  @IsString()
+  @MinLength(1)
+  url!: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  filename!: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  contentType!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  sizeBytes!: number;
+}
 
 class CreateTopicDto {
   @IsUUID()
@@ -24,6 +57,12 @@ class CreateTopicDto {
   @MinLength(1)
   @MaxLength(10000)
   body!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaAttachmentDto)
+  attachments?: MediaAttachmentDto[];
 }
 
 class CreateCommentDto {
@@ -35,6 +74,12 @@ class CreateCommentDto {
   @IsOptional()
   @IsUUID()
   parentId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaAttachmentDto)
+  attachments?: MediaAttachmentDto[];
 }
 
 class UpsertReactionDto {
@@ -52,7 +97,43 @@ class UpsertReactionDto {
 
 @Controller('forum')
 export class ForumController {
-  constructor(private readonly forum: ForumClient) {}
+  constructor(
+    private readonly forum: ForumClient,
+    private readonly mediaLimits: MediaLimitsService,
+    private readonly mediaStorage: MediaStorageService,
+  ) {}
+
+  private validateForumMedia(
+    userId: string,
+    body: string,
+    attachments: MediaAttachment[] | undefined,
+    limits: { countMax: number; sizeMaxBytes: number },
+  ) {
+    try {
+      assertMediaAttachmentsAllowed({
+        attachments: attachments ?? [],
+        userId,
+        domain: 'forum',
+        publicBaseUrl: this.mediaStorage.publicBaseUrl(),
+        maxCount: limits.countMax,
+        maxSizeBytes: limits.sizeMaxBytes,
+      });
+      if (body.includes('![')) {
+        assertMarkdownMediaUrlsAllowed({
+          body,
+          userId,
+          domain: 'forum',
+          publicBaseUrl: this.mediaStorage.publicBaseUrl(),
+        });
+      }
+    } catch (err) {
+      const detail =
+        err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
+          ? err.detail
+          : 'Недопустимые вложения';
+      throw new BadRequestException({ type: 'validation', detail });
+    }
+  }
 
   @Get('categories')
   listCategories() {
@@ -74,8 +155,15 @@ export class ForumController {
 
   @Post('topics')
   @UseGuards(JwtAuthGuard)
-  createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
-    return this.forum.createTopic({ ...body, authorId: user.sub });
+  async createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
+    const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
+    this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    return this.forum.createTopic({
+      ...body,
+      authorId: user.sub,
+      maxAttachmentCount: limits.countMax,
+      maxAttachmentSizeBytes: limits.sizeMaxBytes,
+    });
   }
 
   @Get('topics/:id/comments')
@@ -85,12 +173,19 @@ export class ForumController {
 
   @Post('topics/:id/comments')
   @UseGuards(JwtAuthGuard)
-  createComment(
+  async createComment(
     @CurrentUser() user: AuthUser,
     @Param('id') topicId: string,
     @Body() body: CreateCommentDto,
   ) {
-    return this.forum.createComment(topicId, { ...body, authorId: user.sub });
+    const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
+    this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    return this.forum.createComment(topicId, {
+      ...body,
+      authorId: user.sub,
+      maxAttachmentCount: limits.countMax,
+      maxAttachmentSizeBytes: limits.sizeMaxBytes,
+    });
   }
 
   @Get('reactions')

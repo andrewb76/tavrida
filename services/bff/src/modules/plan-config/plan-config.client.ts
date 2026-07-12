@@ -158,6 +158,16 @@ export class PlanConfigClient {
     }>('POST', '/internal/v1/limits/check', body);
   }
 
+  async resolveLimitValue(userId: string, variableKey: string): Promise<number | null> {
+    const result = await this.checkLimit({
+      userId,
+      variableKey,
+      requestedValue: 0,
+      currentUsage: 0,
+    });
+    return result.limit;
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,

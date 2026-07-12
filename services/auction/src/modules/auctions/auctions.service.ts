@@ -71,7 +71,7 @@ export class AuctionsService {
       startsAt,
       endsAt,
       promotedUntil,
-      images: (input.images ?? []).slice(0, 8),
+      images: (input.images ?? []).slice(0, input.maxImageCount ?? 8),
       bidCount: 0,
       hasExpertAppraisal: false,
     });

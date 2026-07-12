@@ -5,6 +5,7 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { MediaAttachment } from '@tavrida/object-storage';
 
 @Entity({ schema: 'forum', name: 'topic' })
 export class TopicEntity {
@@ -22,6 +23,9 @@ export class TopicEntity {
 
   @Column('text')
   body!: string;
+
+  @Column('jsonb', { default: () => "'[]'" })
+  attachments!: MediaAttachment[];
 
   @Column('boolean', { name: 'is_pinned', default: false })
   isPinned!: boolean;

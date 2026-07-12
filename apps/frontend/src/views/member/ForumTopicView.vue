@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import AttachmentBadge from '@/components/media/AttachmentBadge.vue';
+import AttachmentList from '@/components/media/AttachmentList.vue';
+import MarkdownBody from '@/components/media/MarkdownBody.vue';
+import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   buildCommentTree,
   createComment,
@@ -25,6 +30,8 @@ const commentTree = computed(() => buildCommentTree(comments.value));
 const commentBody = ref('');
 const posting = ref(false);
 const postError = ref<string | null>(null);
+const commentAttachmentsExpanded = ref(false);
+const commentUpload = useMediaUpload('forum');
 
 onMounted(load);
 
@@ -54,9 +61,14 @@ async function submitTopicComment() {
   posting.value = true;
   postError.value = null;
   try {
-    const created = await createComment(topicId.value, { body: commentBody.value.trim() });
+    const created = await createComment(topicId.value, {
+      body: commentBody.value.trim(),
+      attachments: commentUpload.readyAttachments.value,
+    });
     onCommentCreated(created);
     commentBody.value = '';
+    commentUpload.reset();
+    commentAttachmentsExpanded.value = false;
   } catch (e) {
     postError.value = e instanceof Error ? e.message : 'Не удалось отправить';
   } finally {
@@ -86,9 +98,15 @@ async function submitTopicComment() {
         <p class="forum-topic__meta">
           {{ new Date(topic.createdAt).toLocaleString('ru-RU') }}
         </p>
-        <div class="forum-topic__body">
-          {{ topic.body }}
-        </div>
+        <MarkdownBody :body="topic.body" />
+        <AttachmentBadge
+          v-if="topic.attachments?.length"
+          :count="topic.attachments.length"
+        >
+          <template #list>
+            <AttachmentList :attachments="topic.attachments" />
+          </template>
+        </AttachmentBadge>
       </article>
 
       <section class="forum-topic__comments">
@@ -126,6 +144,30 @@ async function submitTopicComment() {
               required
             />
           </label>
+
+          <div class="forum-topic__attachments">
+            <button
+              type="button"
+              class="forum-topic__attachments-toggle"
+              @click="commentAttachmentsExpanded = !commentAttachmentsExpanded"
+            >
+            Вложения
+            <span
+              v-if="commentUpload.count.value > 0"
+            >📎 {{ commentUpload.count.value }}</span>
+            <span>{{ commentAttachmentsExpanded ? '▼' : '▶' }}</span>
+            </button>
+            <div v-if="commentAttachmentsExpanded">
+              <MediaUploader
+                :items="commentUpload.items.value"
+                :accept="commentUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="commentUpload.canAddMore.value"
+                @select="commentUpload.addFiles($event)"
+                @remove="commentUpload.removeItem"
+              />
+            </div>
+          </div>
+
           <p
             v-if="postError"
             class="forum-topic__error"
@@ -162,10 +204,6 @@ async function submitTopicComment() {
   color: var(--color-text-muted, #666);
 }
 
-.forum-topic__body {
-  white-space: pre-wrap;
-}
-
 .forum-topic__comment-list {
   list-style: none;
   margin: 0;
@@ -187,6 +225,22 @@ async function submitTopicComment() {
 .forum-topic__form textarea {
   width: 100%;
   margin-top: 0.25rem;
+}
+
+.forum-topic__attachments {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.forum-topic__attachments-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
 }
 
 .forum-topic__error {

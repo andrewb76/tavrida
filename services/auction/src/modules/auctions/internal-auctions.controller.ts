@@ -132,6 +132,16 @@ class CreateAuctionDto {
   @IsOptional()
   @IsIn(['ENGLISH', 'DUTCH'], { each: true })
   allowedTypes?: AuctionType[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  maxImageCount?: number;
+
+  @IsOptional()
+  @IsString()
+  mediaPublicBaseUrl?: string;
 }
 
 @Controller('internal/v1/auctions')

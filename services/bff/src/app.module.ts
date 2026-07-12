@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { resolve } from 'node:path';
 import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
@@ -15,6 +16,8 @@ import { ForumModule } from './modules/forum/forum.module';
 import { AuctionModule } from './modules/auction/auction.module';
 import { KetoModule } from './modules/keto/keto.module';
 import { LogtoWebhooksModule } from './modules/logto-webhooks/logto-webhooks.module';
+import { MediaModule } from './modules/media/media.module';
+import { MediaUploadIntentEntity } from './modules/media/media-upload-intent.entity';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -23,6 +26,17 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [repoRootEnv('.env.local'), repoRootEnv('.env')],
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST ?? 'localhost',
+      port: Number(process.env.DB_PORT ?? 5432),
+      username: process.env.DB_USER ?? 'postgres',
+      password: process.env.DB_PASSWORD ?? 'postgres',
+      database: process.env.DB_NAME ?? 'tavrida_lot',
+      schema: 'bff',
+      entities: [MediaUploadIntentEntity],
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
     KetoModule,
     MeModule,
@@ -36,6 +50,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     WalletsModule,
     ForumModule,
     AuctionModule,
+    MediaModule,
     LogtoWebhooksModule,
   ],
   controllers: [HealthController],

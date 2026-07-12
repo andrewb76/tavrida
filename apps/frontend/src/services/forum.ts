@@ -5,6 +5,8 @@ import {
   type ForumComment,
 } from './forum-tree';
 
+import type { MediaAttachment } from './media';
+
 export { buildCommentTree, type CommentTreeNode, type ForumComment };
 
 export type CategoryNode = {
@@ -32,6 +34,7 @@ export type TopicSummary = {
 
 export type TopicDetail = TopicSummary & {
   body: string;
+  attachments: MediaAttachment[];
 };
 
 function apiBase(): string {
@@ -63,6 +66,7 @@ export async function createTopic(input: {
   categoryId: string;
   title: string;
   body: string;
+  attachments?: MediaAttachment[];
 }): Promise<TopicDetail> {
   const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics`, {
@@ -89,7 +93,7 @@ export async function listComments(topicId: string): Promise<ForumComment[]> {
 
 export async function createComment(
   topicId: string,
-  input: { body: string; parentId?: string },
+  input: { body: string; parentId?: string; attachments?: MediaAttachment[] },
 ): Promise<ForumComment> {
   const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {

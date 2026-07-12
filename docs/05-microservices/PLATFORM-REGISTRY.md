@@ -171,6 +171,8 @@ Default `rating.contextWeights`:
 |------|-----|------|-------|-----|----------|
 | `auction.seller.lot.activeMax` | limit | 2 | 5 | ∞ | **Seller:** макс. **своих** лотов ACTIVE |
 | `auction.seller.lot.dailyCreateMax` | limit | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
+| `auction.seller.image.countMax` | limit | 3 | 5 | 8 | Фото на лот |
+| `auction.seller.image.sizeMaxMb` | limit | 3 | 5 | 10 | Размер одного фото (MB) |
 | `auction.seller.lot.durationMaxHours` | limit | 72 | 336 | ∞ | Макс. длительность (часы) |
 | `auction.bidder.participation.activeMax` | limit | 5 | 20 | ∞ | **Bidder:** чужих торгов со ставками одновременно |
 | `auction.bidder.bid.hourlyMax` | limit | 20 | 100 | ∞ | Ставок в час (антибот) |

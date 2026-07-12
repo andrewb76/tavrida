@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { assertMediaUrlsAllowed } from '@tavrida/object-storage';
 import type { AuctionType } from '../../entities/auction.entity';
 
 export type CreateAuctionInput = {
@@ -16,6 +17,8 @@ export type CreateAuctionInput = {
   promote?: boolean;
   maxDurationHours?: number | null;
   allowedTypes?: AuctionType[];
+  maxImageCount?: number;
+  mediaPublicBaseUrl?: string;
 };
 
 export function validateCreateAuction(input: CreateAuctionInput): void {
@@ -62,6 +65,24 @@ export function validateCreateAuction(input: CreateAuctionInput): void {
       type: 'validation',
       detail: 'Резервная цена не может быть ниже стартовой',
     });
+  }
+
+  if (input.images?.length) {
+    try {
+      assertMediaUrlsAllowed({
+        urls: input.images,
+        userId: input.sellerId,
+        domain: 'auction',
+        publicBaseUrl: input.mediaPublicBaseUrl ?? 'http://localhost:9000',
+        maxCount: input.maxImageCount ?? 8,
+      });
+    } catch (err) {
+      const detail =
+        err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
+          ? err.detail
+          : 'Недопустимые URL изображений';
+      throw new BadRequestException({ type: 'validation', detail });
+    }
   }
 }
 

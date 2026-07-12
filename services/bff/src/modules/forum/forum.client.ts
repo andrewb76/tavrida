@@ -67,6 +67,14 @@ export class ForumClient {
     authorId: string;
     title: string;
     body: string;
+    attachments?: Array<{
+      url: string;
+      filename: string;
+      contentType: string;
+      sizeBytes: number;
+    }>;
+    maxAttachmentCount?: number;
+    maxAttachmentSizeBytes?: number;
   }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/topics', input);
   }
@@ -77,7 +85,19 @@ export class ForumClient {
 
   createComment(
     topicId: string,
-    input: { authorId: string; body: string; parentId?: string },
+    input: {
+      authorId: string;
+      body: string;
+      parentId?: string;
+      attachments?: Array<{
+        url: string;
+        filename: string;
+        contentType: string;
+        sizeBytes: number;
+      }>;
+      maxAttachmentCount?: number;
+      maxAttachmentSizeBytes?: number;
+    },
   ) {
     return this.request<Record<string, unknown>>(
       'POST',

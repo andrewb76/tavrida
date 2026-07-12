@@ -5,6 +5,8 @@ import { ForbiddenException } from '@nestjs/common';
 
 import type { AuthUser } from '../auth/current-user.decorator';
 import type { PlanConfigClient } from '../plan-config/plan-config.client';
+import type { MediaLimitsService } from '../media/media-limits.service';
+import type { MediaStorageService } from '../media/media-storage.service';
 import { AuctionController } from './auction.controller';
 import type { AuctionClient } from './auction.client';
 
@@ -68,7 +70,20 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     },
   } as unknown as PlanConfigClient;
 
-  const controller = new AuctionController(auction, planConfig);
+  const mediaLimits = {
+    getLimits: async () => ({
+      countMax: 3,
+      sizeMaxMb: 3,
+      sizeMaxBytes: 3 * 1024 * 1024,
+      accept: 'image/*',
+    }),
+  } as unknown as MediaLimitsService;
+
+  const mediaStorage = {
+    publicBaseUrl: () => 'http://localhost:9000',
+  } as unknown as MediaStorageService;
+
+  const controller = new AuctionController(auction, planConfig, mediaLimits, mediaStorage);
 
   return { controller, calls };
 }
@@ -153,6 +168,7 @@ describe('AuctionController (integration)', () => {
     assert.equal(result.planId, 'free');
     assert.deepEqual(result.allowedTypes, ['ENGLISH']);
     assert.deepEqual(result.dailyLimit, { limit: 3, used: 1, remaining: 2 });
+    assert.equal(result.imageLimits?.countMax, 3);
   });
 
   it('POST create applies seller policy and forwards sellerId', async () => {

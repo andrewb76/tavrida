@@ -10,6 +10,7 @@ function comment(
     topicId: 'topic-1',
     authorId: 'user-1',
     parentId: null,
+    attachments: [],
     promotedTopicId: null,
     createdAt: '2026-01-01T10:00:00.000Z',
     updatedAt: '2026-01-01T10:00:00.000Z',

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, Body, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Post, Query, Body, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -12,9 +12,12 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { assertMediaUrlsAllowed } from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
+import { MediaLimitsService } from '../media/media-limits.service';
+import { MediaStorageService } from '../media/media-storage.service';
 import { AuctionClient } from './auction.client';
 import { applySearchPolicy, resolveSearchScope } from './auction-search-policy';
 import {
@@ -130,6 +133,8 @@ export class AuctionController {
   constructor(
     private readonly auction: AuctionClient,
     private readonly planConfig: PlanConfigClient,
+    private readonly mediaLimits: MediaLimitsService,
+    private readonly mediaStorage: MediaStorageService,
   ) {}
 
   private async resolvePlanId(userId: string) {
@@ -146,9 +151,11 @@ export class AuctionController {
     const planId = await this.resolvePlanId(user.sub);
     const options = resolveSellerPlanOptions(planId);
     const meta = await this.auction.getSellerMeta(user.sub);
+    const imageLimits = await this.mediaLimits.getLimits(user.sub, 'auction');
     return {
       ...options,
       dailyLimit: dailyLimitSummary(options, meta.lotsCreatedToday),
+      imageLimits,
     };
   }
 
@@ -158,7 +165,32 @@ export class AuctionController {
     const options = resolveSellerPlanOptions(planId);
     const meta = await this.auction.getSellerMeta(user.sub);
     const payload = applySellerCreatePolicy(body, options, meta.lotsCreatedToday);
-    return this.auction.createAuction({ ...payload, sellerId: user.sub });
+    const imageLimits = await this.mediaLimits.getLimits(user.sub, 'auction');
+
+    if (payload.images?.length) {
+      try {
+        assertMediaUrlsAllowed({
+          urls: payload.images,
+          userId: user.sub,
+          domain: 'auction',
+          publicBaseUrl: this.mediaStorage.publicBaseUrl(),
+          maxCount: imageLimits.countMax,
+        });
+      } catch (err) {
+        const detail =
+          err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
+            ? err.detail
+            : 'Недопустимые URL изображений';
+        throw new BadRequestException({ type: 'validation', detail });
+      }
+    }
+
+    return this.auction.createAuction({
+      ...payload,
+      sellerId: user.sub,
+      maxImageCount: imageLimits.countMax,
+      mediaPublicBaseUrl: this.mediaStorage.publicBaseUrl(),
+    });
   }
 
   @Get()

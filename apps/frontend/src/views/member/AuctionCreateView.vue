@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MediaUploader from '@/components/media/MediaUploader.vue';
+import { useMediaUpload } from '@/composables/useMediaUpload';
 import { auctionTypeLabel, formatMoney } from '@/services/auction-format';
 import {
   createAuction,
@@ -31,7 +33,7 @@ const endsAtLocal = ref('');
 const reserveEnabled = ref(false);
 const reservePrice = ref(1000);
 const promote = ref(false);
-const imagePreviews = ref<string[]>([]);
+const photoUpload = useMediaUpload('auction');
 
 const flatCategories = computed(() => flattenCategories(categories.value));
 
@@ -46,6 +48,12 @@ const dailyLimitLabel = computed(() => {
   const dl = options.value?.dailyLimit;
   if (!dl || dl.limit == null) return 'Без лимита на создание лотов';
   return `Осталось лотов сегодня: ${dl.remaining ?? 0} / ${dl.limit}`;
+});
+
+const photoHint = computed(() => {
+  const limits = options.value?.imageLimits ?? photoUpload.limits.value;
+  if (!limits) return 'Загрузка фото в MinIO';
+  return `До ${limits.countMax} фото, макс. ${limits.sizeMaxMb} MB каждое`;
 });
 
 function defaultSchedule() {
@@ -80,25 +88,8 @@ onMounted(async () => {
   }
 });
 
-function onPhotosSelected(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const files = input.files;
-  if (!files?.length) return;
-
-  for (const file of Array.from(files).slice(0, 4)) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        imagePreviews.value = [...imagePreviews.value, reader.result].slice(0, 4);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-  input.value = '';
-}
-
-function removePhoto(index: number) {
-  imagePreviews.value = imagePreviews.value.filter((_, i) => i !== index);
+function onPhotosSelected(files: FileList) {
+  void photoUpload.addFiles(files);
 }
 
 async function submit() {
@@ -115,7 +106,7 @@ async function submit() {
     bidIncrement: bidIncrement.value,
     startsAt: toIso(startsAtLocal.value),
     endsAt: toIso(endsAtLocal.value),
-    images: imagePreviews.value.length ? imagePreviews.value : undefined,
+    images: photoUpload.readyUrls.value.length ? photoUpload.readyUrls.value : undefined,
     promote: promote.value,
   };
 
@@ -171,37 +162,20 @@ async function submit() {
     >
       <fieldset class="create-lot__section">
         <legend>1. Фото</legend>
-        <p class="create-lot__hint">
-          Загрузка в MinIO — в разработке; сейчас превью хранится локально.
+        <p
+          v-if="photoUpload.globalError.value"
+          class="create-lot__error"
+        >
+          {{ photoUpload.globalError.value }}
         </p>
-        <div class="create-lot__photos">
-          <label class="create-lot__upload">
-            <span>+ Добавить</span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              @change="onPhotosSelected"
-            >
-          </label>
-          <div
-            v-for="(src, idx) in imagePreviews"
-            :key="idx"
-            class="create-lot__photo"
-          >
-            <img
-              :src="src"
-              alt=""
-            >
-            <button
-              type="button"
-              @click="removePhoto(idx)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
+        <MediaUploader
+          :items="photoUpload.items.value"
+          :accept="photoUpload.limits.value?.accept ?? 'image/*'"
+          :can-add-more="photoUpload.canAddMore.value"
+          :hint="photoHint"
+          @select="onPhotosSelected"
+          @remove="photoUpload.removeItem"
+        />
       </fieldset>
 
       <fieldset class="create-lot__section">

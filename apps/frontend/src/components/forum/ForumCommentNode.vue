@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import AttachmentBadge from '@/components/media/AttachmentBadge.vue';
+import AttachmentList from '@/components/media/AttachmentList.vue';
+import MarkdownBody from '@/components/media/MarkdownBody.vue';
+import MediaUploader from '@/components/media/MediaUploader.vue';
+import { useMediaUpload } from '@/composables/useMediaUpload';
 import { createComment, type CommentTreeNode, type ForumComment } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
 import { ref } from 'vue';
@@ -17,6 +22,8 @@ const showReply = ref(false);
 const replyBody = ref('');
 const posting = ref(false);
 const postError = ref<string | null>(null);
+const replyAttachmentsExpanded = ref(false);
+const replyUpload = useMediaUpload('forum');
 
 async function submitReply() {
   if (!replyBody.value.trim()) return;
@@ -26,10 +33,13 @@ async function submitReply() {
     const created = await createComment(props.topicId, {
       body: replyBody.value.trim(),
       parentId: props.node.id,
+      attachments: replyUpload.readyAttachments.value,
     });
     emit('created', created);
     replyBody.value = '';
+    replyUpload.reset();
     showReply.value = false;
+    replyAttachmentsExpanded.value = false;
   } catch (e) {
     postError.value = e instanceof Error ? e.message : 'Не удалось отправить';
   } finally {
@@ -44,9 +54,15 @@ async function submitReply() {
     :style="{ marginLeft: `${depth * 1.25}rem` }"
   >
     <article class="forum-comment__card">
-      <p class="forum-comment__body">
-        {{ node.body }}
-      </p>
+      <MarkdownBody :body="node.body" />
+      <AttachmentBadge
+        v-if="node.attachments?.length"
+        :count="node.attachments.length"
+      >
+        <template #list>
+          <AttachmentList :attachments="node.attachments" />
+        </template>
+      </AttachmentBadge>
       <footer class="forum-comment__meta">
         <small>{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</small>
         <UiButton
@@ -72,6 +88,30 @@ async function submitReply() {
             required
           />
         </label>
+
+        <div class="forum-comment__attachments">
+          <button
+            type="button"
+            class="forum-comment__attachments-toggle"
+            @click="replyAttachmentsExpanded = !replyAttachmentsExpanded"
+          >
+            Вложения
+            <span
+              v-if="replyUpload.count.value > 0"
+            >📎 {{ replyUpload.count.value }}</span>
+            <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
+          </button>
+          <div v-if="replyAttachmentsExpanded">
+            <MediaUploader
+              :items="replyUpload.items.value"
+              :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
+              :can-add-more="replyUpload.canAddMore.value"
+              @select="replyUpload.addFiles($event)"
+              @remove="replyUpload.removeItem"
+            />
+          </div>
+        </div>
+
         <p
           v-if="postError"
           class="forum-comment__error"
@@ -117,17 +157,13 @@ async function submitReply() {
   background: var(--color-surface, #fff);
 }
 
-.forum-comment__body {
-  margin: 0 0 0.5rem;
-  white-space: pre-wrap;
-}
-
 .forum-comment__meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   color: var(--color-text-muted, #666);
+  margin-top: 0.5rem;
 }
 
 .forum-comment__children {
@@ -147,6 +183,22 @@ async function submitReply() {
 .forum-comment__reply-form textarea {
   width: 100%;
   margin-top: 0.25rem;
+}
+
+.forum-comment__attachments {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.forum-comment__attachments-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
 }
 
 .forum-comment__error {

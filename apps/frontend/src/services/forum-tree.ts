@@ -4,6 +4,12 @@ export type ForumComment = {
   authorId: string;
   parentId: string | null;
   body: string;
+  attachments: Array<{
+    url: string;
+    filename: string;
+    contentType: string;
+    sizeBytes: number;
+  }>;
   promotedTopicId: string | null;
   createdAt: string;
   updatedAt: string;

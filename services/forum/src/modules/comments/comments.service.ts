@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { DataSource, Repository } from 'typeorm';
+import type { MediaAttachment } from '@tavrida/object-storage';
+import { validateForumContent } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
@@ -16,6 +19,7 @@ export class CommentsService {
     @InjectRepository(TopicEntity)
     private readonly topics: Repository<TopicEntity>,
     private readonly dataSource: DataSource,
+    private readonly config: ConfigService,
   ) {}
 
   async listByTopic(topicId: string) {
@@ -36,6 +40,7 @@ export class CommentsService {
         authorId: row.authorId,
         parentId: row.parentId,
         body: row.body,
+        attachments: row.attachments ?? [],
         promotedTopicId: row.promotedTopicId,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
@@ -48,6 +53,9 @@ export class CommentsService {
     authorId: string;
     body: string;
     parentId?: string | null;
+    attachments?: MediaAttachment[];
+    maxAttachmentCount?: number;
+    maxAttachmentSizeBytes?: number;
   }) {
     const topic = await this.topics.findOne({ where: { id: input.topicId } });
     if (!topic) {
@@ -66,6 +74,18 @@ export class CommentsService {
       }
     }
 
+    const attachments = input.attachments ?? [];
+    validateForumContent({
+      body: input.body,
+      attachments,
+      media: {
+        authorId: input.authorId,
+        publicBaseUrl: this.mediaPublicBaseUrl(),
+        maxAttachmentCount: input.maxAttachmentCount ?? 1,
+        maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
+      },
+    });
+
     return this.dataSource.transaction(async (manager) => {
       const comment = manager.create(CommentEntity, {
         id: randomUUID(),
@@ -73,6 +93,7 @@ export class CommentsService {
         authorId: input.authorId,
         parentId: input.parentId ?? null,
         body: input.body.trim(),
+        attachments,
         promotedTopicId: null,
       });
       await manager.save(comment);
@@ -106,10 +127,19 @@ export class CommentsService {
         authorId: comment.authorId,
         parentId: comment.parentId,
         body: comment.body,
+        attachments: comment.attachments ?? [],
         promotedTopicId: comment.promotedTopicId,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
       };
     });
+  }
+
+  private mediaPublicBaseUrl() {
+    return (
+      this.config.get<string>('MEDIA_PUBLIC_BASE_URL') ??
+      this.config.get<string>('MINIO_URL') ??
+      'http://localhost:9000'
+    );
   }
 }

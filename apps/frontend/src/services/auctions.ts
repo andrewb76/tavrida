@@ -161,6 +161,12 @@ export type AuctionCreateOptions = {
   dailyLimit: { limit: number | null; used: number; remaining: number | null };
   promotionUnitPrice: number;
   reserveUnitPrice: number;
+  imageLimits?: {
+    countMax: number;
+    sizeMaxMb: number;
+    sizeMaxBytes: number;
+    accept: string;
+  };
 };
 
 export type CreateAuctionInput = {

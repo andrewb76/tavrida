@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MediaGallery from '@/components/media/MediaGallery.vue';
 import { useCountdown } from '@/composables/useCountdown';
 import {
   auctionStatusLabel,
@@ -52,14 +53,6 @@ const endingSoon = computed(() => {
 
 const canBid = computed(() => Boolean(lot.value?.isLive));
 
-const gallerySlides = computed(() => {
-  if (!lot.value) return [];
-  if (lot.value.images.length) return lot.value.images;
-  return ['placeholder'];
-});
-
-const activeGallery = ref(0);
-
 watch(
   () => lot.value?.minNextBid,
   (value) => {
@@ -73,7 +66,6 @@ onMounted(load);
 async function load() {
   loading.value = true;
   error.value = null;
-  activeGallery.value = 0;
   try {
     const [detail, bidRows, expertRows, categoryTree] = await Promise.all([
       getAuction(auctionId.value),
@@ -134,33 +126,10 @@ function confirmBidMock() {
     </p>
 
     <template v-else-if="lot">
-      <div class="lot-page__gallery">
-        <div class="lot-page__gallery-main">
-          <img
-            v-if="gallerySlides[activeGallery] !== 'placeholder'"
-            :src="gallerySlides[activeGallery]"
-            :alt="lot.title"
-            class="lot-page__gallery-img"
-          >
-          <span
-            v-else
-            class="lot-page__gallery-placeholder"
-          >🏺</span>
-        </div>
-        <div
-          v-if="gallerySlides.length > 1"
-          class="lot-page__gallery-dots"
-        >
-          <button
-            v-for="(_, idx) in gallerySlides"
-            :key="idx"
-            type="button"
-            class="lot-page__dot"
-            :class="{ 'lot-page__dot--active': idx === activeGallery }"
-            @click="activeGallery = idx"
-          />
-        </div>
-      </div>
+      <MediaGallery
+        class="lot-page__gallery"
+        :images="lot.images"
+      />
 
       <div class="lot-page__head">
         <h1>{{ lot.title }}</h1>
