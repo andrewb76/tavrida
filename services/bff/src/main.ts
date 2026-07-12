@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ensureDatabaseSchema } from './config/ensure-database';
 
 const DEFAULT_PORT = 3000;
 
@@ -12,6 +13,8 @@ function parseCorsOrigins(): string[] | boolean {
 }
 
 async function bootstrap() {
+  await ensureDatabaseSchema();
+
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
   app.enableCors({ origin: parseCorsOrigins(), credentials: true });
