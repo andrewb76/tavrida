@@ -90,7 +90,10 @@ export async function uploadFile(domain: MediaDomain, file: File): Promise<Media
     body: file,
   });
   if (!putRes.ok) {
-    throw new Error(`Не удалось загрузить файл: ${file.name}`);
+    const body = await putRes.text().catch(() => '');
+    const s3Message = body.match(/<Message>([^<]+)<\/Message>/)?.[1];
+    const detail = s3Message ?? (body.trim() || `HTTP ${putRes.status}`);
+    throw new Error(`Не удалось загрузить файл: ${file.name} (${detail})`);
   }
 
   const confirmed = await confirmUploadIntent(intent.uploadId);
