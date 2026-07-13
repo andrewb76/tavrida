@@ -1,6 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import DOMPurify, { type Config } from 'dompurify';
-import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
+import { imageProxyPresets, proxiedMediaUrl } from './imageProxy.js';
 
 const markdown = new MarkdownIt({
   html: false,
