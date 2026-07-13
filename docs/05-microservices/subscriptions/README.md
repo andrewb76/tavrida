@@ -1,14 +1,25 @@
 # 🔔 Сервис: subscriptions
 
-> **Статус:** spec ready · **Версия:** 0.3 · **Schema:** `subscriptions` · **Port:** 3004  
+> **Статус:** implementing (CRUD v1 + UI) · **Версия:** 0.4 · **Schema:** `subscriptions` · **Port:** 3004  
 > **ADR:** [006-service-renames](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)  
-> **Legacy:** `auction-subscriptions` / `auction_subscriptions` — deprecated
+> **Код:** `services/subscriptions` (`@tavrida/subscriptions`) · **Legacy:** `auction-subscriptions` deprecated
 
 ## 🎯 Назначение
 
 **Универсальные подписки** пользователя на события платформы с доставкой через `notifications`.
 
 Не только аукционы: **форум**, **теги**, **marketplace** (draft), digest по доменам.
+
+## ✅ Реализовано (v1)
+
+| Слой | Статус |
+|------|--------|
+| Entity `Subscription` + unique `(userId, sourceDomain, targetType, targetId)` | ✅ |
+| Internal API list/create/delete/count | ✅ |
+| BFF `GET/POST/DELETE /api/v1/subscriptions` + JWT | ✅ |
+| Limit check via plan-config (`subscriptions.member.*`) | ✅ seed в `default-seed.ts` |
+| Frontend subscribe toggle (тема / лот) | ✅ |
+| DeliveryPreference / digest / RMQ match / notifications | ⏳ next |
 
 ## 📖 Термины
 
@@ -93,14 +104,16 @@
 
 ## 💳 Переменные plan-config
 
+Ключи — **[PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)** (не flat alias из старых черновиков):
+
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
-| `subscriptions.auctionCategoriesMax` | 3 | 10 | ∞ | Категории аукциона |
-| `subscriptions.auctionsMax` | 5 | 20 | ∞ | Конкретные лоты |
-| `subscriptions.forumCategoriesMax` | 5 | 15 | ∞ | Категории форума |
-| `subscriptions.forumTopicsMax` | 10 | 50 | ∞ | Темы |
-| `subscriptions.tagsMax` | 3 | 10 | ∞ | Подписки на теги |
-| `subscriptions.emailDigest` | feature | false | false | true |
+| `subscriptions.member.auction.categoryMax` | 3 | 10 | ∞ | Категории аукциона |
+| `subscriptions.member.auction.lotMax` | 5 | 20 | ∞ | Конкретные лоты |
+| `subscriptions.member.forum.categoryMax` | 5 | 15 | ∞ | Категории форума |
+| `subscriptions.member.forum.topicMax` | 10 | 50 | ∞ | Темы |
+| `subscriptions.member.tag.max` | 3 | 10 | ∞ | Подписки на теги |
+| `subscriptions.member.notify.emailDigestEnabled` | feature | false | false | true |
 
 > Legacy keys `auction_subscriptions.*` → migrate to `subscriptions.*` ([ADR-006](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
 

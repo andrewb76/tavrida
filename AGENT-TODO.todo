@@ -22,6 +22,14 @@ Financial-policy:
   ☐ Monte Carlo @vanga
   ☐ settings domain vanga.* @vanga @settings
 
+Subscriptions (event intent):
+  ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)
+  ✔ Seed plan-config subscriptions.member.* keys @plan-config @subscriptions @done(26-07-13)
+  ✔ Frontend subscribe UI (lot/topic) @frontend @subscriptions @done(26-07-13)
+  ☐ DeliveryPreference + digest CRON @subscriptions
+  ☐ Internal match + RMQ consumers → notifications @subscriptions
+  ☐ Richer subscriptions UI (categories/tags/list) @frontend @subscriptions
+
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 

@@ -3,6 +3,7 @@ import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
@@ -161,16 +162,25 @@ async function submitTopicComment() {
             <span class="forum-topic__author-name">{{ forumAuthorLabel(topic.author) }}</span>
             <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           </div>
-          <UiButton
-            v-if="canEditTopic && !editingTopic"
-            intent="ghost"
-            size="sm"
-            type="button"
-            class="forum-topic__edit-btn"
-            @click="startTopicEdit"
+          <div
+            v-if="session.isMember || (canEditTopic && !editingTopic)"
+            class="forum-topic__actions"
           >
-            Редактировать
-          </UiButton>
+            <EventSubscribeButton
+              source-domain="forum"
+              target-type="FORUM_TOPIC"
+              :target-id="topic.id"
+            />
+            <UiButton
+              v-if="canEditTopic && !editingTopic"
+              intent="ghost"
+              size="sm"
+              type="button"
+              @click="startTopicEdit"
+            >
+              Редактировать
+            </UiButton>
+          </div>
         </header>
 
         <template v-if="editingTopic">
@@ -331,8 +341,13 @@ async function submitTopicComment() {
   margin-bottom: 0.75rem;
 }
 
-.forum-topic__edit-btn {
+.forum-topic__actions {
   margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .forum-topic__edit-field {

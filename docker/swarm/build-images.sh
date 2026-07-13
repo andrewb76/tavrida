@@ -31,6 +31,7 @@ declare -A SERVICES=(
   [billing]="@tavrida/billing|services/billing"
   [plan-config]="@tavrida/plan-config|services/plan-config"
   [auction]="@tavrida/auction|services/auction"
+  [subscriptions]="@tavrida/subscriptions|services/subscriptions"
   [user-profile]="@tavrida/user-profile|services/user-profile"
   [scalar-config]="@tavrida/scalar-config|services/scalar-config"
   [forum]="@tavrida/forum|services/forum"

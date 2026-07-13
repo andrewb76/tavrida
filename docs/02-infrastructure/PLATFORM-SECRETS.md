@@ -86,7 +86,7 @@
 | `BILLING_URL` | нет | `http://localhost:3001` | Upstream billing |
 | `PLAN_CONFIG_URL` | нет | `http://localhost:3002` | Upstream plan-config |
 | `AUCTION_URL` | нет | `http://localhost:3003` | Upstream auction |
-| `AUCTION_SUBSCRIPTIONS_URL` | нет | `http://localhost:3004` | Upstream auction-subscriptions |
+| `SUBSCRIPTIONS_URL` | нет | `http://localhost:3004` | Upstream subscriptions (legacy: `AUCTION_SUBSCRIPTIONS_URL`) |
 | `RATING_URL` | нет | `http://localhost:3005` | Upstream rating |
 | `FEEDBACK_URL` | нет | `http://localhost:3006` | Upstream feedback |
 | `USER_PROFILE_URL` | нет | `http://localhost:3007` | Upstream user-profile |
@@ -145,15 +145,15 @@
 
 ---
 
-## 🔔 auction-subscriptions (`services/auction-subscriptions`) — порт 3004
+## 🔔 subscriptions (`services/subscriptions`) — порт 3004
 
 | Переменная | Секрет | Schema | Default | Описание |
 |------------|--------|--------|---------|----------|
-| `PORT` | нет | — | `3004` | HTTP |
-| `DATABASE_URL` | **да** | `auction_subscriptions` | см. платформа | PostgreSQL |
-| `RABBITMQ_URL` | **да** | — | см. платформа | События auction |
-| `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты подписок |
-| `NOTIFICATIONS_URL` | нет | — | `http://localhost:3010` | Триггер уведомлений |
+| `PORT` / `SUBSCRIPTIONS_PORT` | нет | — | `3004` | HTTP |
+| `DATABASE_URL` | **да** | `subscriptions` | см. платформа | PostgreSQL |
+| `RABBITMQ_URL` | **да** | — | см. платформа | События (fan-out later) |
+| `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты (check via BFF) |
+| `NOTIFICATIONS_URL` | нет | — | `http://localhost:3010` | Триггер уведомлений (later) |
 | `SENTRY_DSN` | **да** | — | — | Опционально |
 
 ---

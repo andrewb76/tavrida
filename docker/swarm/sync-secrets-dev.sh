@@ -26,6 +26,7 @@ COMPUTED_KEYS=(
   BILLING_DATABASE_URL
   PLAN_CONFIG_DATABASE_URL
   AUCTION_DATABASE_URL
+  SUBSCRIPTIONS_DATABASE_URL
   USER_PROFILE_DATABASE_URL
   SCALAR_CONFIG_DATABASE_URL
   FORUM_DATABASE_URL
@@ -101,6 +102,7 @@ build_computed_secrets() {
   BILLING_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=billing"
   PLAN_CONFIG_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=plan_config"
   AUCTION_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=auction"
+  SUBSCRIPTIONS_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=subscriptions"
   USER_PROFILE_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=user_profile"
   SCALAR_CONFIG_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=scalar_config"
   FORUM_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=forum"

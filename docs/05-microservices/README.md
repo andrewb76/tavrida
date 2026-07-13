@@ -14,7 +14,7 @@
 | 💰 billing | 3001 | 🚧 | ✅ spec | [billing](./billing/README.md) |
 | 📋 plan-config | 3002 | 🚧 | ✅ spec | [plan-config](./plan-config/README.md) |
 | 🔨 auction | 3003 | 🚧 | ✅ spec | [auction](./auction/README.md) |
-| 🔔 subscriptions | 3004 | 🚧 | ✅ spec | [subscriptions](./subscriptions/README.md) |
+| 🔔 subscriptions | 3004 | 🚧 CRUD v1 | ✅ spec | [subscriptions](./subscriptions/README.md) |
 | ⭐ rating | — | 📝 | ✅ spec | [rating](./rating/README.md) |
 | 💬 deal-feedback | — | 📝 | ✅ spec | [deal_feedback](./deal_feedback/README.md) |
 | 🗣️ forum | — | 📝 | ✅ spec | [forum](./forum/README.md) |

@@ -19,6 +19,7 @@ import { KetoModule } from './modules/keto/keto.module';
 import { LogtoWebhooksModule } from './modules/logto-webhooks/logto-webhooks.module';
 import { MediaModule } from './modules/media/media.module';
 import { MediaUploadIntentEntity } from './modules/media/media-upload-intent.entity';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -52,6 +53,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     WalletsModule,
     ForumModule,
     AuctionModule,
+    SubscriptionsModule,
     MediaModule,
     LogtoWebhooksModule,
   ],

@@ -77,7 +77,7 @@ Legacy aliases (удалить после миграции кода): `PLAN_CONF
 | billing | `BILLING_PORT` | 3001 |
 | plan-config | `PLAN_CONFIG_PORT` | 3002 |
 | auction | `AUCTION_PORT` | 3003 |
-| auction-subscriptions | `AUCTION_SUBSCRIPTIONS_PORT` | 3004 |
+| subscriptions | `SUBSCRIPTIONS_PORT` | 3004 |
 | user-profile | `USER_PROFILE_PORT` | 3007 |
 | scalar-config | `SCALAR_CONFIG_PORT` | 3008 |
 | forum | `FORUM_PORT` | 3009 |

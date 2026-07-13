@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MediaGallery from '@/components/media/MediaGallery.vue';
+import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import { useCountdown } from '@/composables/useCountdown';
 import {
   auctionStatusLabel,
@@ -142,7 +143,14 @@ function confirmBidMock() {
       />
 
       <div class="lot-page__head">
-        <h1>{{ lot.title }}</h1>
+        <div class="lot-page__title-row">
+          <h1>{{ lot.title }}</h1>
+          <EventSubscribeButton
+            source-domain="auction"
+            target-type="AUCTION"
+            :target-id="lot.id"
+          />
+        </div>
         <div class="lot-page__meta">
           <span class="lot-page__seller">👤 {{ sellerDisplayName(lot.sellerId) }}</span>
           <span
@@ -476,9 +484,19 @@ function confirmBidMock() {
   background: var(--color-primary, #2563eb);
 }
 
+.lot-page__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
 .lot-page__head h1 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 1.5rem;
+  flex: 1 1 12rem;
 }
 
 .lot-page__meta {

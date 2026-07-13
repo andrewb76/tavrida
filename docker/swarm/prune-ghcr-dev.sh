@@ -25,6 +25,7 @@ PACKAGES=(
   tavrida-billing
   tavrida-plan-config
   tavrida-auction
+  tavrida-subscriptions
   tavrida-user-profile
   tavrida-scalar-config
   tavrida-forum

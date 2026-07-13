@@ -7,7 +7,7 @@ const config: DataSourceOptions = {
   username: process.env.DB_USER ?? 'postgres',
   password: process.env.DB_PASSWORD ?? 'postgres',
   database: process.env.DB_NAME ?? 'tavrida_lot',
-  schema: 'auction_subscriptions',
+  schema: 'subscriptions',
   entities: ['dist/entities/**/*.js'],
   migrations: ['dist/migrations/**/*.js'],
   synchronize: false,

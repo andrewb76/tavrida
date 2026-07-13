@@ -166,6 +166,48 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     description: 'Макс. начислений реферала на пользователя',
     valueType: 'limit',
   },
+  {
+    key: 'subscriptions.member.auction.categoryMax',
+    service: 'subscriptions',
+    name: 'Подписки на категории аукциона',
+    description: 'Макс. подписок на категории. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'subscriptions.member.auction.lotMax',
+    service: 'subscriptions',
+    name: 'Подписки на лоты',
+    description: 'Макс. подписок на конкретные лоты. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'subscriptions.member.forum.categoryMax',
+    service: 'subscriptions',
+    name: 'Подписки на категории форума',
+    description: 'Макс. подписок на категории форума. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'subscriptions.member.forum.topicMax',
+    service: 'subscriptions',
+    name: 'Подписки на темы форума',
+    description: 'Макс. подписок на темы. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'subscriptions.member.tag.max',
+    service: 'subscriptions',
+    name: 'Подписки на теги',
+    description: 'Макс. подписок на теги. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'subscriptions.member.notify.emailDigestEnabled',
+    service: 'subscriptions',
+    name: 'Email digest',
+    description: 'Сводные email-дайджесты по подпискам',
+    valueType: 'feature',
+  },
 ];
 
 export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
@@ -258,5 +300,41 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { limitValue: 100 },
     basic: { limitValue: 500 },
     pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.auction.categoryMax',
+    free: { limitValue: 3 },
+    basic: { limitValue: 10 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.auction.lotMax',
+    free: { limitValue: 5 },
+    basic: { limitValue: 20 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.forum.categoryMax',
+    free: { limitValue: 5 },
+    basic: { limitValue: 15 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.forum.topicMax',
+    free: { limitValue: 10 },
+    basic: { limitValue: 50 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.tag.max',
+    free: { limitValue: 3 },
+    basic: { limitValue: 10 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'subscriptions.member.notify.emailDigestEnabled',
+    free: { isFeatureEnabled: false },
+    basic: { isFeatureEnabled: false },
+    pro: { isFeatureEnabled: true },
   },
 ];
