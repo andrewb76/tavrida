@@ -26,7 +26,7 @@ export function computeOneTimeRevenue(
   return roundRub(total);
 }
 
-/** Amount for a single billing.charge — same formula Oracle uses per event. */
+/** Amount for a single billing.charge — same formula Vanga uses per event. */
 export function computeChargeAmount(target: string, prices: OneTimePriceMap): number {
   const row = prices[target];
   if (!row?.enabled) return 0;

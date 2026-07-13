@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
+import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 
 const props = withDefaults(
   defineProps<{
@@ -15,6 +16,14 @@ const props = withDefaults(
 
 const session = useSessionStore();
 const failed = ref(false);
+
+const resizePreset = computed(() => {
+  if (props.size === 'sm') return imageProxyPresets.avatarSm;
+  if (props.size === 'lg') return imageProxyPresets.avatarLg;
+  return imageProxyPresets.avatarMd;
+});
+
+const displayUrl = computed(() => proxiedMediaUrl(props.avatarUrl, resizePreset.value));
 
 const initial = computed(() => {
   const source = props.label.trim() || '?';
@@ -55,8 +64,8 @@ watch(
         aria-hidden="true"
       >{{ initial }}</span>
       <img
-        v-if="avatarUrl && !failed"
-        :src="avatarUrl"
+        v-if="displayUrl && !failed"
+        :src="displayUrl"
         :alt="label"
         class="user-avatar__image"
         referrerpolicy="no-referrer"
@@ -77,8 +86,8 @@ watch(
       aria-hidden="true"
     >{{ initial }}</span>
     <img
-      v-if="avatarUrl && !failed"
-      :src="avatarUrl"
+      v-if="displayUrl && !failed"
+      :src="displayUrl"
       :alt="label"
       class="user-avatar__image"
       referrerpolicy="no-referrer"

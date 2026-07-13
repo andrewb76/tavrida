@@ -4,7 +4,7 @@
 
 ## 🎯 Контекст
 
-Деньги в Tavrida Lot считаются в нескольких местах: `billing` (списание), `plan-config` (цена плана), domain-сервисы (когда charge), **Oracle** (прогноз). Дублирование формул в сервисах и UI ведёт к расхождению: «в Оракуле 48k, в отчёте 41k».
+Деньги в Tavrida Lot считаются в нескольких местах: `billing` (списание), `plan-config` (цена плана), domain-сервисы (когда charge), **Vanga** (прогноз). Дублирование формул в сервисах и UI ведёт к расхождению: «в Вангае 48k, в отчёте 41k».
 
 Нужно **чётко разделить ответственность** и вынести математику в один stateless-модуль.
 
@@ -15,7 +15,7 @@
 - **Только чистые функции** (детерминированные: одинаковый вход → одинаковый выход).
 - **Без состояния**: нет БД, HTTP, env, singleton с кэшем.
 - **Без I/O**: не читает scalar-config/plan-config; caller передаёт числа и конфиг как аргументы.
-- Доступен **и платформе, и Oracle** до появления `services/oracle`.
+- Доступен **и платформе, и Vanga** до появления `services/vanga`.
 
 ### Класс-фасад (опционально)
 
@@ -33,7 +33,7 @@ MonetizationMath.computeMrr(state, prices) // то же, что computeMrr(...)
 | **billing** | Баланс, `Transaction`, идемпотентность, **вызов** `computeChargeAmount` перед charge | Формула цены promotion |
 | **plan-config** | Планы, лимиты, **хранение** `monthlyPrice` | Прогноз когорт |
 | **referral-rewards** | Orchestration выплат, hold, cron | Процент по глубине (берёт из engine + settings) |
-| **Oracle / BFF** | Assumptions, YAML defaults, **вызов** `simulate()` | Свои формулы в UI |
+| **Vanga / BFF** | Assumptions, YAML defaults, **вызов** `simulate()` | Свои формулы в UI |
 | **Frontend** | Ползунки, графики | Любая математика кроме отображения |
 
 ### Потоки данных
@@ -51,9 +51,9 @@ flowchart TB
   SC[scalar-config] -->|referral rules| BFF
   BFF -->|params| F2
   Auction[auction] -->|before charge| F2
-  OracleUI[Oracle UI] -->|assumptions| BFF
+  VangaUI[Vanga UI] -->|assumptions| BFF
   BFF --> F4
-  F4 --> OracleUI
+  F4 --> VangaUI
   F2 -->|amount ₽| Billing[billing.charge]
 ```
 
@@ -66,7 +66,7 @@ flowchart TB
 
 | Вариант | Почему нет |
 |---------|------------|
-| Формулы внутри Oracle-сервиса | Платформа не переиспользует |
+| Формулы внутри Vanga-сервиса | Платформа не переиспользует |
 | Shared class со state (кэш цен) | Скрытое состояние → расхождения в тестах |
 | Один god-service «calculator» | Смешивает math и HTTP |
 
@@ -74,10 +74,10 @@ flowchart TB
 
 - Новая платная фича → функция в engine + тест + monetization-catalog.
 - `billing` / domain вызывают engine **перед** charge (фаза внедрения по сервисам).
-- Oracle **никогда** не дублирует формулы во Vue.
+- Vanga **никогда** не дублирует формулы во Vue.
 
 ## 🔗 Связанные
 
-- [ADR-014](./014-oracle-revenue-forecast.md)
+- [ADR-014](./014-vanga-revenue-forecast.md)
 - [packages/monetization-engine/README.md](../../packages/monetization-engine/README.md)
-- [engine-and-api.md](../../05-microservices/oracle/topics/engine-and-api.md)
+- [engine-and-api.md](../../05-microservices/vanga/topics/engine-and-api.md)

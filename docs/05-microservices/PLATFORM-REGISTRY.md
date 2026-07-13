@@ -23,7 +23,7 @@
 
 | | PLATFORM-REGISTRY (этот файл) | `plan_config.plan_variable` в БД |
 |--|------------------------------|--------------------------------|
-| Назначение | Проектирование, Oracle, onboarding | Production runtime |
+| Назначение | Проектирование, Vanga, onboarding | Production runtime |
 | Когда появляется ключ | При описании фичи в docs | Когда **domain-сервис** вызвал sync |
 | Пустая матрица в админке | Нормально, если auction/forum ещё не подняты | Ожидаемо до register |
 

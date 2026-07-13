@@ -1,6 +1,7 @@
 @import '../../../../packages/ui/styles/tokens.css';
 @import '../../../../packages/ui/styles/theme.css';
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 @layer base {
   html {

@@ -1,0 +1,54 @@
+name: Prune GHCR (dev images)
+
+# Delete old tavrida-* package versions; keep last N + tags :dev / :latest.
+# See docker/swarm/prune-ghcr-dev.sh
+
+on:
+  schedule:
+    # Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      keep_last:
+        description: 'Keep newest N versions per package (besides protected tags)'
+        required: false
+        type: string
+        default: '10'
+      dry_run:
+        description: 'List deletions without deleting'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prune:
+    name: Prune tavrida-* packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prune
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_OWNER: ${{ vars.GHCR_OWNER || github.repository_owner }}
+          KEEP_LAST: ${{ inputs.keep_last || '10' }}
+          KEEP_TAGS: dev,latest
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true && '1' || '0' }}
+        run: |
+          chmod +x ./docker/swarm/prune-ghcr-dev.sh
+          ./docker/swarm/prune-ghcr-dev.sh
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### GHCR prune"
+            echo "- owner: \`${{ vars.GHCR_OWNER || github.repository_owner }}\`"
+            echo "- keep_last: \`${{ inputs.keep_last || '10' }}\`"
+            echo "- dry_run: \`${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true }}\`"
+            echo "- protected tags: \`dev\`, \`latest\`"
+          } >> "$GITHUB_STEP_SUMMARY"

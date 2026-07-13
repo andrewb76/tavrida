@@ -38,7 +38,7 @@ export function computeMonthlyNet(
 
 /**
  * First month index (1-based) where cumulative net >= 0.
- * manualBurnOverride affects threshold only when provided (Oracle UX).
+ * manualBurnOverride affects threshold only when provided (Vanga UX).
  */
 export function findBreakEvenMonth(
   cumulativeNetByMonth: number[],

@@ -5,6 +5,7 @@
 #   Redis       localhost:6379
 #   RabbitMQ    localhost:5672  guest/guest
 #   MinIO       localhost:9000  minioadmin/minioadmin
+#   imgproxy    localhost:8080  (resize / WebP for MinIO media)
 #
 # Start: docker compose -f docker/compose/infra.local.yml up -d
 # Stop:  docker compose -f docker/compose/infra.local.yml down
@@ -28,7 +29,7 @@ services:
       POSTGRES_DB: tavrida_lot
     volumes:
       - tavrida_pg_data:/var/lib/postgresql/data
-      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+      - ../config/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - tavrida
     healthcheck:
@@ -87,6 +88,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  imgproxy:
+    image: darthsim/imgproxy:latest
+    ports:
+      - '8080:8080'
+    networks:
+      - tavrida
+    environment:
+      IMGPROXY_BIND: ':8080'
+      IMGPROXY_USE_ETAG: 'true'
+      IMGPROXY_ENABLE_WEBP_DETECTION: 'true'
+      IMGPROXY_JPEG_PROGRESSIVE: 'true'
+      IMGPROXY_MAX_SRC_RESOLUTION: '50'
+    depends_on:
+      minio:
+        condition: service_healthy
 
 volumes:
   tavrida_pg_data:

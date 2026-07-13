@@ -1,0 +1,215 @@
+# Dev Swarm — infrastructure + edge (Traefik, data stores, Keto, imgproxy)
+#
+# Deploy together with stack-platform.dev.yml:
+#   ./docker/swarm/deploy-dev.sh
+#
+# Requires: docker/swarm/dev.env (see dev.env.example)
+
+name: tavrida-dev
+
+networks:
+  tavrida_net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  pg_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  traefik_letsencrypt:
+
+configs:
+  traefik_static:
+    file: ../config/traefik/traefik.dev.yml
+  keto_config:
+    file: ../config/keto/keto.yml
+
+secrets:
+  postgres_password:
+    external: true
+    name: tavrida_dev_postgres_password
+  rabbitmq_password:
+    external: true
+    name: tavrida_dev_rabbitmq_password
+  minio_root_password:
+    external: true
+    name: tavrida_dev_minio_root_password
+
+services:
+  traefik:
+    image: traefik:v3.7
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      TRAEFIK_SWARM_NETWORK: ${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
+    configs:
+      - source: traefik_static
+        target: /etc/traefik/traefik.yml
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+      # Absolute path on Swarm manager (CI remote context cannot use runner-relative binds)
+      - ${TAVRIDA_REPO_ROOT}/docker/config/traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - tavrida_net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.traefik.rule=Host(`traefik.${DEV_DOMAIN}`)
+        - traefik.http.routers.traefik.entrypoints=websecure
+        - traefik.http.routers.traefik.tls.certresolver=le
+        - traefik.http.routers.traefik.service=api@internal
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ${POSTGRES_DB}
+    secrets:
+      - postgres_password
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ${TAVRIDA_REPO_ROOT}/docker/config/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      replicas: 1
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+    secrets:
+      - rabbitmq_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        export RABBITMQ_DEFAULT_PASS=$$(cat /run/secrets/rabbitmq_password)
+        exec docker-entrypoint.sh rabbitmq-server
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.rabbitmq.rule=Host(`rabbitmq.${DEV_DOMAIN}`)
+        - traefik.http.routers.rabbitmq.entrypoints=websecure
+        - traefik.http.routers.rabbitmq.tls.certresolver=le
+        - traefik.http.services.rabbitmq.loadbalancer.server.port=15672
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    secrets:
+      - minio_root_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        export MINIO_ROOT_PASSWORD=$$(cat /run/secrets/minio_root_password)
+        exec minio server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.minio-api.rule=Host(`s3.${DEV_DOMAIN}`)
+        - traefik.http.routers.minio-api.entrypoints=websecure
+        - traefik.http.routers.minio-api.tls.certresolver=le
+        - traefik.http.services.minio-api.loadbalancer.server.port=9000
+        - traefik.http.routers.minio-console.rule=Host(`minio.${DEV_DOMAIN}`)
+        - traefik.http.routers.minio-console.entrypoints=websecure
+        - traefik.http.routers.minio-console.tls.certresolver=le
+        - traefik.http.services.minio-console.loadbalancer.server.port=9001
+
+  imgproxy:
+    image: darthsim/imgproxy:latest
+    environment:
+      IMGPROXY_BIND: ':8080'
+      IMGPROXY_USE_ETAG: 'true'
+      IMGPROXY_ENABLE_WEBP_DETECTION: 'true'
+      IMGPROXY_JPEG_PROGRESSIVE: 'true'
+      IMGPROXY_MAX_SRC_RESOLUTION: '50'
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.imgproxy.rule=Host(`img.${DEV_DOMAIN}`)
+        - traefik.http.routers.imgproxy.entrypoints=websecure
+        - traefik.http.routers.imgproxy.tls.certresolver=le
+        - traefik.http.services.imgproxy.loadbalancer.server.port=8080
+
+  keto-migrate:
+    image: oryd/keto:v0.14.0
+    configs:
+      - source: keto_config
+        target: /home/ory/keto.yml
+    volumes:
+      - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
+    command: migrate up -y -c /home/ory/keto.yml
+    networks:
+      - tavrida_net
+    deploy:
+      restart_policy:
+        condition: none
+      replicas: 1
+
+  keto:
+    image: oryd/keto:v0.14.0
+    configs:
+      - source: keto_config
+        target: /home/ory/keto.yml
+    volumes:
+      - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
+    command: serve -c /home/ory/keto.yml
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1

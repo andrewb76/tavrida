@@ -1,0 +1,41 @@
+# Multi-stage NestJS service image for monorepo (pnpm + turbo).
+#
+# Build:
+#   docker build -f docker/images/Dockerfile.service \
+#     --build-arg SERVICE_PKG=@tavrida/bff \
+#     --build-arg SERVICE_DIR=services/bff \
+#     -t ghcr.io/<owner>/tavrida-bff:<tag> .
+#
+# SERVICE_PKG — pnpm package name (@tavrida/*)
+# SERVICE_DIR — path to service directory (dist/main.js relative to deploy root)
+
+ARG SERVICE_PKG=@tavrida/bff
+ARG SERVICE_DIR=services/bff
+
+FROM node:20-alpine AS build
+ARG SERVICE_PKG
+ARG SERVICE_DIR
+
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /repo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages ./packages
+COPY tools ./tools
+COPY services ./services
+COPY config ./config
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec turbo run build --filter=${SERVICE_PKG}...
+RUN pnpm deploy --filter=${SERVICE_PKG} --prod --legacy /deploy
+
+FROM node:20-alpine AS runtime
+ARG SERVICE_DIR
+
+WORKDIR /app
+COPY --from=build /deploy ./
+
+ENV NODE_ENV=production
+
+# pnpm deploy layout: package root with dist/ for Nest services
+CMD ["node", "dist/main.js"]

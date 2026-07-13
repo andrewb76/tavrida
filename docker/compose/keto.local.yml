@@ -42,7 +42,7 @@ services:
     command: migrate up -y -c keto.yml
     volumes:
       - type: bind
-        source: ../keto
+        source: ../config/keto
         target: /home/ory
     depends_on:
       keto-schema-init:
@@ -61,7 +61,7 @@ services:
     restart: on-failure
     volumes:
       - type: bind
-        source: ../keto
+        source: ../config/keto
         target: /home/ory
     depends_on:
       keto-migrate:

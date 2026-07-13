@@ -28,7 +28,7 @@
 | [011](./011-centralized-outbound-webhooks.md) | Централизованный сервис исходящих webhooks | accepted | 2026-07-09 |
 | [012](./012-club-invite-via-logto.md) | Member = Logto; invite = registration + referral | accepted | 2026-07-09 |
 | [013](./013-referral-rewards-service.md) | Денежные реферальные вознаграждения — `referral-rewards` | accepted | 2026-07-10 |
-| [014](./014-oracle-revenue-forecast.md) | Oracle: симулятор дохода (admin) | accepted | 2026-07-11 |
+| [014](./014-vanga-revenue-forecast.md) | Vanga: симулятор дохода (admin) | accepted | 2026-07-11 |
 | [015](./015-monetization-engine.md) | Monetization engine package | accepted | 2026-07-11 |
 | [016](./016-financial-policy-parameter-registration.md) | Plan-config: планы, матрица, register plan variables | accepted | 2026-07-11 |
 | [017](./017-plan-config-scalar-config-rename.md) | Rename plan-config / scalar-config, key format | accepted | 2026-07-11 |

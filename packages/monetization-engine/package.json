@@ -2,7 +2,7 @@
   "name": "@tavrida/monetization-engine",
   "version": "0.0.1",
   "private": true,
-  "description": "Pure deterministic monetization formulas — shared by platform services and Oracle",
+  "description": "Pure deterministic monetization formulas — shared by platform services and Vanga",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

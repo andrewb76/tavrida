@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AttachmentBadge from '@/components/media/AttachmentBadge.vue';
 import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
@@ -9,23 +8,36 @@ import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   buildCommentTree,
   createComment,
+  fetchForumMeta,
   forumAuthorLabel,
   getTopic,
   listComments,
+  updateTopic,
   type ForumComment,
+  type ForumMeta,
   type TopicDetail,
 } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
+import { canEditForumContent } from '@tavrida/shared';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useSessionStore } from '@/stores/session';
 
 const route = useRoute();
+const session = useSessionStore();
 const topicId = computed(() => route.params.id as string);
 
 const topic = ref<TopicDetail | null>(null);
+const forumMeta = ref<ForumMeta | null>(null);
 const comments = ref<ForumComment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const editingTopic = ref(false);
+const topicTitleDraft = ref('');
+const topicBodyDraft = ref('');
+const savingTopic = ref(false);
+const topicEditError = ref<string | null>(null);
 
 const commentTree = computed(() => buildCommentTree(comments.value));
 
@@ -35,18 +47,26 @@ const postError = ref<string | null>(null);
 const commentAttachmentsExpanded = ref(false);
 const commentUpload = useMediaUpload('forum');
 
+const canEditTopic = computed(() => {
+  if (!topic.value || !session.userId || !forumMeta.value) return false;
+  if (topic.value.authorId !== session.userId) return false;
+  return canEditForumContent(topic.value.createdAt, forumMeta.value.editWindowMinutes);
+});
+
 onMounted(load);
 
 async function load() {
   loading.value = true;
   error.value = null;
   try {
-    const [topicRow, commentRows] = await Promise.all([
+    const [topicRow, commentRows, meta] = await Promise.all([
       getTopic(topicId.value),
       listComments(topicId.value),
+      fetchForumMeta(),
     ]);
     topic.value = topicRow;
     comments.value = commentRows;
+    forumMeta.value = meta;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
@@ -54,8 +74,42 @@ async function load() {
   }
 }
 
+function startTopicEdit() {
+  if (!topic.value) return;
+  topicTitleDraft.value = topic.value.title;
+  topicBodyDraft.value = topic.value.body;
+  topicEditError.value = null;
+  editingTopic.value = true;
+}
+
+function cancelTopicEdit() {
+  editingTopic.value = false;
+  topicEditError.value = null;
+}
+
+async function saveTopicEdit() {
+  if (!topic.value || !topicTitleDraft.value.trim() || !topicBodyDraft.value.trim()) return;
+  savingTopic.value = true;
+  topicEditError.value = null;
+  try {
+    topic.value = await updateTopic(topicId.value, {
+      title: topicTitleDraft.value.trim(),
+      body: topicBodyDraft.value.trim(),
+    });
+    editingTopic.value = false;
+  } catch (e) {
+    topicEditError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
+  } finally {
+    savingTopic.value = false;
+  }
+}
+
 function onCommentCreated(created: ForumComment) {
   comments.value = [...comments.value, created];
+}
+
+function onCommentUpdated(updated: ForumComment) {
+  comments.value = comments.value.map((row) => (row.id === updated.id ? updated : row));
 }
 
 async function submitTopicComment() {
@@ -107,17 +161,73 @@ async function submitTopicComment() {
             <span class="forum-topic__author-name">{{ forumAuthorLabel(topic.author) }}</span>
             <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           </div>
+          <UiButton
+            v-if="canEditTopic && !editingTopic"
+            intent="ghost"
+            size="sm"
+            type="button"
+            class="forum-topic__edit-btn"
+            @click="startTopicEdit"
+          >
+            Редактировать
+          </UiButton>
         </header>
-        <h1>{{ topic.title }}</h1>
-        <MarkdownBody :body="topic.body" />
-        <AttachmentBadge
+
+        <template v-if="editingTopic">
+          <label class="forum-topic__edit-field">
+            Заголовок
+            <input
+              v-model="topicTitleDraft"
+              type="text"
+              maxlength="256"
+              required
+            >
+          </label>
+          <label class="forum-topic__edit-field">
+            Текст (Markdown)
+            <textarea
+              v-model="topicBodyDraft"
+              rows="8"
+              maxlength="10000"
+              required
+            />
+          </label>
+          <p
+            v-if="topicEditError"
+            class="forum-topic__error"
+          >
+            {{ topicEditError }}
+          </p>
+          <div class="forum-topic__edit-actions">
+            <UiButton
+              intent="primary"
+              size="sm"
+              type="button"
+              :disabled="savingTopic"
+              @click="saveTopicEdit"
+            >
+              {{ savingTopic ? 'Сохранение…' : 'Сохранить' }}
+            </UiButton>
+            <UiButton
+              intent="secondary"
+              size="sm"
+              type="button"
+              :disabled="savingTopic"
+              @click="cancelTopicEdit"
+            >
+              Отмена
+            </UiButton>
+          </div>
+        </template>
+        <template v-else>
+          <h1>{{ topic.title }}</h1>
+          <MarkdownBody :body="topic.body" />
+        </template>
+        <AttachmentList
           v-if="topic.attachments?.length"
-          :count="topic.attachments.length"
-        >
-          <template #list>
-            <AttachmentList :attachments="topic.attachments" />
-          </template>
-        </AttachmentBadge>
+          :attachments="topic.attachments"
+          variant="forum"
+        />
       </article>
 
       <section class="forum-topic__comments">
@@ -133,7 +243,10 @@ async function submitTopicComment() {
             :node="node"
             :topic-id="topicId"
             :depth="0"
+            :edit-window-minutes="forumMeta?.editWindowMinutes ?? 0"
+            :current-user-id="session.userId"
             @created="onCommentCreated"
+            @updated="onCommentUpdated"
           />
         </ul>
         <p
@@ -215,6 +328,28 @@ async function submitTopicComment() {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.forum-topic__edit-btn {
+  margin-left: auto;
+}
+
+.forum-topic__edit-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.forum-topic__edit-field input,
+.forum-topic__edit-field textarea {
+  width: 100%;
+}
+
+.forum-topic__edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 

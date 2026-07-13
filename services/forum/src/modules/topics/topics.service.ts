@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
+import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
@@ -77,6 +78,56 @@ export class TopicsService {
       attachments,
       isPinned: false,
     });
+    await this.topics.save(row);
+    return this.toDetail(row);
+  }
+
+  async update(input: {
+    topicId: string;
+    authorId: string;
+    title?: string;
+    body?: string;
+    attachments?: MediaAttachment[];
+    editWindowMinutes: number;
+    maxAttachmentCount?: number;
+    maxAttachmentSizeBytes?: number;
+  }) {
+    const row = await this.topics.findOne({ where: { id: input.topicId } });
+    if (!row) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+
+    assertForumEditAllowed({
+      authorId: row.authorId,
+      editorId: input.authorId,
+      createdAt: row.createdAt,
+      editWindowMinutes: input.editWindowMinutes,
+    });
+
+    const nextTitle = input.title?.trim();
+    const nextBody = input.body?.trim();
+    if (!nextTitle && !nextBody && input.attachments === undefined) {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Укажите title, body или attachments для обновления',
+      });
+    }
+
+    if (nextTitle) row.title = nextTitle;
+    if (nextBody) row.body = nextBody;
+    if (input.attachments !== undefined) row.attachments = input.attachments;
+
+    validateForumContent({
+      body: row.body,
+      attachments: row.attachments ?? [],
+      media: {
+        authorId: input.authorId,
+        publicBaseUrl: this.mediaPublicBaseUrl(),
+        maxAttachmentCount: input.maxAttachmentCount ?? 1,
+        maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
+      },
+    });
+
     await this.topics.save(row);
     return this.toDetail(row);
   }

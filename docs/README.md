@@ -14,7 +14,7 @@
 | [🌊 platform-for-users](./01-goal/platform-for-users.md) | Функциональность без технического жаргона |
 | [🏛️ club-access](./01-goal/club-access.md) | Клуб: лендинг, инвайт-only |
 | [⭐ karma-and-rating](./01-goal/karma-and-rating.md) | Рейтинг, карма, формулы, referral |
-| [💰 monetization-catalog](./01-goal/monetization-catalog.md) | Доходы, расходы, формулы (Oracle) |
+| [💰 monetization-catalog](./01-goal/monetization-catalog.md) | Доходы, расходы, формулы (Vanga) |
 | [👥 roles](./01-goal/roles.md) | Роли, тарифы, права, матрица доступа |
 
 ---

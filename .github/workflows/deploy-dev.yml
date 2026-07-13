@@ -1,0 +1,121 @@
+name: Deploy dev (Swarm)
+
+# Build → GHCR → docker stack deploy via SSH Docker context.
+# App secrets are NOT touched here — use workflow "Sync secrets (dev)" when rotating.
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: 'Image tag (empty = short GITHUB_SHA)'
+        required: false
+        type: string
+      skip_build:
+        description: 'Skip build/push (deploy existing tag only)'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [master]
+    paths:
+      - 'services/**'
+      - 'apps/frontend/**'
+      - 'packages/**'
+      - 'config/**'
+      - 'docker/**'
+      - '.github/workflows/deploy-dev.yml'
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKER_CONTEXT: dev-swarm
+
+jobs:
+  deploy:
+    name: Build + deploy
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: tag
+        env:
+          INPUT_SHA: ${{ inputs.git_sha }}
+        run: |
+          if [[ -n "${INPUT_SHA}" ]]; then
+            echo "git_sha=${INPUT_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "git_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write public dev.env
+        env:
+          DEV_DOMAIN: ${{ vars.DEV_DOMAIN }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          TAVRIDA_REPO_ROOT: ${{ vars.TAVRIDA_REPO_ROOT || '/opt/tavrida' }}
+          GHCR_OWNER: ${{ vars.GHCR_OWNER || github.repository_owner }}
+          GIT_SHA: ${{ steps.tag.outputs.git_sha }}
+          LOGTO_ENDPOINT: ${{ vars.LOGTO_ENDPOINT }}
+          LOGTO_JWKS_URL: ${{ vars.LOGTO_JWKS_URL }}
+          LOGTO_AUDIENCE: ${{ vars.LOGTO_AUDIENCE }}
+          LOGTO_M2M_APP_ID: ${{ vars.LOGTO_M2M_APP_ID }}
+          LOGTO_M2M_RESOURCE: ${{ vars.LOGTO_M2M_RESOURCE }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+        run: ./docker/swarm/ci-write-dev-env.sh
+
+      - name: Log in to GHCR
+        if: ${{ github.event_name == 'push' || inputs.skip_build != true }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: ${{ github.event_name == 'push' || inputs.skip_build != true }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push images
+        if: ${{ github.event_name == 'push' || inputs.skip_build != true }}
+        env:
+          GHCR_OWNER: ${{ vars.GHCR_OWNER || github.repository_owner }}
+          GIT_SHA: ${{ steps.tag.outputs.git_sha }}
+          DEV_DOMAIN: ${{ vars.DEV_DOMAIN }}
+        run: ./docker/swarm/build-images.sh --push
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEV_SWARM_SSH_KEY }}
+
+      - name: Docker context → Swarm
+        env:
+          DEV_SWARM_SSH_HOST: ${{ vars.DEV_SWARM_SSH_HOST }}
+          DEV_SWARM_SSH_USER: ${{ vars.DEV_SWARM_SSH_USER }}
+        run: ./docker/swarm/ci-docker-context.sh
+
+      - name: Registry auth on context (for --with-registry-auth)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker --context "$DOCKER_CONTEXT" login ghcr.io \
+            -u "${{ github.actor }}" --password-stdin
+
+      - name: Stack deploy
+        env:
+          DOCKER_CONTEXT: dev-swarm
+        run: ./docker/swarm/deploy-dev.sh
+
+      - name: Summary
+        run: |
+          {
+            echo "### Dev deploy"
+            echo "- tag: \`${{ steps.tag.outputs.git_sha }}\`"
+            echo "- app: https://app.${{ vars.DEV_DOMAIN }}"
+            echo "- api: https://api.${{ vars.DEV_DOMAIN }}/api/v1"
+          } >> "$GITHUB_STEP_SUMMARY"

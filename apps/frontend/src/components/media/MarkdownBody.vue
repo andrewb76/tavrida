@@ -1,69 +1,82 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { renderForumMarkdown } from '@/utils/renderForumMarkdown';
 
 const props = defineProps<{
   body: string;
 }>();
 
-const parts = computed(() => {
-  const pattern = /!\[([^\]]*)]\(([^)]+)\)/g;
-  const segments: Array<{ type: 'text' | 'image'; value: string; alt?: string }> = [];
-  let lastIndex = 0;
-  for (const match of props.body.matchAll(pattern)) {
-    const index = match.index ?? 0;
-    if (index > lastIndex) {
-      segments.push({ type: 'text', value: props.body.slice(lastIndex, index) });
-    }
-    segments.push({ type: 'image', alt: match[1] ?? '', value: match[2] ?? '' });
-    lastIndex = index + match[0].length;
-  }
-  if (lastIndex < props.body.length) {
-    segments.push({ type: 'text', value: props.body.slice(lastIndex) });
-  }
-  return segments.length ? segments : [{ type: 'text' as const, value: props.body }];
-});
+const html = computed(() => renderForumMarkdown(props.body));
 </script>
 
 <template>
-  <div class="markdown-body">
-    <template
-      v-for="(part, idx) in parts"
-      :key="idx"
-    >
-      <span
-        v-if="part.type === 'text'"
-        class="markdown-body__text"
-      >{{ part.value }}</span>
-      <figure
-        v-else
-        class="markdown-body__figure"
-      >
-        <img
-          :src="part.value"
-          :alt="part.alt"
-          loading="lazy"
-        >
-      </figure>
-    </template>
-  </div>
+  <div
+    v-if="html"
+    class="markdown-body prose prose-sm max-w-none"
+    v-html="html"
+  />
 </template>
 
 <style scoped>
-.markdown-body {
-  display: grid;
-  gap: 0.75rem;
+.markdown-body :deep(p) {
+  margin: 0.5rem 0;
 }
 
-.markdown-body__text {
-  white-space: pre-wrap;
+.markdown-body :deep(p:first-child) {
+  margin-top: 0;
 }
 
-.markdown-body__figure {
-  margin: 0;
+.markdown-body :deep(p:last-child) {
+  margin-bottom: 0;
 }
 
-.markdown-body__figure img {
+.markdown-body :deep(a) {
+  color: var(--color-primary, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-body :deep(blockquote) {
+  border-left: 3px solid color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+  padding-left: 0.75rem;
+  color: var(--color-text-muted, #666);
+}
+
+.markdown-body :deep(code) {
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--color-text, #111) 6%, transparent);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.875em;
+}
+
+.markdown-body :deep(pre) {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border, #ddd);
+  background: var(--color-bg, #f8fafc);
+  padding: 0.75rem;
+}
+
+.markdown-body :deep(pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+.markdown-body :deep(img) {
   max-width: 100%;
-  border-radius: 8px;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.markdown-body :deep(table) {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  border: 1px solid var(--color-border, #ddd);
+  padding: 0.35rem 0.5rem;
 }
 </style>

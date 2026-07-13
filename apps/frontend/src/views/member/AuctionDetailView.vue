@@ -3,6 +3,7 @@ import MediaGallery from '@/components/media/MediaGallery.vue';
 import { useCountdown } from '@/composables/useCountdown';
 import {
   auctionStatusLabel,
+  auctionTimeProgressPercent,
   auctionTypeLabel,
   formatCountdown,
   formatMoney,
@@ -49,6 +50,15 @@ const categoryTitle = computed(() => {
 const endingSoon = computed(() => {
   if (!lot.value?.isLive) return false;
   return remainingMs.value > 0 && remainingMs.value <= 24 * 60 * 60 * 1000;
+});
+
+const auctionProgress = computed(() => {
+  if (!lot.value?.isLive || !lot.value.startsAt || !lot.value.endsAt) return null;
+  return auctionTimeProgressPercent({
+    startsAt: lot.value.startsAt,
+    endsAt: lot.value.endsAt,
+    remainingMs: remainingMs.value,
+  });
 });
 
 const canBid = computed(() => Boolean(lot.value?.isLive));
@@ -147,24 +157,49 @@ function confirmBidMock() {
         class="lot-page__status-bar"
         :class="{ 'lot-page__status-bar--ending': endingSoon }"
       >
-        <div class="lot-page__status-left">
-          <span
-            v-if="lot.isLive"
-            class="lot-page__live"
-          >● LIVE</span>
-          <span
-            v-if="lot.isPromoted"
-            class="lot-page__promoted"
-          >↑ Продвижение</span>
-          <span class="lot-page__phase">{{ auctionStatusLabel(lot) }}</span>
+        <div class="lot-page__status-main">
+          <div class="lot-page__status-left">
+            <span
+              v-if="lot.isLive"
+              class="lot-page__live"
+            >● LIVE</span>
+            <span
+              v-if="lot.isPromoted"
+              class="lot-page__promoted"
+            >↑ Продвижение</span>
+            <span class="lot-page__phase">{{ auctionStatusLabel(lot) }}</span>
+          </div>
+          <div class="lot-page__status-right">
+            <span
+              v-if="lot.isLive && lot.endsAt"
+              class="lot-page__timer"
+            >⏱ {{ formatCountdown(remainingMs) }}</span>
+            <strong class="lot-page__price">{{ formatMoney(lot.currentPrice, lot.currency) }}</strong>
+            <span class="lot-page__bids">{{ lot.bidCount }} ставок</span>
+          </div>
         </div>
-        <div class="lot-page__status-right">
-          <span
-            v-if="lot.isLive && lot.endsAt"
-            class="lot-page__timer"
-          >⏱ {{ formatCountdown(remainingMs) }}</span>
-          <strong class="lot-page__price">{{ formatMoney(lot.currentPrice, lot.currency) }}</strong>
-          <span class="lot-page__bids">{{ lot.bidCount }} ставок</span>
+
+        <div
+          v-if="auctionProgress != null"
+          class="lot-page__auction-progress"
+        >
+          <div class="lot-page__auction-progress-meta">
+            <span>Ход торгов</span>
+            <span>{{ Math.round(auctionProgress) }}%</span>
+          </div>
+          <div
+            class="lot-page__auction-progress-track"
+            role="progressbar"
+            :aria-valuenow="Math.round(auctionProgress)"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-label="`Прошло ${Math.round(auctionProgress)}% времени торгов`"
+          >
+            <div
+              class="lot-page__auction-progress-fill"
+              :style="{ width: `${auctionProgress}%` }"
+            />
+          </div>
         </div>
       </div>
 
@@ -456,13 +491,49 @@ function confirmBidMock() {
 
 .lot-page__status-bar {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
   border: 1px solid var(--color-border, #ddd);
   background: var(--color-surface, #fff);
+}
+
+.lot-page__status-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lot-page__auction-progress {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lot-page__auction-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #666);
+}
+
+.lot-page__auction-progress-track {
+  overflow: hidden;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text, #111) 8%, transparent);
+}
+
+.lot-page__auction-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary, #2563eb);
+  transition: width 1s linear;
+}
+
+.lot-page__status-bar--ending .lot-page__auction-progress-fill {
+  background: #f59e0b;
 }
 
 .lot-page__status-bar--ending {

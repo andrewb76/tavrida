@@ -30,6 +30,21 @@ export function formatCountdown(ms: number): string {
   return [h, m, s].map((v) => String(v).padStart(2, '0')).join(':');
 }
 
+/** Elapsed auction time as 0–100, based on startsAt/endsAt and remaining countdown. */
+export function auctionTimeProgressPercent(input: {
+  startsAt: string;
+  endsAt: string;
+  remainingMs: number;
+}): number | null {
+  const start = new Date(input.startsAt).getTime();
+  const end = new Date(input.endsAt).getTime();
+  const total = end - start;
+  if (total <= 0) return null;
+
+  const elapsed = total - Math.max(0, input.remainingMs);
+  return Math.min(100, Math.max(0, (elapsed / total) * 100));
+}
+
 export function sellerDisplayName(sellerId: string): string {
   const map: Record<string, string> = {
     'seed-seller-1': 'Андрей К.',

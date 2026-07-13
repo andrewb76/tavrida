@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
+import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 
 const props = defineProps<{
   avatarUrl: string;
@@ -9,6 +10,7 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true });
 
 const failed = ref(false);
+const displayUrl = computed(() => proxiedMediaUrl(props.avatarUrl, imageProxyPresets.avatarPreview));
 
 const initial = computed(() => {
   const source = props.label.trim() || '?';
@@ -91,8 +93,8 @@ onUnmounted(() => {
               aria-hidden="true"
             >{{ initial }}</span>
             <img
-              v-if="!failed"
-              :src="avatarUrl"
+              v-if="displayUrl && !failed"
+              :src="displayUrl"
               :alt="label"
               class="profile-avatar-preview__image"
               referrerpolicy="no-referrer"

@@ -40,6 +40,10 @@ export type TopicDetail = TopicSummary & {
   author: ForumAuthor;
 };
 
+export type ForumMeta = {
+  editWindowMinutes: number;
+};
+
 function apiBase(): string {
   return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 }
@@ -57,6 +61,12 @@ export async function listTopics(categoryId?: string): Promise<TopicSummary[]> {
   if (!res.ok) throw new Error('Не удалось загрузить темы');
   const json = (await res.json()) as { data: TopicSummary[] };
   return json.data;
+}
+
+export async function fetchForumMeta(): Promise<ForumMeta> {
+  const res = await fetch(`${apiBase()}/forum/meta`);
+  if (!res.ok) throw new Error('Не удалось загрузить настройки форума');
+  return (await res.json()) as ForumMeta;
 }
 
 export async function getTopic(topicId: string): Promise<TopicDetail> {
@@ -87,6 +97,26 @@ export async function createTopic(input: {
   return (await res.json()) as TopicDetail;
 }
 
+export async function updateTopic(
+  topicId: string,
+  input: { title?: string; body?: string; attachments?: MediaAttachment[] },
+): Promise<TopicDetail> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось обновить тему');
+  }
+  return (await res.json()) as TopicDetail;
+}
+
 export async function listComments(topicId: string): Promise<ForumComment[]> {
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`);
   if (!res.ok) throw new Error('Не удалось загрузить комментарии');
@@ -110,6 +140,30 @@ export async function createComment(
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(err?.detail ?? 'Не удалось отправить комментарий');
+  }
+  return (await res.json()) as ForumComment;
+}
+
+export async function updateComment(
+  topicId: string,
+  commentId: string,
+  input: { body?: string; attachments?: MediaAttachment[] },
+): Promise<ForumComment> {
+  const token = await requireBearerToken();
+  const res = await fetch(
+    `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось обновить комментарий');
   }
   return (await res.json()) as ForumComment;
 }

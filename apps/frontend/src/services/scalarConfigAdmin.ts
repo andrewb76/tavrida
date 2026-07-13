@@ -56,6 +56,45 @@ export async function saveClubSettings(patch: ClubSettings): Promise<ClubSetting
   return (await res.json()) as ClubSettings;
 }
 
+export type ForumSettings = {
+  'edit.windowMinutes'?: number;
+};
+
+export async function fetchForumSettings(): Promise<ForumSettings> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load forum settings (${res.status})`);
+  }
+  return (await res.json()) as ForumSettings;
+}
+
+export async function saveForumSettings(patch: ForumSettings): Promise<ForumSettings> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    let detail = `Failed to save forum settings (${res.status})`;
+    try {
+      const body = (await res.json()) as { detail?: string; message?: string | string[] };
+      if (typeof body.detail === 'string') detail = body.detail;
+      else if (typeof body.message === 'string') detail = body.message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return (await res.json()) as ForumSettings;
+}
+
 export async function fetchScalarRegistry(): Promise<ScalarRegistryEntry[]> {
   const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/registry`, {

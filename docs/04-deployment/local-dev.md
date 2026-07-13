@@ -40,7 +40,7 @@ pnpm grant:admin <your_logto_sub>   # sub с /profile/me
 docker compose -f docker/compose/infra.local.yml up -d
 ```
 
-Поднимает: PostgreSQL (`tavrida_lot`), Redis, RabbitMQ, MinIO. Сеть `tavrida-local`.  
+Поднимает: PostgreSQL (`tavrida_lot`), Redis, RabbitMQ, MinIO, **imgproxy**. Сеть `tavrida-local`.  
 **Keto** — `pnpm keto:up` (schema `keto` в Postgres, [bootstrap-admin](../09-security/bootstrap-admin.md)). Logto — Cloud или `logto.local.yml`.
 
 ## 🌐 Local URLs
@@ -54,6 +54,8 @@ docker compose -f docker/compose/infra.local.yml up -d
 | `http://localhost:3002` | plan-config (legacy: financial-policy — debug only) |
 | `http://localhost:3008` | scalar-config (legacy: settings — debug only) |
 | `http://localhost:3009` | forum (internal — debug only) |
+| `http://localhost:9000` | MinIO (S3 API) |
+| `http://localhost:8080` | imgproxy (resize / WebP для медиа) |
 
 Предпочтительно: **только BFF** с фронта; direct service ports — для отладки.
 

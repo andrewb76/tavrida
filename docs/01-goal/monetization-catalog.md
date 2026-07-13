@@ -1,7 +1,7 @@
 # 💰 Каталог монетизации Tavrida Lot
 
-> **Статус:** draft · **Версия:** 0.1 · **Аудитория:** PM, founder, admin, Oracle  
-> **Связано:** [platform-for-users](./platform-for-users.md) · [PLATFORM-REGISTRY](../05-microservices/PLATFORM-REGISTRY.md) · [Oracle](../05-microservices/oracle/README.md)
+> **Статус:** draft · **Версия:** 0.1 · **Аудитория:** PM, founder, admin, Vanga  
+> **Связано:** [platform-for-users](./platform-for-users.md) · [PLATFORM-REGISTRY](../05-microservices/PLATFORM-REGISTRY.md) · [Vanga](../05-microservices/vanga/README.md)
 
 ## 🎯 Назначение
 
@@ -9,7 +9,7 @@
 
 - Для людей — [platform-for-users.md](./platform-for-users.md) (§ «Деньги и тарифы»).
 - Для конфигурации — [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md).
-- Для **прогноза** — [Oracle](../05-microservices/oracle/README.md) ([topic-index](../05-microservices/oracle/topic-index.md))
+- Для **прогноза** — [Vanga](../05-microservices/vanga/README.md) ([topic-index](../05-microservices/vanga/topic-index.md))
 
 ---
 
@@ -57,7 +57,7 @@ flowchart TB
 | Активация плана | `basic`, `pro` | `plan_config.plan.monthlyPrice` / `yearlyPrice` | plan-config → `billing.charge` target `plan-config.activate-plan:{planId}` | `subscription.activated` |
 | Автопродление | тот же | то же | CRON plan-config: `expiresAt <= now` ∧ `autoRenew` → charge → extend | `subscription.activated` или `subscription.expired` |
 
-**Oracle assumptions (входные ползунки):**
+**Vanga assumptions (входные ползунки):**
 
 | Параметр | Описание | Default (draft) |
 |----------|----------|-----------------|
@@ -106,7 +106,7 @@ MRR_subscriptions =
 | `marketplace.featuredPlacement` | TBD |
 | `marketplace.platformFee` | TBD |
 
-**Oracle assumptions:**
+**Vanga assumptions:**
 
 | Параметр | Описание |
 |----------|----------|
@@ -128,7 +128,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 `billing.deposit` — перевод **собственных** денег пользователя на баланс. Для P&L это **не выручка**, но влияет на:
 
 - конверсию в подписку / разовые покупки;
-- cash flow (если Oracle считает «деньги в системе»).
+- cash flow (если Vanga считает «деньги в системе»).
 
 | Параметр | Источник |
 |----------|----------|
@@ -146,7 +146,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 | `AUCTION_SERVICES` | promotion и др. | [charge-categories](../05-microservices/referral-rewards/requirements/charge-categories.md) |
 | `MARKETPLACE_SERVICES` | platform charges | то же |
 
-**Oracle assumptions:**
+**Vanga assumptions:**
 
 | Параметр | Описание |
 |----------|----------|
@@ -156,7 +156,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 ---
 
-## 5️⃣ Затраты (cost sliders в Oracle)
+## 5️⃣ Затраты (cost sliders в Vanga)
 
 | Категория | Примеры | Период |
 |-----------|---------|--------|
@@ -167,14 +167,14 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 ---
 
-## 6️⃣ Где живут параметры (для чекбоксов Oracle)
+## 6️⃣ Где живут параметры (для чекбоксов Vanga)
 
 | Слой | Сервис | Примеры ключей | Редактирует |
 |------|--------|----------------|-------------|
 | **Settings** | `scalar-config` | `billing.minDepositAmount`, `referralRewards.*`, `club.*` | admin |
 | **Plans & plan variables** | `plan-config` | Матрица; ключи через sync от domain | admin `/admin/plan-config` |
 | **Scalar config** | `scalar-config` | Линейный реестр | admin `/admin/scalar-config` |
-| **Assumptions** | **Oracle only** | registrations, mix, churn, attach rates, tree | admin (simulation); defaults: `config/oracle.defaults.yaml` |
+| **Assumptions** | **Vanga only** | registrations, mix, churn, attach rates, tree | admin (simulation); defaults: `config/vanga.defaults.yaml` |
 
 ---
 
@@ -188,7 +188,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 | forum | paid reactions | — | [requirements](../05-microservices/forum/requirements/README.md) |
 | marketplace | platform fees TBD | — | [README](../05-microservices/marketplace/README.md) |
 | referral-rewards | — | payouts | [README](../05-microservices/referral-rewards/README.md) |
-| **oracle** | прогноз (read-only) | — | [README](../05-microservices/oracle/README.md) |
+| **vanga** | прогноз (read-only) | — | [README](../05-microservices/vanga/README.md) |
 
 ---
 
@@ -196,7 +196,7 @@ one_time_revenue = Σ (events_i × price_i × attach_rate_i)
 
 1. Новая платная фича → строка в §2 + `billing.target` + PLATFORM-REGISTRY.
 2. Новая подписка / цена → `plan_config.plan` + §1.
-3. Новая формула Oracle → [oracle/README](../05-microservices/oracle/README.md) + `config/oracle.defaults.yaml` + `@tavrida/monetization-engine`.
+3. Новая формула Vanga → [vanga/README](../05-microservices/vanga/README.md) + `config/vanga.defaults.yaml` + `@tavrida/monetization-engine`.
 
 ---
 

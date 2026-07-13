@@ -159,7 +159,7 @@ Idempotency-Key: {uuid}
 
 - [BFF](../05-microservices/bff/README.md)
 - [BFF invites API](../05-microservices/bff/invites-api.md)
-- [Oracle admin API](./oracle-admin-api.md)
+- [Vanga admin API](./vanga-admin-api.md)
 - [Security](../09-security/README.md)
 - [Architecture](../03-architecture/README.md)
 

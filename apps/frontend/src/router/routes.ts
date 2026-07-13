@@ -131,10 +131,10 @@ const memberChildren: RouteRecordRaw[] = [
         meta: { title: 'Тарифы', requiresMember: true, requiresAdmin: true },
       },
       {
-        path: 'oracle',
-        name: 'admin-oracle',
-        component: () => import('@/views/admin/AdminOracleView.vue'),
-        meta: { title: 'Oracle', requiresMember: true, requiresAdmin: true },
+        path: 'vanga',
+        name: 'admin-vanga',
+        component: () => import('@/views/admin/AdminVangaView.vue'),
+        meta: { title: 'Ванга', requiresMember: true, requiresAdmin: true },
       },
       {
         path: 'roles',

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 
 const props = defineProps<{
   images: string[];
@@ -8,6 +9,12 @@ const props = defineProps<{
 const active = ref(0);
 
 const slides = computed(() => (props.images.length ? props.images : ['placeholder']));
+
+const activeSrc = computed(() => {
+  const slide = slides.value[active.value];
+  if (slide === 'placeholder') return undefined;
+  return proxiedMediaUrl(slide, imageProxyPresets.galleryMain);
+});
 
 function select(index: number) {
   active.value = index;
@@ -18,8 +25,8 @@ function select(index: number) {
   <div class="media-gallery">
     <div class="media-gallery__main">
       <img
-        v-if="slides[active] !== 'placeholder'"
-        :src="slides[active]"
+        v-if="activeSrc"
+        :src="activeSrc"
         alt=""
         class="media-gallery__img"
       >

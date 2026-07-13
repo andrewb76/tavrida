@@ -1,0 +1,8 @@
+-- NestJS microservice schemas (ADR-001). Created on first Postgres init.
+CREATE SCHEMA IF NOT EXISTS billing;
+CREATE SCHEMA IF NOT EXISTS plan_config;
+CREATE SCHEMA IF NOT EXISTS auction;
+CREATE SCHEMA IF NOT EXISTS auction_subscriptions;
+CREATE SCHEMA IF NOT EXISTS user_profile;
+CREATE SCHEMA IF NOT EXISTS scalar_config;
+CREATE SCHEMA IF NOT EXISTS forum;

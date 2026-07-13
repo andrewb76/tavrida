@@ -1,0 +1,234 @@
+# Dev Swarm — platform services (images from GHCR)
+#
+# Secrets: sync via sync-secrets-dev.sh → *_FILE env in containers
+# Deploy: DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
+
+name: tavrida-dev
+
+secrets:
+  rabbitmq_url:
+    external: true
+    name: tavrida_dev_rabbitmq_url
+  billing_database_url:
+    external: true
+    name: tavrida_dev_billing_database_url
+  plan_config_database_url:
+    external: true
+    name: tavrida_dev_plan_config_database_url
+  auction_database_url:
+    external: true
+    name: tavrida_dev_auction_database_url
+  user_profile_database_url:
+    external: true
+    name: tavrida_dev_user_profile_database_url
+  scalar_config_database_url:
+    external: true
+    name: tavrida_dev_scalar_config_database_url
+  forum_database_url:
+    external: true
+    name: tavrida_dev_forum_database_url
+  bff_database_url:
+    external: true
+    name: tavrida_dev_bff_database_url
+  logto_m2m_app_secret:
+    external: true
+    name: tavrida_dev_logto_m2m_app_secret
+  minio_secret_key:
+    external: true
+    name: tavrida_dev_minio_root_password
+
+x-nest-env: &nest-env
+  NODE_ENV: production
+  REDIS_URL: redis://redis:6379
+  RABBITMQ_URL_FILE: /run/secrets/rabbitmq_url
+
+x-nest-deploy: &nest-deploy
+  replicas: 1
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+  update_config:
+    parallelism: 1
+    delay: 15s
+    order: start-first
+
+services:
+  billing:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-billing:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - billing_database_url
+    environment:
+      <<: *nest-env
+      BILLING_PORT: '3001'
+      DATABASE_URL_FILE: /run/secrets/billing_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  plan-config:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-plan-config:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - plan_config_database_url
+    environment:
+      <<: *nest-env
+      PLAN_CONFIG_PORT: '3002'
+      DATABASE_URL_FILE: /run/secrets/plan_config_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  auction:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-auction:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - auction_database_url
+    environment:
+      <<: *nest-env
+      AUCTION_PORT: '3003'
+      DATABASE_URL_FILE: /run/secrets/auction_database_url
+      MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  user-profile:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-user-profile:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - user_profile_database_url
+    environment:
+      <<: *nest-env
+      USER_PROFILE_PORT: '3007'
+      DATABASE_URL_FILE: /run/secrets/user_profile_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3007/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  scalar-config:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-scalar-config:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - scalar_config_database_url
+    environment:
+      <<: *nest-env
+      SCALAR_CONFIG_PORT: '3008'
+      DATABASE_URL_FILE: /run/secrets/scalar_config_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3008/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  forum:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-forum:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - forum_database_url
+    environment:
+      <<: *nest-env
+      FORUM_PORT: '3009'
+      DATABASE_URL_FILE: /run/secrets/forum_database_url
+      MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3009/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  bff:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - bff_database_url
+      - logto_m2m_app_secret
+      - minio_secret_key
+    environment:
+      <<: *nest-env
+      BFF_PORT: '3000'
+      DATABASE_URL_FILE: /run/secrets/bff_database_url
+      BILLING_URL: http://billing:3001
+      PLAN_CONFIG_URL: http://plan-config:3002
+      AUCTION_URL: http://auction:3003
+      USER_PROFILE_URL: http://user-profile:3007
+      SCALAR_CONFIG_URL: http://scalar-config:3008
+      FORUM_URL: http://forum:3009
+      KETO_READ_URL: ${KETO_READ_URL}
+      KETO_WRITE_URL: ${KETO_WRITE_URL}
+      LOGTO_ENDPOINT: ${LOGTO_ENDPOINT}
+      LOGTO_JWKS_URL: ${LOGTO_JWKS_URL}
+      LOGTO_AUDIENCE: ${LOGTO_AUDIENCE}
+      LOGTO_M2M_APP_ID: ${LOGTO_M2M_APP_ID}
+      LOGTO_M2M_APP_SECRET_FILE: /run/secrets/logto_m2m_app_secret
+      LOGTO_M2M_RESOURCE: ${LOGTO_M2M_RESOURCE}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: '9000'
+      MINIO_USE_SSL: 'false'
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY_FILE: /run/secrets/minio_secret_key
+      MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
+      VANGA_DEFAULTS_PATH: /app/config/vanga.defaults.yaml
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.bff.rule=Host(`api.${DEV_DOMAIN}`)
+        - traefik.http.routers.bff.entrypoints=websecure
+        - traefik.http.routers.bff.tls.certresolver=le
+        - traefik.http.services.bff.loadbalancer.server.port=3000
+
+  frontend:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-frontend:${GIT_SHA}
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.frontend.rule=Host(`app.${DEV_DOMAIN}`)
+        - traefik.http.routers.frontend.entrypoints=websecure
+        - traefik.http.routers.frontend.tls.certresolver=le
+        - traefik.http.services.frontend.loadbalancer.server.port=80

@@ -5,8 +5,10 @@ import { toast } from 'vue-sonner';
 import {
   deleteScalarKey,
   fetchClubSettings,
+  fetchForumSettings,
   fetchScalarRegistry,
   saveClubSettings,
+  saveForumSettings,
   type ClubSettings,
   type ScalarRegistryEntry,
 } from '@/services/scalarConfigAdmin';
@@ -14,6 +16,7 @@ import { useClubAccessStore } from '@/stores/clubAccess';
 
 const loading = ref(true);
 const saving = ref(false);
+const savingForum = ref(false);
 const deletingKey = ref<string | null>(null);
 const error = ref('');
 const registry = ref<ScalarRegistryEntry[]>([]);
@@ -24,6 +27,10 @@ const form = ref({
   validityDays: 14,
   codeType: 'SINGLE_USE' as 'SINGLE_USE' | 'MULTI_USE',
   publicSections: 'about, rules, request',
+});
+
+const forumForm = ref({
+  editWindowMinutes: 10,
 });
 
 function applySettings(data: ClubSettings) {
@@ -39,8 +46,13 @@ async function load() {
   loading.value = true;
   error.value = '';
   try {
-    const [club, rows] = await Promise.all([fetchClubSettings(), fetchScalarRegistry()]);
+    const [club, forum, rows] = await Promise.all([
+      fetchClubSettings(),
+      fetchForumSettings(),
+      fetchScalarRegistry(),
+    ]);
     applySettings(club);
+    forumForm.value.editWindowMinutes = forum['edit.windowMinutes'] ?? 10;
     registry.value = rows;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить scalar-config';
@@ -98,6 +110,24 @@ async function save() {
     toast.error(error.value);
   } finally {
     saving.value = false;
+  }
+}
+
+async function saveForum() {
+  savingForum.value = true;
+  error.value = '';
+  try {
+    const updated = await saveForumSettings({
+      'edit.windowMinutes': Number(forumForm.value.editWindowMinutes),
+    });
+    forumForm.value.editWindowMinutes = updated['edit.windowMinutes'] ?? 10;
+    registry.value = await fetchScalarRegistry();
+    toast.success('Настройки форума сохранены');
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Ошибка сохранения форума';
+    toast.error(error.value);
+  } finally {
+    savingForum.value = false;
   }
 }
 
@@ -209,6 +239,44 @@ onMounted(() => {
           </UiButton>
         </form>
       </template>
+    </section>
+
+    <section class="space-y-4">
+      <h3 class="font-medium">
+        Форум
+      </h3>
+      <p class="text-sm text-text-muted">
+        Ключ <code class="text-xs">forum.edit.windowMinutes</code> — владелец sync: forum (BFF).
+      </p>
+
+      <form
+        v-if="!loading"
+        class="max-w-lg space-y-4"
+        @submit.prevent="saveForum"
+      >
+        <label class="block text-sm">
+          <span class="text-text-muted">Окно редактирования поста/комментария (минуты)</span>
+          <input
+            v-model.number="forumForm.editWindowMinutes"
+            type="number"
+            min="-1"
+            step="1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <p class="text-xs text-text-muted">
+          <code>0</code> — редактирование запрещено,
+          <code>-1</code> — без ограничения по времени,
+          положительное число — сколько минут после публикации можно править свой текст.
+        </p>
+        <UiButton
+          type="submit"
+          intent="primary"
+          :disabled="savingForum"
+        >
+          {{ savingForum ? 'Сохранение…' : 'Сохранить форум' }}
+        </UiButton>
+      </form>
     </section>
 
     <section

@@ -9,6 +9,10 @@ export type ClubSettings = {
   'landing.publicSections'?: string[];
 };
 
+export type ForumSettings = {
+  'edit.windowMinutes'?: number;
+};
+
 @Injectable()
 export class ScalarConfigClient {
   constructor(private readonly config: ConfigService) {}
@@ -53,6 +57,17 @@ export class ScalarConfigClient {
 
   async patchClubSettings(patch: ClubSettings, updatedBy: string): Promise<ClubSettings> {
     return this.request<ClubSettings>('POST', '/internal/v1/scalar-variables/club', {
+      ...patch,
+      updatedBy,
+    });
+  }
+
+  async getForumSettings(): Promise<ForumSettings> {
+    return this.request<ForumSettings>('GET', '/internal/v1/scalar-variables/forum');
+  }
+
+  async patchForumSettings(patch: ForumSettings, updatedBy: string): Promise<ForumSettings> {
+    return this.request<ForumSettings>('POST', '/internal/v1/scalar-variables/forum', {
       ...patch,
       updatedBy,
     });

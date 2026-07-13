@@ -105,11 +105,12 @@ async function submit() {
       </label>
 
       <label>
-        Текст
+        Текст (Markdown)
         <textarea
           v-model="body"
           rows="8"
           maxlength="10000"
+          placeholder="**жирный**, *курсив*, списки, ссылки, `код`, ```блоки кода```"
           required
         />
       </label>

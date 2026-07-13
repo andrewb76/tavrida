@@ -24,7 +24,7 @@
 | 🔗 webhooks | 3011 | 📝 | ✅ spec | [webhooks](./webhooks/README.md) |
 | 🛒 marketplace | — | 📝 | ✅ spec | [marketplace](./marketplace/README.md) |
 | 🎁 referral-rewards | 3012 | 📝 | ✅ spec | [referral-rewards](./referral-rewards/README.md) |
-| 🔮 oracle | 3013 | 📝 | ✅ spec draft | [oracle](./oracle/README.md) |
+| 🔮 vanga | 3013 | 📝 | ✅ spec draft | [vanga](./vanga/README.md) |
 
 > Спецификация новых сервисов: [MICROSERVICE-SPEC](./MICROSERVICE-SPEC.md) · Реестр переменных: [PLATFORM-REGISTRY](./PLATFORM-REGISTRY.md)
 

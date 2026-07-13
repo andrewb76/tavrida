@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -23,6 +23,7 @@ import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { ForumClient } from './forum.client';
 import { ForumAuthorsService } from './forum-authors.service';
+import { ForumSettingsReader } from '../scalar-config/forum-settings.reader';
 
 class MediaAttachmentDto {
   @IsString()
@@ -96,6 +97,40 @@ class UpsertReactionDto {
   emojiKey!: string;
 }
 
+class UpdateTopicDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(10000)
+  body?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaAttachmentDto)
+  attachments?: MediaAttachmentDto[];
+}
+
+class UpdateCommentDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(10000)
+  body?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaAttachmentDto)
+  attachments?: MediaAttachmentDto[];
+}
+
 @Controller('forum')
 export class ForumController {
   constructor(
@@ -103,6 +138,7 @@ export class ForumController {
     private readonly authors: ForumAuthorsService,
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
+    private readonly forumSettings: ForumSettingsReader,
   ) {}
 
   private validateForumMedia(
@@ -135,6 +171,13 @@ export class ForumController {
           : 'Недопустимые вложения';
       throw new BadRequestException({ type: 'validation', detail });
     }
+  }
+
+  @Get('meta')
+  async getMeta() {
+    return {
+      editWindowMinutes: await this.forumSettings.editWindowMinutes(),
+    };
   }
 
   @Get('categories')
@@ -171,6 +214,29 @@ export class ForumController {
     );
   }
 
+  @Patch('topics/:id')
+  @UseGuards(JwtAuthGuard)
+  async updateTopic(
+    @CurrentUser() user: AuthUser,
+    @Param('id') topicId: string,
+    @Body() body: UpdateTopicDto,
+  ) {
+    const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
+    if (body.body) {
+      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    }
+    const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    return this.authors.enrichOne(
+      await this.forum.updateTopic(topicId, {
+        ...body,
+        authorId: user.sub,
+        editWindowMinutes,
+        maxAttachmentCount: limits.countMax,
+        maxAttachmentSizeBytes: limits.sizeMaxBytes,
+      }) as { authorId: string },
+    );
+  }
+
   @Get('topics/:id/comments')
   async listComments(@Param('id') topicId: string) {
     const res = await this.forum.listComments(topicId);
@@ -191,6 +257,30 @@ export class ForumController {
       await this.forum.createComment(topicId, {
         ...body,
         authorId: user.sub,
+        maxAttachmentCount: limits.countMax,
+        maxAttachmentSizeBytes: limits.sizeMaxBytes,
+      }) as { authorId: string },
+    );
+  }
+
+  @Patch('topics/:topicId/comments/:commentId')
+  @UseGuards(JwtAuthGuard)
+  async updateComment(
+    @CurrentUser() user: AuthUser,
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+    @Body() body: UpdateCommentDto,
+  ) {
+    const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
+    if (body.body) {
+      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    }
+    const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    return this.authors.enrichOne(
+      await this.forum.updateComment(topicId, commentId, {
+        ...body,
+        authorId: user.sub,
+        editWindowMinutes,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
       }) as { authorId: string },

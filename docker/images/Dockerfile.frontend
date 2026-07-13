@@ -1,0 +1,43 @@
+# Vue SPA — static nginx image.
+#
+# Build (pass Vite env at build time):
+#   docker build -f docker/images/Dockerfile.frontend \
+#     --build-arg VITE_API_BASE_URL=https://api.193.142.148.175.nip.io/api/v1 \
+#     --build-arg VITE_IMAGE_PROXY_URL=https://img.193.142.148.175.nip.io \
+#     --build-arg VITE_MEDIA_PUBLIC_BASE_URL=https://s3.193.142.148.175.nip.io \
+#     -t ghcr.io/<owner>/tavrida-frontend:<tag> .
+
+FROM node:20-alpine AS build
+
+ARG VITE_API_BASE_URL
+ARG VITE_IMAGE_PROXY_URL
+ARG VITE_IMAGE_PROXY_FETCH_BASE_URL=http://minio:9000
+ARG VITE_MEDIA_PUBLIC_BASE_URL
+ARG VITE_USE_MOCK=false
+ARG VITE_LOGTO_ENDPOINT
+ARG VITE_LOGTO_APP_ID
+ARG VITE_LOGTO_API_RESOURCE
+
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_IMAGE_PROXY_URL=$VITE_IMAGE_PROXY_URL \
+    VITE_IMAGE_PROXY_FETCH_BASE_URL=$VITE_IMAGE_PROXY_FETCH_BASE_URL \
+    VITE_MEDIA_PUBLIC_BASE_URL=$VITE_MEDIA_PUBLIC_BASE_URL \
+    VITE_USE_MOCK=$VITE_USE_MOCK \
+    VITE_LOGTO_ENDPOINT=$VITE_LOGTO_ENDPOINT \
+    VITE_LOGTO_APP_ID=$VITE_LOGTO_APP_ID \
+    VITE_LOGTO_API_RESOURCE=$VITE_LOGTO_API_RESOURCE
+
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /repo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages ./packages
+COPY apps/frontend ./apps/frontend
+COPY tools ./tools
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec turbo run build --filter=@tavrida/frontend
+
+FROM nginx:1.27-alpine AS runtime
+COPY docker/images/nginx.frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /repo/apps/frontend/dist /usr/share/nginx/html

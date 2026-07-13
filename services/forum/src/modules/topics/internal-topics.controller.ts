@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -82,6 +82,48 @@ class CreateTopicRequestDto extends CreateTopicDto {
   maxAttachmentSizeBytes?: number;
 }
 
+class UpdateTopicDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(10000)
+  body?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaAttachmentDto)
+  attachments?: MediaAttachmentDto[];
+}
+
+class UpdateTopicRequestDto extends UpdateTopicDto {
+  @IsString()
+  @MinLength(1)
+  authorId!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  editWindowMinutes!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxAttachmentCount?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxAttachmentSizeBytes?: number;
+}
+
 @Controller('internal/v1/topics')
 export class InternalTopicsController {
   constructor(private readonly topics: TopicsService) {}
@@ -99,5 +141,10 @@ export class InternalTopicsController {
   @Post()
   create(@Body() body: CreateTopicRequestDto) {
     return this.topics.create(body);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() body: UpdateTopicRequestDto) {
+    return this.topics.update({ topicId: id, ...body });
   }
 }

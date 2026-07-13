@@ -12,6 +12,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
       '@tavrida/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
       '@tavrida/ui': resolve(__dirname, '../../packages/ui/src/index.ts'),
+      '@tavrida/object-storage': resolve(__dirname, '../../packages/object-storage/src/index.ts'),
     },
   },
   server: {

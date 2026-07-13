@@ -5,7 +5,7 @@
 | Окружение | Домены |
 |-----------|--------|
 | Local | `*.tavrida-lot.localhost` |
-| Dev | `*.tl.dev.some.domain` |
+| Dev | `*.193.142.148.175.nip.io` — [Swarm stack](../../docker/swarm/README.dev.md) |
 | Prod | `*.tavrida-lot.ru` |
 
 ## 🐳 Оркестрация

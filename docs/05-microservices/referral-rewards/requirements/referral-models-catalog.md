@@ -1,7 +1,7 @@
 # 📐 Каталог моделей реферальных выплат
 
 > **Статус:** draft · **Версия:** 0.1  
-> **Продолжение:** [analysis.md](./analysis.md) · **Oracle:** [referral-forecast.md](../../oracle/topics/referral-forecast.md)
+> **Продолжение:** [analysis.md](./analysis.md) · **Vanga:** [referral-forecast.md](../../vanga/topics/referral-forecast.md)
 
 Документ для выбора **расчётной модели** реферальной программы: сравнение рыночных схем, рекомендация для Tavrida Lot и схема конфигурации «одна активная модель + свои параметры».
 
@@ -12,8 +12,8 @@
 В [analysis.md](./analysis.md) уже описаны типы схем (CPA, CPS, recurring, bilateral, MLM). На практике админу и founder нужно не перечисление абстракций, а:
 
 1. **Выбрать одну рабочую модель** (или переключаться между пресетами без деплоя).
-2. **Настроить только релевантные параметры** — у CPA нет `depthCoefficients`, у MLM нет `holdDays` в Oracle.
-3. **Согласовать Oracle и production** — одна формула в `monetization-engine`, те же поля в `referralRewards.*`.
+2. **Настроить только релевантные параметры** — у CPA нет `depthCoefficients`, у MLM нет `holdDays` в Vanga.
+3. **Согласовать Vanga и production** — одна формула в `monetization-engine`, те же поля в `referralRewards.*`.
 
 Предлагаемая архитектура: **Combo Model Presets + Rule Engine**.
 
@@ -23,7 +23,7 @@
 | **Параметры модели** | `models[].params` — значения ползунков, специфичные для preset |
 | **Combo** | Несколько `models[]` с `enabled: true` — выплаты **суммируются** |
 | **Rule Engine** (prod) | `referralRewards.rules[]`, синхронизированный с активными preset |
-| **Oracle** | Тот же `models[]` → `computeReferralOut()` |
+| **Vanga** | Тот же `models[]` → `computeReferralOut()` |
 
 Админ в UI: чекбоксы активных моделей + выпадающий список для настройки параметров выбранной модели.
 
@@ -44,9 +44,9 @@
 | `category_mixed` | Смешанные категории | Разные % по `SUBSCRIPTION`, `AUCTION_SERVICES`, … | ✅ | Сложность UI | Когда хотим стимулировать не только подписки |
 | `deposit_rebate` | % с депозита | Rebate от пополнения кошелька | ❌ | Отмывание, плохой триггер | Не для нас |
 
-**Итог для v1:** включить в каталог **четыре** модели с полной поддержкой Oracle + scalar-config:
+**Итог для v1:** включить в каталог **четыре** модели с полной поддержкой Vanga + scalar-config:
 
-1. `revshare_single` — default production и Oracle  
+1. `revshare_single` — default production и Vanga  
 2. `revshare_multi_decay` — опционально после legal  
 3. `cpa_first_charge` — альтернатива для экспериментов  
 4. `bilateral_first_sub` — парный с `revshare_single` (можно комбинировать через rules)
@@ -59,10 +59,10 @@
 
 Общие поля **всех** денежных моделей (глобальные, не зависят от preset):
 
-| Параметр | scalar-config ключ | Oracle YAML | Описание |
+| Параметр | scalar-config ключ | Vanga YAML | Описание |
 |----------|---------------|-------------|----------|
 | Вкл. программа | `globalEnabled` | `programEnabled` | Kill switch |
-| Доля реферального трафика | — (прогноз) | `attachRatePercent` | % gross с inviter (только Oracle) |
+| Доля реферального трафика | — (прогноз) | `attachRatePercent` | % gross с inviter (только Vanga) |
 | Категории charge | `enabledChargeCategories` | `enabledChargeCategories` | SUBSCRIPTION, … |
 | Глобальный бюджет | `globalBudgetPerMonth` | `globalBudgetPerMonth` | Cap ₽/мес на всю программу |
 | Hold | `defaultHoldDays` | — (prod only) | Задержка перед credit |
@@ -79,7 +79,7 @@
 | `maxPayoutPerEvent` | number ₽ | null | Cap на одно событие |
 | `maxEarnedPerMonth` | number ₽ | plan-config limit | Cap на inviter / месяц |
 
-**Формула Oracle (месяц t):**
+**Формула Vanga (месяц t):**
 
 ```
 eligibleGross = gross[t] × attachRate × shareSubscriptionOnly
@@ -100,10 +100,10 @@ payout = eligibleGross × percentOfCharge / 100
 | `percentOfCharge` | number % | 10 | Базовый % от charge |
 | `maxDepth` | number | 3 | Уровни 1…N |
 | `depthCoefficients` | number[] | `[1.0, 0.3, 0.1]` | Множитель уровня d |
-| `payoutDistributionByDepth` | number[] % | `[70, 20, 10]` | Доля выплат по уровням (сумма ≤ 100) — для Oracle UI / дерева |
+| `payoutDistributionByDepth` | number[] % | `[70, 20, 10]` | Доля выплат по уровням (сумма ≤ 100) — для Vanga UI / дерева |
 | `maxEarnedPerMonth` | number ₽ | plan-config | Cap на бенефициара |
 
-**Формула Oracle:**
+**Формула Vanga:**
 
 ```
 eligible = gross × attachRate × categoryFraction
@@ -127,7 +127,7 @@ referralOut = Σ payout[d]
 | `qualifyingCategories` | enum[] | `[SUBSCRIPTION]` | Какие категории считаются |
 | `oncePerInvitee` | boolean | true | Только один раз на invitee |
 
-**Формула Oracle (упрощённо):**
+**Формула Vanga (упрощённо):**
 
 ```
 newPayingReferrals[t] ≈ registrations[t] × attachRate × planMixPaid
@@ -150,7 +150,7 @@ referralOut[t] = newPayingReferrals[t] × fixedAmountRub
 
 **Settings:** `referralRewards.inviteeBonus.*` + отдельное rule для inviter fixed.
 
-**Формула Oracle:**
+**Формула Vanga:**
 
 ```
 referralOut = newSubsReferral × (inviterBonus + inviteeBonus)   // если stack
@@ -206,7 +206,7 @@ referralOut = newSubsReferral × (inviterBonus + inviteeBonus)   // если sta
 При смене `calculationModelId` BFF/scalar-config **валидирует** `modelParams` по JSON Schema preset (лишние ключи отклоняются).  
 Опционально: кнопка «Сгенерировать rules из модели» заполняет `rules[]` для прозрачности в audit.
 
-### 4.2. Oracle (`config/oracle.defaults.yaml`)
+### 4.2. Vanga (`config/vanga.defaults.yaml`)
 
 ```yaml
 referral:
@@ -259,12 +259,12 @@ function computeReferralOut(
 
 ---
 
-## 5. UI: вкладка «Реферал» (Oracle и admin scalar-config)
+## 5. UI: вкладка «Реферал» (Vanga и admin scalar-config)
 
 1. Чекбокс «Программа включена».  
 2. **Select «Модель расчёта»** — список из `calculationModelId.options`.  
 3. Динамические ползунки из `referral.models[activeModel]`.  
-4. Общие поля: attach rate (Oracle), категории, бюджет.  
+4. Общие поля: attach rate (Vanga), категории, бюджет.  
 5. Блок «Выплаты по уровням» — только для `revshare_multi_decay`.
 
 ---
@@ -274,8 +274,8 @@ function computeReferralOut(
 | Фаза | Что | Статус |
 |------|-----|--------|
 | 0 | Этот каталог + согласование с founder | **сейчас** |
-| 1 | `revshare_single` в engine + Oracle UI (текущие ползунки + % charge) | частично (engine v0) |
-| 2 | Select модели + условные поля в Oracle | backlog |
+| 1 | `revshare_single` в engine + Vanga UI (текущие ползунки + % charge) | частично (engine v0) |
+| 2 | Select модели + условные поля в Vanga | backlog |
 | 3 | `calculationModelId` в scalar-config + валидатор `modelParams` | backlog |
 | 4 | `referral-rewards` service: preset → rules compiler | backlog |
 | 5 | `revshare_multi_decay`, `cpa_*`, `bilateral_*` + golden tests | backlog |
@@ -284,7 +284,7 @@ function computeReferralOut(
 
 ## 7. Открытые вопросы для обсуждения
 
-1. **Комбинация моделей:** разрешено включать **несколько** preset одновременно; выплаты **суммируются**. Oracle и settings отражают список `models[]` с флагом `enabled` на каждую.
+1. **Комбинация моделей:** разрешено включать **несколько** preset одновременно; выплаты **суммируются**. Vanga и settings отражают список `models[]` с флагом `enabled` на каждую.
 
 2. **Синхронизация rules:** хранить только `modelParams` или дублировать в `rules[]` для audit?  
    *Рекомендация:* `modelParams` — source of truth для preset; `rules` — материализованный snapshot при publish.
@@ -301,7 +301,7 @@ function computeReferralOut(
 - [charge-categories.md](./charge-categories.md)
 - [legal-scope.md](./legal-scope.md)
 - [referral-rewards README](../README.md)
-- [referral-forecast.md](../../oracle/topics/referral-forecast.md)
+- [referral-forecast.md](../../vanga/topics/referral-forecast.md)
 - [ADR-013](../../../03-architecture/adr/013-referral-rewards-service.md)
 
 ---

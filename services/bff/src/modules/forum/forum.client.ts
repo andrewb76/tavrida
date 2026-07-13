@@ -79,6 +79,26 @@ export class ForumClient {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/topics', input);
   }
 
+  updateTopic(
+    topicId: string,
+    input: {
+      authorId: string;
+      title?: string;
+      body?: string;
+      attachments?: Array<{
+        url: string;
+        filename: string;
+        contentType: string;
+        sizeBytes: number;
+      }>;
+      editWindowMinutes: number;
+      maxAttachmentCount?: number;
+      maxAttachmentSizeBytes?: number;
+    },
+  ) {
+    return this.request<Record<string, unknown>>('PATCH', `/internal/v1/topics/${topicId}`, input);
+  }
+
   listComments(topicId: string) {
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics/${topicId}/comments`);
   }
@@ -102,6 +122,30 @@ export class ForumClient {
     return this.request<Record<string, unknown>>(
       'POST',
       `/internal/v1/topics/${topicId}/comments`,
+      input,
+    );
+  }
+
+  updateComment(
+    topicId: string,
+    commentId: string,
+    input: {
+      authorId: string;
+      body?: string;
+      attachments?: Array<{
+        url: string;
+        filename: string;
+        contentType: string;
+        sizeBytes: number;
+      }>;
+      editWindowMinutes: number;
+      maxAttachmentCount?: number;
+      maxAttachmentSizeBytes?: number;
+    },
+  ) {
+    return this.request<Record<string, unknown>>(
+      'PATCH',
+      `/internal/v1/topics/${topicId}/comments/${commentId}`,
       input,
     );
   }

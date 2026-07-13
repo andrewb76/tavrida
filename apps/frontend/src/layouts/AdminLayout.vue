@@ -7,7 +7,7 @@ const tabs = [
   { name: 'admin-users', to: '/admin/users', label: 'Пользователи' },
   { name: 'admin-scalar-config', to: '/admin/scalar-config', label: 'Конфиг' },
   { name: 'admin-plan-config', to: '/admin/plan-config', label: 'Тарифы' },
-  { name: 'admin-oracle', to: '/admin/oracle', label: 'Oracle' },
+  { name: 'admin-vanga', to: '/admin/vanga', label: 'Ванга' },
   { name: 'admin-roles', to: '/admin/roles', label: 'Мои роли' },
 ];
 

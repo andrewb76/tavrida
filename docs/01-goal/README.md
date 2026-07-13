@@ -17,7 +17,7 @@
 | **[legal-documents.md](./legal-documents.md)** | legal, PM | Перечень юр. документов |
 | **[karma-and-rating.md](./karma-and-rating.md)** | PM, QA, dev | Рейтинг, карма, формулы, referral |
 | **[roles.md](./roles.md)** | PM, UX, разработчики | Роли, тарифы, права, матрица доступа |
-| **[monetization-catalog.md](./monetization-catalog.md)** | PM, founder, admin | Индекс доходов/расходов + формулы для Oracle |
+| **[monetization-catalog.md](./monetization-catalog.md)** | PM, founder, admin | Индекс доходов/расходов + формулы для Vanga |
 | **[PROJECT-CONTEXT.md](../00-meta/PROJECT-CONTEXT.md)** | Dev, AI | Bootstrap — краткий контекст проекта |
 
 > 👉 Новым участникам — [platform-for-users.md](./platform-for-users.md).  

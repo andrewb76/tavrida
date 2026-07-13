@@ -9,5 +9,5 @@
     "rootDir": "src",
     "declaration": false
   },
-  "include": ["src/services/forum-tree.ts", "src/services/forum.test.ts"]
+  "include": ["src/services/forum-tree.ts", "src/services/forum.test.ts", "src/utils/renderForumMarkdown.ts", "src/utils/renderForumMarkdown.test.ts"]
 }

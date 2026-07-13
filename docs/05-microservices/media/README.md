@@ -62,6 +62,26 @@
 - **Auction:** `images: string[]` — только URL после confirm.
 - **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
 
+## Image proxy (imgproxy)
+
+Для превью и галерей браузер грузит **уменьшенные** копии через [imgproxy](https://docs.imgproxy.net/) — оригиналы остаются в MinIO.
+
+| Env (root `.env.local`) | Назначение |
+|-------------------------|------------|
+| `VITE_IMAGE_PROXY_URL` | Публичный URL imgproxy (`http://localhost:8080`) |
+| `VITE_IMAGE_PROXY_FETCH_BASE_URL` | Origin, с которого imgproxy тянет файлы (`http://minio:9000` в docker) |
+| `VITE_MEDIA_PUBLIC_BASE_URL` | Должен совпадать с `MEDIA_PUBLIC_BASE_URL` — для rewrite URL |
+
+Локально: `docker compose -f docker/compose/infra.local.yml up -d` поднимает `imgproxy` на `:8080`.
+
+- Проксируются только URL из наших бакетов (`parseMediaUrl`).
+- Формат imgproxy: base64-encoded source URL (без `/plain/` — тот режим для percent-encoded URL).
+- Внешние аватары (Logto CDN) идут напрямую.
+- Без `VITE_IMAGE_PROXY_URL` фронт использует сырые MinIO URL (как раньше).
+- Production: подписанные URL imgproxy (`IMGPROXY_KEY` / `IMGPROXY_SALT`) — TODO.
+
+Утилита: `@tavrida/object-storage` → `buildImageProxyUrl`; фронт → `proxiedMediaUrl()`.
+
 ## Пакет
 
 `@tavrida/object-storage` — paths, mime whitelist, URL validation (общий для BFF, auction, forum).

@@ -6,6 +6,7 @@ import {
   type AuctionCard,
   type AuctionCatalogFilters,
 } from '@/services/auctions';
+import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -156,9 +157,11 @@ function loadMore() {
         <div class="flex h-32 items-center justify-center bg-bg text-3xl">
           <img
             v-if="lot.thumbnailUrl"
-            :src="lot.thumbnailUrl"
+            :src="proxiedMediaUrl(lot.thumbnailUrl, imageProxyPresets.auctionCatalogThumb)"
             :alt="lot.title"
             class="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
           >
           <span v-else>🏺</span>
         </div>

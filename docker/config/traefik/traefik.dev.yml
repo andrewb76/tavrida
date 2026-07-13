@@ -1,0 +1,44 @@
+# Traefik v3.7 — static config (dev Swarm)
+# Mounted as /etc/traefik/traefik.yml; env: ACME_EMAIL, TRAEFIK_SWARM_NETWORK
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ':80'
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ':443'
+
+certificatesResolvers:
+  le:
+    acme:
+      email: '${ACME_EMAIL}'
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+providers:
+  swarm:
+    endpoint: 'unix:///var/run/docker.sock'
+    exposedByDefault: false
+    network: '${TRAEFIK_SWARM_NETWORK}'
+    watch: true
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: INFO
+
+accessLog: {}

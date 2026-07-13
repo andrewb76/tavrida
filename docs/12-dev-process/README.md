@@ -19,6 +19,7 @@ pnpm lint     # turbo run lint
 
 | Branch | Назначение |
 |--------|------------|
+| `stage` | Интеграционный стенд; защищённая ветка, merge только через PR → CD ([stage-deployment-todo](../04-deployment/stage-deployment-todo.md)) |
 | `master` | Всегда deployable; защищён |
 | `feature/*` | Задачи, merge через PR |
 | `fix/*` | Hotfix → PR → fast track deploy |

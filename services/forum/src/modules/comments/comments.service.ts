@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { DataSource, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
+import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
@@ -133,6 +134,70 @@ export class CommentsService {
         updatedAt: comment.updatedAt.toISOString(),
       };
     });
+  }
+
+  async update(input: {
+    topicId: string;
+    commentId: string;
+    authorId: string;
+    body?: string;
+    attachments?: MediaAttachment[];
+    editWindowMinutes: number;
+    maxAttachmentCount?: number;
+    maxAttachmentSizeBytes?: number;
+  }) {
+    const comment = await this.comments.findOne({
+      where: { id: input.commentId, topicId: input.topicId },
+    });
+    if (!comment) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${input.commentId} not found in topic`,
+      });
+    }
+
+    assertForumEditAllowed({
+      authorId: comment.authorId,
+      editorId: input.authorId,
+      createdAt: comment.createdAt,
+      editWindowMinutes: input.editWindowMinutes,
+    });
+
+    const nextBody = input.body?.trim();
+    if (!nextBody && input.attachments === undefined) {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Укажите body или attachments для обновления',
+      });
+    }
+
+    if (nextBody) comment.body = nextBody;
+    if (input.attachments !== undefined) comment.attachments = input.attachments;
+
+    validateForumContent({
+      body: comment.body,
+      attachments: comment.attachments ?? [],
+      media: {
+        authorId: input.authorId,
+        publicBaseUrl: this.mediaPublicBaseUrl(),
+        maxAttachmentCount: input.maxAttachmentCount ?? 1,
+        maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
+      },
+    });
+
+    await this.comments.save(comment);
+
+    return {
+      id: comment.id,
+      topicId: comment.topicId,
+      authorId: comment.authorId,
+      parentId: comment.parentId,
+      body: comment.body,
+      attachments: comment.attachments ?? [],
+      promotedTopicId: comment.promotedTopicId,
+      createdAt: comment.createdAt.toISOString(),
+      updatedAt: comment.updatedAt.toISOString(),
+    };
   }
 
   private mediaPublicBaseUrl() {

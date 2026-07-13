@@ -38,7 +38,7 @@ relation:   admin
 subject_id: user:{logtoSub}
 ```
 
-См. [keto-schema.md](./keto-schema.md). OPL-модель: `docker/keto/namespaces.ts`.
+См. [keto-schema.md](./keto-schema.md). OPL-модель: `docker/config/keto/namespaces.ts`.
 
 ---
 

@@ -8,7 +8,8 @@
 | Env | Домены | Назначение |
 |-----|--------|------------|
 | `local` | `*.tavrida-lot.localhost` | Разработка (pnpm + infra compose) |
-| `dev` | `*.tl.dev.*` | Интеграционный стенд |
+| `stage` | `*.stage.*` (TBD) | Интеграционный стенд — CD из ветки `stage` ([backlog](./stage-deployment-todo.md)) |
+| `dev` | `*.193.142.148.175.nip.io` | Swarm на VPS — [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md) |
 | `prod` | `*.tavrida-lot.ru` | Production |
 
 Публичный трафик: **Traefik → BFF → internal services**. Admin/tools — `*.tools.<env>` + [tinyauth](../02-infrastructure/dev-tools.md).
@@ -17,15 +18,26 @@
 
 ```
 docker/
+├── config/                  # Traefik, Keto, Postgres init (shared local + Swarm)
+│   ├── traefik/
+│   ├── keto/
+│   └── postgres/init/
 ├── compose/
 │   ├── infra.local.yml      # PG, Redis, RabbitMQ, MinIO, Keto, Logto (dev)
 │   └── tools.local.yml      # Adminer, Dozzle, Mailpit (optional)
 ├── swarm/
-│   ├── stack-infra.yml      # Stateful + edge (Traefik)
+│   ├── stack-infra.dev.yml   # Dev VPS: Traefik + data stores
+│   ├── stack-platform.dev.yml # Dev VPS: GHCR core services
+│   ├── dev.env.example
+│   ├── deploy-dev.sh
+│   ├── build-images.sh
+│   ├── README.dev.md
+│   ├── stack-infra.yml      # (prod/stage — TBD)
 │   ├── stack-platform.yml   # BFF + implemented services
 │   └── stack-tools.yml      # Portainer, observability agents
 └── images/
-    └── Dockerfile.service   # Multi-stage NestJS (shared pattern)
+    ├── Dockerfile.service   # Multi-stage NestJS (shared pattern)
+    └── Dockerfile.frontend  # Vue static + nginx
 ```
 
 > `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO. Keto — `keto.local.yml` ([bootstrap-admin](../09-security/bootstrap-admin.md)). Logto — `logto.local.yml` или Logto Cloud.
@@ -100,6 +112,7 @@ registry.example.com/tavrida/billing:{semver}  # release tags only
 
 | Документ | Содержание |
 |----------|------------|
+| [stage-deployment-todo.md](./stage-deployment-todo.md) | Решения по stage + backlog (GHCR, Logto Cloud, …) |
 | [swarm-stacks.md](./swarm-stacks.md) | Стеки, сети, labels |
 | [migrations.md](./migrations.md) | TypeORM migrations job |
 | [runbook-rollback.md](./runbook-rollback.md) | Откат релиза |

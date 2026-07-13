@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src",
-    "pretest": "pnpm run build",
+    "pretest": "pnpm run build && tsc -p tsconfig.test.json",
     "test": "node --test dist/**/*.test.js"
   },
   "devDependencies": {

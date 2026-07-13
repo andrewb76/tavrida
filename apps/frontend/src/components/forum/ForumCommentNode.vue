@@ -1,30 +1,71 @@
 <script setup lang="ts">
-import AttachmentBadge from '@/components/media/AttachmentBadge.vue';
 import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
-import { createComment, forumAuthorLabel, type CommentTreeNode, type ForumComment } from '@/services/forum';
+import { createComment, forumAuthorLabel, updateComment, type CommentTreeNode, type ForumComment } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
-import { ref } from 'vue';
+import { canEditForumContent } from '@tavrida/shared';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   node: CommentTreeNode;
   topicId: string;
   depth: number;
+  editWindowMinutes: number;
+  currentUserId?: string | null;
 }>();
 
 const emit = defineEmits<{
   created: [ForumComment];
+  updated: [ForumComment];
 }>();
 
 const showReply = ref(false);
+const editing = ref(false);
+const editBody = ref('');
+const savingEdit = ref(false);
+const editError = ref<string | null>(null);
 const replyBody = ref('');
 const posting = ref(false);
 const postError = ref<string | null>(null);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
+
+const canEdit = computed(() => {
+  if (!props.currentUserId || props.node.authorId !== props.currentUserId) return false;
+  return canEditForumContent(props.node.createdAt, props.editWindowMinutes);
+});
+
+function startEdit() {
+  editBody.value = props.node.body;
+  editError.value = null;
+  editing.value = true;
+  showReply.value = false;
+}
+
+function cancelEdit() {
+  editing.value = false;
+  editError.value = null;
+}
+
+async function saveEdit() {
+  if (!editBody.value.trim()) return;
+  savingEdit.value = true;
+  editError.value = null;
+  try {
+    const updated = await updateComment(props.topicId, props.node.id, {
+      body: editBody.value.trim(),
+    });
+    emit('updated', updated);
+    editing.value = false;
+  } catch (e) {
+    editError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
+  } finally {
+    savingEdit.value = false;
+  }
+}
 
 async function submitReply() {
   if (!replyBody.value.trim()) return;
@@ -75,17 +116,65 @@ async function submitReply() {
         >
           {{ showReply ? 'Отмена' : 'Ответить' }}
         </UiButton>
+        <UiButton
+          v-if="canEdit && !editing"
+          intent="ghost"
+          size="sm"
+          type="button"
+          @click="startEdit"
+        >
+          Редактировать
+        </UiButton>
       </header>
 
-      <MarkdownBody :body="node.body" />
-      <AttachmentBadge
-        v-if="node.attachments?.length"
-        :count="node.attachments.length"
+      <form
+        v-if="editing"
+        class="forum-comment__edit-form"
+        @submit.prevent="saveEdit"
       >
-        <template #list>
-          <AttachmentList :attachments="node.attachments" />
-        </template>
-      </AttachmentBadge>
+        <label>
+          Редактирование комментария
+          <textarea
+            v-model="editBody"
+            rows="4"
+            required
+          />
+        </label>
+        <p
+          v-if="editError"
+          class="forum-comment__error"
+        >
+          {{ editError }}
+        </p>
+        <div class="forum-comment__edit-actions">
+          <UiButton
+            intent="primary"
+            size="sm"
+            type="submit"
+            :disabled="savingEdit"
+          >
+            {{ savingEdit ? 'Сохранение…' : 'Сохранить' }}
+          </UiButton>
+          <UiButton
+            intent="secondary"
+            size="sm"
+            type="button"
+            :disabled="savingEdit"
+            @click="cancelEdit"
+          >
+            Отмена
+          </UiButton>
+        </div>
+      </form>
+      <MarkdownBody
+        v-else
+        :body="node.body"
+      />
+      <AttachmentList
+        v-if="node.attachments?.length"
+        :attachments="node.attachments"
+        variant="forum"
+      />
 
       <form
         v-if="showReply"
@@ -151,7 +240,10 @@ async function submitReply() {
         :node="child"
         :topic-id="topicId"
         :depth="depth + 1"
+        :edit-window-minutes="editWindowMinutes"
+        :current-user-id="currentUserId"
         @created="emit('created', $event)"
+        @updated="emit('updated', $event)"
       />
     </ul>
   </li>
@@ -212,9 +304,22 @@ async function submitReply() {
   margin-top: 0.75rem;
 }
 
+.forum-comment__edit-form {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.forum-comment__edit-form textarea,
 .forum-comment__reply-form textarea {
   width: 100%;
   margin-top: 0.25rem;
+}
+
+.forum-comment__edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .forum-comment__attachments {

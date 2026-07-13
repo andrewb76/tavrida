@@ -1,6 +1,6 @@
 # @tavrida/monetization-engine
 
-**Единый stateless-движок формул монетизации** — платформа и Oracle.
+**Единый stateless-движок формул монетизации** — платформа и Vanga.
 
 > ADR: [docs/03-architecture/adr/015-monetization-engine.md](../../docs/03-architecture/adr/015-monetization-engine.md)
 
@@ -15,11 +15,11 @@
 
 | Consumer | Примеры вызовов |
 |----------|-----------------|
-| `services/bff` (Oracle) | `simulate()`, `compare()` |
+| `services/bff` (Vanga) | `simulate()`, `compare()` |
 | `services/auction` | `computeOneTimeRevenue()`, `computeChargeAmount()` |
 | `services/financial-policy` | `computeSubscriptionCharge()` |
 | `services/referral-rewards` | `computeReferralPayout()` |
-| `services/oracle` (фаза 3) | `simulate()` |
+| `services/vanga` (фаза 3) | `simulate()` |
 
 ## API surface
 
@@ -56,7 +56,7 @@ index.ts
 ## Чего здесь нет
 
 - Запись в БД, RabbitMQ, charge в billing.
-- Чтение `config/oracle.defaults.yaml` (это BFF / loader в apps).
+- Чтение `config/vanga.defaults.yaml` (это BFF / loader в apps).
 
 ## Тесты
 
