@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-13 (subscriptions CRUD v1 + seed + UI)
+**Последнее обновление индекса:** 2026-07-13 (subscriptions v2 delivery + match)
 
 ---
 
@@ -36,7 +36,7 @@
 | **Рейтинг / карма** | karma, referral tree | [karma-and-rating.md](../01-goal/karma-and-rating.md) → [rating/README.md](../05-microservices/rating/README.md) | [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) | docs only |
 | **Реферальные выплаты** | referral-rewards, модели CPA/CPS, Vanga реферал | [referral-rewards/requirements/analysis.md](../05-microservices/referral-rewards/requirements/analysis.md) → [referral-models-catalog.md](../05-microservices/referral-rewards/requirements/referral-models-catalog.md) → [referral-rewards/README.md](../05-microservices/referral-rewards/README.md) | [referral-forecast.md](../05-microservices/vanga/topics/referral-forecast.md) · [charge-categories.md](../05-microservices/referral-rewards/requirements/charge-categories.md) | docs · engine v0 |
 | **Marketplace** | услуги, заказы | [marketplace/README.md](../05-microservices/marketplace/README.md) | [marketplace/requirements/README.md](../05-microservices/marketplace/requirements/README.md) | docs only |
-| **Подписки (events)** | subscribe to lot/topic/tag | [subscriptions/README.md](../05-microservices/subscriptions/README.md) → [ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) · [notifications/README.md](../05-microservices/notifications/README.md) | `services/subscriptions` CRUD v1 · BFF `/api/v1/subscriptions` · plan-config seed · UI topic/lot |
+| **Подписки (events)** | subscribe to lot/topic/tag | [subscriptions/README.md](../05-microservices/subscriptions/README.md) → [ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) · [notifications/README.md](../05-microservices/notifications/README.md) | CRUD + DeliveryPreference + match + digest stub · UI topic/lot · RMQ/notifications next |
 | **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |
 | **События / messaging** | RabbitMQ, event names | [event-catalog.md](../03-architecture/event-catalog.md) → [messaging.md](../03-architecture/messaging.md) | [03-architecture/README.md](../03-architecture/README.md) | — |
 | **API conventions** | errors, pagination, idempotency | [06-api/README.md](../06-api/README.md) | [bff/README.md](../05-microservices/bff/README.md) | — |

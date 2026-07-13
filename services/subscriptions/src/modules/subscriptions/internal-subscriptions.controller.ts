@@ -5,10 +5,12 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
 import {
+  IsBoolean,
   IsIn,
   IsObject,
   IsOptional,
@@ -16,8 +18,14 @@ import {
   IsUUID,
   MinLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
-import { SOURCE_DOMAINS, TARGET_TYPES } from '../../common/subscription.types';
+import { Type } from 'class-transformer';
+import {
+  DIGEST_FREQUENCIES,
+  SOURCE_DOMAINS,
+  TARGET_TYPES,
+} from '../../common/subscription.types';
 import { SubscriptionsService } from './subscriptions.service';
 
 class ListQueryDto {
@@ -65,6 +73,55 @@ class CountQueryDto {
   targetType!: (typeof TARGET_TYPES)[number];
 }
 
+class DeliveryQueryDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
+}
+
+class QuietHoursDto {
+  @IsString()
+  start!: string;
+
+  @IsString()
+  end!: string;
+
+  @IsString()
+  tz!: string;
+}
+
+class UpdateDeliveryDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emailDigestEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  pushEnabled?: boolean;
+
+  @IsOptional()
+  @IsIn([...DIGEST_FREQUENCIES])
+  digestFrequency?: (typeof DIGEST_FREQUENCIES)[number];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => QuietHoursDto)
+  quietHours?: QuietHoursDto | null;
+}
+
+class MatchDto {
+  @IsString()
+  @MinLength(1)
+  eventType!: string;
+
+  @IsObject()
+  payload!: Record<string, unknown>;
+}
+
 @Controller('internal/v1/subscriptions')
 export class InternalSubscriptionsController {
   constructor(private readonly subscriptions: SubscriptionsService) {}
@@ -82,6 +139,32 @@ export class InternalSubscriptionsController {
       count,
       limitKey: this.subscriptions.limitKeyFor(query.targetType),
     };
+  }
+
+  @Get('delivery')
+  getDelivery(@Query() query: DeliveryQueryDto) {
+    return this.subscriptions.getDeliveryPreference(query.userId);
+  }
+
+  @Patch('delivery')
+  updateDelivery(@Body() body: UpdateDeliveryDto) {
+    return this.subscriptions.upsertDeliveryPreference({
+      userId: body.userId,
+      emailDigestEnabled: body.emailDigestEnabled,
+      pushEnabled: body.pushEnabled,
+      digestFrequency: body.digestFrequency,
+      quietHours: body.quietHours,
+    });
+  }
+
+  @Post('match')
+  match(@Body() body: MatchDto) {
+    return this.subscriptions.match(body.eventType, body.payload);
+  }
+
+  @Post('digest/run')
+  runDigest() {
+    return this.subscriptions.runDigest();
   }
 
   @Post()

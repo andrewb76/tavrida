@@ -16,6 +16,15 @@ export type SubscriptionDto = {
   createdAt: string;
 };
 
+export type DeliveryPreferenceDto = {
+  userId: string;
+  emailDigestEnabled: boolean;
+  pushEnabled: boolean;
+  digestFrequency: 'DAILY' | 'WEEKLY';
+  quietHours: { start: string; end: string; tz: string } | null;
+  updatedAt: string | null;
+};
+
 @Injectable()
 export class SubscriptionsClient {
   constructor(private readonly config: ConfigService) {}
@@ -58,6 +67,28 @@ export class SubscriptionsClient {
   remove(userId: string, id: string) {
     const params = new URLSearchParams({ userId });
     return this.request<{ ok: true }>('DELETE', `/internal/v1/subscriptions/${id}?${params}`);
+  }
+
+  getDelivery(userId: string) {
+    const params = new URLSearchParams({ userId });
+    return this.request<DeliveryPreferenceDto>(
+      'GET',
+      `/internal/v1/subscriptions/delivery?${params}`,
+    );
+  }
+
+  updateDelivery(input: {
+    userId: string;
+    emailDigestEnabled?: boolean;
+    pushEnabled?: boolean;
+    digestFrequency?: 'DAILY' | 'WEEKLY';
+    quietHours?: { start: string; end: string; tz: string } | null;
+  }) {
+    return this.request<DeliveryPreferenceDto>(
+      'PATCH',
+      '/internal/v1/subscriptions/delivery',
+      input,
+    );
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {

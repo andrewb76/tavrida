@@ -1,6 +1,6 @@
 # 🔔 Сервис: subscriptions
 
-> **Статус:** implementing (CRUD v1 + UI) · **Версия:** 0.4 · **Schema:** `subscriptions` · **Port:** 3004  
+> **Статус:** implementing (v2 delivery + match) · **Версия:** 0.5 · **Schema:** `subscriptions` · **Port:** 3004  
 > **ADR:** [006-service-renames](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)  
 > **Код:** `services/subscriptions` (`@tavrida/subscriptions`) · **Legacy:** `auction-subscriptions` deprecated
 
@@ -10,16 +10,20 @@
 
 Не только аукционы: **форум**, **теги**, **marketplace** (draft), digest по доменам.
 
-## ✅ Реализовано (v1)
+## ✅ Реализовано
 
 | Слой | Статус |
 |------|--------|
 | Entity `Subscription` + unique `(userId, sourceDomain, targetType, targetId)` | ✅ |
+| Entity `DeliveryPreference` | ✅ |
 | Internal API list/create/delete/count | ✅ |
+| Internal `POST …/match`, `GET/PATCH …/delivery`, `POST …/digest/run` | ✅ |
 | BFF `GET/POST/DELETE /api/v1/subscriptions` + JWT | ✅ |
+| BFF `GET/PATCH /api/v1/subscriptions/delivery` + emailDigest feature gate | ✅ |
 | Limit check via plan-config (`subscriptions.member.*`) | ✅ seed в `default-seed.ts` |
 | Frontend subscribe toggle (тема / лот) | ✅ |
-| DeliveryPreference / digest / RMQ match / notifications | ⏳ next |
+| Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
+| RMQ consumers → match → notifications | ⏳ next (producers ещё не публикуют) |
 
 ## 📖 Термины
 
@@ -77,7 +81,8 @@
 | GET | `/subscriptions` | Список (`?sourceDomain=`) |
 | POST | `/subscriptions` | Создать (check limits) |
 | DELETE | `/subscriptions/{id}` | Отписаться |
-| PATCH | `/subscriptions/delivery` | Delivery preferences |
+| GET | `/subscriptions/delivery` | Delivery preferences (defaults if unset) |
+| PATCH | `/subscriptions/delivery` | Update delivery (`emailDigestEnabled` → plan-config feature) |
 
 ### `POST /api/v1/subscriptions`
 
@@ -96,11 +101,27 @@
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/internal/v1/subscriptions/match` | `{ event, payload }` → userIds[] |
-| GET | `/internal/v1/subscriptions/by-user` | notifications batch |
+| GET | `/internal/v1/subscriptions` | List by user |
+| GET | `/internal/v1/subscriptions/count` | Count + limitKey |
+| POST | `/internal/v1/subscriptions` | Create |
+| DELETE | `/internal/v1/subscriptions/{id}` | Delete |
+| GET/PATCH | `/internal/v1/subscriptions/delivery` | Delivery preferences |
+| POST | `/internal/v1/subscriptions/match` | `{ eventType, payload }` → `{ userIds }` |
+| POST | `/internal/v1/subscriptions/digest/run` | External CRON: due users (notifications stub) |
 | GET | `/health`, `/health/ready` | — |
 
-> **Fan-out contract:** producer event → subscriptions `match` → HTTP trigger `notifications`.
+> **Fan-out contract:** producer event → subscriptions `match` → HTTP trigger `notifications` (RMQ consumer later).
+> **Digest CRON:** external scheduler → `digest/run` (как deal-feedback `reminders/run`); пока `triggered: 0`.
+
+### Match mapping
+
+| eventType | targetType | payload field |
+|-----------|------------|---------------|
+| `auction.created` | `AUCTION_CATEGORY` | `categoryId` |
+| `auction.bid_placed` / `auction.completed` | `AUCTION` | `auctionId` |
+| `forum.topic_created` | `FORUM_CATEGORY` | `categoryId` |
+| `forum.comment_created` | `FORUM_TOPIC` | `topicId` |
+| `tag.content_tagged` | `TAG` | `tagId` |
 
 ## 💳 Переменные plan-config
 

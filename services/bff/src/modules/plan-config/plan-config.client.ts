@@ -158,6 +158,14 @@ export class PlanConfigClient {
     }>('POST', '/internal/v1/limits/check', body);
   }
 
+  async canUseFeature(body: { userId: string; featureKey: string }) {
+    return this.request<{ allowed: boolean; planId: string }>(
+      'POST',
+      '/internal/v1/features/can-use',
+      body,
+    );
+  }
+
   async resolveLimitValue(userId: string, variableKey: string): Promise<number | null> {
     const result = await this.checkLimit({
       userId,

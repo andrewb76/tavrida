@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { resolve } from 'node:path';
+import { DeliveryPreferenceEntity } from './entities/delivery-preference.entity';
 import { SubscriptionEntity } from './entities/subscription.entity';
 import { HealthController } from './modules/health/health.controller';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
@@ -22,7 +23,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME ?? 'tavrida_lot',
       schema: 'subscriptions',
-      entities: [SubscriptionEntity],
+      entities: [SubscriptionEntity, DeliveryPreferenceEntity],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     SubscriptionsModule,
