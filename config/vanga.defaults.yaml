@@ -1,6 +1,6 @@
-# Oracle — defaults & ranges for revenue forecast (founder-only tool)
+# Vanga — defaults & ranges for revenue forecast (founder-only tool)
 # Edit manually before/after meetings. Not production settings.
-# Spec: docs/05-microservices/oracle/oracle-config.md
+# Spec: docs/05-microservices/vanga/vanga-config.md
 # v0.1 — placeholders; finalize on business review
 
 version: "0.1"
