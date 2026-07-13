@@ -13,6 +13,10 @@ dist/
 .env.*
 !.env.example
 
+# Swarm dev (never commit filled files)
+docker/swarm/dev.env
+docker/swarm/dev.secrets.env
+
 # IDE
 .idea/
 .gigacode/

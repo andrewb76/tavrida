@@ -2,25 +2,25 @@ Agent backlog (Tavrida Lot):
   Общий файл задач для AI + Todo+ sidebar. Правило: .cursor/rules/agent-tasks.mdc
 
 Invites / BFF:
-  ✔ OpenAPI fragment Oracle в docs/06-api/oracle-admin-api.md @oracle @docs @done(26-07-11)
+  ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
   ☐ OpenAPI fragment для invites в docs/06-api @bff @docs
   ☐ E2E: create → resolve → mock signIn → claim @bff
   ☐ Интеграция club.invitesPerMonth через financial-policy (вместо env) @bff
 
-Oracle (прогноз дохода):
-  ☐ Checkpoint 0: founder review topic-index + oracle.defaults.yaml @oracle
-  ✔ packages/monetization-engine — MRR/costs fixes + golden tests @oracle @done(26-07-11)
-  ✔ BFF GET/POST /admin/oracle/* @oracle @bff @done(26-07-11)
-  ✔ Frontend /admin/oracle — вкладки по topic-index @oracle @frontend @done(26-07-11)
-  ☐ services/oracle :3013 — saved scenarios (фаза 3) @oracle
+Vanga (прогноз дохода):
+  ☐ Checkpoint 0: founder review topic-index + vanga.defaults.yaml @vanga
+  ✔ packages/monetization-engine — MRR/costs fixes + golden tests @vanga @done(26-07-11)
+  ✔ BFF GET/POST /admin/vanga/* @vanga @bff @done(26-07-11)
+  ✔ Frontend /admin/vanga — вкладки по topic-index @vanga @frontend @done(26-07-11)
+  ☐ services/vanga :3013 — saved scenarios (фаза 3) @vanga
 
 Financial-policy:
   ✔ services/financial-policy v1 — plans, limits, subscription scaffold @financial-policy @done(26-07-11)
   ☐ BFF plans activate + billing charge @financial-policy @billing
   ☐ CRON автопродление подписок @financial-policy
-  ☐ Экспорт CSV/PDF @oracle @docs
-  ☐ Monte Carlo @oracle
-  ☐ settings domain oracle.* @oracle @settings
+  ☐ Экспорт CSV/PDF @vanga @docs
+  ☐ Monte Carlo @vanga
+  ☐ settings domain vanga.* @vanga @settings
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
@@ -30,6 +30,6 @@ Archive:
   ✔ Доделать BFF invites: валидация, 201, admin skip limit @done(26-07-10)
   ✔ Invites: validityDays + codeType из settings (ClubSettingsReader) @done(26-07-11)
   ✔ inviteOnly: GET /settings/public + landing/join UI @done(26-07-11)
-  ✔ Oracle spec: monetization-catalog + ADR-014 + oracle README @done(26-07-11)
-  ✔ Oracle config: oracle.defaults.yaml + oracle-config.md (решения founder) @done(26-07-11)
-  ✔ Oracle docs tree: glossary, overview, topic-index, topics/*, IMPLEMENTATION-PLAN @done(26-07-11)
+  ✔ Vanga spec: monetization-catalog + ADR-014 + vanga README @done(26-07-11)
+  ✔ Vanga config: vanga.defaults.yaml + vanga-config.md (решения founder) @done(26-07-11)
+  ✔ Vanga docs tree: glossary, overview, topic-index, topics/*, IMPLEMENTATION-PLAN @done(26-07-11)
