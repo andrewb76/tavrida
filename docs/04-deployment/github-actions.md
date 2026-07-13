@@ -182,6 +182,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 | Стадия                              | Статус                                                     |
 | ----------------------------------- | ---------------------------------------------------------- |
 | Lint + docs build                   | ✅ workflow                                                 |
+| Actions on Node 24 (`checkout@v5`…) | ✅ workflows                                                |
 | GitHub Pages                        | ✅ workflow                                                 |
 | `pnpm test` в CI                    | ✅ в `ci.yml`                                               |
 | Docker matrix → GHCR + Swarm deploy | ✅ `deploy-dev.yml`                                         |
