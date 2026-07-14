@@ -16,7 +16,7 @@ import {
   type MediaDomain,
 } from '@tavrida/object-storage';
 
-const PUBLIC_BUCKETS: MediaDomain[] = ['auction', 'forum'];
+const PUBLIC_BUCKETS: MediaDomain[] = ['auction', 'forum', 'marketplace'];
 
 @Injectable()
 export class MediaStorageService implements OnModuleInit {

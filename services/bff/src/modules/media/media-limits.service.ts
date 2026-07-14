@@ -18,16 +18,22 @@ const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
     count: 'forum.author.attachment.countMax',
     size: 'forum.author.attachment.sizeMaxMb',
   },
+  marketplace: {
+    count: 'marketplace.seller.portfolio.itemMax',
+    size: 'marketplace.seller.portfolio.image.sizeMaxMb',
+  },
 };
 
 const COUNT_FALLBACK: Record<MediaDomain, number> = {
   auction: 3,
   forum: 1,
+  marketplace: 5,
 };
 
 const SIZE_FALLBACK_MB: Record<MediaDomain, number> = {
   auction: 3,
   forum: 2,
+  marketplace: 3,
 };
 
 @Injectable()

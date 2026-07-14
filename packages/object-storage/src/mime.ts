@@ -12,6 +12,6 @@ export function isAllowedContentType(domain: MediaDomain, contentType: string): 
 }
 
 export function acceptAttributeForDomain(domain: MediaDomain): string {
-  if (domain === 'auction') return 'image/*';
-  return 'image/*,.pdf,application/pdf';
+  if (domain === 'forum') return 'image/*,.pdf,application/pdf';
+  return 'image/*';
 }

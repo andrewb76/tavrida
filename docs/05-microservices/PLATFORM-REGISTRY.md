@@ -279,7 +279,8 @@ Default `rating.contextWeights`:
 |------|-----|------|-------|-----|----------|
 | `marketplace.seller.listing.activeMax` | limit | **0** | 3 | ∞ | Активных объявлений (0 = только заказывать) |
 | `marketplace.buyer.order.monthlyMax` | limit | 2 | 10 | ∞ | Заказов в месяц (заказчик) |
-| `marketplace.seller.portfolio.itemMax` | limit | — | 5 | 20 | Фото в портфолио на услугу |
+| `marketplace.seller.portfolio.itemMax` | limit | **0** | 5 | 20 | Фото в портфолио на услугу |
+| `marketplace.seller.portfolio.image.sizeMaxMb` | limit | **0** | 3 | 8 | Размер одного фото портфолио (MB) |
 | `marketplace.seller.listing.promotionUnitPrice` | price | TBD | TBD | TBD | Продвижение в каталоге |
 | `marketplace.seller.listing.featuredUnitPrice` | price | TBD | TBD | TBD | Закрепление в категории |
 

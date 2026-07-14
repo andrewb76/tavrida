@@ -1,23 +1,35 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
+import MediaUploader from '@/components/media/MediaUploader.vue';
+import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   LISTING_CATEGORY_LABELS,
+  addPortfolioItem,
   createListing,
   deleteListing,
+  getMarketplaceListing,
   listMyListings,
+  removePortfolioItem,
   updateListing,
   type ListingCategory,
   type ListingStatus,
   type MarketplaceListing,
+  type PortfolioItem,
 } from '@/services/marketplace';
+import { proxiedMediaUrl, imageProxyPresets } from '@/utils/imageProxy';
 
 const loading = ref(true);
 const error = ref('');
 const items = ref<MarketplaceListing[]>([]);
 const showForm = ref(false);
+const portfolioListingId = ref<string | null>(null);
+const portfolioItems = ref<PortfolioItem[]>([]);
+const portfolioLoading = ref(false);
+const portfolioBusy = ref(false);
+
 const form = ref({
   title: '',
   description: '',
@@ -27,6 +39,12 @@ const form = ref({
 });
 
 const categories = Object.entries(LISTING_CATEGORY_LABELS) as [ListingCategory, string][];
+const upload = useMediaUpload('marketplace');
+
+const canAddPortfolio = computed(() => {
+  if (!upload.limits.value) return false;
+  return portfolioItems.value.length + upload.items.value.length < upload.limits.value.countMax;
+});
 
 async function load() {
   loading.value = true;
@@ -78,12 +96,88 @@ async function remove(row: MarketplaceListing) {
   if (!window.confirm(`Удалить «${row.title}»?`)) return;
   try {
     await deleteListing(row.id);
+    if (portfolioListingId.value === row.id) closePortfolio();
     toast.success('Удалено');
     await load();
   } catch (e) {
     toast.error(e instanceof Error ? e.message : 'Ошибка');
   }
 }
+
+async function openPortfolio(row: MarketplaceListing) {
+  portfolioListingId.value = row.id;
+  portfolioLoading.value = true;
+  upload.reset();
+  try {
+    const full = await getMarketplaceListing(row.id);
+    portfolioItems.value = full.portfolio ?? [];
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось загрузить портфолио');
+    closePortfolio();
+  } finally {
+    portfolioLoading.value = false;
+  }
+}
+
+function closePortfolio() {
+  portfolioListingId.value = null;
+  portfolioItems.value = [];
+  upload.reset();
+}
+
+async function attachReadyUploads() {
+  const listingId = portfolioListingId.value;
+  if (!listingId || portfolioBusy.value) return;
+
+  const ready = upload.items.value.filter((i) => i.status === 'ready' && i.result);
+  if (!ready.length) return;
+
+  portfolioBusy.value = true;
+  try {
+    for (const item of ready) {
+      const result = item.result!;
+      await addPortfolioItem(listingId, {
+        title: result.filename.replace(/\.[^.]+$/, '') || 'Фото',
+        imageUrl: result.url,
+      });
+      upload.removeItem(item.id);
+    }
+    const full = await getMarketplaceListing(listingId);
+    portfolioItems.value = full.portfolio ?? [];
+    toast.success('Фото добавлены в портфолио');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось сохранить портфолио');
+  } finally {
+    portfolioBusy.value = false;
+  }
+}
+
+async function removePortfolio(item: PortfolioItem) {
+  const listingId = portfolioListingId.value;
+  if (!listingId) return;
+  try {
+    await removePortfolioItem(listingId, item.id);
+    portfolioItems.value = portfolioItems.value.filter((p) => p.id !== item.id);
+    toast.success('Удалено из портфолио');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Ошибка удаления');
+  }
+}
+
+function onSelectFiles(files: FileList) {
+  if (!canAddPortfolio.value) {
+    toast.error('Достигнут лимит портфолио для тарифа');
+    return;
+  }
+  void upload.addFiles(files);
+}
+
+watch(
+  () => upload.items.value.map((i) => `${i.id}:${i.status}`).join('|'),
+  () => {
+    void attachReadyUploads();
+  },
+);
 
 onMounted(load);
 </script>
@@ -156,6 +250,14 @@ onMounted(load);
         </div>
         <div class="flex flex-wrap gap-1">
           <UiButton
+            intent="ghost"
+            size="sm"
+            type="button"
+            @click="openPortfolio(row)"
+          >
+            Портфолио
+          </UiButton>
+          <UiButton
             v-if="row.status !== 'ACTIVE'"
             intent="secondary"
             size="sm"
@@ -190,6 +292,86 @@ onMounted(load);
         Пока нет объявлений.
       </li>
     </ul>
+
+    <section
+      v-if="portfolioListingId"
+      class="space-y-3 rounded-md border border-border p-4"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-lg font-medium">
+          Портфолио
+        </h2>
+        <UiButton
+          intent="secondary"
+          size="sm"
+          type="button"
+          @click="closePortfolio"
+        >
+          Закрыть
+        </UiButton>
+      </div>
+
+      <p
+        v-if="portfolioLoading"
+        class="text-sm text-text-muted"
+      >
+        Загрузка…
+      </p>
+      <template v-else>
+        <ul
+          v-if="portfolioItems.length"
+          class="grid gap-3 sm:grid-cols-3"
+        >
+          <li
+            v-for="item in portfolioItems"
+            :key="item.id"
+            class="relative overflow-hidden rounded-md border border-border"
+          >
+            <img
+              :src="proxiedMediaUrl(item.imageUrl, imageProxyPresets.attachmentThumb) ?? item.imageUrl"
+              :alt="item.title"
+              class="aspect-video w-full object-cover"
+            >
+            <div class="flex items-center justify-between gap-2 p-2">
+              <span class="truncate text-xs">{{ item.title }}</span>
+              <UiButton
+                intent="danger"
+                size="sm"
+                type="button"
+                @click="removePortfolio(item)"
+              >
+                ×
+              </UiButton>
+            </div>
+          </li>
+        </ul>
+        <p
+          v-else
+          class="text-sm text-text-muted"
+        >
+          Пока нет фото. Загрузите примеры работ.
+        </p>
+
+        <MediaUploader
+          :items="upload.items.value"
+          :accept="upload.limits.value?.accept ?? 'image/*'"
+          :can-add-more="canAddPortfolio && !portfolioBusy"
+          :hint="
+            upload.limits.value
+              ? `До ${upload.limits.value.countMax} фото, до ${upload.limits.value.sizeMaxMb} MB`
+              : undefined
+          "
+          @select="onSelectFiles"
+          @remove="upload.removeItem"
+        />
+        <p
+          v-if="upload.globalError.value"
+          class="text-sm text-error"
+        >
+          {{ upload.globalError.value }}
+        </p>
+      </template>
+    </section>
 
     <form
       v-if="showForm"

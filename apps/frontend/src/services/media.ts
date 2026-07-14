@@ -1,6 +1,6 @@
 import { requireBearerToken } from './apiAuth';
 
-export type MediaDomain = 'auction' | 'forum';
+export type MediaDomain = 'auction' | 'forum' | 'marketplace';
 
 export type MediaAttachment = {
   url: string;

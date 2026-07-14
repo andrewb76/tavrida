@@ -3,6 +3,7 @@ import type { MediaDomain } from './types';
 const DOMAIN_BUCKETS: Record<MediaDomain, string> = {
   auction: 'auction-images',
   forum: 'forum-attachments',
+  marketplace: 'marketplace-portfolio',
 };
 
 export function bucketForDomain(domain: MediaDomain): string {

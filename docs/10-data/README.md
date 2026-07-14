@@ -81,6 +81,7 @@
 | `avatars`           | user-profile | Аватары пользователей    |
 | `forum-attachments` | forum        | Вложения к topic/comment |
 | `auction-images`    | auction      | Фото лотов               |
+| `marketplace-portfolio` | marketplace | Фото портфолио услуг |
 | `feedback-media`    | feedback     | Фото к отзывам           |
 
 

@@ -17,9 +17,10 @@
 | Слой | Статус |
 |------|--------|
 | Listings CRUD + portfolio | ✅ |
+| Portfolio upload (media domain `marketplace`) + demo seed | ✅ |
 | Orders create + status transitions | ✅ |
 | BFF `/api/v1/marketplace/*` + plan-config limits | ✅ |
-| Frontend каталог / карточка / мои услуги | ✅ |
+| Frontend каталог / карточка / мои услуги / заказы | ✅ |
 | RMQ → deal-feedback / promotions / admin | ⏳ |
 
 > **Юридическое и монетизация платформы** (комиссия %, договор оферты) — отдельный документ, **не утверждено**.  

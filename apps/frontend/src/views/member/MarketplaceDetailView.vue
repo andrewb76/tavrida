@@ -10,6 +10,7 @@ import {
   type MarketplaceListing,
 } from '@/services/marketplace';
 import { useSessionStore } from '@/stores/session';
+import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 
 const route = useRoute();
 const router = useRouter();
@@ -107,7 +108,7 @@ onMounted(load);
             class="rounded-md border border-border p-2"
           >
             <img
-              :src="p.imageUrl"
+              :src="proxiedMediaUrl(p.imageUrl, imageProxyPresets.galleryMain) ?? p.imageUrl"
               :alt="p.title"
               class="mb-2 aspect-video w-full rounded object-cover"
             >

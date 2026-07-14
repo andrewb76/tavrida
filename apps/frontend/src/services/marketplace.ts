@@ -191,6 +191,30 @@ export async function deleteListing(id: string): Promise<void> {
   if (!res.ok) throw new Error(await parseError(res));
 }
 
+export async function addPortfolioItem(
+  listingId: string,
+  input: { title: string; description?: string; imageUrl: string },
+): Promise<PortfolioItem> {
+  const res = await fetch(`${apiBase()}/marketplace/listings/${listingId}/portfolio`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return (await res.json()) as PortfolioItem;
+}
+
+export async function removePortfolioItem(listingId: string, itemId: string): Promise<void> {
+  const res = await fetch(
+    `${apiBase()}/marketplace/listings/${listingId}/portfolio/${itemId}`,
+    {
+      method: 'DELETE',
+      headers: await authHeaders(),
+    },
+  );
+  if (!res.ok) throw new Error(await parseError(res));
+}
+
 export async function createOrder(listingId: string, note?: string): Promise<MarketplaceOrder> {
   const res = await fetch(`${apiBase()}/marketplace/orders`, {
     method: 'POST',

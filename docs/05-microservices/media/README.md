@@ -4,7 +4,7 @@
 
 ## Область
 
-Единый контур загрузки файлов для **аукциона** (фото лотов) и **форума** (вложения к темам/комментариям). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
+Единый контур загрузки файлов для **аукциона** (фото лотов), **форума** (вложения) и **marketplace** (портфолио услуг). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
 
 ## Бакеты
 
@@ -12,6 +12,7 @@
 |--------|--------|------|
 | `auction` | `auction-images` | public |
 | `forum` | `forum-attachments` | public |
+| `marketplace` | `marketplace-portfolio` | public |
 
 Публичный URL: `{MEDIA_PUBLIC_BASE_URL}/{bucket}/users/{userId}/{uploadId}/{filename}`
 
@@ -21,12 +22,13 @@
 |--------|-------|
 | auction | `auction.seller.image.countMax`, `auction.seller.image.sizeMaxMb` |
 | forum | `forum.author.attachment.countMax`, `forum.author.attachment.sizeMaxMb` |
+| marketplace | `marketplace.seller.portfolio.itemMax`, `marketplace.seller.portfolio.image.sizeMaxMb` |
 
 ## API (BFF `/api/v1/media`)
 
 | Method | Path | Auth | Описание |
 |--------|------|------|----------|
-| GET | `/limits?domain=auction\|forum` | JWT | Лимиты тарифа |
+| GET | `/limits?domain=auction\|forum\|marketplace` | JWT | Лимиты тарифа |
 | POST | `/upload-intents` | JWT | Создать сессию + presigned PUT |
 | POST | `/upload-intents/:id/confirm` | JWT | Подтвердить после PUT |
 | DELETE | `/upload-intents/:id` | JWT | Отменить pending |
@@ -61,6 +63,7 @@
 
 - **Auction:** `images: string[]` — только URL после confirm.
 - **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
+- **Marketplace:** `portfolio_item.imageUrl` — URL после confirm (`domain=marketplace`).
 
 ## Image proxy (imgproxy)
 

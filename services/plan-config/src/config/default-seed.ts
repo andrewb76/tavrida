@@ -229,6 +229,13 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     description: 'Макс. фото в портфолио на объявление. −1 = без лимита.',
     valueType: 'limit',
   },
+  {
+    key: 'marketplace.seller.portfolio.image.sizeMaxMb',
+    service: 'marketplace',
+    name: 'Размер фото портфолио',
+    description: 'Макс. размер одного фото портфолио (MB).',
+    valueType: 'limit',
+  },
 ];
 
 export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
@@ -375,5 +382,11 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { limitValue: 0 },
     basic: { limitValue: 5 },
     pro: { limitValue: 20 },
+  },
+  {
+    variableKey: 'marketplace.seller.portfolio.image.sizeMaxMb',
+    free: { limitValue: 0 },
+    basic: { limitValue: 3 },
+    pro: { limitValue: 8 },
   },
 ];

@@ -7,6 +7,7 @@ import { ServiceListingEntity } from './entities/service-listing.entity';
 import { ServiceOrderEntity } from './entities/service-order.entity';
 import { HealthController } from './modules/health/health.controller';
 import { MarketplaceDomainModule } from './modules/marketplace/marketplace.module';
+import { SeedModule } from './modules/seed/seed.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -34,6 +35,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     MarketplaceDomainModule,
+    SeedModule,
   ],
   controllers: [HealthController],
 })
