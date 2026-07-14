@@ -77,7 +77,7 @@
 | 🔨 auction | ✅ spec ready | [auction](./05-microservices/auction/README.md) |
 | 🔔 subscriptions | ✅ spec ready | [subscriptions](./05-microservices/subscriptions/README.md) |
 | ⭐ rating | ✅ spec ready | [rating](./05-microservices/rating/README.md) |
-| 💬 deal-feedback | ✅ spec ready | [deal_feedback](./05-microservices/deal_feedback/README.md) |
+| 💬 deal-feedback | ✅ implementing | [deal_feedback](./05-microservices/deal_feedback/README.md) |
 | 🗣️ forum | ✅ spec ready | [forum](./05-microservices/forum/README.md) · [requirements](./05-microservices/forum/requirements/README.md) |
 | 👤 user-profile | ✅ spec ready | [user-profile](./05-microservices/user-profile/README.md) |
 | ⚙️ scalar-config | ✅ spec ready | [scalar-config](./05-microservices/scalar-config/README.md) |

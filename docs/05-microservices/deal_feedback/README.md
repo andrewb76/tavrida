@@ -1,10 +1,20 @@
 # 💬 Сервис: deal-feedback
 
-> **Статус:** spec ready · **Версия:** 0.3 · **Schema:** `deal_feedback`  
+> **Статус:** implementing (v1) · **Версия:** 0.4 · **Schema:** `deal_feedback` · **Port:** 3006  
+> **Код:** `services/deal-feedback` (`@tavrida/deal-feedback`)  
 > **ADR:** [006-service-renames](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)  
 > **Legacy:** каталог `feedback/` и schema `feedback` — deprecated
 
-## 🎯 Назначение
+## ✅ Реализовано (v1)
+
+| Слой | Статус |
+|------|--------|
+| Pending create (HTTP + RMQ `marketplace.order_completed`) | ✅ |
+| Submit rating → user-profile `DEAL_FEEDBACK` log | ✅ |
+| BFF `/api/v1/deal-feedback/*` | ✅ |
+| Auction.completed consumer handler | ⏳ bind only |
+| Reminder CRON / notifications | ⏳ |
+
 
 **Отзывы о завершённых сделках** (аукцион и marketplace): сбор, напоминания, бонусы через rating.
 

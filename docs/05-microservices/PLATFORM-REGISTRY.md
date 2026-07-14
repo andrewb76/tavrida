@@ -319,7 +319,7 @@ Default `rating.contextWeights`:
 | [forum](./forum/requirements/README.md) | ✅ | ✅ | ✅ реакции (price) |
 | [auction](./auction/requirements/financial-features.md) | ✅ | ✅ | ✅ |
 | [subscriptions](./subscriptions/README.md) | — | ✅ | — |
-| [deal_feedback](./deal_feedback/README.md) | ✅ | — | — |
+| [deal_feedback](./deal_feedback/README.md) | — | — | — |
 | [marketplace](./marketplace/README.md) | ✅ | ✅ draft | — |
 | [billing](./billing/README.md) | ✅ | — | — |
 | [bff](./bff/README.md) | ✅ club | — | — |

@@ -15,6 +15,8 @@
     "src/forum-vote-window.ts",
     "src/forum-vote-window.test.ts",
     "src/forum-vote-karma.ts",
-    "src/forum-vote-karma.test.ts"
+    "src/forum-vote-karma.test.ts",
+    "src/domain-events.ts",
+    "src/domain-events.test.ts"
   ]
 }

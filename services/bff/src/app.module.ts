@@ -22,6 +22,7 @@ import { MediaUploadIntentEntity } from './modules/media/media-upload-intent.ent
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PeriodsModule } from './modules/periods/periods.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { DealFeedbackModule } from './modules/deal-feedback/deal-feedback.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -58,6 +59,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     SubscriptionsModule,
     PeriodsModule,
     MarketplaceModule,
+    DealFeedbackModule,
     MediaModule,
     LogtoWebhooksModule,
   ],

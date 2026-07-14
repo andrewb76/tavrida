@@ -12,6 +12,7 @@ import {
 } from '../../common/marketplace.types';
 import { ServiceListingEntity } from '../../entities/service-listing.entity';
 import { ServiceOrderEntity } from '../../entities/service-order.entity';
+import { MarketplaceEventsPublisher } from '../events/marketplace-events.publisher';
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +21,7 @@ export class OrdersService {
     private readonly orders: Repository<ServiceOrderEntity>,
     @InjectRepository(ServiceListingEntity)
     private readonly listings: Repository<ServiceListingEntity>,
+    private readonly events: MarketplaceEventsPublisher,
   ) {}
 
   async countCustomerOrdersThisMonth(customerId: string) {
@@ -89,7 +91,30 @@ export class OrdersService {
 
     row.status = status;
     if (status === 'COMPLETED') row.completedAt = new Date();
-    return this.toOrder(await this.orders.save(row));
+    const saved = await this.orders.save(row);
+    const order = this.toOrder(saved);
+
+    if (status === 'COMPLETED') {
+      void this.events.publishOrderCompleted({
+        orderId: order.id,
+        listingId: order.listingId,
+        providerId: order.providerId,
+        customerId: order.customerId,
+        price: order.agreedPrice,
+        currency: order.currency,
+        completedAt: order.completedAt ?? new Date().toISOString(),
+      });
+    } else if (status === 'CANCELLED') {
+      void this.events.publishOrderCancelled({
+        orderId: order.id,
+        providerId: order.providerId,
+        customerId: order.customerId,
+        reason: 'user_cancelled',
+        cancelledAt: new Date().toISOString(),
+      });
+    }
+
+    return order;
   }
 
   private toOrder(row: ServiceOrderEntity) {

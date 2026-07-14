@@ -170,14 +170,17 @@
 
 ---
 
-## 💬 feedback — порт 3006 _(docs)_
+## 💬 deal-feedback — порт 3006
 
 | Переменная | Секрет | Schema | Описание |
 |------------|--------|--------|----------|
-| `PORT` | нет | — | `3006` |
-| `DATABASE_URL` | **да** | `feedback` | PostgreSQL |
-| `RABBITMQ_URL` | **да** | — | События сделок |
-| `MINIO_*` | **да** | bucket `feedback-media` | Фото отзывов |
+| `PORT` / `DEAL_FEEDBACK_PORT` | нет | — | `3006` |
+| `DATABASE_URL` | **да** | `deal_feedback` | PostgreSQL |
+| `RABBITMQ_URL` | **да*** | — | consume `marketplace.order_completed` |
+| `USER_PROFILE_URL` | нет | — | Δrating на submit (`DEAL_FEEDBACK`) |
+| `FEEDBACK_URL` / `DEAL_FEEDBACK_URL` | нет (BFF) | — | Upstream URL |
+
+\*без URL consumer тихо отключается.
 
 ---
 

@@ -21,7 +21,8 @@
 | Orders create + status transitions | ✅ |
 | BFF `/api/v1/marketplace/*` + plan-config limits | ✅ |
 | Frontend каталог / карточка / мои услуги / заказы | ✅ |
-| RMQ → deal-feedback / promotions / admin | ⏳ |
+| RMQ `marketplace.order_completed` → deal-feedback | ✅ |
+| RMQ → promotions / admin | ⏳ |
 
 > **Юридическое и монетизация платформы** (комиссия %, договор оферты) — отдельный документ, **не утверждено**.  
 > Текущая модель: **цена задаёт поставщик**, расчёт **между пользователями**; платформа не удерживает комиссию до отдельного решения.
