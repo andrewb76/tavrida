@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 export type DomainEventEnvelope<T = unknown> = {
   eventId: string;
   eventType: string;
@@ -19,8 +17,14 @@ export function createDomainEvent<T>(input: {
   correlationId?: string;
   eventId?: string;
 }): DomainEventEnvelope<T> {
+  const eventId =
+    input.eventId ??
+    (typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
   return {
-    eventId: input.eventId ?? randomUUID(),
+    eventId,
     eventType: input.eventType,
     eventVersion: '1',
     timestamp: new Date().toISOString(),

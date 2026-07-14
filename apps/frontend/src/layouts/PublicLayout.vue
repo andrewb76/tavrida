@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UiButton } from '@tavrida/ui';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { RouterLink, RouterView } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { useClubAccess } from '@/composables/useClubAccess';
@@ -39,9 +39,14 @@ const theme = useThemeStore();
           <UiButton
             intent="ghost"
             size="sm"
+            :title="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
             @click="theme.toggle()"
           >
-            {{ theme.mode === 'light' ? '🌙' : '☀️' }}
+            <UiIcon
+              :name="theme.mode === 'light' ? 'moon' : 'sun'"
+              :size="18"
+              :label="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
+            />
           </UiButton>
           <UiButton
             v-if="!auth.isAuthenticated.value && !inviteOnly"

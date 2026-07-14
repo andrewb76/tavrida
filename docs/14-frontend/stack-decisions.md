@@ -21,7 +21,32 @@
 | **RxJS** | **Не используем в v1** | см. [§ RxJS](#-rxjs) |
 | Уведомления UI | **vue-sonner** (toast) + Novu Inbox | свой Toast |
 | Markdown (форум) | **markdown-it** + `@tailwindcss/typography` | MDX — overkill |
-| Icons | **@iconify/vue** (Lucide subset) | inline SVG everywhere |
+| Icons | **@iconify/vue** + Lucide subset (`@iconify-icons/lucide`) | inline SVG · emoji · full `@iconify-json/lucide` |
+
+---
+
+## 🎨 Иконки (`UiIcon`)
+
+Источник: [Lucide](https://lucide.dev) через [@iconify/vue](https://docs.iconify.design/icon-components/vue/).  
+Офлайн-subset регистрируется в `registerLucideIcons` (импорты `@iconify-icons/lucide/*` — tree-shake). Новый глиф → добавить import + ключ в `uiIcons`.
+
+```vue
+<script setup>
+import { UiIcon } from '@tavrida/ui'
+</script>
+<template>
+  <UiIcon name="home" :size="20" />
+  <UiIcon name="lucide:gavel" label="Аукцион" />
+</template>
+```
+
+| Правило | Деталь |
+|---------|--------|
+| Импорт | только `UiIcon` / `uiIcons` из `@tavrida/ui` — не тянуть `@iconify/vue` из views |
+| Имена | семантические ключи (`home`, `auctions`, …) → см. `uiIcons` |
+| a11y | декоративные без `label` (`aria-hidden`); кликабельные — с `label` или `title` на кнопке |
+| Цвет | `currentColor` — наследует `text-*` родителя |
+
 | i18n | **vue-i18n** | — |
 | Тесты | Vitest + Playwright | — |
 
@@ -184,6 +209,7 @@ Pinia store `useTheme()` + `localStorage` + `prefers-color-scheme` при пер
 | Компонент | Reka base | Примечание |
 |-----------|-----------|------------|
 | `Button` | — | CVA: primary/secondary/ghost/danger, sm/md/lg |
+| `Icon` (`UiIcon`) | Iconify | Lucide; см. [§ Иконки](#-иконки-uiicon) |
 | `IconButton` | — | a11y label обязателен |
 | `Input`, `Textarea` | — | validation states |
 | `Select`, `Checkbox`, `Switch` | Reka | |

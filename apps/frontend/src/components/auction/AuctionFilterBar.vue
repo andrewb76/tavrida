@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CatalogSort, CatalogStatus } from '@/services/auctions';
 import { flattenCategories, listCategories, type CategoryNode } from '@/services/forum';
+import { UiIcon } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
@@ -93,7 +94,12 @@ function applyProFilters() {
   <div class="auction-filters">
     <div class="auction-filters__row">
       <label class="auction-filters__search">
-        <span class="auction-filters__search-icon">🔍</span>
+        <span class="auction-filters__search-icon">
+          <UiIcon
+            name="search"
+            :size="16"
+          />
+        </span>
         <input
           :value="search"
           type="search"

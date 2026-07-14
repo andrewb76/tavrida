@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UiButton } from '@tavrida/ui';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
@@ -15,14 +15,14 @@ const auth = useAuth();
 const theme = useThemeStore();
 
 const navItems = computed(() => {
-  const items = [
-    { to: '/app', label: 'Home', icon: '🏠' },
-    { to: '/auctions', label: 'Аукционы', icon: '🔨' },
-    { to: '/forum', label: 'Форум', icon: '🗣️' },
-    { to: '/profile/me', label: 'Профиль', icon: '👤' },
+  const items: Array<{ to: string; label: string; icon: string }> = [
+    { to: '/app', label: 'Home', icon: 'home' },
+    { to: '/auctions', label: 'Аукционы', icon: 'auctions' },
+    { to: '/forum', label: 'Форум', icon: 'forum' },
+    { to: '/profile/me', label: 'Профиль', icon: 'profile' },
   ];
   if (session.isAdmin) {
-    items.push({ to: '/admin/users', label: 'Админ', icon: '🛡️' });
+    items.push({ to: '/admin/users', label: 'Админ', icon: 'admin' });
   }
   return items;
 });
@@ -75,9 +75,13 @@ function isActive(path: string) {
           <RouterLink
             v-if="session.isMember"
             to="/wallet"
-            class="hidden rounded-full bg-bg px-2 py-1 text-xs tabular-nums text-text-muted hover:text-text sm:inline"
+            class="hidden items-center gap-1 rounded-full bg-bg px-2 py-1 text-xs tabular-nums text-text-muted hover:text-text sm:inline-flex"
             title="Кошелёк"
           >
+            <UiIcon
+              name="wallet"
+              :size="14"
+            />
             {{ formatMoney(session.balance, session.balanceCurrency) }}
           </RouterLink>
           <UiButton
@@ -86,14 +90,23 @@ function isActive(path: string) {
             title="Inbox (W15 stub)"
             @click="() => {}"
           >
-            🔔
+            <UiIcon
+              name="notifications"
+              :size="18"
+              label="Уведомления"
+            />
           </UiButton>
           <UiButton
             intent="ghost"
             size="sm"
+            :title="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
             @click="theme.toggle()"
           >
-            {{ theme.mode === 'light' ? '🌙' : '☀️' }}
+            <UiIcon
+              :name="theme.mode === 'light' ? 'moon' : 'sun'"
+              :size="18"
+              :label="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
+            />
           </UiButton>
           <UiButton
             intent="ghost"
@@ -101,7 +114,11 @@ function isActive(path: string) {
             title="Выйти"
             @click="auth.signOut()"
           >
-            ⎋
+            <UiIcon
+              name="logout"
+              :size="18"
+              label="Выйти"
+            />
           </UiButton>
         </div>
       </div>
@@ -130,10 +147,10 @@ function isActive(path: string) {
                 : 'text-text-muted hover:text-text'
             "
           >
-            <span
-              class="text-lg"
-              aria-hidden="true"
-            >{{ item.icon }}</span>
+            <UiIcon
+              :name="item.icon"
+              :size="22"
+            />
             {{ item.label }}
           </RouterLink>
         </li>
