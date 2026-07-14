@@ -1,6 +1,6 @@
 # ⏳ Сервис: periods
 
-> **Статус:** implementing (scaffold v1) · **Версия:** 0.1 · **Schema:** `periods` · **Port:** 3014  
+> **Статус:** implementing (v1 + Crimea seed) · **Версия:** 0.2 · **Schema:** `periods` · **Port:** 3014  
 > **Код:** `services/periods` (`@tavrida/periods`)  
 > **Продукт:** исторический справочник для атрибуции находок (Крым / Причерноморье) и виджет выбора интервала (d3, later)
 
@@ -198,6 +198,16 @@ Mirror admin + public without JWT (`/internal/v1/periods/...`).
 | `PERIODS_URL` | нет (BFF) | `http://localhost:3014` |
 | `DATABASE_URL` / `DB_*` | да | schema `periods` |
 
+## 🌱 Seed (Crimea / Black Sea)
+
+На пустой таблице `periods.period` (`PeriodsSeedService`):
+
+- категории уже из `SEED_CATEGORIES` (`CategoriesService.onModuleInit`);
+- деревья в `config/crimea-seed.ts`: epochs, cultures, polities (с partition у Кафы / ханства), dynasties (Гиреи), religions, craft_traditions, trade_networks;
+- даты в **н.э.** (ISO); до н.э. — в title/summary (лексикографический compare ненадёжен для BC).
+
+Повторный старт при `count > 0` seed пропускает.
+
 ## 📎 Связанные
 
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)
@@ -209,7 +219,7 @@ Mirror admin + public without JWT (`/internal/v1/periods/...`).
 | Фаза | Содержание |
 |------|------------|
 | **v1** | Docs + Nest CRUD + partition validation + BFF + admin UI |
-| **v2** | Seed данных Крыма, GIN metadata, public widget API polish |
+| **v2** | ✔ Seed данных Крыма (`crimea-seed.ts`); GIN metadata later |
 | **v3** | d3.js SVG timeline (ограничение / выбор периода) |
 | **v4** | Привязка аукцион/форум → period |
 

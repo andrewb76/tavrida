@@ -34,7 +34,7 @@ Subscriptions (event intent):
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
   ✔ BFF public/admin + admin UI (schema + CRUD + partition) @periods @frontend @bff @done(26-07-13)
-  ☐ Seed данных Крыма / Причерноморья @periods
+  ✔ Seed данных Крыма / Причерноморья @periods @done(26-07-14)
   ☐ d3.js SVG timeline widget (выбор / ограничение периода) @frontend @periods
   ☐ Привязка auction/forum → periodId @auction @forum @periods
 
