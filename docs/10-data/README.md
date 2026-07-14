@@ -34,7 +34,7 @@
 | `auction_subscriptions` | auction-subscriptions | `subscription`, `digest_preference`                           | Подписки           |
 | `rating`                | rating                | `user_rating`, `vote_log`                                     | Рейтинг, карма     |
 | `feedback`              | feedback              | `deal_feedback`, `pending_feedback`, `feedback_bonus`         | Отзывы             |
-| `user_profile`          | user-profile          | `user_profile`, `profile_note`                                | Bio, avatar, notes |
+| `user_profile`          | user-profile          | `user_profile`, `profile_note`, `user_rating`, `reputation_change_log` | Bio, avatar, notes; temporary rating SoT until `rating` svc |
 | `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure` | Контент форума     |
 | `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`          | Маркет услуг       |
 | `notifications`         | notifications-adapter | `notification_log`, `subscriber`                              | Audit уведомлений  |

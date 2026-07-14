@@ -115,3 +115,49 @@ export async function adjustProfileRating(
     body: JSON.stringify(patch),
   })) as ProfileRatingStats;
 }
+
+export type ReputationLogEntry = {
+  id: string;
+  userId: string;
+  metric: 'karma' | 'rating';
+  delta: number;
+  balanceAfter: number;
+  source: string;
+  actorId: string | null;
+  referenceId: string | null;
+  note: string | null;
+  createdAt: string;
+};
+
+export async function fetchReputationLog(
+  userId: string,
+  metric: 'karma' | 'rating',
+  limit = 50,
+): Promise<ReputationLogEntry[]> {
+  const params = new URLSearchParams({ metric, limit: String(limit) });
+  const json = (await profileFetch(
+    `/profile/${encodeURIComponent(userId)}/rating/log?${params}`,
+  )) as { data: ReputationLogEntry[] };
+  return json.data;
+}
+
+export function reputationSourceLabel(source: string): string {
+  switch (source) {
+    case 'ADMIN_ADJUST':
+      return 'Корректировка админа';
+    case 'FORUM_VOTE':
+      return 'Голос на форуме';
+    case 'DEAL_FEEDBACK':
+      return 'Отзыв по сделке';
+    case 'REFERRAL':
+      return 'Реферальный вклад';
+    case 'BONUS':
+      return 'Бонус';
+    case 'PENALTY':
+      return 'Штраф';
+    case 'SYSTEM':
+      return 'Система';
+    default:
+      return source;
+  }
+}

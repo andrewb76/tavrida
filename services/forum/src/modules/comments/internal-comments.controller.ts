@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -110,8 +110,18 @@ export class InternalCommentsController {
   constructor(private readonly comments: CommentsService) {}
 
   @Get()
-  list(@Param('topicId') topicId: string) {
-    return this.comments.listByTopic(topicId);
+  list(
+    @Param('topicId') topicId: string,
+    @Query('viewerId') viewerId?: string,
+    @Query('changeWindowMinutes') changeWindowMinutes?: string,
+  ) {
+    return this.comments.listByTopic(topicId, {
+      userId: viewerId,
+      changeWindowMinutes:
+        changeWindowMinutes != null && changeWindowMinutes !== ''
+          ? Number(changeWindowMinutes)
+          : undefined,
+    });
   }
 
   @Post()

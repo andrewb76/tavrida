@@ -58,6 +58,7 @@ export async function saveClubSettings(patch: ClubSettings): Promise<ClubSetting
 
 export type ForumSettings = {
   'edit.windowMinutes'?: number;
+  'vote.changeWindowMinutes'?: number;
 };
 
 export async function fetchForumSettings(): Promise<ForumSettings> {

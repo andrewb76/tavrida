@@ -97,6 +97,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | Method | Path | Описание |
 |--------|------|----------|
 | GET | `/rating/{userId}` | Публичный рейтинг + coverage |
+| GET | `/profile/{userId}/rating/log?metric=karma\|rating` | Лог изменений (BFF → user-profile; click popup) |
 
 ```json
 {

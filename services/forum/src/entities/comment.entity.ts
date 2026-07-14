@@ -30,6 +30,13 @@ export class CommentEntity {
   @Column('uuid', { name: 'promoted_topic_id', nullable: true })
   promotedTopicId!: string | null;
 
+  /** Denormalized +/- aggregates (updated with content_vote). */
+  @Column('int', { name: 'vote_plus_count', default: 0 })
+  votePlusCount!: number;
+
+  @Column('int', { name: 'vote_minus_count', default: 0 })
+  voteMinusCount!: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

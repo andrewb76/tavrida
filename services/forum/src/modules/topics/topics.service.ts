@@ -8,6 +8,7 @@ import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { VotesService } from '../votes/votes.service';
 
 @Injectable()
 export class TopicsService {
@@ -17,6 +18,7 @@ export class TopicsService {
     @InjectRepository(CategoryEntity)
     private readonly categories: Repository<CategoryEntity>,
     private readonly config: ConfigService,
+    private readonly votes: VotesService,
   ) {}
 
   async list(input: { categoryId?: string; limit?: number }) {
@@ -32,12 +34,15 @@ export class TopicsService {
     };
   }
 
-  async getById(topicId: string) {
+  async getById(
+    topicId: string,
+    viewer?: { userId?: string; changeWindowMinutes?: number },
+  ) {
     const row = await this.topics.findOne({ where: { id: topicId } });
     if (!row) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
-    return this.toDetail(row);
+    return this.toDetail(row, viewer);
   }
 
   async create(input: {
@@ -148,16 +153,33 @@ export class TopicsService {
       title: row.title,
       excerpt: row.body.slice(0, 200),
       isPinned: row.isPinned,
+      votePlusCount: row.votePlusCount ?? 0,
+      voteMinusCount: row.voteMinusCount ?? 0,
+      score: (row.votePlusCount ?? 0) - (row.voteMinusCount ?? 0),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
   }
 
-  private toDetail(row: TopicEntity) {
+  private async toDetail(
+    row: TopicEntity,
+    viewer?: { userId?: string; changeWindowMinutes?: number },
+  ) {
+    const changeWindowMinutes = viewer?.changeWindowMinutes ?? 3;
+    const mine = await this.votes.findMine(row.id, 'topic', viewer?.userId);
+    const vote = this.votes.summarize(
+      row.votePlusCount ?? 0,
+      row.voteMinusCount ?? 0,
+      mine?.value ?? null,
+      mine?.createdAt ?? null,
+      changeWindowMinutes,
+    );
     return {
       ...this.toSummary(row),
       body: row.body,
       attachments: row.attachments ?? [],
+      myVote: vote.myVote,
+      canChangeVote: vote.canChange,
     };
   }
 }

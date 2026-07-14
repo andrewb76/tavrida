@@ -18,6 +18,11 @@ export type ForumComment = {
     sizeBytes: number;
   }>;
   promotedTopicId: string | null;
+  votePlusCount?: number;
+  voteMinusCount?: number;
+  score?: number;
+  myVote?: 1 | -1 | null;
+  canChangeVote?: boolean;
   createdAt: string;
   updatedAt: string;
 };

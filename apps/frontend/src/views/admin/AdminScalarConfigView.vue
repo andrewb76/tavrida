@@ -31,6 +31,7 @@ const form = ref({
 
 const forumForm = ref({
   editWindowMinutes: 10,
+  voteChangeWindowMinutes: 3,
 });
 
 function applySettings(data: ClubSettings) {
@@ -53,6 +54,7 @@ async function load() {
     ]);
     applySettings(club);
     forumForm.value.editWindowMinutes = forum['edit.windowMinutes'] ?? 10;
+    forumForm.value.voteChangeWindowMinutes = forum['vote.changeWindowMinutes'] ?? 3;
     registry.value = rows;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить scalar-config';
@@ -119,8 +121,10 @@ async function saveForum() {
   try {
     const updated = await saveForumSettings({
       'edit.windowMinutes': Number(forumForm.value.editWindowMinutes),
+      'vote.changeWindowMinutes': Number(forumForm.value.voteChangeWindowMinutes),
     });
     forumForm.value.editWindowMinutes = updated['edit.windowMinutes'] ?? 10;
+    forumForm.value.voteChangeWindowMinutes = updated['vote.changeWindowMinutes'] ?? 3;
     registry.value = await fetchScalarRegistry();
     toast.success('Настройки форума сохранены');
   } catch (e) {
@@ -268,6 +272,23 @@ onMounted(() => {
           <code>0</code> — редактирование запрещено,
           <code>-1</code> — без ограничения по времени,
           положительное число — сколько минут после публикации можно править свой текст.
+        </p>
+        <label class="block text-sm">
+          <span class="text-text-muted">Окно смены +/- голоса (минуты)</span>
+          <input
+            v-model.number="forumForm.voteChangeWindowMinutes"
+            type="number"
+            min="-1"
+            step="1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <p class="text-xs text-text-muted">
+          Ключ <code class="text-xs">forum.vote.changeWindowMinutes</code>.
+          С момента первого голоса:
+          <code>0</code> — нельзя менять,
+          <code>-1</code> — всегда,
+          иначе N минут (сменить +↔− или снять).
         </p>
         <UiButton
           type="submit"

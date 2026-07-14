@@ -64,8 +64,28 @@ export class ProfileController {
 
   @Post(':userId/rating/adjust')
   @UseGuards(AdminGuard)
-  adjustRating(@Param('userId') userId: string, @Body() body: AdjustRatingDto) {
-    return this.profiles.adjustRating(userId, body);
+  adjustRating(
+    @CurrentUser() user: AuthUser,
+    @Param('userId') userId: string,
+    @Body() body: AdjustRatingDto,
+  ) {
+    return this.profiles.adjustRating(userId, {
+      ...body,
+      actorId: user.sub,
+      source: 'ADMIN_ADJUST',
+    });
+  }
+
+  @Get(':userId/rating/log')
+  getRatingLog(
+    @Param('userId') userId: string,
+    @Query('metric') metric: 'karma' | 'rating',
+    @Query('limit') limit?: string,
+  ) {
+    return this.profiles.getRatingLog(userId, {
+      metric: metric === 'rating' ? 'rating' : 'karma',
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Get(':userId')

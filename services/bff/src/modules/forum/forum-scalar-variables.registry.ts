@@ -10,4 +10,12 @@ export const FORUM_SCALAR_REGISTRY: ScalarVariableRegistration[] = [
     description:
       'Окно редактирования своего поста/комментария (мин). 0 — нельзя, -1 — всегда.',
   },
+  {
+    key: 'forum.vote.changeWindowMinutes',
+    type: 'number',
+    default: 3,
+    service: 'forum',
+    description:
+      'Окно смены +/- голоса (мин) с момента первого голоса. 0 — нельзя менять, -1 — всегда.',
+  },
 ];

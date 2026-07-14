@@ -11,6 +11,7 @@ export type ClubSettings = {
 
 export type ForumSettings = {
   'edit.windowMinutes'?: number;
+  'vote.changeWindowMinutes'?: number;
 };
 
 @Injectable()

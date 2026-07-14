@@ -21,6 +21,7 @@
 | **Topic** | Корневое сообщение темы |
 | **Comment** | Ответ в topic; **родитель — topic (корень) или любой comment** любой глубины ([ветки](#-ветки-комментариев)) |
 | **Reaction** | Эмоция на `contentId` + `contentType` |
+| **Content vote** | Исключительный +/- на topic/comment (один голос на пользователя) |
 | **Promote** | Выделение comment → равноправный topic ([ADR-005](../../03-architecture/adr/005-forum-terminology.md)) |
 
 ## 🗄️ Сущности
@@ -28,10 +29,25 @@
 | Таблица | Описание |
 |---------|----------|
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
-| `topic` | Тема |
-| `comment` | Комментарий; `promotedTopicId` после promote |
+| `topic` | Тема; `votePlusCount`, `voteMinusCount` |
+| `comment` | Комментарий; `promotedTopicId`; vote counters |
 | `comment_closure` | Closure table для дерева |
-| `reaction` | `contentId`, `contentType`, `emojiKey`, `userId` |
+| `reaction` | emoji-реакции (`emojiKey`) |
+| `content_vote` | +/- : `userId`+`contentId` PK, `value` ±1, `createdAt` |
+
+## +/- голоса
+
+- У участника на объект только одно состояние: **+**, **−** или **ничего**
+- Повторный клик по активной кнопке снимает голос (если окно позволяет)
+- Смена решения: `forum.vote.changeWindowMinutes` от **первого** голоса (`0` / `N` / `-1`)
+- Свой контент голосовать нельзя
+- Агрегаты денормализованы; `myVote` при чтении через `viewerId`
+
+| Данные | Сейчас | Next |
+|--------|--------|------|
+| Aggregates | `vote_*_count` на topic/comment | Redis hash |
+| myVote | batch SQL на странице темы | Redis TTL ≈ окно смены |
+| Settings | BFF `ForumSettingsReader` 30s | уже есть |
 
 > DDL detail: [10-data](../../10-data/README.md)
 
@@ -41,8 +57,10 @@
 |--------|------|----------|
 | GET | `/forum/categories` | Дерево |
 | GET/POST | `/forum/topics` | Список / создание |
-| GET/PATCH | `/forum/topics/{id}` | Детали / edit window |
-| GET/POST | `/forum/topics/{id}/comments` | Ветка: плоский список с `parentId`; POST — ответ к теме или к comment |
+| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote` при auth) / edit window |
+| GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth |
+| POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |
+| POST | `/forum/votes/clear` | Снять голос |
 | POST | `/forum/reactions` | `{ contentId, contentType, emojiKey }` |
 | POST | `/forum/content/report` | Жалоба → `forum.content_reported` |
 | POST | `/internal/.../comments/{id}/promote-to-topic` | Moderator only |
@@ -78,6 +96,7 @@
 |------|----------|
 | `forum.bannedWordsList` | Фильтр контента |
 | `forum.editWindowMinutes` | Окно редактирования |
+| `forum.vote.changeWindowMinutes` | Окно смены +/- голоса (0 / N / -1) |
 | `forum.reaction.karmaWeights` | Веса для rating karma |
 
 ## 💳 Переменные plan-config

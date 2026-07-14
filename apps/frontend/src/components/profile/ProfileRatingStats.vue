@@ -2,6 +2,7 @@
 import { UiButton } from '@tavrida/ui';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
+import ProfileReputationLogModal from '@/components/profile/ProfileReputationLogModal.vue';
 import {
   adjustProfileRating,
   formatKarma,
@@ -20,6 +21,8 @@ const emit = defineEmits<{
 
 const session = useSessionStore();
 const adjusting = ref(false);
+const logOpen = ref(false);
+const logMetric = ref<'karma' | 'rating'>('karma');
 
 const canAdjust = computed(() => session.isAdmin);
 
@@ -33,6 +36,11 @@ const coverageLabel = computed(() => {
   if (props.rating.feedbackCoverage == null) return '—';
   return `${Math.round(props.rating.feedbackCoverage * 100)}%`;
 });
+
+function openLog(metric: 'karma' | 'rating') {
+  logMetric.value = metric;
+  logOpen.value = true;
+}
 
 async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) {
   adjusting.value = true;
@@ -53,7 +61,14 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
     <div class="profile-rating-stats__grid">
       <div class="profile-rating-stats__item">
         <span class="profile-rating-stats__label">Рейтинг</span>
-        <span class="profile-rating-stats__value">★ {{ ratingLabel }}</span>
+        <button
+          type="button"
+          class="profile-rating-stats__value-btn"
+          title="История рейтинга"
+          @click="openLog('rating')"
+        >
+          ★ {{ ratingLabel }}
+        </button>
         <span class="profile-rating-stats__hint">
           {{ rating.verifiedSales }} сделок · покрытие {{ coverageLabel }}
         </span>
@@ -82,12 +97,15 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
 
       <div class="profile-rating-stats__item">
         <span class="profile-rating-stats__label">Карма</span>
-        <span
-          class="profile-rating-stats__value"
-          :class="rating.effectiveKarma >= 0 ? 'profile-rating-stats__value--positive' : 'profile-rating-stats__value--negative'"
+        <button
+          type="button"
+          class="profile-rating-stats__value-btn"
+          :class="rating.effectiveKarma >= 0 ? 'is-positive' : 'is-negative'"
+          title="История кармы"
+          @click="openLog('karma')"
         >
           {{ karmaLabel }}
-        </span>
+        </button>
         <span
           v-if="rating.referralKarma !== 0"
           class="profile-rating-stats__hint"
@@ -117,6 +135,13 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
         </div>
       </div>
     </div>
+
+    <ProfileReputationLogModal
+      v-model:open="logOpen"
+      :user-id="rating.userId"
+      :metric="logMetric"
+      :verified-sales="rating.verifiedSales"
+    />
   </section>
 </template>
 
@@ -148,17 +173,33 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
   color: var(--color-text-muted, #666);
 }
 
-.profile-rating-stats__value {
+.profile-rating-stats__value-btn {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text, #111);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.15em;
 }
 
-.profile-rating-stats__value--positive {
+.profile-rating-stats__value-btn:hover,
+.profile-rating-stats__value-btn:focus-visible {
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+.profile-rating-stats__value-btn.is-positive {
   color: #067647;
 }
 
-.profile-rating-stats__value--negative {
+.profile-rating-stats__value-btn.is-negative {
   color: #b42318;
 }
 

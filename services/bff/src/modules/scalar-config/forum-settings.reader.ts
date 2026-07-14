@@ -4,9 +4,10 @@ import { ScalarConfigClient } from './scalar-config.client';
 
 const CACHE_TTL_MS = 30_000;
 const DEFAULT_EDIT_WINDOW_MINUTES = 10;
+const DEFAULT_VOTE_CHANGE_WINDOW_MINUTES = 3;
 
-function parseEditWindowMinutes(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULT_EDIT_WINDOW_MINUTES;
+function parseWindowMinutes(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   return Math.trunc(value);
 }
 
@@ -23,7 +24,15 @@ export class ForumSettingsReader {
 
   async editWindowMinutes(): Promise<number> {
     const settings = await this.loadForumSettings();
-    return parseEditWindowMinutes(settings?.['edit.windowMinutes']);
+    return parseWindowMinutes(settings?.['edit.windowMinutes'], DEFAULT_EDIT_WINDOW_MINUTES);
+  }
+
+  async voteChangeWindowMinutes(): Promise<number> {
+    const settings = await this.loadForumSettings();
+    return parseWindowMinutes(
+      settings?.['vote.changeWindowMinutes'],
+      DEFAULT_VOTE_CHANGE_WINDOW_MINUTES,
+    );
   }
 
   private async loadForumSettings(): Promise<ForumSettings | null> {

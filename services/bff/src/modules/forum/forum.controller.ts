@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -12,6 +12,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import type { Request } from 'express';
 import {
   assertMarkdownMediaUrlsAllowed,
   assertMediaAttachmentsAllowed,
@@ -19,6 +20,7 @@ import {
 } from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { ForumClient } from './forum.client';
@@ -95,6 +97,27 @@ class UpsertReactionDto {
   @MinLength(1)
   @MaxLength(32)
   emojiKey!: string;
+}
+
+class CastVoteDto {
+  @IsUUID()
+  contentId!: string;
+
+  @IsIn(['topic', 'comment'])
+  contentType!: 'topic' | 'comment';
+
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([1, -1])
+  value!: 1 | -1;
+}
+
+class ClearVoteDto {
+  @IsUUID()
+  contentId!: string;
+
+  @IsIn(['topic', 'comment'])
+  contentType!: 'topic' | 'comment';
 }
 
 class UpdateTopicDto {
@@ -177,6 +200,7 @@ export class ForumController {
   async getMeta() {
     return {
       editWindowMinutes: await this.forumSettings.editWindowMinutes(),
+      voteChangeWindowMinutes: await this.forumSettings.voteChangeWindowMinutes(),
     };
   }
 
@@ -194,8 +218,13 @@ export class ForumController {
   }
 
   @Get('topics/:id')
-  async getTopic(@Param('id') id: string) {
-    const topic = await this.forum.getTopic(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  async getTopic(@Param('id') id: string, @Req() req: Request & { user?: AuthUser }) {
+    const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    const topic = await this.forum.getTopic(id, {
+      userId: req.user?.sub,
+      changeWindowMinutes,
+    });
     return this.authors.enrichOne(topic as { authorId: string });
   }
 
@@ -238,8 +267,13 @@ export class ForumController {
   }
 
   @Get('topics/:id/comments')
-  async listComments(@Param('id') topicId: string) {
-    const res = await this.forum.listComments(topicId);
+  @UseGuards(OptionalJwtAuthGuard)
+  async listComments(@Param('id') topicId: string, @Req() req: Request & { user?: AuthUser }) {
+    const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    const res = await this.forum.listComments(topicId, {
+      userId: req.user?.sub,
+      changeWindowMinutes,
+    });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data };
   }
@@ -299,5 +333,27 @@ export class ForumController {
   @UseGuards(JwtAuthGuard)
   upsertReaction(@CurrentUser() user: AuthUser, @Body() body: UpsertReactionDto) {
     return this.forum.upsertReaction({ ...body, userId: user.sub });
+  }
+
+  @Post('votes')
+  @UseGuards(JwtAuthGuard)
+  async castVote(@CurrentUser() user: AuthUser, @Body() body: CastVoteDto) {
+    const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    return this.forum.castVote({
+      ...body,
+      userId: user.sub,
+      changeWindowMinutes,
+    });
+  }
+
+  @Post('votes/clear')
+  @UseGuards(JwtAuthGuard)
+  async clearVote(@CurrentUser() user: AuthUser, @Body() body: ClearVoteDto) {
+    const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    return this.forum.clearVote({
+      ...body,
+      userId: user.sub,
+      changeWindowMinutes,
+    });
   }
 }

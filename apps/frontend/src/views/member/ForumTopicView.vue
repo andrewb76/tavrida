@@ -3,6 +3,7 @@ import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
@@ -111,6 +112,24 @@ function onCommentCreated(created: ForumComment) {
 
 function onCommentUpdated(updated: ForumComment) {
   comments.value = comments.value.map((row) => (row.id === updated.id ? updated : row));
+}
+
+function onTopicVoteUpdated(result: {
+  plusCount: number;
+  minusCount: number;
+  score: number;
+  myVote: 1 | -1 | null;
+  canChange: boolean;
+}) {
+  if (!topic.value) return;
+  topic.value = {
+    ...topic.value,
+    votePlusCount: result.plusCount,
+    voteMinusCount: result.minusCount,
+    score: result.score,
+    myVote: result.myVote,
+    canChangeVote: result.canChange,
+  };
 }
 
 async function submitTopicComment() {
@@ -237,6 +256,17 @@ async function submitTopicComment() {
           v-if="topic.attachments?.length"
           :attachments="topic.attachments"
           variant="forum"
+        />
+        <ForumVoteBar
+          class="mt-3"
+          content-type="topic"
+          :content-id="topic.id"
+          :plus-count="topic.votePlusCount ?? 0"
+          :minus-count="topic.voteMinusCount ?? 0"
+          :my-vote="topic.myVote ?? null"
+          :can-change="topic.canChangeVote ?? true"
+          :disabled="!session.userId || topic.authorId === session.userId"
+          @updated="onTopicVoteUpdated"
         />
       </article>
 

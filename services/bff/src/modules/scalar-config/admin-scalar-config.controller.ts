@@ -33,6 +33,11 @@ class PatchForumSettingsBodyDto {
   @IsInt()
   @Min(-1)
   'edit.windowMinutes'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-1)
+  'vote.changeWindowMinutes'?: number;
 }
 
 @Controller('admin/scalar-config')

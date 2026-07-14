@@ -9,6 +9,7 @@ import { validateForumContent } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { VotesService } from '../votes/votes.service';
 
 @Injectable()
 export class CommentsService {
@@ -21,9 +22,13 @@ export class CommentsService {
     private readonly topics: Repository<TopicEntity>,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
+    private readonly votes: VotesService,
   ) {}
 
-  async listByTopic(topicId: string) {
+  async listByTopic(
+    topicId: string,
+    viewer?: { userId?: string; changeWindowMinutes?: number },
+  ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
     if (!topic) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
@@ -34,18 +39,40 @@ export class CommentsService {
       order: { createdAt: 'ASC' },
     });
 
+    const changeWindowMinutes = viewer?.changeWindowMinutes ?? 3;
+    const mineById = await this.votes.findMineMany(
+      'comment',
+      rows.map((r) => r.id),
+      viewer?.userId,
+    );
+
     return {
-      data: rows.map((row) => ({
-        id: row.id,
-        topicId: row.topicId,
-        authorId: row.authorId,
-        parentId: row.parentId,
-        body: row.body,
-        attachments: row.attachments ?? [],
-        promotedTopicId: row.promotedTopicId,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      })),
+      data: rows.map((row) => {
+        const mine = mineById.get(row.id) ?? null;
+        const vote = this.votes.summarize(
+          row.votePlusCount ?? 0,
+          row.voteMinusCount ?? 0,
+          mine?.value ?? null,
+          mine?.createdAt ?? null,
+          changeWindowMinutes,
+        );
+        return {
+          id: row.id,
+          topicId: row.topicId,
+          authorId: row.authorId,
+          parentId: row.parentId,
+          body: row.body,
+          attachments: row.attachments ?? [],
+          promotedTopicId: row.promotedTopicId,
+          votePlusCount: vote.plusCount,
+          voteMinusCount: vote.minusCount,
+          score: vote.score,
+          myVote: vote.myVote,
+          canChangeVote: vote.canChange,
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt.toISOString(),
+        };
+      }),
     };
   }
 
@@ -130,6 +157,11 @@ export class CommentsService {
         body: comment.body,
         attachments: comment.attachments ?? [],
         promotedTopicId: comment.promotedTopicId,
+        votePlusCount: 0,
+        voteMinusCount: 0,
+        score: 0,
+        myVote: null,
+        canChangeVote: true,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
       };
@@ -195,6 +227,11 @@ export class CommentsService {
       body: comment.body,
       attachments: comment.attachments ?? [],
       promotedTopicId: comment.promotedTopicId,
+      votePlusCount: comment.votePlusCount ?? 0,
+      voteMinusCount: comment.voteMinusCount ?? 0,
+      score: (comment.votePlusCount ?? 0) - (comment.voteMinusCount ?? 0),
+      myVote: null,
+      canChangeVote: true,
       createdAt: comment.createdAt.toISOString(),
       updatedAt: comment.updatedAt.toISOString(),
     };

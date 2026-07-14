@@ -2,6 +2,7 @@
 import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
+import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import { createComment, forumAuthorLabel, updateComment, type CommentTreeNode, type ForumComment } from '@/services/forum';
@@ -21,6 +22,23 @@ const emit = defineEmits<{
   created: [ForumComment];
   updated: [ForumComment];
 }>();
+
+function onVoteUpdated(result: {
+  plusCount: number;
+  minusCount: number;
+  score: number;
+  myVote: 1 | -1 | null;
+  canChange: boolean;
+}) {
+  emit('updated', {
+    ...props.node,
+    votePlusCount: result.plusCount,
+    voteMinusCount: result.minusCount,
+    score: result.score,
+    myVote: result.myVote,
+    canChangeVote: result.canChange,
+  });
+}
 
 const showReply = ref(false);
 const editing = ref(false);
@@ -174,6 +192,18 @@ async function submitReply() {
         v-if="node.attachments?.length"
         :attachments="node.attachments"
         variant="forum"
+      />
+
+      <ForumVoteBar
+        class="mt-2"
+        content-type="comment"
+        :content-id="node.id"
+        :plus-count="node.votePlusCount ?? 0"
+        :minus-count="node.voteMinusCount ?? 0"
+        :my-vote="node.myVote ?? null"
+        :can-change="node.canChangeVote ?? true"
+        :disabled="!currentUserId || node.authorId === currentUserId"
+        @updated="onVoteUpdated"
       />
 
       <form

@@ -58,8 +58,14 @@ export class ForumClient {
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
   }
 
-  getTopic(topicId: string) {
-    return this.request<Record<string, unknown>>('GET', `/internal/v1/topics/${topicId}`);
+  getTopic(topicId: string, viewer?: { userId?: string; changeWindowMinutes?: number }) {
+    const params = new URLSearchParams();
+    if (viewer?.userId) params.set('viewerId', viewer.userId);
+    if (viewer?.changeWindowMinutes != null) {
+      params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
+    }
+    const q = params.size ? `?${params}` : '';
+    return this.request<Record<string, unknown>>('GET', `/internal/v1/topics/${topicId}${q}`);
   }
 
   createTopic(input: {
@@ -99,8 +105,20 @@ export class ForumClient {
     return this.request<Record<string, unknown>>('PATCH', `/internal/v1/topics/${topicId}`, input);
   }
 
-  listComments(topicId: string) {
-    return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics/${topicId}/comments`);
+  listComments(
+    topicId: string,
+    viewer?: { userId?: string; changeWindowMinutes?: number },
+  ) {
+    const params = new URLSearchParams();
+    if (viewer?.userId) params.set('viewerId', viewer.userId);
+    if (viewer?.changeWindowMinutes != null) {
+      params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
+    }
+    const q = params.size ? `?${params}` : '';
+    return this.request<{ data: unknown[] }>(
+      'GET',
+      `/internal/v1/topics/${topicId}/comments${q}`,
+    );
   }
 
   createComment(
@@ -163,6 +181,25 @@ export class ForumClient {
     allowPaid?: boolean;
   }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/reactions', input);
+  }
+
+  castVote(input: {
+    contentId: string;
+    contentType: 'topic' | 'comment';
+    userId: string;
+    value: 1 | -1;
+    changeWindowMinutes: number;
+  }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/votes', input);
+  }
+
+  clearVote(input: {
+    contentId: string;
+    contentType: 'topic' | 'comment';
+    userId: string;
+    changeWindowMinutes: number;
+  }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/votes/clear', input);
   }
 
   private async request<T>(

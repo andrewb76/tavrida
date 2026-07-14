@@ -11,7 +11,7 @@
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
 | Header card | Avatar, name, bio | Public |
-| Stats | Rating, deals, karma, heatmap | BFF aggregate |
+| Stats | Rating, deals, karma | Click rating/karma → log modal |
 | Tabs | Аукционы, Форум, Услуги | Activity lists |
 | Owner | Edit bio/avatar | `PATCH /profile/me` |
 | Private note | On **other** profiles | Author-only, invisible to others |
@@ -25,7 +25,7 @@
 ```
 ┌─────────────────────────────────────┐
 │ [Avatar]  displayName               │
-│ ★ 4.8 · 20 сделок · karma 128       │
+│ ★ 4.8 · 20 сделок · karma 128       │  ← click ★ / karma → log popup
 │ ░░ heatmap (activity grid)          │
 ├─────────────────────────────────────┤
 │ [ Аукционы ] [ Форум ] [ Услуги ]   │

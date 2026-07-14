@@ -7,6 +7,7 @@ import { InviteCodeEntity } from './entities/invite-code.entity';
 import { ProfileNoteEntity } from './entities/profile-note.entity';
 import { UserProfileEntity } from './entities/user-profile.entity';
 import { UserRatingEntity } from './entities/user-rating.entity';
+import { ReputationChangeLogEntity } from './entities/reputation-change-log.entity';
 import { HealthController } from './modules/health/health.controller';
 import { InvitesModule } from './modules/invites/invites.module';
 import { NotesModule } from './modules/notes/notes.module';
@@ -29,7 +30,14 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME ?? 'tavrida_lot',
       schema: 'user_profile',
-      entities: [UserProfileEntity, InviteCodeEntity, InvitationEntity, ProfileNoteEntity, UserRatingEntity],
+      entities: [
+        UserProfileEntity,
+        InviteCodeEntity,
+        InvitationEntity,
+        ProfileNoteEntity,
+        UserRatingEntity,
+        ReputationChangeLogEntity,
+      ],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     InvitesModule,

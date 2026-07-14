@@ -134,8 +134,18 @@ export class InternalTopicsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
-    return this.topics.getById(id);
+  getById(
+    @Param('id') id: string,
+    @Query('viewerId') viewerId?: string,
+    @Query('changeWindowMinutes') changeWindowMinutes?: string,
+  ) {
+    return this.topics.getById(id, {
+      userId: viewerId,
+      changeWindowMinutes:
+        changeWindowMinutes != null && changeWindowMinutes !== ''
+          ? Number(changeWindowMinutes)
+          : undefined,
+    });
   }
 
   @Post()

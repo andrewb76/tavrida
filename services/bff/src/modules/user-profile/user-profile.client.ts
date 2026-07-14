@@ -174,7 +174,13 @@ export class UserProfileClient {
 
   async adjustRating(
     userId: string,
-    body: { karmaDelta?: number; ratingDelta?: number },
+    body: {
+      karmaDelta?: number;
+      ratingDelta?: number;
+      actorId?: string;
+      source?: string;
+      note?: string;
+    },
   ) {
     return this.request<{
       userId: string;
@@ -188,6 +194,28 @@ export class UserProfileClient {
       pendingSales: number;
       feedbackCoverage: number | null;
     }>('POST', `/internal/v1/ratings/${encodeURIComponent(userId)}/adjust`, body);
+  }
+
+  async getRatingLog(
+    userId: string,
+    query: { metric: 'karma' | 'rating'; limit?: number },
+  ) {
+    const params = new URLSearchParams({ metric: query.metric });
+    if (query.limit != null) params.set('limit', String(query.limit));
+    return this.request<{
+      data: Array<{
+        id: string;
+        userId: string;
+        metric: 'karma' | 'rating';
+        delta: number;
+        balanceAfter: number;
+        source: string;
+        actorId: string | null;
+        referenceId: string | null;
+        note: string | null;
+        createdAt: string;
+      }>;
+    }>('GET', `/internal/v1/ratings/${encodeURIComponent(userId)}/log?${params}`);
   }
 
   async getProfileNote(ownerId: string, authorId: string) {

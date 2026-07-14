@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { optionalBearerToken, requireBearerToken } from './apiAuth';
 import {
   buildCommentTree,
   forumAuthorLabel,
@@ -30,6 +30,9 @@ export type TopicSummary = {
   title: string;
   excerpt: string;
   isPinned: boolean;
+  votePlusCount?: number;
+  voteMinusCount?: number;
+  score?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,10 +41,13 @@ export type TopicDetail = TopicSummary & {
   body: string;
   attachments: MediaAttachment[];
   author: ForumAuthor;
+  myVote?: 1 | -1 | null;
+  canChangeVote?: boolean;
 };
 
 export type ForumMeta = {
   editWindowMinutes: number;
+  voteChangeWindowMinutes: number;
 };
 
 function apiBase(): string {
@@ -70,7 +76,10 @@ export async function fetchForumMeta(): Promise<ForumMeta> {
 }
 
 export async function getTopic(topicId: string): Promise<TopicDetail> {
-  const res = await fetch(`${apiBase()}/forum/topics/${topicId}`);
+  const token = await optionalBearerToken();
+  const res = await fetch(`${apiBase()}/forum/topics/${topicId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (!res.ok) throw new Error('Тема не найдена');
   return (await res.json()) as TopicDetail;
 }
@@ -118,7 +127,10 @@ export async function updateTopic(
 }
 
 export async function listComments(topicId: string): Promise<ForumComment[]> {
-  const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`);
+  const token = await optionalBearerToken();
+  const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (!res.ok) throw new Error('Не удалось загрузить комментарии');
   const json = (await res.json()) as { data: ForumComment[] };
   return json.data;
@@ -166,6 +178,57 @@ export async function updateComment(
     throw new Error(err?.detail ?? 'Не удалось обновить комментарий');
   }
   return (await res.json()) as ForumComment;
+}
+
+export type ForumVoteResult = {
+  contentId: string;
+  contentType: 'topic' | 'comment';
+  plusCount: number;
+  minusCount: number;
+  score: number;
+  myVote: 1 | -1 | null;
+  canChange: boolean;
+};
+
+export async function castForumVote(input: {
+  contentId: string;
+  contentType: 'topic' | 'comment';
+  value: 1 | -1;
+}): Promise<ForumVoteResult> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/forum/votes`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось проголосовать');
+  }
+  return (await res.json()) as ForumVoteResult;
+}
+
+export async function clearForumVote(input: {
+  contentId: string;
+  contentType: 'topic' | 'comment';
+}): Promise<ForumVoteResult> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/forum/votes/clear`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось снять голос');
+  }
+  return (await res.json()) as ForumVoteResult;
 }
 
 export function flattenCategories(nodes: CategoryNode[]): CategoryNode[] {

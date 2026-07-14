@@ -30,6 +30,13 @@ export class TopicEntity {
   @Column('boolean', { name: 'is_pinned', default: false })
   isPinned!: boolean;
 
+  /** Denormalized +/- aggregates (updated with content_vote). */
+  @Column('int', { name: 'vote_plus_count', default: 0 })
+  votePlusCount!: number;
+
+  @Column('int', { name: 'vote_minus_count', default: 0 })
+  voteMinusCount!: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
