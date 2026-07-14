@@ -44,14 +44,25 @@ onMounted(load);
           Реставрация, экспертиза, доставка и другие услуги участников клуба.
         </p>
       </div>
-      <RouterLink to="/marketplace/my-listings">
-        <UiButton
-          size="sm"
-          type="button"
-        >
-          Мои услуги
-        </UiButton>
-      </RouterLink>
+      <div class="flex flex-wrap gap-2">
+        <RouterLink to="/marketplace/orders">
+          <UiButton
+            size="sm"
+            intent="secondary"
+            type="button"
+          >
+            Мои заказы
+          </UiButton>
+        </RouterLink>
+        <RouterLink to="/marketplace/my-listings">
+          <UiButton
+            size="sm"
+            type="button"
+          >
+            Мои услуги
+          </UiButton>
+        </RouterLink>
+      </div>
     </header>
 
     <div class="flex flex-wrap gap-2">

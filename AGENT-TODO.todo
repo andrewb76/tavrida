@@ -41,7 +41,8 @@ Periods (historical reference):
 Marketplace:
   ✔ Scaffold listings/orders + BFF + member UI @marketplace @done(26-07-14)
   ☐ Portfolio upload via media + seed demo listings @marketplace @frontend
-  ☐ Orders UI (provider/customer) + RMQ → feedback @marketplace
+  ✔ Orders UI (provider/customer) @marketplace @frontend @done(26-07-14)
+  ☐ RMQ order_completed → deal-feedback @marketplace
 
 Forum votes (+/-):
   ✔ content_vote + changeWindowMinutes + UI pressed state @forum @frontend @done(26-07-14)

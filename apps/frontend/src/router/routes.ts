@@ -101,6 +101,12 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Мои услуги', requiresMember: true },
   },
   {
+    path: 'marketplace/orders',
+    name: 'marketplace-orders',
+    component: () => import('@/views/member/MarketplaceOrdersView.vue'),
+    meta: { title: 'Заказы', requiresMember: true },
+  },
+  {
     path: 'marketplace/:id',
     name: 'marketplace-detail',
     component: () => import('@/views/member/MarketplaceDetailView.vue'),

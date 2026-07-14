@@ -41,7 +41,12 @@ async function order() {
   ordering.value = true;
   try {
     await createOrder(id.value);
-    toast.success('Заказ создан');
+    toast.success('Заказ создан', {
+      action: {
+        label: 'К заказам',
+        onClick: () => router.push('/marketplace/orders'),
+      },
+    });
   } catch (e) {
     toast.error(e instanceof Error ? e.message : 'Не удалось заказать');
   } finally {
