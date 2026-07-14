@@ -33,6 +33,14 @@ export type PortfolioItem = {
   sortOrder: number;
 };
 
+export type OrderStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'DISPUTED';
+
 export type MarketplaceOrder = {
   id: string;
   listingId: string;
@@ -40,10 +48,48 @@ export type MarketplaceOrder = {
   customerId: string;
   agreedPrice: number;
   currency: string;
-  status: string;
+  status: OrderStatus;
   note: string | null;
   completedAt: string | null;
   createdAt: string;
+  updatedAt?: string;
+};
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING: 'Ожидает',
+  ACCEPTED: 'Принят',
+  IN_PROGRESS: 'В работе',
+  COMPLETED: 'Завершён',
+  CANCELLED: 'Отменён',
+  DISPUTED: 'Спор',
+};
+
+/** Mirror of services/marketplace ORDER_TRANSITIONS */
+export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: ['ACCEPTED', 'CANCELLED'],
+  ACCEPTED: ['IN_PROGRESS', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED', 'CANCELLED', 'DISPUTED'],
+  COMPLETED: [],
+  CANCELLED: [],
+  DISPUTED: ['CANCELLED', 'COMPLETED'],
+};
+
+export function orderActionsForRole(
+  status: OrderStatus,
+  role: 'provider' | 'customer',
+): OrderStatus[] {
+  const next = ORDER_TRANSITIONS[status] ?? [];
+  if (role === 'customer') return next.filter((s) => s === 'CANCELLED');
+  return next;
+}
+
+export const ORDER_ACTION_LABELS: Record<OrderStatus, string> = {
+  PENDING: 'Ожидает',
+  ACCEPTED: 'Принять',
+  IN_PROGRESS: 'В работу',
+  COMPLETED: 'Завершить',
+  CANCELLED: 'Отменить',
+  DISPUTED: 'Спор',
 };
 
 export const LISTING_CATEGORY_LABELS: Record<ListingCategory, string> = {
@@ -150,6 +196,31 @@ export async function createOrder(listingId: string, note?: string): Promise<Mar
     method: 'POST',
     headers: await authHeaders(),
     body: JSON.stringify({ listingId, note }),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return (await res.json()) as MarketplaceOrder;
+}
+
+export async function listOrders(
+  role: 'provider' | 'customer' = 'customer',
+): Promise<MarketplaceOrder[]> {
+  const params = new URLSearchParams({ role });
+  const res = await fetch(`${apiBase()}/marketplace/orders?${params}`, {
+    headers: await authHeaders(),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  const json = (await res.json()) as { data: MarketplaceOrder[] };
+  return json.data;
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  status: OrderStatus,
+): Promise<MarketplaceOrder> {
+  const res = await fetch(`${apiBase()}/marketplace/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify({ status }),
   });
   if (!res.ok) throw new Error(await parseError(res));
   return (await res.json()) as MarketplaceOrder;

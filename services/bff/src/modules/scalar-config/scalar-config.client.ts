@@ -12,6 +12,8 @@ export type ClubSettings = {
 export type ForumSettings = {
   'edit.windowMinutes'?: number;
   'vote.changeWindowMinutes'?: number;
+  'vote.karmaPlusWeight'?: number;
+  'vote.karmaMinusWeight'?: number;
 };
 
 @Injectable()

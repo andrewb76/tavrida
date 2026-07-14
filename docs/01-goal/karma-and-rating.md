@@ -224,8 +224,8 @@ voteValue = baseValue × authority^authorityExponent × contextWeight[context]
 
 | Источник | Δ karma |
 |----------|---------|
-| Реакция 👍 | +`forum.reaction.karmaWeights.plus` (default 0.2) |
-| Реакция 👎 | -0.2 |
+| Реакция 👍 / голос + | +`forum.vote.karmaPlusWeight` (default 0.2; emoji: `forum.reaction.karmaWeights.plus`) |
+| Реакция 👎 / голос − | −`forum.vote.karmaMinusWeight` (default 0.2) |
 | ❤️ | +0.3 |
 | 😮 | +0.1 |
 | 🤔 | 0 |

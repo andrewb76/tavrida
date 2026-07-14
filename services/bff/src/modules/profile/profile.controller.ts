@@ -77,15 +77,50 @@ export class ProfileController {
   }
 
   @Get(':userId/rating/log')
-  getRatingLog(
+  async getRatingLog(
     @Param('userId') userId: string,
     @Query('metric') metric: 'karma' | 'rating',
     @Query('limit') limit?: string,
   ) {
-    return this.profiles.getRatingLog(userId, {
+    const result = await this.profiles.getRatingLog(userId, {
       metric: metric === 'rating' ? 'rating' : 'karma',
       limit: limit ? Number(limit) : undefined,
     });
+
+    const actorIds = [
+      ...new Set(result.data.map((row) => row.actorId).filter((id): id is string => Boolean(id))),
+    ];
+    const actors = new Map<
+      string,
+      { userId: string; displayName: string | null; avatarUrl: string | null }
+    >();
+    if (actorIds.length > 0) {
+      try {
+        const rows = await this.profiles.lookupByIds(actorIds);
+        for (const row of rows) {
+          actors.set(row.userId, {
+            userId: row.userId,
+            displayName: row.displayName,
+            avatarUrl: row.avatarUrl,
+          });
+        }
+      } catch {
+        /* keep raw ids */
+      }
+    }
+
+    return {
+      data: result.data.map((row) => ({
+        ...row,
+        actor: row.actorId
+          ? (actors.get(row.actorId) ?? {
+              userId: row.actorId,
+              displayName: null,
+              avatarUrl: null,
+            })
+          : null,
+      })),
+    };
   }
 
   @Get(':userId')

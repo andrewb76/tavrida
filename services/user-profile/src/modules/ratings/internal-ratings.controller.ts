@@ -27,6 +27,10 @@ class AdjustRatingBody {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
 }
 
 class ListLogQuery {

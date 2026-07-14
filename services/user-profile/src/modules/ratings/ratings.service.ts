@@ -70,6 +70,7 @@ export class RatingsService {
       actorId?: string;
       source?: ReputationChangeSource;
       note?: string;
+      referenceId?: string;
     },
   ) {
     const row = await this.ensure(userId);
@@ -87,6 +88,7 @@ export class RatingsService {
         balanceAfter: karma,
         source,
         actorId: input.actorId ?? null,
+        referenceId: input.referenceId ?? null,
         note: input.note ?? null,
       });
     }
@@ -101,6 +103,7 @@ export class RatingsService {
         balanceAfter: totalRating,
         source,
         actorId: input.actorId ?? null,
+        referenceId: input.referenceId ?? null,
         note: input.note ?? null,
       });
     }
@@ -119,6 +122,7 @@ export class RatingsService {
     balanceAfter: number;
     source: ReputationChangeSource;
     actorId: string | null;
+    referenceId: string | null;
     note: string | null;
   }) {
     await this.logs.save(
@@ -130,7 +134,7 @@ export class RatingsService {
         balanceAfter: input.balanceAfter.toFixed(2),
         source: input.source,
         actorId: input.actorId,
-        referenceId: null,
+        referenceId: input.referenceId,
         note: input.note,
       }),
     );

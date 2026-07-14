@@ -82,7 +82,9 @@ Default `rating.contextWeights`:
 | `forum.moderation.bannedWordsList` | string[] | `[]` | global | Список запрещённых слов |
 | `forum.edit.windowMinutes` | number | `10` | global | Окно редактирования своего поста |
 | `forum.vote.changeWindowMinutes` | number | `3` | global | Окно смены +/- (0 никогда, -1 всегда, N минут от первого голоса) |
-| `forum.reaction.karmaWeights` | object | см. [forum](./forum/requirements/README.md) | global | Вес реакций для кармы |
+| `forum.vote.karmaPlusWeight` | number | `0.2` | global | Δкармы автору за голос + |
+| `forum.vote.karmaMinusWeight` | number | `0.2` | global | Δкармы автору за голос − (вычитается) |
+| `forum.reaction.karmaWeights` | object | см. [forum](./forum/requirements/README.md) | global | Вес emoji-реакций для кармы |
 | `forum.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
 | `forum.tags.bannedSlugs` | string[] | `[]` | global | Запрещённые slug тегов |
 

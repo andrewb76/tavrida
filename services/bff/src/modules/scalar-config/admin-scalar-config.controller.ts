@@ -38,6 +38,16 @@ class PatchForumSettingsBodyDto {
   @IsInt()
   @Min(-1)
   'vote.changeWindowMinutes'?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  'vote.karmaPlusWeight'?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  'vote.karmaMinusWeight'?: number;
 }
 
 @Controller('admin/scalar-config')

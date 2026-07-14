@@ -100,6 +100,8 @@ export class VotesService {
         },
       });
 
+      let previousValue: 1 | -1 | null = null;
+
       if (!existing) {
         await voteRepo.save(
           voteRepo.create({
@@ -113,10 +115,12 @@ export class VotesService {
           plus: input.value === 1 ? 1 : 0,
           minus: input.value === -1 ? 1 : 0,
         });
+        previousValue = null;
       } else if (existing.value === input.value) {
-        // Idempotent: already pressed
+        previousValue = existing.value;
       } else {
         this.assertCanChange(existing.createdAt, input.changeWindowMinutes);
+        previousValue = existing.value;
         const prev = existing.value;
         existing.value = input.value;
         await voteRepo.save(existing);
@@ -141,6 +145,8 @@ export class VotesService {
       return {
         contentId: input.contentId,
         contentType: input.contentType,
+        authorId: content.authorId,
+        previousValue,
         ...this.summarize(
           refreshed.votePlusCount,
           refreshed.voteMinusCount,
@@ -158,6 +164,7 @@ export class VotesService {
     userId: string;
     changeWindowMinutes: number;
   }) {
+    const content = await this.loadContent(input.contentId, input.contentType);
     return this.dataSource.transaction(async (manager) => {
       const voteRepo = manager.getRepository(ContentVoteEntity);
       const existing = await voteRepo.findOne({
@@ -176,6 +183,8 @@ export class VotesService {
         return {
           contentId: input.contentId,
           contentType: input.contentType,
+          authorId: content.authorId,
+          previousValue: null as 1 | -1 | null,
           ...this.summarize(
             refreshed.votePlusCount,
             refreshed.voteMinusCount,
@@ -187,6 +196,7 @@ export class VotesService {
       }
 
       this.assertCanChange(existing.createdAt, input.changeWindowMinutes);
+      const previousValue = existing.value;
       await voteRepo.remove(existing);
       await this.applyCounterDelta(manager, input.contentType, input.contentId, {
         plus: existing.value === 1 ? -1 : 0,
@@ -201,6 +211,8 @@ export class VotesService {
       return {
         contentId: input.contentId,
         contentType: input.contentType,
+        authorId: content.authorId,
+        previousValue,
         ...this.summarize(
           refreshed.votePlusCount,
           refreshed.voteMinusCount,

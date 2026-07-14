@@ -124,6 +124,11 @@ export type ReputationLogEntry = {
   balanceAfter: number;
   source: string;
   actorId: string | null;
+  actor?: {
+    userId: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null;
   referenceId: string | null;
   note: string | null;
   createdAt: string;

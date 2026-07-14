@@ -45,12 +45,11 @@ Marketplace:
 
 Forum votes (+/-):
   ✔ content_vote + changeWindowMinutes + UI pressed state @forum @frontend @done(26-07-14)
-  ☐ При +/- голосе: Δkarma автору + запись в reputation_change_log (source=FORUM_VOTE) @forum @user-profile @rating
+  ✔ При +/- голосе: Δkarma автору + log FORUM_VOTE @forum @user-profile @done(26-07-14)
 
 Reputation log:
   ✔ Click rating/karma → popup log (user-profile reputation_change_log) @frontend @user-profile @done(26-07-14)
   ☐ При deal-feedback: Δrating + log (source=DEAL_FEEDBACK) @feedback @user-profile @rating
-  ☐ Не забыть wire: forum vote / feedback → adjust(+log), не только admin ± @forum @feedback @user-profile
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)

@@ -42,6 +42,7 @@
 - Смена решения: `forum.vote.changeWindowMinutes` от **первого** голоса (`0` / `N` / `-1`)
 - Свой контент голосовать нельзя
 - Агрегаты денормализованы; `myVote` при чтении через `viewerId`
+- BFF после голоса → `user-profile.adjust` с `source=FORUM_VOTE` (веса `forum.vote.karmaPlusWeight` / `karmaMinusWeight`)
 
 | Данные | Сейчас | Next |
 |--------|--------|------|
@@ -97,7 +98,8 @@
 | `forum.bannedWordsList` | Фильтр контента |
 | `forum.editWindowMinutes` | Окно редактирования |
 | `forum.vote.changeWindowMinutes` | Окно смены +/- голоса (0 / N / -1) |
-| `forum.reaction.karmaWeights` | Веса для rating karma |
+| `forum.vote.karmaPlusWeight` / `karmaMinusWeight` | Δкармы автору за +/- (default 0.2) |
+| `forum.reaction.karmaWeights` | Веса emoji-реакций для кармы |
 
 ## 💳 Переменные plan-config
 

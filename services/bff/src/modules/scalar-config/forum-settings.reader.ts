@@ -5,11 +5,19 @@ import { ScalarConfigClient } from './scalar-config.client';
 const CACHE_TTL_MS = 30_000;
 const DEFAULT_EDIT_WINDOW_MINUTES = 10;
 const DEFAULT_VOTE_CHANGE_WINDOW_MINUTES = 3;
+const DEFAULT_VOTE_KARMA_WEIGHT = 0.2;
 
 function parseWindowMinutes(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   return Math.trunc(value);
 }
+
+function parseWeight(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return fallback;
+  return value;
+}
+
+export type ForumVoteKarmaWeights = { plus: number; minus: number };
 
 @Injectable()
 export class ForumSettingsReader {
@@ -33,6 +41,14 @@ export class ForumSettingsReader {
       settings?.['vote.changeWindowMinutes'],
       DEFAULT_VOTE_CHANGE_WINDOW_MINUTES,
     );
+  }
+
+  async voteKarmaWeights(): Promise<ForumVoteKarmaWeights> {
+    const settings = await this.loadForumSettings();
+    return {
+      plus: parseWeight(settings?.['vote.karmaPlusWeight'], DEFAULT_VOTE_KARMA_WEIGHT),
+      minus: parseWeight(settings?.['vote.karmaMinusWeight'], DEFAULT_VOTE_KARMA_WEIGHT),
+    };
   }
 
   private async loadForumSettings(): Promise<ForumSettings | null> {

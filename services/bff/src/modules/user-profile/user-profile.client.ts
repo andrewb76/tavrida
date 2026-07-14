@@ -180,6 +180,7 @@ export class UserProfileClient {
       actorId?: string;
       source?: string;
       note?: string;
+      referenceId?: string;
     },
   ) {
     return this.request<{

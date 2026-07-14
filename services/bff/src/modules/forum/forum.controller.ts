@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -23,8 +23,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 import { ForumClient } from './forum.client';
 import { ForumAuthorsService } from './forum-authors.service';
+import { forumVoteKarmaDelta } from './forum-vote-karma';
 import { ForumSettingsReader } from '../scalar-config/forum-settings.reader';
 
 class MediaAttachmentDto {
@@ -156,12 +158,15 @@ class UpdateCommentDto {
 
 @Controller('forum')
 export class ForumController {
+  private readonly logger = new Logger(ForumController.name);
+
   constructor(
     private readonly forum: ForumClient,
     private readonly authors: ForumAuthorsService,
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
     private readonly forumSettings: ForumSettingsReader,
+    private readonly profiles: UserProfileClient,
   ) {}
 
   private validateForumMedia(
@@ -339,21 +344,97 @@ export class ForumController {
   @UseGuards(JwtAuthGuard)
   async castVote(@CurrentUser() user: AuthUser, @Body() body: CastVoteDto) {
     const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
-    return this.forum.castVote({
+    const result = (await this.forum.castVote({
       ...body,
       userId: user.sub,
       changeWindowMinutes,
+    })) as {
+      contentId: string;
+      contentType: 'topic' | 'comment';
+      authorId: string;
+      previousValue: 1 | -1 | null;
+      myVote: 1 | -1 | null;
+      plusCount: number;
+      minusCount: number;
+      score: number;
+      canChange: boolean;
+    };
+
+    await this.applyForumVoteKarma({
+      authorId: result.authorId,
+      actorId: user.sub,
+      contentId: result.contentId,
+      contentType: result.contentType,
+      previousVote: result.previousValue,
+      nextVote: result.myVote,
     });
+
+    return result;
   }
 
   @Post('votes/clear')
   @UseGuards(JwtAuthGuard)
   async clearVote(@CurrentUser() user: AuthUser, @Body() body: ClearVoteDto) {
     const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
-    return this.forum.clearVote({
+    const result = (await this.forum.clearVote({
       ...body,
       userId: user.sub,
       changeWindowMinutes,
+    })) as {
+      contentId: string;
+      contentType: 'topic' | 'comment';
+      authorId: string;
+      previousValue: 1 | -1 | null;
+      myVote: 1 | -1 | null;
+      plusCount: number;
+      minusCount: number;
+      score: number;
+      canChange: boolean;
+    };
+
+    await this.applyForumVoteKarma({
+      authorId: result.authorId,
+      actorId: user.sub,
+      contentId: result.contentId,
+      contentType: result.contentType,
+      previousVote: result.previousValue,
+      nextVote: null,
     });
+
+    return result;
+  }
+
+  private async applyForumVoteKarma(input: {
+    authorId: string;
+    actorId: string;
+    contentId: string;
+    contentType: 'topic' | 'comment';
+    previousVote: 1 | -1 | null;
+    nextVote: 1 | -1 | null;
+  }) {
+    const weights = await this.forumSettings.voteKarmaWeights();
+    const karmaDelta = forumVoteKarmaDelta(
+      input.previousVote,
+      input.nextVote,
+      weights.plus,
+      weights.minus,
+    );
+    if (Math.abs(karmaDelta) < 1e-9) return;
+
+    try {
+      await this.profiles.adjustRating(input.authorId, {
+        karmaDelta,
+        actorId: input.actorId,
+        source: 'FORUM_VOTE',
+        referenceId: input.contentId,
+        note: `${input.contentType} vote ${input.previousVote ?? 0}→${input.nextVote ?? 0}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `forum vote karma adjust failed for ${input.authorId}: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    }
   }
 }

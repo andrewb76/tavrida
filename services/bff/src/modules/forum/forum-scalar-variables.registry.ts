@@ -18,4 +18,18 @@ export const FORUM_SCALAR_REGISTRY: ScalarVariableRegistration[] = [
     description:
       'Окно смены +/- голоса (мин) с момента первого голоса. 0 — нельзя менять, -1 — всегда.',
   },
+  {
+    key: 'forum.vote.karmaPlusWeight',
+    type: 'number',
+    default: 0.2,
+    service: 'forum',
+    description: 'Δкармы автору за голос + (default 0.2).',
+  },
+  {
+    key: 'forum.vote.karmaMinusWeight',
+    type: 'number',
+    default: 0.2,
+    service: 'forum',
+    description: 'Δкармы автору за голос − (вычитается, default 0.2).',
+  },
 ];

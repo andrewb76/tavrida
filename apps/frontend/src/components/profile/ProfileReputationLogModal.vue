@@ -1,14 +1,18 @@
 <script setup lang="ts">
+import UserAvatar from '@/components/user/UserAvatar.vue';
 import { UiModal } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
 import {
   fetchReputationLog,
   formatKarma,
   formatRating,
+  publicProfileLabel,
   reputationSourceLabel,
   type ReputationLogEntry,
 } from '@/services/profile';
+import { useSessionStore } from '@/stores/session';
 
 const props = defineProps<{
   userId: string;
@@ -17,6 +21,7 @@ const props = defineProps<{
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
+const session = useSessionStore();
 
 const loading = ref(false);
 const entries = ref<ReputationLogEntry[]>([]);
@@ -65,6 +70,26 @@ function formatWhen(iso: string): string {
     return iso;
   }
 }
+
+function actorLabel(row: ReputationLogEntry): string {
+  if (row.actor) {
+    return publicProfileLabel({
+      userId: row.actor.userId,
+      displayName: row.actor.displayName,
+      username: null,
+    });
+  }
+  return row.actorId ? 'Участник' : '';
+}
+
+function actorProfileTo(actorId: string) {
+  if (session.userId === actorId) return { name: 'profile-me' as const };
+  return { name: 'profile-user' as const, params: { userId: actorId } };
+}
+
+function closeOnProfileNavigate() {
+  open.value = false;
+}
 </script>
 
 <template>
@@ -102,9 +127,22 @@ function formatWhen(iso: string): string {
           <span class="rep-log__when">{{ formatWhen(row.createdAt) }}</span>
         </div>
         <div class="rep-log__meta">
-          {{ reputationSourceLabel(row.source) }}
+          <RouterLink
+            v-if="row.actorId"
+            :to="actorProfileTo(row.actorId)"
+            class="rep-log__actor"
+            @click="closeOnProfileNavigate"
+          >
+            <UserAvatar
+              size="sm"
+              :avatar-url="row.actor?.avatarUrl"
+              :label="actorLabel(row)"
+            />
+            <span class="rep-log__actor-name">{{ actorLabel(row) }}</span>
+          </RouterLink>
+          <span>{{ reputationSourceLabel(row.source) }}</span>
           <template v-if="row.note">
-            · {{ row.note }}
+            <span>· {{ row.note }}</span>
           </template>
         </div>
       </li>
@@ -165,9 +203,32 @@ function formatWhen(iso: string): string {
 }
 
 .rep-log__meta {
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
   font-size: 0.75rem;
   color: var(--color-text-muted, #666);
+}
+
+.rep-log__actor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.15rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.rep-log__actor:hover .rep-log__actor-name,
+.rep-log__actor:focus-visible .rep-log__actor-name {
+  text-decoration: underline;
+}
+
+.rep-log__actor-name {
+  color: var(--color-primary, #2563eb);
+  text-underline-offset: 0.12em;
 }
 
 .rep-log__muted {

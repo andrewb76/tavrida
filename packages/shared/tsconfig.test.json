@@ -9,5 +9,12 @@
     "rootDir": "src",
     "declaration": false
   },
-  "include": ["src/forum-edit-window.ts", "src/forum-edit-window.test.ts"]
+  "include": [
+    "src/forum-edit-window.ts",
+    "src/forum-edit-window.test.ts",
+    "src/forum-vote-window.ts",
+    "src/forum-vote-window.test.ts",
+    "src/forum-vote-karma.ts",
+    "src/forum-vote-karma.test.ts"
+  ]
 }
