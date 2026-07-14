@@ -6,12 +6,20 @@
 #   RabbitMQ    localhost:5672  guest/guest
 #   MinIO       localhost:9000  minioadmin/minioadmin
 #   imgproxy    localhost:8080  (resize / WebP for MinIO media)
+#   Keto        localhost:4466 (read) / 4467 (write) — schema `keto` in Postgres
 #
 # Start: docker compose -f docker/compose/infra.local.yml up -d
 # Stop:  docker compose -f docker/compose/infra.local.yml down
 # Logs:  docker compose -f docker/compose/infra.local.yml logs -f postgres
+# Keto only: docker compose -f docker/compose/infra.local.yml up -d keto
+# Or: pnpm keto:up
 #
-# Shared network for app services (Keto, etc.): tavrida-local
+# Bootstrap first admin (after login — copy Logto sub from /profile/me):
+#   pnpm grant:admin <logto_sub>
+#
+# Shared network for app services: tavrida-local
+
+name: tavrida-infra
 
 networks:
   tavrida:
@@ -104,6 +112,56 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+
+  # Ory Keto — relation tuples in Postgres schema `keto` (survives container recreate).
+  keto-schema-init:
+    image: postgres:17-alpine
+    networks:
+      - tavrida
+    environment:
+      PGPASSWORD: postgres
+    entrypoint: ['sh', '-c']
+    command:
+      - |
+        until pg_isready -h postgres -U postgres -d tavrida_lot; do sleep 1; done
+        psql -h postgres -U postgres -d tavrida_lot -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  keto-migrate:
+    image: oryd/keto:v0.14.0
+    working_dir: /home/ory
+    networks:
+      - tavrida
+    command: migrate up -y -c keto.yml
+    volumes:
+      - type: bind
+        source: ../config/keto
+        target: /home/ory
+    depends_on:
+      keto-schema-init:
+        condition: service_completed_successfully
+    restart: 'no'
+
+  keto:
+    image: oryd/keto:v0.14.0
+    working_dir: /home/ory
+    ports:
+      - '4466:4466'
+      - '4467:4467'
+    networks:
+      - tavrida
+    command: serve -c keto.yml
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ../config/keto
+        target: /home/ory
+    depends_on:
+      keto-migrate:
+        condition: service_completed_successfully
 
 volumes:
   tavrida_pg_data:

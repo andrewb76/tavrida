@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-13 (subscriptions v2 delivery + match)
+**Последнее обновление индекса:** 2026-07-14 (marketplace scaffold v1)
 
 ---
 
@@ -35,13 +35,14 @@
 | **Форум** | topics, comments, модерация | [forum/README.md](../05-microservices/forum/README.md) → [ADR-005](../03-architecture/adr/005-forum-terminology.md) | [forum/requirements/README.md](../05-microservices/forum/requirements/README.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) | docs only |
 | **Рейтинг / карма** | karma, referral tree | [karma-and-rating.md](../01-goal/karma-and-rating.md) → [rating/README.md](../05-microservices/rating/README.md) | [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) | docs only |
 | **Реферальные выплаты** | referral-rewards, модели CPA/CPS, Vanga реферал | [referral-rewards/requirements/analysis.md](../05-microservices/referral-rewards/requirements/analysis.md) → [referral-models-catalog.md](../05-microservices/referral-rewards/requirements/referral-models-catalog.md) → [referral-rewards/README.md](../05-microservices/referral-rewards/README.md) | [referral-forecast.md](../05-microservices/vanga/topics/referral-forecast.md) · [charge-categories.md](../05-microservices/referral-rewards/requirements/charge-categories.md) | docs · engine v0 |
-| **Marketplace** | услуги, заказы | [marketplace/README.md](../05-microservices/marketplace/README.md) | [marketplace/requirements/README.md](../05-microservices/marketplace/requirements/README.md) | docs only |
+| **Marketplace** | услуги, заказы | [marketplace/README.md](../05-microservices/marketplace/README.md) | [marketplace/requirements/README.md](../05-microservices/marketplace/requirements/README.md) · [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/marketplace` :3011 · BFF `/marketplace` · UI list/detail/my |
 | **Подписки (events)** | subscribe to lot/topic/tag | [subscriptions/README.md](../05-microservices/subscriptions/README.md) → [ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) · [notifications/README.md](../05-microservices/notifications/README.md) | CRUD + DeliveryPreference + match + digest stub · UI topic/lot · RMQ/notifications next |
+| **Периоды (история)** | иерархический справочник, timeline widget | [periods/README.md](../05-microservices/periods/README.md) | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) · platform-for-users | `services/periods` :3014 · BFF public/admin · `/admin/periods` · d3 widget later |
 | **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |
 | **События / messaging** | RabbitMQ, event names | [event-catalog.md](../03-architecture/event-catalog.md) → [messaging.md](../03-architecture/messaging.md) | [03-architecture/README.md](../03-architecture/README.md) | — |
 | **API conventions** | errors, pagination, idempotency | [06-api/README.md](../06-api/README.md) | [bff/README.md](../05-microservices/bff/README.md) | — |
 | **Данные / schema** | entities, ownership | [10-data/README.md](../10-data/README.md) → [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) | [naming.md](../13-maintenance/naming.md) · [registry-keys.md](../13-maintenance/registry-keys.md) | — |
-| **Локальная разработка** | docker, env, ports | [local-dev.md](../04-deployment/local-dev.md) → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | [bootstrap-admin.md](../09-security/bootstrap-admin.md) · [dev-tools.md](../02-infrastructure/dev-tools.md) · `docker/compose/` | Keto: `pnpm keto:up` · schema `keto` |
+| **Локальная разработка** | docker, env, ports | [local-dev.md](../04-deployment/local-dev.md) → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | [bootstrap-admin.md](../09-security/bootstrap-admin.md) · [dev-tools.md](../02-infrastructure/dev-tools.md) · `docker/compose/` | infra includes Keto · `pnpm keto:up` · schema `keto` |
 | **Деплой / CI** | Swarm, migrations, GH Actions | [04-deployment/README.md](../04-deployment/README.md) → [github-actions.md](../04-deployment/github-actions.md) | [swarm-stacks.md](../04-deployment/swarm-stacks.md) · [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md) | Environment `dev`: deploy + sync secrets |
 | **Observability** | logs, metrics, SLO | [07-observability/README.md](../07-observability/README.md) | [slo.md](../07-observability/slo.md) · [sentry-setup.md](../07-observability/sentry-setup.md) | — |
 | **UX / wireframes** | экраны, IA | [11-ux-ui/README.md](../11-ux-ui/README.md) → [screen-tree.md](../11-ux-ui/screen-tree.md) | [wireframes/](../11-ux-ui/wireframes/README.md) | — |

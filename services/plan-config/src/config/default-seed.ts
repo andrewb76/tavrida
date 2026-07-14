@@ -208,6 +208,27 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     description: 'Сводные email-дайджесты по подпискам',
     valueType: 'feature',
   },
+  {
+    key: 'marketplace.seller.listing.activeMax',
+    service: 'marketplace',
+    name: 'Активные услуги',
+    description: 'Макс. активных объявлений. 0 = только заказчик. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'marketplace.buyer.order.monthlyMax',
+    service: 'marketplace',
+    name: 'Заказы / мес',
+    description: 'Макс. заказов в месяц для заказчика. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'marketplace.seller.portfolio.itemMax',
+    service: 'marketplace',
+    name: 'Портфолио на услугу',
+    description: 'Макс. фото в портфолио на объявление. −1 = без лимита.',
+    valueType: 'limit',
+  },
 ];
 
 export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
@@ -336,5 +357,23 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { isFeatureEnabled: false },
     basic: { isFeatureEnabled: false },
     pro: { isFeatureEnabled: true },
+  },
+  {
+    variableKey: 'marketplace.seller.listing.activeMax',
+    free: { limitValue: 0 },
+    basic: { limitValue: 3 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'marketplace.buyer.order.monthlyMax',
+    free: { limitValue: 2 },
+    basic: { limitValue: 10 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'marketplace.seller.portfolio.itemMax',
+    free: { limitValue: 0 },
+    basic: { limitValue: 5 },
+    pro: { limitValue: 20 },
   },
 ];

@@ -23,7 +23,7 @@ flowchart TD
 |-----|----------|
 | 1 | Войти в SPA (Logto) — любой пользователь становится **member** по факту JWT |
 | 2 | Открыть `/profile/me` — скопировать **Logto sub** (например `zox2u6bqqefb`) |
-| 3 | Поднять Postgres + Keto: `pnpm keto:up` (или infra + `keto.local.yml`) |
+| 3 | Поднять Postgres + Keto: `docker compose -f docker/compose/infra.local.yml up -d` (или `pnpm keto:up`) |
 | 4 | Назначить admin: `pnpm grant:admin <logto_sub>` |
 | 5 | Перезапуск BFF не нужен — проверка при каждом `POST /invites` |
 
@@ -45,12 +45,11 @@ subject_id: user:{logtoSub}
 ## Команды
 
 ```bash
-# Postgres + Keto (schema keto в tavrida_lot, tuples персистентны)
-pnpm keto:up
+# Вся локальная infra (включая Keto)
+docker compose -f docker/compose/infra.local.yml up -d
 
-# Или по шагам:
-# docker compose -f docker/compose/infra.local.yml up -d postgres
-# docker compose -f docker/compose/keto.local.yml up -d
+# Или только Keto (+ postgres/migrate при необходимости)
+pnpm keto:up
 
 # Первый admin — подставь свой Logto sub
 pnpm grant:admin zox2u6bqqefb
@@ -82,7 +81,7 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 | Database | `tavrida_lot` |
 | Schema | `keto` |
 | DSN (docker) | `postgres://postgres:postgres@postgres:5432/tavrida_lot?sslmode=disable&search_path=keto` |
-| Миграции | `keto migrate up` (автоматически в `keto.local.yml`) |
+| Миграции | `keto migrate up` (автоматически в `infra.local.yml`) |
 | Доступ сервисов | **только** Keto Read/Write API — не SQL из микросервисов |
 
 При росте нагрузки — вынести в отдельную БД без смены API (смена DSN).

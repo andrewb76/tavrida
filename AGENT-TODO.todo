@@ -31,6 +31,18 @@ Subscriptions (event intent):
   ☐ RMQ consumers → match → notifications (needs producers + notifications svc) @subscriptions
   ☐ Richer subscriptions UI (categories/tags/list + delivery prefs) @frontend @subscriptions
 
+Periods (historical reference):
+  ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
+  ✔ BFF public/admin + admin UI (schema + CRUD + partition) @periods @frontend @bff @done(26-07-13)
+  ☐ Seed данных Крыма / Причерноморья @periods
+  ☐ d3.js SVG timeline widget (выбор / ограничение периода) @frontend @periods
+  ☐ Привязка auction/forum → periodId @auction @forum @periods
+
+Marketplace:
+  ✔ Scaffold listings/orders + BFF + member UI @marketplace @done(26-07-14)
+  ☐ Portfolio upload via media + seed demo listings @marketplace @frontend
+  ☐ Orders UI (provider/customer) + RMQ → feedback @marketplace
+
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 

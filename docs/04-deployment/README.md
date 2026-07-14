@@ -40,7 +40,7 @@ docker/
     └── Dockerfile.frontend  # Vue static + nginx
 ```
 
-> `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO. Keto — `keto.local.yml` ([bootstrap-admin](../09-security/bootstrap-admin.md)). Logto — `logto.local.yml` или Logto Cloud.
+> `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO, imgproxy, **Keto**. Logto — `logto.local.yml` или Logto Cloud. Bootstrap: [bootstrap-admin](../09-security/bootstrap-admin.md).
 
 ## 🔄 CI/CD (целевой pipeline)
 

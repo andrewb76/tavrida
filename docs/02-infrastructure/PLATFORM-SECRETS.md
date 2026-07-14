@@ -94,6 +94,7 @@
 | `FORUM_URL` | нет | `http://localhost:3009` | Upstream forum |
 | `NOTIFICATIONS_URL` | нет | `http://localhost:3010` | Upstream notifications |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
+| `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
 | `KETO_NAMESPACE` | нет | `TavridaLot` | Keto namespace |
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
@@ -214,6 +215,15 @@
 
 ---
 
+## ⏳ periods — порт 3014
+
+| Переменная | Секрет | Schema | Описание |
+|------------|--------|--------|---------|
+| `PORT` / `PERIODS_PORT` | нет | — | `3014` |
+| `DATABASE_URL` | **да** | `periods` | PostgreSQL |
+
+---
+
 ## 📬 notifications — порт 3010 _(docs)_
 
 | Переменная | Секрет | Schema | Описание |
@@ -228,16 +238,13 @@
 
 ---
 
-## 🛒 marketplace — порт 3011 _(docs)_
+## 🛒 marketplace — порт 3011
 
 | Переменная | Секрет | Schema | Описание |
 |------------|--------|--------|----------|
-| `PORT` | нет | — | `3011` |
+| `PORT` / `MARKETPLACE_PORT` | нет | — | `3011` |
 | `DATABASE_URL` | **да** | `marketplace` | PostgreSQL |
-| `RABBITMQ_URL` | **да** | — | Order events |
-| `PLAN_CONFIG_URL` | нет | — | Лимиты |
-| `BILLING_URL` | нет | — | Оплата |
-| `MINIO_*` | **да** | bucket `marketplace-portfolio` | Портфолио |
+| `RABBITMQ_URL` | нет* | — | Order events *(next)* |
 
 ---
 

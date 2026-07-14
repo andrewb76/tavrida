@@ -18,7 +18,7 @@ config/
 |------|------------------|
 | `traefik/traefik.dev.yml` | `docker/swarm/stack-infra.dev.yml` (Swarm config) |
 | `traefik/dynamic/` | bind-mount в Traefik (dev Swarm) |
-| `keto/` | `keto.local.yml`, `stack-infra.dev.yml` |
+| `keto/` | `infra.local.yml`, `stack-infra.dev.yml` |
 | `postgres/init/` | `infra.local.yml`, `stack-infra.dev.yml` |
 
 Swarm-деплой на VPS требует checkout репозитория на manager-ноде (bind-mount `traefik/dynamic`, `keto/namespaces.ts`, `postgres/init`).

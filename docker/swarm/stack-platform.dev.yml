@@ -30,6 +30,12 @@ secrets:
   forum_database_url:
     external: true
     name: tavrida_dev_forum_database_url
+  periods_database_url:
+    external: true
+    name: tavrida_dev_periods_database_url
+  marketplace_database_url:
+    external: true
+    name: tavrida_dev_marketplace_database_url
   bff_database_url:
     external: true
     name: tavrida_dev_bff_database_url
@@ -191,6 +197,44 @@ services:
     deploy:
       <<: *nest-deploy
 
+  periods:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-periods:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - periods_database_url
+    environment:
+      <<: *nest-env
+      PERIODS_PORT: '3014'
+      DATABASE_URL_FILE: /run/secrets/periods_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3014/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
+  marketplace:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-marketplace:${GIT_SHA}
+    secrets:
+      - rabbitmq_url
+      - marketplace_database_url
+    environment:
+      <<: *nest-env
+      MARKETPLACE_PORT: '3011'
+      DATABASE_URL_FILE: /run/secrets/marketplace_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3011/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
@@ -209,6 +253,8 @@ services:
       USER_PROFILE_URL: http://user-profile:3007
       SCALAR_CONFIG_URL: http://scalar-config:3008
       FORUM_URL: http://forum:3009
+      PERIODS_URL: http://periods:3014
+      MARKETPLACE_URL: http://marketplace:3011
       KETO_READ_URL: ${KETO_READ_URL}
       KETO_WRITE_URL: ${KETO_WRITE_URL}
       LOGTO_ENDPOINT: ${LOGTO_ENDPOINT}

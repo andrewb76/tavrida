@@ -20,6 +20,8 @@ import { LogtoWebhooksModule } from './modules/logto-webhooks/logto-webhooks.mod
 import { MediaModule } from './modules/media/media.module';
 import { MediaUploadIntentEntity } from './modules/media/media-upload-intent.entity';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { PeriodsModule } from './modules/periods/periods.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 
@@ -54,6 +56,8 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     ForumModule,
     AuctionModule,
     SubscriptionsModule,
+    PeriodsModule,
+    MarketplaceModule,
     MediaModule,
     LogtoWebhooksModule,
   ],

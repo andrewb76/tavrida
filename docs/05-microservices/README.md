@@ -21,10 +21,11 @@
 | 👤 user-profile | — | 📝 | ✅ spec | [user-profile](./user-profile/README.md) |
 | ⚙️ scalar-config | — | 📝 | ✅ spec | [scalar-config](./scalar-config/README.md) |
 | 📬 notifications | 3010 | 📝 | ✅ spec | [notifications](./notifications/README.md) |
-| 🔗 webhooks | 3011 | 📝 | ✅ spec | [webhooks](./webhooks/README.md) |
-| 🛒 marketplace | — | 📝 | ✅ spec | [marketplace](./marketplace/README.md) |
+| 🔗 webhooks | — | 📝 | ✅ spec | [webhooks](./webhooks/README.md) |
+| 🛒 marketplace | 3011 | 🚧 scaffold | ✅ spec | [marketplace](./marketplace/README.md) |
 | 🎁 referral-rewards | 3012 | 📝 | ✅ spec | [referral-rewards](./referral-rewards/README.md) |
 | 🔮 vanga | 3013 | 📝 | ✅ spec draft | [vanga](./vanga/README.md) |
+| ⏳ periods | 3014 | 🚧 scaffold | ✅ spec | [periods](./periods/README.md) |
 
 > Спецификация новых сервисов: [MICROSERVICE-SPEC](./MICROSERVICE-SPEC.md) · Реестр переменных: [PLATFORM-REGISTRY](./PLATFORM-REGISTRY.md)
 

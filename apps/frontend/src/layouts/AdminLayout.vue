@@ -8,6 +8,7 @@ const tabs = [
   { name: 'admin-scalar-config', to: '/admin/scalar-config', label: 'Конфиг' },
   { name: 'admin-plan-config', to: '/admin/plan-config', label: 'Тарифы' },
   { name: 'admin-vanga', to: '/admin/vanga', label: 'Ванга' },
+  { name: 'admin-periods', to: '/admin/periods', label: 'Периоды' },
   { name: 'admin-roles', to: '/admin/roles', label: 'Мои роли' },
 ];
 

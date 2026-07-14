@@ -151,6 +151,9 @@ Idempotency-Key: {uuid}
 | `/feedback` | submit, status | feedback |
 | `/marketplace/*` | listings, orders | marketplace |
 | `/subscriptions` | CRUD + delivery prefs | subscriptions |
+| `/periods` | historical reference (read) | periods |
+| `/admin/periods` | categories + periods CRUD | periods |
+| `/marketplace` | listings + orders | marketplace |
 | `/settings` | get (public subset) | scalar-config |
 
 > OpenAPI spec: TODO `06-api/openapi.yaml` (генерация из NestJS decorators)

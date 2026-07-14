@@ -35,6 +35,8 @@ declare -A SERVICES=(
   [user-profile]="@tavrida/user-profile|services/user-profile"
   [scalar-config]="@tavrida/scalar-config|services/scalar-config"
   [forum]="@tavrida/forum|services/forum"
+  [periods]="@tavrida/periods|services/periods"
+  [marketplace]="@tavrida/marketplace|services/marketplace"
 )
 
 build_service() {

@@ -29,6 +29,8 @@ PACKAGES=(
   tavrida-user-profile
   tavrida-scalar-config
   tavrida-forum
+  tavrida-periods
+  tavrida-marketplace
   tavrida-frontend
 )
 

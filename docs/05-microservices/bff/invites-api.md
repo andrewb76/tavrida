@@ -405,7 +405,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 ## Bootstrap (день 0)
 
 1. Первый вход через Logto → скопировать `sub` с `/profile/me`.
-2. Keto: `docker compose -f docker/compose/keto.local.yml up -d`.
+2. Keto: `docker compose -f docker/compose/infra.local.yml up -d` (или `pnpm keto:up`).
 3. Admin tuple: `pnpm grant:admin <logto_sub>` — см. [bootstrap-admin.md](../../09-security/bootstrap-admin.md).
 4. Неограниченные `POST /invites` для admin (Keto check в BFF).
 5. Первые invite-ссылки раздаются вручную.

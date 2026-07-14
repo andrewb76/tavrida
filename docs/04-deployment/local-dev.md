@@ -40,8 +40,8 @@ pnpm grant:admin <your_logto_sub>   # sub с /profile/me
 docker compose -f docker/compose/infra.local.yml up -d
 ```
 
-Поднимает: PostgreSQL (`tavrida_lot`), Redis, RabbitMQ, MinIO, **imgproxy**. Сеть `tavrida-local`.  
-**Keto** — `pnpm keto:up` (schema `keto` в Postgres, [bootstrap-admin](../09-security/bootstrap-admin.md)). Logto — Cloud или `logto.local.yml`.
+Поднимает: PostgreSQL (`tavrida_lot`), Redis, RabbitMQ, MinIO, **imgproxy**, **Keto** (read `:4466` / write `:4467`, schema `keto`). Сеть `tavrida-local`.  
+Только Keto: `pnpm keto:up`. Logto — Cloud или `logto.local.yml`. Bootstrap admin: [bootstrap-admin](../09-security/bootstrap-admin.md).
 
 ## 🌐 Local URLs
 
@@ -89,7 +89,7 @@ Legacy aliases (удалить после миграции кода): `PLAN_CONF
 - **Logto Cloud** (рекомендуется): [logto-setup.md](../14-frontend/logto-setup.md) — `pnpm setup:env`, заполнить `VITE_LOGTO_*`
 - **Logto OSS локально**: `docker compose -f docker/compose/logto.local.yml up -d` (admin :3302)
 - **Без Logto**: mock auth на `/invite` (любой код)
-- Keto: `pnpm keto:up` — tuples в schema `keto`; bootstrap: [bootstrap-admin.md](../09-security/bootstrap-admin.md)
+- Keto: входит в `infra.local.yml` / `pnpm keto:up` — tuples в schema `keto`; bootstrap: [bootstrap-admin.md](../09-security/bootstrap-admin.md)
 
 ## 🩺 Проверка
 

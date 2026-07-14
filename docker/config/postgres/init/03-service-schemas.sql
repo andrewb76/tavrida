@@ -7,3 +7,5 @@ CREATE SCHEMA IF NOT EXISTS auction_subscriptions; -- legacy alias schema (unuse
 CREATE SCHEMA IF NOT EXISTS user_profile;
 CREATE SCHEMA IF NOT EXISTS scalar_config;
 CREATE SCHEMA IF NOT EXISTS forum;
+CREATE SCHEMA IF NOT EXISTS periods;
+CREATE SCHEMA IF NOT EXISTS marketplace;
