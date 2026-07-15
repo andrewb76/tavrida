@@ -1,6 +1,6 @@
 Agent backlog (Tavrida Lot):
   Общий файл задач для AI + Todo+ sidebar. Правило: .cursor/rules/agent-tasks.mdc
-  План дней (коллизии + review): docs/00-meta/WORK-PLAN-NEXT.md
+  План дней (неделя: renew CRON + invitation.redeemed): docs/00-meta/WORK-PLAN-NEXT.md
 
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)

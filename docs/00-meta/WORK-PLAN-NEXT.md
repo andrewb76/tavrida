@@ -1,136 +1,109 @@
-# 📋 WORK-PLAN-NEXT — аудит docs↔код + план на несколько дней
+# 📋 WORK-PLAN-NEXT — неделя: billing renew + referral event
 
 > **Статус:** living · **Дата:** 2026-07-16 · **Горизонт:** 3–4 рабочих дня  
-> **Обновлять:** в конце каждого дня (статусы Day 1–4, закрытые коллизии)  
+> **Фокус:** plan-config CRON auto-renew + `invitation.redeemed` (RMQ)  
+> **Обновлять:** в конце каждого дня (чеклисты Day 1–4)  
 > **Очередь:** [AGENT-TODO.todo](../../AGENT-TODO.todo) · **Индекс:** [AGENT-DOCS-INDEX.md](./AGENT-DOCS-INDEX.md)
+
+**Предыдущая неделя (закрыта):** docs parity · notifications harden · RMQ `tag.content_tagged` · titles/store · invites OpenAPI/quota/flow test — см. git log `e43cc44`…`a7a809e`.
 
 ---
 
-## 1. Snapshot
+## 1. Snapshot (после прошлой недели)
 
 | | |
 |---|---|
-| **Фаза (факт)** | Docs v0.2 + scaffold+ многих сервисов (не «только docs») |
-| **Live async** | `marketplace.order_completed` → RMQ → `deal-feedback` |
-| **Live sync** | BFF `PUT …/tags` → subscriptions `match` → notifications `trigger` |
-| **Docs-only (нет package.json)** | `rating`, `webhooks` |
-| **Код есть** | bff, billing, plan-config, auction, subscriptions, forum, user-profile, scalar-config, notifications (:3010), marketplace (:3011), deal-feedback (:3006), periods (:3014) |
+| **Фаза** | Scaffold+ · BFF/SPA живые · docs в целом в паритете по портам/именам |
+| **Live RMQ** | `marketplace.order_completed` → deal-feedback · `tag.content_tagged` → subscriptions → notifications |
+| **Live sync fallback** | BFF PUT tags → HTTP match/trigger если RMQ недоступен (`mode: async`) |
+| **Plans** | `POST /plans/activate` + billing charge при `price>0` ✅ · **auto-renew CRON ❌** |
+| **Invites** | create/resolve/claim + plan-config quota ✅ · BFF flow test ✅ · **`invitation.redeemed` RMQ stub** |
+| **Ops open** | Novu Dashboard `tag-content` (не блокирует код) |
 
 ```mermaid
 flowchart LR
-  Author[TopicAuthor] --> BFF[BFF_PUT_tags]
-  BFF --> Forum[Forum_Tag_SoT]
-  BFF --> Match[Subscriptions_match_HTTP]
-  BFF --> Notif[Notifications_trigger_HTTP]
-  Notif --> NovuOrMock[Novu_or_mock]
-  Marketplace --> RMQ[RMQ_events]
-  RMQ --> DealFeedback[DealFeedback_consumer]
+  subgraph weekFocus [This_week]
+    CRON[plan-config_renew_CRON] --> Billing[billing_charge]
+    CRON --> SubRow[user_subscription_expiresAt]
+    Claim[user-profile_claim] --> RMQ[invitation.redeemed]
+    RMQ --> RatingOpt[rating_or_karma_consumer_later]
+  end
 ```
 
-**Что в хорошем состоянии:** Formal Tag/ContentTag ≈ [forum/tags.md](../05-microservices/forum/tags.md); exclude actor + dedupe users в fan-out + unit-тесты; TAG → `sourceDomain: platform`; Swarm не публикует domain services через Traefik.
+---
+
+## 2. Коллизии / gaps (актуальные)
+
+| Sev | Проблема | Где | Когда |
+|-----|----------|-----|-------|
+| **HIGH** | Paid plan не продлевается после `expiresAt` | plan-config · нет CRON/job | **Day 1–2** |
+| **HIGH** | Claim не публикует domain event | user-profile TODO · [event-catalog](../03-architecture/event-catalog.md) `invitation.redeemed` | **Day 3** |
+| **MED** | Activate idempotencyKey = `randomUUID()` каждый раз | plan-config `subscriptions.service` | Day 2 (stable key) |
+| **MED** | Digest CRON stub `triggered: 0` | subscriptions | backlog (после Novu) |
+| **MED** | `INTERNAL_SERVICE_TOKEN` optional (fail-open unset) | notifications/subscriptions | harden later / ops |
+| **LOW** | Quiet hours нет в UI delivery prefs | frontend `/subscriptions` | backlog |
+| **LOW** | Create topic с tags — fan-out легко пропустить | forum/BFF | при изменении create |
+| **LOW** | DOCS-ROADMAP parity % возможно устарел | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | Day 4 hygiene |
 
 ---
 
-## 2. Коллизии docs ↔ код
+## 3. Code review leftovers (не закрывать всё сразу)
 
-| Sev | Проблема | Док / код | Исправление |
-|-----|----------|-----------|-------------|
-| **HIGH** | PROJECT-CONTEXT: `notifications` = «только docs»; фаза «BFF — docs» | [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) vs `services/notifications` | Inventory + фаза → Day 1 |
-| **HIGH** | Порт **3011**: webhooks (docs) и marketplace (код) | [webhooks/README.md](../05-microservices/webhooks/README.md) · `marketplace` `DEFAULT_PORT` | webhooks → **3015** · Day 1 |
-| **HIGH** | event-catalog завышает producers/consumers; имена `auction-subscriptions`, `feedback` | [event-catalog.md](../03-architecture/event-catalog.md) | Implemented/Planned; rename; HTTP `tag.content_tagged` · Day 1 |
-| **HIGH** | Каталог микросервисов: порты `—`, статусы 📝 устарели | [05-microservices/README.md](../05-microservices/README.md) | Синхрон с [AGENTS.md](../../AGENTS.md) · Day 1 |
-| **MED** | 10-data: схемы `auction_subscriptions` / `feedback` | [10-data/README.md](../10-data/README.md) | → `subscriptions` / `deal_feedback` · Day 1 |
-| **MED** | Architecture overview: `settings`, `feedback`, `auction-subscriptions` | [03-architecture/README.md](../03-architecture/README.md) | Canonical names · Day 1 |
-| **MED** | local-dev: нет marketplace / deal-feedback / periods | [local-dev.md](../04-deployment/local-dev.md) | Добавить порты · Day 1 |
-| **MED** | swarm-stacks / naming examples: старые имена | [swarm-stacks.md](../04-deployment/swarm-stacks.md), [naming.md](../13-maintenance/naming.md) | Rename · Day 1 (по возможности) |
-| **LOW** | AGENT-TODO секция «Financial-policy»; item activate+charge | [AGENT-TODO.todo](../../AGENT-TODO.todo) · `PlansController.activate` | ✔ Day 4 — rename + activate verified |
-| **LOW** | DOCS-ROADMAP «код↔docs parity ~15%» занижен относительно факта | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | Обновить после Day 1 |
+Из прошлой недели **ещё open / частично**:
 
----
-
-## 3. Code review (problems)
-
-### Critical / High — действовать на этой неделе
-
-| # | Sev | Cat | Где | Находка | Рекомендация |
-|---|-----|-----|-----|---------|--------------|
-| 1 | **critical** | security | `services/bff/.../forum.controller.ts` | `PUT …/tags` возвращает `tagFanout.matchedUserIds` (UUID подписчиков автору) | Публично только `{ notified, skipped }` · **Day 1** |
-| 2 | **high** | security | `notifications` / `subscriptions` `/internal/v1/*` | Нет auth; docs обещают service JWT | Shared service-token / deny-by-default · Day 2+ |
-| 3 | **high** | reliability | `subscription-fanout.service.ts` | Best-effort без outbox/retry; частичный fail безвозвратен | RMQ / idempotent redelivery · Day 3 |
-| 4 | **high** | architecture | BFF tag PUT | Fan-out **await** на write path (match×N + trigger×users) | Post-commit / fire-and-forget / RMQ · Day 3 |
-| 5 | **high** | reliability | match + trigger | `DeliveryPreference` (`pushEnabled`, quiet hours) **игнорируется** | Фильтр перед trigger · Day 2 |
-| 6 | **high** | reliability | notifications trigger / log | Нет idempotency key → дубли Novu | `idempotencyKey` + unique · Day 2 |
-| 7 | **high** | architecture | event-catalog vs код | `tag.content_tagged` только HTTP-оркестрация BFF, не событие | RMQ SoT · Day 3 |
-
-### Medium
-
-| # | Cat | Находка | Когда |
-|---|-----|---------|-------|
-| 8 | reliability | `replaceTopicTags` без транзакции | после Day 2 |
-| 9 | reliability | Legacy jsonb → ContentTag на **GET** без fan-out | после Day 2 |
-| 10 | reliability | BFF `fetch` без timeout/AbortSignal | **Day 2** |
-| 11 | api | Лимит тегов только `.slice(0, 10)`, не 400 | backlog |
-| 12 | api | TAG `options.domains` в docs, не в `match` | backlog |
-| 13 | reliability | Digest CRON: `DAILY` всегда due; stub `triggered: 0` | после Novu |
-| 14 | security | Unknown `workflowId` только warn, всё равно trigger | **Day 2** |
-| 15 | ux | List = truncate UUID; TAG без href | **Day 3** |
-| 16 | ux | N× `GET /subscriptions` на chip'ах тегов | Day 3/4 |
-| 17 | architecture | Create topic с tags: fan-out легко пропустить | при изменении create |
-
-### Low / tech-debt
-
-- Race create slug tag; UNIQUE NULLS NOT DISTINCT для `DIGEST_GLOBAL`
-- Delivery prefs: email digest «Pro» без upsell; quiet hours нет в UI
-- ADR-004 `@novu/node` vs raw `fetch` в коде
-- Fan-out payload `tagIds` даже при partial match failure
+| # | Тема | Статус |
+|---|------|--------|
+| — | matchedUserIds leak | ✔ закрыто |
+| — | prefs + idempotency + AbortSignal | ✔ закрыто |
+| — | RMQ tag fan-out + async write path | ✔ закрыто |
+| — | titles + TAG href + shared store | ✔ закрыто |
+| M8 | `replaceTopicTags` без транзакции | backlog |
+| M13 | Digest delivery | после Novu ops |
+| — | service-token required in non-dev | ops / Day 4 optional |
 
 ---
 
 ## 4. План Day 1–4
 
-### Day 1 — Docs parity + security hotfix
+### Day 1 — Design + renew skeleton (plan-config)
 
-- [x] [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md): inventory, фаза, порты (webhooks **3015**, marketplace **3011**)
-- [x] [05-microservices/README.md](../05-microservices/README.md): статусы/порты
-- [x] [webhooks/README.md](../05-microservices/webhooks/README.md): port **3015**
-- [x] [local-dev.md](../04-deployment/local-dev.md): marketplace, deal-feedback, periods
-- [x] [event-catalog.md](../03-architecture/event-catalog.md): Implemented/Planned; rename; HTTP tag fan-out note
-- [x] [10-data/README.md](../10-data/README.md) + architecture overview: canonical schema/service names
-- [x] **Code:** убрать `matchedUserIds` из ответа `PUT /forum/topics/:id/tags` (оставить counts + server logs)
+- [ ] Spec slice в [plan-config/README.md](../05-microservices/plan-config/README.md): кто due (`autoRenew=true`, `status=ACTIVE`, `expiresAt <= now+window`), charge → extend `expiresAt`, fail path (balance → status?)
+- [ ] Internal endpoint **или** Nest `@Cron` / external CRON → `POST /internal/v1/subscription/renew/run` (как digests: вызов снаружи ок для Swarm)
+- [ ] Pure logic unit tests: select due rows, compute next `expiresAt` (monthly/yearly)
+- [ ] Env keys → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) (`PLAN_RENEW_*` / cron secret если нужен)
 
-### Day 2 — Notifications hardening
+### Day 2 — Billing charge + harden activate
 
-- [x] Ops: Novu Dashboard workflow `tag-content` + `NOVU_API_KEY` (или явно mock-only на staging) — **docs: mock without key**; Dashboard остаётся ops checklist
-- [x] Reject unknown `workflowId` → 400
-- [x] `idempotencyKey` на trigger + дедуп в log
-- [x] Учитывать `pushEnabled` (+ quiet hours) перед trigger
-- [x] BFF clients: `AbortSignal` timeout ~2s
-- [x] Заложить service-token для `/internal/v1/*` (env `INTERNAL_SERVICE_TOKEN` в PLATFORM-SECRETS)
+- [ ] Wire renew → существующий `BillingClient.charge` (target вроде `plan-config.renew-plan:{planId}`)
+- [ ] Stable **idempotencyKey** на renew и по возможности на activate (не `randomUUID()` каждый retry)
+- [ ] Tests: charge success extends; charge fail does not extend (и явный статус/лог)
+- [ ] Docs: event-catalog note если появится `subscription.renewed` / reuse `subscription.activated`
 
-### Day 3 — Async fan-out + UX titles
+### Day 3 — `invitation.redeemed` RMQ
 
-- [x] Минимальный publish/consume `tag.content_tagged` (BFF → RMQ → subscriptions → notifications; HTTP fallback если RMQ недоступен)
-- [x] Снять await fan-out с критического write path (`mode: async`)
-- [x] Enrich subscription list titles через BFF; ссылки на TAG (`/forum/tags/:slug`)
-- [x] shared subscription store для chip'ов (`useSubscriptionsStore` + dedupe per domain)
+- [ ] Publish из user-profile после успешного **первого** claim (`claimed: true`) — envelope как marketplace/tag
+- [ ] Payload per [event-catalog](../03-architecture/event-catalog.md): invitee/inviter/inviteCodeId (+ timestamps)
+- [ ] Consumer: минимум **log + ack** в rating path *или* документированный bind + stub handler (полный rating svc вне скоупа)
+- [ ] Unit/integration test: claim twice → одна публикация
+- [ ] Обновить event-catalog status Implemented; AGENT-TODO ✔
 
-### Day 4 — Product slice + backlog hygiene
+### Day 4 — Product glue + hygiene
 
-- [x] UX titles закрыты в Day 3 → OpenAPI fragment invites в [docs/06-api/invites-api.md](../06-api/invites-api.md)
-- [x] Проверен `POST /plans/activate` + billing charge (plan-config → billing) → ✔ в AGENT-TODO; CRON автопродление остаётся open
-- [x] Секция Financial-policy → plan-config в AGENT-TODO
-- [x] Обновлены строки в AGENT-DOCS-INDEX (дата, статусы)
+- [ ] BFF/frontend: убедиться что claim path после Logto callback не ломается; при необходимости smoke note в invites-api
+- [ ] Ops checklist: Novu `tag-content` остаётся ☐ (не блокер кода) — явно в AGENT-TODO
+- [ ] AGENT-DOCS-INDEX + PROJECT-CONTEXT pointer на этот work plan
+- [ ] (если успеем) quiet-hours UI **или** DOCS-ROADMAP parity refresh — одно небольшое
 
 ---
 
 ## 5. Вне скоупа этой недели
 
-- Полная реализация `webhooks` сервиса
-- Periods: d3 timeline + `periodId` на auction/forum
-- Vanga: Monte Carlo, CSV/PDF, `services/vanga` :3013
-- `rating` microservice
-- Legal L-17 webhooks
-- Полный E2E invites (можно только OpenAPI на Day 4)
+- Periods: d3 timeline + `periodId` на auction/forum *(следующий кандидат после billing)*
+- Vanga: Monte Carlo, CSV/PDF, `services/vanga` :3013, founder checkpoint 0
+- Полный `rating` microservice / karma side-effects от `invitation.redeemed`
+- `webhooks` outbound service
+- Digest email real delivery
+- Playwright/browser E2E invites
 
 ---
 
@@ -138,26 +111,23 @@ flowchart LR
 
 | Критерий | Done when |
 |----------|-----------|
-| Docs parity | PROJECT-CONTEXT, microservices README, ports, event-catalog snapshot без HIGH-коллизий из §2 |
-| Security hotfix | PUT tags не отдаёт `matchedUserIds` |
-| Notify path | Unknown workflow rejected; prefs частично уважаются; timeouts на BFF clients; idempotency начат |
-| Fan-out | Есть путь к async (хотя бы skeleton) **или** явно зафиксирован временный sync + risks |
-| UX | Список подписок показывает имена, не только UUID (для topic/tag) |
-| Backlog | AGENT-TODO и индекс синхронизированы с фактом |
+| Auto-renew | Due subscriptions с `autoRenew` продлеваются через billing charge (хотя бы internal run + tests) |
+| Fail path | Неуспешный charge не сдвигает `expiresAt` безосновательно; поведение задокументировано |
+| Referral event | `invitation.redeemed` уходит в RMQ при первом claim; идемпотентность claim сохраняется |
+| Docs/backlog | event-catalog, plan-config README, AGENT-TODO, AGENT-DOCS-INDEX синхронизированы |
+| Не расползтись | Periods/Vanga/webhooks не начаты «заодно», кроме явного Day 4 tiny hygiene |
 
 ---
 
 ## 7. Связанные документы
 
-- [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
-- [AGENT-DOCS-INDEX.md](./AGENT-DOCS-INDEX.md)
-- [DOCS-ROADMAP.md](./DOCS-ROADMAP.md)
-- [event-catalog.md](../03-architecture/event-catalog.md)
-- [subscriptions/README.md](../05-microservices/subscriptions/README.md)
-- [notifications/README.md](../05-microservices/notifications/README.md)
-- [forum/tags.md](../05-microservices/forum/tags.md)
-- [security-ops.md](../09-security/security-ops.md)
+- [plan-config/README.md](../05-microservices/plan-config/README.md)
+- [billing/README.md](../05-microservices/billing/README.md)
+- [invites-api.md](../05-microservices/bff/invites-api.md) · [06-api/invites-api.md](../06-api/invites-api.md)
+- [event-catalog.md](../03-architecture/event-catalog.md) · [messaging.md](../03-architecture/messaging.md)
+- [club-access.md](../01-goal/club-access.md) · [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md)
+- [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md)
 
 ---
 
-**Автор:** AI session audit 2026-07-16 · **Версия:** 0.1
+**Автор:** AI session 2026-07-16 · **Версия:** 0.2 (week: billing + invites event)
