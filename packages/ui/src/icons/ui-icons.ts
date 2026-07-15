@@ -24,6 +24,8 @@ export const uiIcons = {
   edit: 'lucide:pencil',
   promote: 'lucide:split',
   tag: 'lucide:tag',
+  thumbsUp: 'lucide:thumbs-up',
+  thumbsDown: 'lucide:thumbs-down',
 } as const;
 
 export type UiIconName = keyof typeof uiIcons | (string & {});

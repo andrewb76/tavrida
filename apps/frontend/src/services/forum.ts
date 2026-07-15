@@ -31,6 +31,7 @@ export type TopicSummary = {
   excerpt: string;
   isPinned: boolean;
   tags?: string[];
+  author?: ForumAuthor;
   votePlusCount?: number;
   voteMinusCount?: number;
   score?: number;
@@ -285,7 +286,13 @@ export async function promoteCommentToTopic(
   topicId: string,
   commentId: string,
   input?: { title?: string },
-): Promise<{ commentId: string; sourceTopicId: string; promotedTopicId: string; title: string }> {
+): Promise<{
+  commentId: string;
+  sourceTopicId: string;
+  promotedTopicId: string;
+  title: string;
+  movedCommentCount?: number;
+}> {
   const token = await requireBearerToken();
   const res = await fetch(
     `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}/promote-to-topic`,
@@ -307,6 +314,7 @@ export async function promoteCommentToTopic(
     sourceTopicId: string;
     promotedTopicId: string;
     title: string;
+    movedCommentCount?: number;
   };
 }
 

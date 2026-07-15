@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { castForumVote, clearForumVote } from '@/services/forum';
+import { UiIcon } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -125,7 +126,10 @@ function apply(result: {
       title="Плюс"
       @click="onPlus"
     >
-      +
+      <UiIcon
+        name="thumbsUp"
+        :size="16"
+      />
     </button>
     <span
       class="forum-vote__score"
@@ -140,7 +144,10 @@ function apply(result: {
       title="Минус"
       @click="onMinus"
     >
-      −
+      <UiIcon
+        name="thumbsDown"
+        :size="16"
+      />
     </button>
   </div>
 </template>
@@ -153,13 +160,15 @@ function apply(result: {
 }
 
 .forum-vote__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2rem;
   height: 2rem;
   border: 1px solid var(--color-border, #ccc);
   border-radius: 0.375rem;
   background: transparent;
   color: inherit;
-  font-size: 1rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -172,7 +181,7 @@ function apply(result: {
 .forum-vote__btn.is-active {
   border-color: var(--color-primary, #2563eb);
   background: color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent);
-  font-weight: 600;
+  color: var(--color-primary, #2563eb);
 }
 
 .forum-vote__score {

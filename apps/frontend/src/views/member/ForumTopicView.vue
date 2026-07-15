@@ -116,6 +116,15 @@ function onCommentUpdated(updated: ForumComment) {
   comments.value = comments.value.map((row) => (row.id === updated.id ? updated : row));
 }
 
+async function onCommentPromoted() {
+  // Subtree moved to the new topic — reload flat list from API.
+  try {
+    comments.value = await listComments(topicId.value);
+  } catch {
+    /* keep local state if refresh fails */
+  }
+}
+
 function onTopicVoteUpdated(result: {
   plusCount: number;
   minusCount: number;
@@ -336,6 +345,7 @@ async function submitTopicComment() {
             :current-user-id="session.userId"
             @created="onCommentCreated"
             @updated="onCommentUpdated"
+            @promoted="onCommentPromoted"
           />
         </ul>
         <p

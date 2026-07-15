@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { listCategories, listTopics, type CategoryNode, type TopicSummary } from '@/services/forum';
+import UserAvatar from '@/components/user/UserAvatar.vue';
+import {
+  forumAuthorLabel,
+  listCategories,
+  listTopics,
+  type CategoryNode,
+  type TopicSummary,
+} from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
@@ -51,6 +58,17 @@ watch(categoryId, load);
 
 function clearCategoryFilter() {
   return { path: '/forum' };
+}
+
+function authorOf(topic: TopicSummary) {
+  return (
+    topic.author ?? {
+      userId: topic.authorId,
+      displayName: null,
+      username: null,
+      avatarUrl: null,
+    }
+  );
 }
 </script>
 
@@ -122,18 +140,33 @@ function clearCategoryFilter() {
       <li
         v-for="topic in topics"
         :key="topic.id"
+        class="forum-list__card"
       >
+        <div class="forum-list__item-head">
+          <UserAvatar
+            class="forum-list__avatar"
+            :avatar-url="authorOf(topic).avatarUrl"
+            :label="forumAuthorLabel(authorOf(topic))"
+            :user-id="authorOf(topic).userId"
+            size="sm"
+          />
+          <div class="forum-list__item-meta">
+            <span class="forum-list__author">{{ forumAuthorLabel(authorOf(topic)) }}</span>
+            <time>{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
+          </div>
+        </div>
         <RouterLink
           :to="`/forum/topics/${topic.id}`"
-          class="forum-list__item"
+          class="forum-list__item-body"
         >
-          <strong>{{ topic.title }}</strong>
-          <span
-            v-if="topic.isPinned"
-            class="forum-list__pin"
-          >📌</span>
+          <div class="forum-list__title-row">
+            <strong>{{ topic.title }}</strong>
+            <span
+              v-if="topic.isPinned"
+              class="forum-list__pin"
+            >📌</span>
+          </div>
           <p>{{ topic.excerpt }}</p>
-          <small>{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</small>
         </RouterLink>
       </li>
     </ul>
@@ -204,25 +237,58 @@ function clearCategoryFilter() {
   gap: 0.75rem;
 }
 
-.forum-list__item {
-  display: block;
+.forum-list__card {
   padding: 1rem;
   border: 1px solid var(--color-border, #ddd);
   border-radius: 8px;
+}
+
+.forum-list__card:hover {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.forum-list__item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.forum-list__avatar {
+  flex: none;
+}
+
+.forum-list__item-meta {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #666);
+}
+
+.forum-list__author {
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
+.forum-list__item-body {
+  display: block;
   text-decoration: none;
   color: inherit;
 }
 
-.forum-list__item:hover {
-  border-color: var(--color-primary, #2563eb);
+.forum-list__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
 }
 
-.forum-list__item p {
-  margin: 0.5rem 0;
+.forum-list__item-body p {
+  margin: 0.5rem 0 0;
   color: var(--color-text-muted, #666);
 }
 
 .forum-list__pin {
-  margin-left: 0.5rem;
+  flex: none;
 }
 </style>

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
@@ -239,8 +239,8 @@ export class CommentsService {
 
   /**
    * Promote comment → new topic in the same category.
-   * v1: creates topic from comment body; keeps marker link on original comment.
-   * Subtree move is deferred (children stay under marker in source topic).
+   * Marker comment stays in the source topic; its subtree moves into the new topic
+   * (direct children become roots of Topic B).
    */
   async promoteToTopic(input: {
     topicId: string;
@@ -285,27 +285,91 @@ export class CommentsService {
       'Тема из комментария'
     ).slice(0, 256);
 
-    const newTopic = this.topics.create({
-      id: randomUUID(),
-      categoryId: sourceTopic.categoryId,
-      authorId: comment.authorId,
-      title,
-      body: comment.body,
-      attachments: comment.attachments ?? [],
-      isPinned: false,
-      tags: [],
+    return this.dataSource.transaction(async (manager) => {
+      const newTopic = manager.create(TopicEntity, {
+        id: randomUUID(),
+        categoryId: sourceTopic.categoryId,
+        authorId: comment.authorId,
+        title,
+        body: comment.body,
+        attachments: comment.attachments ?? [],
+        isPinned: false,
+        tags: [],
+      });
+      await manager.save(newTopic);
+
+      const descendantRows = await manager.find(CommentClosureEntity, {
+        where: { ancestorId: comment.id },
+      });
+      const depthFromMarker = new Map(
+        descendantRows
+          .filter((row) => row.depth > 0)
+          .map((row) => [row.descendantId, row.depth] as const),
+      );
+      const moveIds = [...depthFromMarker.keys()];
+
+      if (moveIds.length) {
+        const moved = await manager.find(CommentEntity, {
+          where: { id: In(moveIds) },
+        });
+
+        for (const row of moved) {
+          row.topicId = newTopic.id;
+          if (row.parentId === comment.id || !moveIds.includes(row.parentId ?? '')) {
+            row.parentId = null;
+          }
+        }
+        await manager.save(moved);
+
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(CommentClosureEntity)
+          .where('descendant_id IN (:...ids)', { ids: moveIds })
+          .execute();
+
+        for (const row of moved) {
+          await manager.save(
+            manager.create(CommentClosureEntity, {
+              ancestorId: row.id,
+              descendantId: row.id,
+              depth: 0,
+            }),
+          );
+        }
+
+        // Parents before children — reuse distances from the old marker tree.
+        moved.sort(
+          (a, b) => (depthFromMarker.get(a.id) ?? 0) - (depthFromMarker.get(b.id) ?? 0),
+        );
+        for (const row of moved) {
+          if (!row.parentId) continue;
+          const parentAncestors = await manager.find(CommentClosureEntity, {
+            where: { descendantId: row.parentId },
+          });
+          for (const ancestor of parentAncestors) {
+            await manager.save(
+              manager.create(CommentClosureEntity, {
+                ancestorId: ancestor.ancestorId,
+                descendantId: row.id,
+                depth: ancestor.depth + 1,
+              }),
+            );
+          }
+        }
+      }
+
+      comment.promotedTopicId = newTopic.id;
+      await manager.save(comment);
+
+      return {
+        commentId: comment.id,
+        sourceTopicId: sourceTopic.id,
+        promotedTopicId: newTopic.id,
+        title: newTopic.title,
+        movedCommentCount: moveIds.length,
+      };
     });
-    await this.topics.save(newTopic);
-
-    comment.promotedTopicId = newTopic.id;
-    await this.comments.save(comment);
-
-    return {
-      commentId: comment.id,
-      sourceTopicId: sourceTopic.id,
-      promotedTopicId: newTopic.id,
-      title: newTopic.title,
-    };
   }
 
   private mediaPublicBaseUrl() {

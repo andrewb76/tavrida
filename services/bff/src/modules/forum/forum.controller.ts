@@ -243,11 +243,13 @@ export class ForumController {
   }
 
   @Get('topics')
-  listTopics(@Query('categoryId') categoryId?: string, @Query('limit') limit?: string) {
-    return this.forum.listTopics({
+  async listTopics(@Query('categoryId') categoryId?: string, @Query('limit') limit?: string) {
+    const res = await this.forum.listTopics({
       categoryId,
       limit: limit ? Number(limit) : undefined,
     });
+    const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
+    return { data };
   }
 
   @Get('topics/:id')

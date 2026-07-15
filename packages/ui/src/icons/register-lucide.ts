@@ -24,6 +24,8 @@ import split from '@iconify-icons/lucide/split';
 import store from '@iconify-icons/lucide/store';
 import sun from '@iconify-icons/lucide/sun';
 import tag from '@iconify-icons/lucide/tag';
+import thumbsDown from '@iconify-icons/lucide/thumbs-down';
+import thumbsUp from '@iconify-icons/lucide/thumbs-up';
 import user from '@iconify-icons/lucide/user';
 import wallet from '@iconify-icons/lucide/wallet';
 import x from '@iconify-icons/lucide/x';
@@ -55,6 +57,8 @@ const SUBSET: Record<string, typeof home> = {
   'lucide:pencil': pencil,
   'lucide:split': split,
   'lucide:tag': tag,
+  'lucide:thumbs-up': thumbsUp,
+  'lucide:thumbs-down': thumbsDown,
 };
 
 export function registerLucideIcons(): void {

@@ -32,6 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   created: [ForumComment];
   updated: [ForumComment];
+  promoted: [{ commentId: string; promotedTopicId: string; movedCommentCount: number }];
 }>();
 
 function onVoteUpdated(result: {
@@ -132,7 +133,17 @@ async function onPromote() {
   try {
     const result = await promoteCommentToTopic(props.topicId, props.node.id);
     emit('updated', { ...props.node, promotedTopicId: result.promotedTopicId });
-    toast.success('Комментарий выделен в тему');
+    emit('promoted', {
+      commentId: result.commentId,
+      promotedTopicId: result.promotedTopicId,
+      movedCommentCount: result.movedCommentCount ?? 0,
+    });
+    const moved = result.movedCommentCount ?? 0;
+    toast.success(
+      moved > 0
+        ? `Тема создана, перенесено ответов: ${moved}`
+        : 'Комментарий выделен в тему',
+    );
   } catch (e) {
     toast.error(e instanceof Error ? e.message : 'Не удалось выделить в тему');
   } finally {
@@ -358,6 +369,7 @@ async function onPromote() {
         :current-user-id="currentUserId"
         @created="emit('created', $event)"
         @updated="emit('updated', $event)"
+        @promoted="emit('promoted', $event)"
       />
     </ul>
   </li>
