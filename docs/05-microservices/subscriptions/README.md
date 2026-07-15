@@ -21,7 +21,8 @@
 | BFF `GET/POST/DELETE /api/v1/subscriptions` + JWT | ✅ |
 | BFF `GET/PATCH /api/v1/subscriptions/delivery` + emailDigest feature gate | ✅ |
 | Limit check via plan-config (`subscriptions.member.*`) | ✅ seed в `default-seed.ts` |
-| Frontend subscribe toggle (тема / лот) | ✅ |
+| Frontend subscribe toggle (тема / лот / тег) | ✅ |
+| Frontend `/subscriptions` — список + delivery prefs | ✅ |
 | Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
 | BFF fan-out `tag.content_tagged` → match → notifications | ✅ (после PUT topic tags) |
 | RMQ consumers → match → notifications | ⏳ next (общие producers) |

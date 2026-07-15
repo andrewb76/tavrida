@@ -19,6 +19,7 @@ const navItems = computed(() => {
     { to: '/app', label: 'Home', icon: 'home' },
     { to: '/auctions', label: 'Аукционы', icon: 'auctions' },
     { to: '/forum', label: 'Форум', icon: 'forum' },
+    { to: '/subscriptions', label: 'Подписки', icon: 'notifications' },
     { to: '/profile/me', label: 'Профиль', icon: 'profile' },
   ];
   if (session.isAdmin) {
@@ -84,18 +85,19 @@ function isActive(path: string) {
             />
             {{ formatMoney(session.balance, session.balanceCurrency) }}
           </RouterLink>
-          <UiButton
-            intent="ghost"
-            size="sm"
-            title="Inbox (W15 stub)"
-            @click="() => {}"
+          <RouterLink
+            v-if="session.isMember"
+            to="/subscriptions"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-text hover:bg-bg"
+            title="Подписки"
+            :class="route.path.startsWith('/subscriptions') ? 'bg-primary/10 text-primary' : ''"
           >
             <UiIcon
               name="notifications"
               :size="18"
-              label="Уведомления"
+              label="Подписки"
             />
-          </UiButton>
+          </RouterLink>
           <UiButton
             intent="ghost"
             size="sm"

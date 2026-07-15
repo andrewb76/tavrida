@@ -83,6 +83,12 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Кошелёк', requiresMember: true },
   },
   {
+    path: 'subscriptions',
+    name: 'subscriptions',
+    component: () => import('@/views/member/SubscriptionsView.vue'),
+    meta: { title: 'Подписки', requiresMember: true },
+  },
+  {
     path: 'plans',
     name: 'plans',
     component: () => import('@/views/member/PlansView.vue'),

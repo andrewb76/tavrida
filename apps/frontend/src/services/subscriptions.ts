@@ -79,10 +79,96 @@ export async function deleteEventSubscription(id: string): Promise<void> {
   if (!res.ok) throw new Error('Не удалось отписаться');
 }
 
+export type DeliveryPreference = {
+  userId: string;
+  emailDigestEnabled: boolean;
+  pushEnabled: boolean;
+  digestFrequency: 'DAILY' | 'WEEKLY';
+  quietHours: { start: string; end: string; tz: string } | null;
+  updatedAt: string | null;
+};
+
+export async function getDeliveryPreference(): Promise<DeliveryPreference> {
+  const res = await fetch(`${apiBase()}/subscriptions/delivery`, {
+    headers: await authHeaders(),
+  });
+  if (!res.ok) throw new Error('Не удалось загрузить настройки доставки');
+  return (await res.json()) as DeliveryPreference;
+}
+
+export async function updateDeliveryPreference(
+  input: Partial<{
+    emailDigestEnabled: boolean;
+    pushEnabled: boolean;
+    digestFrequency: 'DAILY' | 'WEEKLY';
+    quietHours: { start: string; end: string; tz: string } | null;
+  }>,
+): Promise<DeliveryPreference> {
+  const res = await fetch(`${apiBase()}/subscriptions/delivery`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string | { message?: string };
+    };
+    const raw =
+      typeof body.message === 'string'
+        ? body.message
+        : typeof body.message?.message === 'string'
+          ? body.message.message
+          : null;
+    if (raw?.toLowerCase().includes('digest') || raw?.includes('plan')) {
+      throw new Error('Email digest недоступен на вашем тарифе');
+    }
+    throw new Error(raw ?? 'Не удалось сохранить настройки доставки');
+  }
+  return (await res.json()) as DeliveryPreference;
+}
+
 export function findSubscription(
   rows: EventSubscription[],
   targetType: TargetType,
   targetId: string,
 ): EventSubscription | undefined {
   return rows.find((row) => row.targetType === targetType && row.targetId === targetId);
+}
+
+const TARGET_LABELS: Record<TargetType, string> = {
+  AUCTION_CATEGORY: 'Категория аукциона',
+  AUCTION: 'Лот',
+  FORUM_CATEGORY: 'Категория форума',
+  FORUM_TOPIC: 'Тема форума',
+  TAG: 'Тег',
+  MARKETPLACE_CATEGORY: 'Категория маркета',
+  DIGEST_GLOBAL: 'Дайджест',
+};
+
+const DOMAIN_LABELS: Record<SourceDomain, string> = {
+  auction: 'Аукцион',
+  forum: 'Форум',
+  marketplace: 'Маркет',
+  platform: 'Платформа',
+};
+
+export function targetTypeLabel(type: TargetType): string {
+  return TARGET_LABELS[type] ?? type;
+}
+
+export function sourceDomainLabel(domain: SourceDomain): string {
+  return DOMAIN_LABELS[domain] ?? domain;
+}
+
+/** Deep-link when we know the target route shape. */
+export function subscriptionHref(row: EventSubscription): string | null {
+  if (!row.targetId) return null;
+  switch (row.targetType) {
+    case 'FORUM_TOPIC':
+      return `/forum/topics/${row.targetId}`;
+    case 'AUCTION':
+      return `/auctions/${row.targetId}`;
+    default:
+      return null;
+  }
 }

@@ -40,8 +40,10 @@ Tavrida Lot (SPA + landing)
 ├─── 🏠 Клуб — главная и навигация
 │    ├── Home — member (/)
 │    │     Дашборд после входа: live-аукционы, teaser форума, баланс.         📐 W01
-│    └── Центр уведомлений (Inbox, overlay)
-│          Novu Inbox: push/email/in-app история (bell в header).             📐 W15
+│    ├── Центр уведомлений (Inbox, overlay)
+│    │     Novu Inbox: push/email/in-app история (bell → позже W15).          📐 W15
+│    └── Подписки на события (/subscriptions)
+│          Список intent-подписок + delivery prefs (push / email digest).     ✅
 │
 ├─── 🔨 Аукционы
 │    ├── Каталог лотов (/auctions)
