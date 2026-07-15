@@ -30,8 +30,9 @@ Subscriptions (event intent):
   ✔ Internal match endpoint @subscriptions @done(26-07-13)
   ✔ Forum Formal Tag/ContentTag + UI subscribe on tag chip @forum @subscriptions @frontend @done(26-07-15)
   ✔ Publish tag.content_tagged (BFF addedTagIds → match → notifications) @forum @subscriptions @bff @done(26-07-15)
-  ☐ Scaffold services/notifications + Novu workflow tag-content @notifications
-  ☐ RMQ consumers → match → notifications (needs producers + notifications svc) @subscriptions
+  ✔ Scaffold services/notifications + trigger/mock + tag-content workflow id @notifications @done(26-07-15)
+  ☐ Novu Dashboard: create workflow tag-content + set NOVU_API_KEY @notifications
+  ☐ RMQ consumers → match → notifications @subscriptions @notifications
   ☐ Richer subscriptions UI (categories/tags/list + delivery prefs) @frontend @subscriptions
 
 Periods (historical reference):

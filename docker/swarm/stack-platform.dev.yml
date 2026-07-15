@@ -36,6 +36,9 @@ secrets:
   marketplace_database_url:
     external: true
     name: tavrida_dev_marketplace_database_url
+  notifications_database_url:
+    external: true
+    name: tavrida_dev_notifications_database_url
   bff_database_url:
     external: true
     name: tavrida_dev_bff_database_url
@@ -235,6 +238,25 @@ services:
     deploy:
       <<: *nest-deploy
 
+  notifications:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-notifications:${GIT_SHA}
+    secrets:
+      - notifications_database_url
+    environment:
+      <<: *nest-env
+      NOTIFICATIONS_PORT: '3010'
+      DATABASE_URL_FILE: /run/secrets/notifications_database_url
+      # NOVU_API_KEY optional — without it triggers run in mock mode
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
@@ -253,6 +275,7 @@ services:
       USER_PROFILE_URL: http://user-profile:3007
       SCALAR_CONFIG_URL: http://scalar-config:3008
       FORUM_URL: http://forum:3009
+      NOTIFICATIONS_URL: http://notifications:3010
       PERIODS_URL: http://periods:3014
       MARKETPLACE_URL: http://marketplace:3011
       KETO_READ_URL: ${KETO_READ_URL}

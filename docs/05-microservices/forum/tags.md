@@ -70,7 +70,7 @@
 | `GET /internal/v1/tags?q=` + `GET …/tags/:slug` | ✅ |
 | BFF public same paths | ✅ |
 | UI chips + autocomplete suggest + compact subscribe (bell) | ✅ |
-| BFF fan-out `tag.content_tagged` → subscriptions.match → notifications `tag-content` | ✅ (notify no-op если `NOTIFICATIONS_URL` / svc down) |
+| BFF fan-out `tag.content_tagged` → subscriptions.match → notifications `tag-content` | ✅ (`@tavrida/notifications` mock/Novu) |
 | RMQ producer из forum (вместо sync BFF) | ⏳ |
 | Admin POST official / merge | ⏳ |
 | Auction / marketplace ContentTag | ⏳ |

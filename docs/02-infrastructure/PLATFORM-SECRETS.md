@@ -227,17 +227,17 @@
 
 ---
 
-## 📬 notifications — порт 3010 _(docs)_
+## 📬 notifications — порт 3010
 
 | Переменная | Секрет | Schema | Описание |
 |------------|--------|--------|----------|
-| `PORT` | нет | — | `3010` |
-| `DATABASE_URL` | **да** | `notifications` | Audit log |
-| `REDIS_URL` | **да** | — | Pub/sub → BFF |
-| `NOVU_API_KEY` | **да** | — | Novu secret |
+| `PORT` / `NOTIFICATIONS_PORT` | нет | — | `3010` |
+| `DATABASE_URL` | **да** | `notifications` | Audit log + subscribers |
+| `REDIS_URL` | нет* | — | Pub/sub → BFF *(next)* |
+| `NOVU_API_KEY` | нет* | — | Novu secret; без ключа — **mock** trigger |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | — | Public id |
-| `NOVU_API_URL` | нет | — | API endpoint |
-| `RABBITMQ_URL` | **да** | — | Consume domain events |
+| `NOVU_API_URL` | нет | — | default `https://api.novu.co` |
+| `RABBITMQ_URL` | нет* | — | Consume domain events *(next)* |
 
 ---
 

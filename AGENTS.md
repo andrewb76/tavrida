@@ -30,9 +30,13 @@ max-alice/
 │   ├── plan-config/           port 3002 (legacy dir: financial-policy; PG schema: plan_config)
 │   ├── auction/               port 3003
 │   ├── subscriptions/         port 3004 (legacy dir: auction-subscriptions; PG schema: subscriptions)
+│   ├── deal-feedback/         port 3006
 │   ├── user-profile/          port 3007
 │   ├── scalar-config/         port 3008 (legacy dir: settings; PG schema: scalar_config)
-│   └── forum/                 port 3009
+│   ├── forum/                 port 3009
+│   ├── notifications/         port 3010
+│   ├── marketplace/           port 3011
+│   └── periods/               port 3014
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/

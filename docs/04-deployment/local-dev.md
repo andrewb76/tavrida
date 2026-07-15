@@ -81,6 +81,7 @@ Legacy aliases (удалить после миграции кода): `PLAN_CONF
 | user-profile | `USER_PROFILE_PORT` | 3007 |
 | scalar-config | `SCALAR_CONFIG_PORT` | 3008 |
 | forum | `FORUM_PORT` | 3009 |
+| notifications | `NOTIFICATIONS_PORT` | 3010 |
 
 **Не задавайте `PORT=3000` в `.env.local`** — при `pnpm dev` turbo передаёт один env всем процессам, и несколько сервисов попытаются занять один порт (`EADDRINUSE`). Используйте только `*_PORT` или полагайтесь на дефолты в `package.json` dev-скриптах.
 

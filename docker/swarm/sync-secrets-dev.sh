@@ -31,6 +31,8 @@ COMPUTED_KEYS=(
   SCALAR_CONFIG_DATABASE_URL
   FORUM_DATABASE_URL
   PERIODS_DATABASE_URL
+  MARKETPLACE_DATABASE_URL
+  NOTIFICATIONS_DATABASE_URL
   BFF_DATABASE_URL
 )
 
@@ -109,6 +111,7 @@ build_computed_secrets() {
   FORUM_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=forum"
   PERIODS_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=periods"
   MARKETPLACE_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=marketplace"
+  NOTIFICATIONS_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=notifications"
   BFF_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=bff"
 }
 
