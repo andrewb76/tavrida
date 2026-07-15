@@ -41,6 +41,7 @@ import { ForumClient } from './forum.client';
 import { ForumAuthorsService } from './forum-authors.service';
 import { forumVoteKarmaDelta } from './forum-vote-karma';
 import { ForumSettingsReader } from '../scalar-config/forum-settings.reader';
+import { SubscriptionFanoutService } from '../subscriptions/subscription-fanout.service';
 
 class MediaAttachmentDto {
   @IsString()
@@ -195,6 +196,7 @@ export class ForumController {
     private readonly mediaStorage: MediaStorageService,
     private readonly forumSettings: ForumSettingsReader,
     private readonly profiles: UserProfileClient,
+    private readonly subscriptionFanout: SubscriptionFanoutService,
   ) {}
 
   private validateForumMedia(
@@ -387,12 +389,28 @@ export class ForumController {
     @Param('id') topicId: string,
     @Body() body: UpdateTopicTagsDto,
   ) {
-    return this.authors.enrichOne(
-      (await this.forum.updateTopicTags(topicId, {
-        authorId: user.sub,
-        tags: body.tags,
-      })) as { authorId: string },
-    );
+    const updated = (await this.forum.updateTopicTags(topicId, {
+      authorId: user.sub,
+      tags: body.tags,
+    })) as {
+      authorId: string;
+      addedTagIds?: string[];
+    };
+
+    const enriched = await this.authors.enrichOne(updated);
+    const addedTagIds = Array.isArray(updated.addedTagIds) ? updated.addedTagIds : [];
+    let tagFanout = { matchedUserIds: [] as string[], notified: 0, skipped: 0 };
+    if (addedTagIds.length) {
+      tagFanout = await this.subscriptionFanout.notifyTagContentTagged({
+        tagIds: addedTagIds,
+        topicId,
+        contentType: 'topic',
+        contentId: topicId,
+        excludeUserIds: [user.sub],
+      });
+    }
+
+    return { ...enriched, tagFanout };
   }
 
   @Get('reactions')

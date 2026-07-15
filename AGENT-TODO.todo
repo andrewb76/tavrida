@@ -29,7 +29,8 @@ Subscriptions (event intent):
   ✔ DeliveryPreference + digest CRON stub @subscriptions @done(26-07-13)
   ✔ Internal match endpoint @subscriptions @done(26-07-13)
   ✔ Forum Formal Tag/ContentTag + UI subscribe on tag chip @forum @subscriptions @frontend @done(26-07-15)
-  ☐ Publish tag.content_tagged (forum addedTagIds → match → notifications) @forum @subscriptions
+  ✔ Publish tag.content_tagged (BFF addedTagIds → match → notifications) @forum @subscriptions @bff @done(26-07-15)
+  ☐ Scaffold services/notifications + Novu workflow tag-content @notifications
   ☐ RMQ consumers → match → notifications (needs producers + notifications svc) @subscriptions
   ☐ Richer subscriptions UI (categories/tags/list + delivery prefs) @frontend @subscriptions
 

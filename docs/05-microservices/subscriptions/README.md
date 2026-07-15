@@ -23,7 +23,8 @@
 | Limit check via plan-config (`subscriptions.member.*`) | ✅ seed в `default-seed.ts` |
 | Frontend subscribe toggle (тема / лот) | ✅ |
 | Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
-| RMQ consumers → match → notifications | ⏳ next (producers ещё не публикуют) |
+| BFF fan-out `tag.content_tagged` → match → notifications | ✅ (после PUT topic tags) |
+| RMQ consumers → match → notifications | ⏳ next (общие producers) |
 
 ## 📖 Термины
 

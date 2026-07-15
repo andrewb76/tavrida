@@ -91,6 +91,14 @@ export class SubscriptionsClient {
     );
   }
 
+  /** Resolve subscribers for a domain event (`tag.content_tagged`, …). */
+  match(eventType: string, payload: Record<string, unknown>) {
+    return this.request<{ userIds: string[] }>('POST', '/internal/v1/subscriptions/match', {
+      eventType,
+      payload,
+    });
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     let res: Response;
     try {

@@ -25,6 +25,7 @@
 | `auction-bid` | Новая ставка (подписан) | push, in-app, WS | `auction.bid_placed` |
 | `auction-subscription-digest` | Новые лоты в категории | email digest, push | scheduled |
 | `forum-reply` | Ответ в теме | email, push | HTTP trigger |
+| `tag-content` | Новый контент с тегом (подписка TAG) | email, push, in-app | BFF fan-out `tag.content_tagged` |
 | `forum-digest` | Email digest по теме (Pro) | email | scheduled |
 | `balance-charged` | Списание с кошелька | in-app | `billing.charge_completed` |
 | `subscription-activated` | Активация подписки | email, in-app | `subscription.activated` |

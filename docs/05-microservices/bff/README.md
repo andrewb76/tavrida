@@ -55,7 +55,9 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/admin/vanga/compare` | POST | BFF + monetization-engine | Admin: до 3 сценариев |
 | `/api/v1/settings/public` | GET | settings (via BFF TBD) | Публичное подмножество |
 | `/api/v1/forum/categories` | GET | forum | `/internal/v1/forum/categories` |
+| `/api/v1/forum/tags` | GET | forum | `/internal/v1/tags` |
 | `/api/v1/forum/topics` | GET, POST | forum | `/internal/v1/forum/topics` |
+| `/api/v1/forum/topics/{id}/tags` | PUT | forum + subscriptions match + notifications | tags + fan-out `tag.content_tagged` |
 | `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
 | `/api/v1/webhooks/logto` | POST | BFF → user-profile | Logto inbound; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
 | `/api/v1/admin/users` | GET, PATCH, POST | BFF + user-profile + Keto + billing | Admin user list / roles / deposit |

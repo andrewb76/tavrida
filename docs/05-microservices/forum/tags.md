@@ -70,7 +70,8 @@
 | `GET /internal/v1/tags?q=` + `GET …/tags/:slug` | ✅ |
 | BFF public same paths | ✅ |
 | UI chips + autocomplete suggest + compact subscribe (bell) | ✅ |
-| Publish `tag.content_tagged` → subscriptions match | ⏳ next (RMQ / BFF fan-out) |
+| BFF fan-out `tag.content_tagged` → subscriptions.match → notifications `tag-content` | ✅ (notify no-op если `NOTIFICATIONS_URL` / svc down) |
+| RMQ producer из forum (вместо sync BFF) | ⏳ |
 | Admin POST official / merge | ⏳ |
 | Auction / marketplace ContentTag | ⏳ |
 
@@ -127,8 +128,9 @@
 
 | Event | Когда | Статус |
 |-------|-------|--------|
-| `tag.content_tagged` | Добавлен тег к контенту (`payload.tagId`) | payload готов (`addedTagIds`); publish → match ⏳ |
+| `tag.content_tagged` | Добавлен тег к topic (`payload.tagId`) | BFF sync fan-out ✅ |
 | → subscriptions | Match `TAG` | match API ✅ |
+| → notifications | workflow `tag-content` | best-effort HTTP ✅ / Novu later |
 | → OpenSearch (post-MVP) | Index facet | — |
 
 ---
