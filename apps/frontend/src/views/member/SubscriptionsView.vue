@@ -5,6 +5,7 @@ import {
   listEventSubscriptions,
   sourceDomainLabel,
   subscriptionHref,
+  subscriptionLabel,
   targetTypeLabel,
   updateDeliveryPreference,
   type DeliveryPreference,
@@ -106,10 +107,6 @@ async function patchDelivery(
   }
 }
 
-function shortId(id: string | null): string {
-  if (!id) return '—';
-  return id.length > 12 ? `${id.slice(0, 8)}…` : id;
-}
 </script>
 
 <template>
@@ -244,12 +241,12 @@ function shortId(id: string | null): string {
                 :to="subscriptionHref(row)!"
                 class="subs__target"
               >
-                {{ shortId(row.targetId) }}
+                {{ subscriptionLabel(row) }}
               </RouterLink>
               <span
                 v-else
                 class="subs__target"
-              >{{ shortId(row.targetId) }}</span>
+              >{{ subscriptionLabel(row) }}</span>
               <time class="subs__date">{{
                 new Date(row.createdAt).toLocaleString('ru-RU')
               }}</time>

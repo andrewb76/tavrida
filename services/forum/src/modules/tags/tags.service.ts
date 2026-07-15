@@ -68,6 +68,16 @@ export class TagsService {
     };
   }
 
+  async findByIds(ids: string[]): Promise<TagItem[]> {
+    const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+    if (!unique.length) return [];
+    const rows = await this.tags.find({
+      where: { id: In(unique), isHidden: false },
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return unique.map((id) => byId.get(id)).filter((r): r is TagEntity => Boolean(r)).map((r) => this.toItem(r));
+  }
+
   async listForContent(contentType: ContentTagType, contentId: string): Promise<TagItem[]> {
     const links = await this.contentTags.find({ where: { contentType, contentId } });
     if (!links.length) return [];

@@ -4,6 +4,7 @@ import {
   findSubscription,
   sourceDomainLabel,
   subscriptionHref,
+  subscriptionLabel,
   targetTypeLabel,
   type EventSubscription,
 } from './subscription-helpers.js';
@@ -29,7 +30,7 @@ describe('subscription-helpers', () => {
     assert.equal(sourceDomainLabel('auction'), 'Аукцион');
   });
 
-  it('builds deep links for topic and auction only', () => {
+  it('builds deep links for topic, auction, and tag slug', () => {
     assert.equal(
       subscriptionHref(row({ id: '1', targetType: 'FORUM_TOPIC', targetId: 'topic-1' })),
       '/forum/topics/topic-1',
@@ -42,7 +43,38 @@ describe('subscription-helpers', () => {
       subscriptionHref(row({ id: '3', targetType: 'TAG', targetId: 'tag-1', sourceDomain: 'platform' })),
       null,
     );
+    assert.equal(
+      subscriptionHref(
+        row({
+          id: '3b',
+          targetType: 'TAG',
+          targetId: 'tag-1',
+          sourceDomain: 'platform',
+          targetSlug: 'krym',
+        }),
+      ),
+      '/forum/tags/krym',
+    );
     assert.equal(subscriptionHref(row({ id: '4', targetType: 'DIGEST_GLOBAL', targetId: null })), null);
+  });
+
+  it('labels with enriched title or short id', () => {
+    assert.equal(
+      subscriptionLabel(
+        row({ id: '1', targetType: 'FORUM_TOPIC', targetId: 'topic-1', targetTitle: 'Скифы' }),
+      ),
+      'Скифы',
+    );
+    assert.equal(
+      subscriptionLabel(
+        row({
+          id: '2',
+          targetType: 'TAG',
+          targetId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        }),
+      ),
+      'aaaaaaaa…',
+    );
   });
 
   it('finds subscription by target type and id', () => {

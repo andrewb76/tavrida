@@ -24,8 +24,9 @@
 | Frontend subscribe toggle (тема / лот / тег) | ✅ |
 | Frontend `/subscriptions` — список + delivery prefs | ✅ |
 | Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
-| BFF fan-out `tag.content_tagged` → match → notifications | ✅ (после PUT topic tags) |
-| RMQ consumers → match → notifications | ⏳ next (общие producers) |
+| BFF fan-out `tag.content_tagged` → match → notifications | ✅ async (RMQ publish; HTTP fallback) |
+| RMQ consumer `tag.content_tagged` → match → notifications | ✅ (`TagEventsConsumer`, queue `subscriptions.events`) |
+| BFF list enrich `targetTitle` / `targetSlug` | ✅ |
 
 ## 📖 Термины
 

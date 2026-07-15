@@ -7,6 +7,7 @@ export {
   findSubscription,
   sourceDomainLabel,
   subscriptionHref,
+  subscriptionLabel,
   targetTypeLabel,
 } from './subscription-helpers';
 

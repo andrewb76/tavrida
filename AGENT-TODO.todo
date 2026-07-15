@@ -34,9 +34,7 @@ Subscriptions (event intent):
   ✔ Scaffold services/notifications + trigger/mock + tag-content workflow id @notifications @done(26-07-15)
   ✔ Richer subscriptions UI (list + delivery prefs) @frontend @subscriptions @done(26-07-15)
   ☐ Novu Dashboard: create workflow tag-content + set NOVU_API_KEY @notifications
-  ☐ RMQ consumers → match → notifications @subscriptions @notifications
-  ☐ Enrich subscription list titles (topic/tag/auction names via BFF) @frontend @subscriptions
-  ✔ Admin impersonation (X-Act-As + banner + Войти как) @bff @frontend @security @done(26-07-16)
+  ☐ Shared subscription store для tag chips (N× GET /subscriptions) @frontend @subscriptions
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
@@ -63,6 +61,9 @@ Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 
 Archive:
+  ✔ RMQ consumers → match → notifications @subscriptions @notifications @done(26-07-16)
+  ✔ Enrich subscription list titles (topic/tag/auction names via BFF) @frontend @subscriptions @done(26-07-16)
+  ✔ Admin impersonation (X-Act-As + banner + Войти как) @bff @frontend @security @done(26-07-16)
   ✔ Настроить AGENT-DOCS-INDEX + правило docs-workflow @done(26-07-10)
   ✔ Доделать BFF invites: валидация, 201, admin skip limit @done(26-07-10)
   ✔ Invites: validityDays + codeType из settings (ClubSettingsReader) @done(26-07-11)

@@ -26,6 +26,7 @@ import { Type } from 'class-transformer';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
+import { SubscriptionTitlesService } from './subscription-titles.service';
 import { SubscriptionsClient } from './subscriptions.client';
 
 const SOURCE_DOMAINS = ['auction', 'forum', 'marketplace', 'platform'] as const;
@@ -93,6 +94,7 @@ export class SubscriptionsController {
   constructor(
     private readonly subscriptions: SubscriptionsClient,
     private readonly planConfig: PlanConfigClient,
+    private readonly titles: SubscriptionTitlesService,
   ) {}
 
   @Get()
@@ -103,7 +105,9 @@ export class SubscriptionsController {
     if (sourceDomain && !SOURCE_DOMAINS.includes(sourceDomain as (typeof SOURCE_DOMAINS)[number])) {
       throw new BadRequestException('Invalid sourceDomain');
     }
-    return this.subscriptions.list(user.sub, sourceDomain);
+    const result = await this.subscriptions.list(user.sub, sourceDomain);
+    const data = await this.titles.enrichList(result.data ?? []);
+    return { data };
   }
 
   @Post()

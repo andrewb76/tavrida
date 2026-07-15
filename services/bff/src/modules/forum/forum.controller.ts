@@ -40,6 +40,8 @@ import { UserProfileClient } from '../user-profile/user-profile.client';
 import { ForumClient } from './forum.client';
 import { ForumAuthorsService } from './forum-authors.service';
 import { forumVoteKarmaDelta } from './forum-vote-karma';
+import { chooseTagFanoutDispatch } from '../events/tag-fanout-dispatch';
+import { TagEventsPublisher } from '../events/tag-events.publisher';
 import { ForumSettingsReader } from '../scalar-config/forum-settings.reader';
 import { SubscriptionFanoutService } from '../subscriptions/subscription-fanout.service';
 
@@ -197,6 +199,7 @@ export class ForumController {
     private readonly forumSettings: ForumSettingsReader,
     private readonly profiles: UserProfileClient,
     private readonly subscriptionFanout: SubscriptionFanoutService,
+    private readonly tagEvents: TagEventsPublisher,
   ) {}
 
   private validateForumMedia(
@@ -399,18 +402,41 @@ export class ForumController {
 
     const enriched = await this.authors.enrichOne(updated);
     const addedTagIds = Array.isArray(updated.addedTagIds) ? updated.addedTagIds : [];
-    let tagFanout = { notified: 0, skipped: 0 };
+    const tagFanout = { notified: 0, skipped: 0, mode: 'noop' as const };
+
     if (addedTagIds.length) {
-      tagFanout = await this.subscriptionFanout.notifyTagContentTagged({
+      void this.dispatchTagFanout({
         tagIds: addedTagIds,
         topicId,
         contentType: 'topic',
         contentId: topicId,
         excludeUserIds: [user.sub],
+      }).catch((error) => {
+        this.logger.warn(
+          `tag fan-out schedule failed: ${error instanceof Error ? error.message : error}`,
+        );
       });
+      return { ...enriched, tagFanout: { ...tagFanout, mode: 'async' as const } };
     }
 
     return { ...enriched, tagFanout };
+  }
+
+  /** RMQ when available; otherwise fire-and-forget HTTP fan-out (no await on write path). */
+  private async dispatchTagFanout(input: {
+    tagIds: string[];
+    topicId: string;
+    contentType: 'topic' | 'comment';
+    contentId: string;
+    excludeUserIds?: string[];
+  }) {
+    const rmqPublished = await this.tagEvents.publishTagContentTagged(input);
+    const choice = chooseTagFanoutDispatch({
+      addedTagIds: input.tagIds,
+      rmqPublished,
+    });
+    if (choice.mode !== 'http-fallback') return;
+    await this.subscriptionFanout.notifyTagContentTagged(input);
   }
 
   @Get('reactions')

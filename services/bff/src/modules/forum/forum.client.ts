@@ -203,6 +203,13 @@ export class ForumClient {
     );
   }
 
+  getTagsByIds(ids: string[]) {
+    const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))].slice(0, 100);
+    if (!unique.length) return Promise.resolve({ data: [] as unknown[] });
+    const params = new URLSearchParams({ ids: unique.join(',') });
+    return this.request<{ data: unknown[] }>('GET', `/internal/v1/tags/by-ids?${params}`);
+  }
+
   listReactions(contentId: string, contentType: 'topic' | 'comment') {
     const params = new URLSearchParams({ contentId, contentType });
     return this.request<Record<string, unknown>>('GET', `/internal/v1/reactions?${params}`);

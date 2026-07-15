@@ -17,6 +17,10 @@ export type EventSubscription = {
   targetId: string | null;
   options: Record<string, unknown>;
   createdAt: string;
+  /** BFF enrich: human title when resolvable. */
+  targetTitle?: string | null;
+  /** BFF enrich: tag slug for deep-link. */
+  targetSlug?: string | null;
 };
 
 const TARGET_LABELS: Record<TargetType, string> = {
@@ -52,9 +56,19 @@ export function subscriptionHref(row: EventSubscription): string | null {
       return `/forum/topics/${row.targetId}`;
     case 'AUCTION':
       return `/auctions/${row.targetId}`;
+    case 'TAG':
+      return row.targetSlug ? `/forum/tags/${encodeURIComponent(row.targetSlug)}` : null;
     default:
       return null;
   }
+}
+
+/** Prefer enriched title; fall back to short id. */
+export function subscriptionLabel(row: EventSubscription): string {
+  const title = row.targetTitle?.trim();
+  if (title) return title;
+  if (!row.targetId) return '—';
+  return row.targetId.length > 12 ? `${row.targetId.slice(0, 8)}…` : row.targetId;
 }
 
 export function findSubscription(

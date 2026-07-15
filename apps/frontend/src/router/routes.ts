@@ -61,6 +61,12 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Тема', requiresMember: true },
   },
   {
+    path: 'forum/tags/:slug',
+    name: 'forum-tag',
+    component: () => import('@/views/member/ForumTagView.vue'),
+    meta: { title: 'Тег', requiresMember: true },
+  },
+  {
     path: 'profile/me',
     name: 'profile-me',
     component: () => import('@/views/member/ProfileView.vue'),

@@ -16,6 +16,11 @@ class SearchTagsQuery {
   limit?: number;
 }
 
+class ByIdsQuery {
+  @IsString()
+  ids!: string;
+}
+
 @Controller('internal/v1/tags')
 export class InternalTagsController {
   constructor(private readonly tags: TagsService) {}
@@ -23,6 +28,17 @@ export class InternalTagsController {
   @Get()
   search(@Query() query: SearchTagsQuery) {
     return this.tags.search({ q: query.q, limit: query.limit });
+  }
+
+  @Get('by-ids')
+  async byIds(@Query() query: ByIdsQuery) {
+    const ids = query.ids
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 100);
+    const data = await this.tags.findByIds(ids);
+    return { data };
   }
 
   @Get(':slug')
