@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-16 (invites quota via plan-config)
+**Последнее обновление индекса:** 2026-07-16 (invites BFF flow test)
 
 ---
 
@@ -22,7 +22,7 @@
 | Тема | Когда читать | Читать (обязательно) | Дополнительно | Код / статус |
 |------|--------------|----------------------|---------------|--------------|
 | **Bootstrap / новая сессия** | Любая незнакомая задача | [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | [docs/README.md](../README.md) | — |
-| **Инвайты / клуб / referral** | BFF invites, `/join`, Logto OTT, claim | [club-access.md](../01-goal/club-access.md) → [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) → [06-api/invites-api.md](../06-api/invites-api.md) → [invites-api.md](../05-microservices/bff/invites-api.md) → [user-profile/README.md](../05-microservices/user-profile/README.md) | [karma-and-rating.md](../01-goal/karma-and-rating.md) · [logto-setup.md](../14-frontend/logto-setup.md) · [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · [plan-config/README.md](../05-microservices/plan-config/README.md) | create/list/resolve/claim ✅ · OpenAPI ✅ · quota `club.member.invite.monthlyMax` ✅ · E2E later |
+| **Инвайты / клуб / referral** | BFF invites, `/join`, Logto OTT, claim | [club-access.md](../01-goal/club-access.md) → [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) → [06-api/invites-api.md](../06-api/invites-api.md) → [invites-api.md](../05-microservices/bff/invites-api.md) → [user-profile/README.md](../05-microservices/user-profile/README.md) | [karma-and-rating.md](../01-goal/karma-and-rating.md) · [logto-setup.md](../14-frontend/logto-setup.md) · [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · [plan-config/README.md](../05-microservices/plan-config/README.md) | create/list/resolve/claim ✅ · quota ✅ · BFF flow test ✅ · `invitation.redeemed` RMQ stub |
 | **BFF (общее)** | Новые REST/WS routes, proxy, агрегация | [bff/README.md](../05-microservices/bff/README.md) → [ADR-002](../03-architecture/adr/002-bff-rest-wss.md) → [06-api/README.md](../06-api/README.md) | [event-catalog.md](../03-architecture/event-catalog.md) | `services/bff` · admin settings API |
 | **Scalar config** | Scalar registry, club.* | [registry-keys.md](../13-maintenance/registry-keys.md) → [scalar-config/README.md](../05-microservices/scalar-config/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) → [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) · [invites-api.md](../05-microservices/bff/invites-api.md) | `services/scalar-config` · BFF `ClubSettingsReader` · admin UI `/admin/settings` |
 | **Auth / JWT / Logto** | Guards, OIDC, M2M, Keto | [09-security/README.md](../09-security/README.md) → [keto-schema.md](../09-security/keto-schema.md) → [bootstrap-admin.md](../09-security/bootstrap-admin.md) → [logto-setup.md](../14-frontend/logto-setup.md) | [ADR-010](../03-architecture/adr/010-jwt-validation-traefik.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) · [impersonation.md](../09-security/impersonation.md) · [ADR-018](../03-architecture/adr/018-admin-impersonation.md) | `GET /me/roles` · `/admin` UI · `X-Act-As` · bff guards |

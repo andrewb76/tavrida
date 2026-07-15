@@ -445,7 +445,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 - [x] `club.invite.validityDays` / `club.invite.codeType` — BFF читает из scalar-config (`ClubSettingsReader`)
 - [x] `club.registration.inviteOnly` — `GET /api/v1/settings/public` + landing/join UI
 - [x] `club.member.invite.monthlyMax` — BFF quota via plan-config (`CLUB_INVITES_PER_MONTH` fallback)
-- [ ] E2E: create → resolve → mock signIn → claim → event
+- [x] E2E (BFF orchestration test): create → resolve → mock signIn → claim (`invites.service.test.ts`); RMQ `invitation.redeemed` ещё stub в user-profile
 
 ---
 
