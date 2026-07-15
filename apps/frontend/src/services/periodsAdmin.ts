@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type MetadataFieldType =
   | 'string'
@@ -50,8 +50,7 @@ function apiBase(): string {
 }
 
 async function authHeaders(): Promise<HeadersInit> {
-  const token = await requireBearerToken();
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  return bffAuthHeaders();
 }
 
 async function parseError(res: Response): Promise<string> {

@@ -13,6 +13,7 @@
 - **Ory Keto** — [keto-schema.md](./keto-schema.md) · bootstrap: [bootstrap-admin.md](./bootstrap-admin.md)
 - Роли UX: [roles.md](../01-goal/roles.md)
 - Модераторы: [moderator-mapping.md](./moderator-mapping.md)
+- **Impersonation (admin):** [impersonation.md](./impersonation.md) · [ADR-018](../03-architecture/adr/018-admin-impersonation.md)
 
 ## 🔐 Секреты
 

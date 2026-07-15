@@ -33,6 +33,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 | 012 | **Клуб / инвайт** — member = Logto; referral graph — [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) |
 | 013 | **referral-rewards** — денежные бонусы (rules scalar-config + plan-config) — [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) |
 | 017 | **Rename** settings → scalar-config, financial-policy → plan-config — [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) |
+| 018 | **Admin impersonation** via `X-Act-As` — [ADR-018](../03-architecture/adr/018-admin-impersonation.md) |
 | 008–010 | OpenSearch, E2EE chat, JWT Traefik — **proposed** |
 
 ## Ключевые docs (читать первым)

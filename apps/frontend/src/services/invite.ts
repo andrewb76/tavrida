@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 /** Human-readable invite code: TAV-XXXX-XXXX (no ambiguous chars). */
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -60,11 +60,7 @@ export function isValidInviteCodeFormat(code: string): boolean {
 }
 
 async function authHeaders(): Promise<HeadersInit> {
-  const token = await requireBearerToken();
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
+  return bffAuthHeaders();
 }
 
 function apiBase(): string {

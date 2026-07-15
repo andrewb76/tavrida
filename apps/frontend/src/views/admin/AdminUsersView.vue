@@ -11,11 +11,15 @@ import {
 import { formatMoney } from '@/services/wallet';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
+import { refreshSessionBalance } from '@/composables/useWalletBalance';
+import { refreshPlatformRoles } from '@/services/roles';
 import { useSessionStore } from '@/stores/session';
 
 const users = ref<AdminUserRow[]>([]);
 const session = useSessionStore();
+const router = useRouter();
 const total = ref(0);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -104,6 +108,30 @@ function openDeposit(row: AdminUserRow) {
   depositAmount.value = 500;
   depositError.value = null;
   depositOpen.value = true;
+}
+
+async function impersonate(row: AdminUserRow) {
+  if (row.roles.includes('admin')) {
+    toast.error('Нельзя войти как другой администратор');
+    return;
+  }
+  if (row.userId === session.userId) {
+    toast.message('Это уже ваш аккаунт');
+    return;
+  }
+  try {
+    session.startImpersonation({
+      targetUserId: row.userId,
+      targetDisplayName: displayLabel(row),
+    });
+    await refreshPlatformRoles();
+    await refreshSessionBalance();
+    toast.success(`Режим: ${displayLabel(row)}`);
+    await router.push('/app');
+  } catch (e) {
+    session.stopImpersonation();
+    toast.error(e instanceof Error ? e.message : 'Не удалось начать impersonation');
+  }
 }
 
 function closeDeposit() {
@@ -254,6 +282,15 @@ async function confirmDeposit() {
               @click="openDeposit(row)"
             >
               Пополнить
+            </button>
+            <button
+              v-if="!row.roles.includes('admin') && row.userId !== session.userId"
+              type="button"
+              class="mt-2 ml-2 inline-flex h-9 items-center justify-center rounded-md border border-amber-600 bg-amber-500 px-3 text-sm font-medium text-stone-900 hover:bg-amber-400"
+              title="Работать от имени пользователя"
+              @click="impersonate(row)"
+            >
+              Подключиться
             </button>
           </div>
         </div>

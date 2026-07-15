@@ -7,13 +7,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Request } from 'express';
+import { ActAsService, ACT_AS_HEADER } from './act-as.service';
 import type { AuthUser } from './current-user.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   private jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly actAs: ActAsService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request & { user?: AuthUser }>();
@@ -23,8 +27,8 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = header.slice('Bearer '.length).trim();
-    const user = await this.verifyToken(token);
-    request.user = user;
+    const actor = await this.verifyToken(token);
+    request.user = await this.actAs.apply(actor, request.headers[ACT_AS_HEADER]);
     return true;
   }
 

@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders, requireBearerToken } from './apiAuth';
 import { useSessionStore } from '@/stores/session';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
@@ -23,9 +23,9 @@ export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
     return ['member'];
   }
 
-  const token = await requireBearerToken();
+  await requireBearerToken();
   const res = await fetch(`${apiBase()}/me/roles`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
 
   if (!res.ok) {

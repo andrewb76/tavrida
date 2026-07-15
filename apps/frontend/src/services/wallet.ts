@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type WalletBalance = {
   userId: string;
@@ -23,11 +23,7 @@ function apiBase(): string {
 }
 
 async function authHeaders(): Promise<HeadersInit> {
-  const token = await requireBearerToken();
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
+  return bffAuthHeaders();
 }
 
 function parseErrorBody(body: unknown, fallback: string): string {

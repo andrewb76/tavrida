@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 import type { VangaDefaultsResponse, VangaSimulateRequest, SimulateResult } from './vanga.types';
 
 function apiBase(): string {
@@ -6,14 +6,9 @@ function apiBase(): string {
 }
 
 async function vangaFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...init?.headers,
-    },
+    headers: await bffAuthHeaders(init?.headers, { skipActAs: true }),
   });
   if (!res.ok) {
     let detail = `Vanga API error (${res.status})`;

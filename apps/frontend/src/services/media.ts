@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type MediaDomain = 'auction' | 'forum' | 'marketplace';
 
@@ -38,14 +38,9 @@ function apiBase(): string {
 }
 
 async function authJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...init?.headers,
-    },
+    headers: await bffAuthHeaders(init?.headers),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;

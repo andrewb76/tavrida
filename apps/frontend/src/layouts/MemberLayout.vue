@@ -2,6 +2,7 @@
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
+import ImpersonationBanner from '@/components/admin/ImpersonationBanner.vue';
 import { useAuth } from '@/composables/useAuth';
 import { refreshSessionBalance } from '@/composables/useWalletBalance';
 import { refreshPlatformRoles } from '@/services/roles';
@@ -22,7 +23,7 @@ const navItems = computed(() => {
     { to: '/subscriptions', label: 'Подписки', icon: 'notifications' },
     { to: '/profile/me', label: 'Профиль', icon: 'profile' },
   ];
-  if (session.isAdmin) {
+  if (session.isAdmin && !session.isImpersonating) {
     items.push({ to: '/admin/users', label: 'Админ', icon: 'admin' });
   }
   return items;
@@ -50,7 +51,11 @@ function isActive(path: string) {
 
 <template>
   <div class="flex min-h-dvh flex-col bg-bg">
-    <header class="sticky top-0 z-40 border-b border-border bg-surface">
+    <ImpersonationBanner />
+    <header
+      class="sticky z-40 border-b border-border bg-surface"
+      :class="session.isImpersonating ? 'top-7' : 'top-0'"
+    >
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
         <RouterLink
           to="/app"
@@ -60,7 +65,7 @@ function isActive(path: string) {
         </RouterLink>
         <div class="flex items-center gap-1 sm:gap-2">
           <RouterLink
-            v-if="session.isAdmin"
+            v-if="session.isAdmin && !session.isImpersonating"
             to="/admin/users"
             class="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
             :class="route.path.startsWith('/admin') ? 'bg-primary/10' : ''"
@@ -69,9 +74,9 @@ function isActive(path: string) {
           </RouterLink>
           <span
             class="hidden max-w-[8rem] truncate rounded-full bg-bg px-2 py-1 text-xs text-text-muted sm:inline"
-            :title="session.displayName"
+            :title="session.isImpersonating ? session.actAsDisplayName : session.displayName"
           >
-            {{ session.displayName }}
+            {{ session.isImpersonating ? session.actAsDisplayName : session.displayName }}
           </span>
           <RouterLink
             v-if="session.isMember"

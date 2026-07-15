@@ -82,6 +82,7 @@ export function useAuth() {
     }
 
     async function signOut() {
+      session.stopImpersonation();
       session.clearProfile();
       await logto.signOut(signOutRedirectUri());
     }

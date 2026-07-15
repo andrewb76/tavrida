@@ -1,6 +1,6 @@
 import type { useLogto } from '@logto/vue';
 import type { useSessionStore } from '@/stores/session';
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 type LogtoClient = ReturnType<typeof useLogto>;
 type SessionStore = ReturnType<typeof useSessionStore>;
@@ -42,13 +42,9 @@ async function pushIdentityToProfile(input: {
   avatarUrl?: string;
 }): Promise<void> {
   try {
-    const token = await requireBearerToken();
     await fetch(`${apiBase()}/me/identity`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: await bffAuthHeaders(),
       body: JSON.stringify(input),
     });
   } catch {

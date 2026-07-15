@@ -32,6 +32,7 @@
 | [015](./015-monetization-engine.md) | Monetization engine package | accepted | 2026-07-11 |
 | [016](./016-financial-policy-parameter-registration.md) | Plan-config: планы, матрица, register plan variables | accepted | 2026-07-11 |
 | [017](./017-plan-config-scalar-config-rename.md) | Rename plan-config / scalar-config, key format | accepted | 2026-07-11 |
+| [018](./018-admin-impersonation.md) | Admin impersonation via `X-Act-As` | accepted | 2026-07-16 |
 
 ## 📝 Шаблон ADR
 

@@ -1,11 +1,8 @@
+import { bffAuthHeaders } from '@/services/apiAuth';
 import { apiGet as baseApiGet } from './client';
-import { useSessionStore } from '@/stores/session';
 
 async function authHeaders(): Promise<HeadersInit> {
-  const session = useSessionStore();
-  const token = await session.getAccessToken();
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
+  return bffAuthHeaders(undefined, { optional: true, json: false });
 }
 
 /** GET with Bearer token when Logto session is active. */

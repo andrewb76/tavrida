@@ -1,4 +1,4 @@
-import { optionalBearerToken, requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 import {
   buildCommentTree,
   forumAuthorLabel,
@@ -8,6 +8,14 @@ import {
 } from './forum-tree';
 
 import type { MediaAttachment } from './media';
+
+async function forumAuthHeaders(optional = false): Promise<Record<string, string>> {
+  return bffAuthHeaders(undefined, { json: false, optional });
+}
+
+async function forumJsonHeaders(): Promise<Record<string, string>> {
+  return bffAuthHeaders();
+}
 
 export { buildCommentTree, forumAuthorLabel, type CommentTreeNode, type ForumAuthor, type ForumComment };
 
@@ -90,9 +98,8 @@ export async function fetchForumMeta(): Promise<ForumMeta> {
 }
 
 export async function getTopic(topicId: string): Promise<TopicDetail> {
-  const token = await optionalBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: await forumAuthHeaders(true),
   });
   if (!res.ok) throw new Error('Тема не найдена');
   return (await res.json()) as TopicDetail;
@@ -104,13 +111,9 @@ export async function createTopic(input: {
   body: string;
   attachments?: MediaAttachment[];
 }): Promise<TopicDetail> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -124,13 +127,9 @@ export async function updateTopic(
   topicId: string,
   input: { title?: string; body?: string; attachments?: MediaAttachment[] },
 ): Promise<TopicDetail> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -141,9 +140,8 @@ export async function updateTopic(
 }
 
 export async function listComments(topicId: string): Promise<ForumComment[]> {
-  const token = await optionalBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: await forumAuthHeaders(true),
   });
   if (!res.ok) throw new Error('Не удалось загрузить комментарии');
   const json = (await res.json()) as { data: ForumComment[] };
@@ -154,13 +152,9 @@ export async function createComment(
   topicId: string,
   input: { body: string; parentId?: string; attachments?: MediaAttachment[] },
 ): Promise<ForumComment> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -175,15 +169,11 @@ export async function updateComment(
   commentId: string,
   input: { body?: string; attachments?: MediaAttachment[] },
 ): Promise<ForumComment> {
-  const token = await requireBearerToken();
   const res = await fetch(
     `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,
     {
       method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: await forumJsonHeaders(),
       body: JSON.stringify(input),
     },
   );
@@ -209,13 +199,9 @@ export async function castForumVote(input: {
   contentType: 'topic' | 'comment';
   value: 1 | -1;
 }): Promise<ForumVoteResult> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/votes`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -229,13 +215,9 @@ export async function clearForumVote(input: {
   contentId: string;
   contentType: 'topic' | 'comment';
 }): Promise<ForumVoteResult> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/votes/clear`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -272,13 +254,9 @@ export async function upsertForumReaction(input: {
   contentType: 'topic' | 'comment';
   emojiKey: string;
 }): Promise<{ emojiKey: string | null; cleared?: boolean; updated?: boolean; allowed?: boolean }> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/reactions`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -304,15 +282,11 @@ export async function promoteCommentToTopic(
   title: string;
   movedCommentCount?: number;
 }> {
-  const token = await requireBearerToken();
   const res = await fetch(
     `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}/promote-to-topic`,
     {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: await forumJsonHeaders(),
       body: JSON.stringify(input ?? {}),
     },
   );
@@ -330,13 +304,9 @@ export async function promoteCommentToTopic(
 }
 
 export async function updateTopicTags(topicId: string, tags: string[]): Promise<TopicDetail> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/tags`, {
     method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify({ tags }),
   });
   if (!res.ok) {
@@ -387,13 +357,9 @@ export type CategoryFormInput = {
 };
 
 export async function createCategory(input: CategoryFormInput): Promise<CategoryRecord> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/forum/categories`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -407,13 +373,9 @@ export async function updateCategory(
   categoryId: string,
   input: Partial<CategoryFormInput>,
 ): Promise<CategoryRecord> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -424,10 +386,9 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(categoryId: string): Promise<void> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await forumAuthHeaders(),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;

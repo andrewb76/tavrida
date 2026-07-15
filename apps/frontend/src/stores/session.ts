@@ -6,6 +6,35 @@ export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
 type AccessTokenGetter = () => Promise<string | undefined>;
 
+const ACT_AS_STORAGE_KEY = 'tavrida.actAs';
+
+type ActAsPersisted = {
+  actAsUserId: string;
+  actAsDisplayName: string;
+  actorUserId: string;
+  actorDisplayName: string;
+};
+
+function loadActAs(): ActAsPersisted | null {
+  try {
+    const raw = localStorage.getItem(ACT_AS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ActAsPersisted;
+    if (!parsed?.actAsUserId || !parsed?.actorUserId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveActAs(value: ActAsPersisted | null) {
+  if (!value) {
+    localStorage.removeItem(ACT_AS_STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(ACT_AS_STORAGE_KEY, JSON.stringify(value));
+}
+
 export const useSessionStore = defineStore('session', () => {
   const logtoEnabled = isLogtoConfigured();
 
@@ -20,6 +49,13 @@ export const useSessionStore = defineStore('session', () => {
   const platformRoles = ref<PlatformRole[]>([]);
   const rolesLoading = ref(false);
 
+  /** Impersonation (ADR-018): real admin JWT + X-Act-As target. */
+  const persisted = loadActAs();
+  const actAsUserId = ref<string | undefined>(persisted?.actAsUserId);
+  const actAsDisplayName = ref(persisted?.actAsDisplayName ?? '');
+  const actorUserId = ref<string | undefined>(persisted?.actorUserId);
+  const actorDisplayName = ref(persisted?.actorDisplayName ?? '');
+
   /** Dev-only when Logto env is missing */
   const devAuthenticated = ref(false);
 
@@ -30,6 +66,8 @@ export const useSessionStore = defineStore('session', () => {
     if (logtoEnabled) return isAuthenticated.value;
     return devAuthenticated.value;
   });
+
+  const isImpersonating = computed(() => Boolean(actAsUserId.value));
 
   const isAdmin = computed(() => platformRoles.value.includes('admin'));
   const isModerator = computed(
@@ -82,12 +120,40 @@ export const useSessionStore = defineStore('session', () => {
     rolesLoading.value = loading;
   }
 
+  function startImpersonation(input: {
+    targetUserId: string;
+    targetDisplayName: string;
+  }) {
+    const actorId = userId.value;
+    if (!actorId) throw new Error('Нет сессии администратора');
+    const actorName = displayName.value || 'Админ';
+    actAsUserId.value = input.targetUserId;
+    actAsDisplayName.value = input.targetDisplayName;
+    actorUserId.value = actorId;
+    actorDisplayName.value = actorName;
+    saveActAs({
+      actAsUserId: input.targetUserId,
+      actAsDisplayName: input.targetDisplayName,
+      actorUserId: actorId,
+      actorDisplayName: actorName,
+    });
+  }
+
+  function stopImpersonation() {
+    actAsUserId.value = undefined;
+    actAsDisplayName.value = '';
+    actorUserId.value = undefined;
+    actorDisplayName.value = '';
+    saveActAs(null);
+  }
+
   function signInDev() {
     devAuthenticated.value = true;
     isAuthenticated.value = true;
   }
 
   function signOutDev() {
+    stopImpersonation();
     devAuthenticated.value = false;
     isAuthenticated.value = false;
     platformRoles.value = [];
@@ -107,6 +173,11 @@ export const useSessionStore = defineStore('session', () => {
     rolesLoading,
     isAdmin,
     isModerator,
+    isImpersonating,
+    actAsUserId,
+    actAsDisplayName,
+    actorUserId,
+    actorDisplayName,
     logtoEnabled,
     setAccessTokenGetter,
     getAccessToken,
@@ -116,6 +187,8 @@ export const useSessionStore = defineStore('session', () => {
     setBalance,
     setPlatformRoles,
     setRolesLoading,
+    startImpersonation,
+    stopImpersonation,
     signInDev,
     signOutDev,
   };

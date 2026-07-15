@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type CatalogStatus = 'ACTIVE' | 'ENDING_SOON' | 'SCHEDULED' | 'ENDED' | 'ALL';
 export type CatalogSort =
@@ -111,9 +111,8 @@ export function buildAuctionQuery(filters: AuctionCatalogFilters): string {
 export async function listAuctions(
   filters: AuctionCatalogFilters = {},
 ): Promise<AuctionListResponse> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/auctions${buildAuctionQuery(filters)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
@@ -123,9 +122,8 @@ export async function listAuctions(
 }
 
 async function authGet<T>(path: string): Promise<T> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
@@ -184,13 +182,9 @@ export type CreateAuctionInput = {
 };
 
 async function authPost<T>(path: string, body: unknown): Promise<T> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await bffAuthHeaders(),
     body: JSON.stringify(body),
   });
   if (!res.ok) {

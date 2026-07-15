@@ -36,6 +36,7 @@ Subscriptions (event intent):
   ☐ Novu Dashboard: create workflow tag-content + set NOVU_API_KEY @notifications
   ☐ RMQ consumers → match → notifications @subscriptions @notifications
   ☐ Enrich subscription list titles (topic/tag/auction names via BFF) @frontend @subscriptions
+  ✔ Admin impersonation (X-Act-As + banner + Войти как) @bff @frontend @security @done(26-07-16)
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)

@@ -44,7 +44,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/invites` | GET, POST | BFF orchestration | [invites-api.md](./invites-api.md) |
 | `/api/v1/invites/resolve` | GET | BFF orchestration | public, см. [invites-api.md](./invites-api.md) |
 | `/api/v1/invites/claim` | POST | BFF orchestration | см. [invites-api.md](./invites-api.md) |
-| `/api/v1/me/roles` | GET | BFF + Keto | JWT → platform roles (`member`, `admin`, …) |
+| `/api/v1/me/roles` | GET | BFF + Keto | JWT (+ optional `X-Act-As`) → platform roles |
 | `/api/v1/me/identity` | POST | BFF → user-profile | Sync Logto claims → profile cache (name/avatar for forum) |
 | `/api/v1/admin/settings/club` | GET, PATCH | BFF + settings | Admin: значения домена `club.*` |
 | `/api/v1/admin/settings/registry` | GET | scalar-config | Реестр ключей (вкл. зависшие) |
@@ -60,7 +60,9 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `/api/v1/forum/topics/{id}/tags` | PUT | forum + subscriptions match + notifications | tags + fan-out `tag.content_tagged` |
 | `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
 | `/api/v1/webhooks/logto` | POST | BFF → user-profile | Logto inbound; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
-| `/api/v1/admin/users` | GET, PATCH, POST | BFF + user-profile + Keto + billing | Admin user list / roles / deposit |
+| `/api/v1/admin/users` | GET, PATCH, POST | BFF + user-profile + Keto + billing | Admin list / roles / deposit; UI «Подключиться» |
+
+> **`X-Act-As`:** admin JWT + header target user id → effective `sub`. [impersonation.md](../../09-security/impersonation.md) · [ADR-018](../../03-architecture/adr/018-admin-impersonation.md).
 | `/api/v1/rating/{userId}` | GET | rating | `/internal/v1/rating/{userId}` |
 | `/api/v1/feedback` | POST, GET | feedback | `/internal/v1/feedback` |
 | `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |

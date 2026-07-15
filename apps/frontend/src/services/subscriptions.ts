@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 import type { EventSubscription, SourceDomain, TargetType } from './subscription-helpers';
 
 export type { EventSubscription, SourceDomain, TargetType };
@@ -24,8 +24,7 @@ function apiBase(): string {
 }
 
 async function authHeaders(): Promise<HeadersInit> {
-  const token = await requireBearerToken();
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  return bffAuthHeaders();
 }
 
 export async function listEventSubscriptions(

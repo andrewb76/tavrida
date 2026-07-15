@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
@@ -23,14 +23,9 @@ function apiBase(): string {
 }
 
 async function adminFetch(path: string, init?: RequestInit) {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
+    headers: await bffAuthHeaders(init?.headers, { skipActAs: true }),
   });
 
   if (!res.ok) {

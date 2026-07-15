@@ -1,4 +1,4 @@
-import { requireBearerToken } from './apiAuth';
+import { bffAuthHeaders } from './apiAuth';
 
 export type ClubSettings = {
   'registration.inviteOnly'?: boolean;
@@ -22,9 +22,8 @@ function apiBase(): string {
 }
 
 export async function fetchClubSettings(): Promise<ClubSettings> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/club`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) {
     throw new Error(`Failed to load club settings (${res.status})`);
@@ -33,13 +32,9 @@ export async function fetchClubSettings(): Promise<ClubSettings> {
 }
 
 export async function saveClubSettings(patch: ClubSettings): Promise<ClubSettings> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/club`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await bffAuthHeaders(undefined, { skipActAs: true }),
     body: JSON.stringify(patch),
   });
   if (!res.ok) {
@@ -62,9 +57,8 @@ export type ForumSettings = {
 };
 
 export async function fetchForumSettings(): Promise<ForumSettings> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) {
     throw new Error(`Failed to load forum settings (${res.status})`);
@@ -73,13 +67,9 @@ export async function fetchForumSettings(): Promise<ForumSettings> {
 }
 
 export async function saveForumSettings(patch: ForumSettings): Promise<ForumSettings> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: await bffAuthHeaders(undefined, { skipActAs: true }),
     body: JSON.stringify(patch),
   });
   if (!res.ok) {
@@ -97,9 +87,8 @@ export async function saveForumSettings(patch: ForumSettings): Promise<ForumSett
 }
 
 export async function fetchScalarRegistry(): Promise<ScalarRegistryEntry[]> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/registry`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) {
     throw new Error(`Failed to load scalar registry (${res.status})`);
@@ -109,10 +98,9 @@ export async function fetchScalarRegistry(): Promise<ScalarRegistryEntry[]> {
 }
 
 export async function deleteScalarKey(key: string): Promise<void> {
-  const token = await requireBearerToken();
   const res = await fetch(`${apiBase()}/admin/scalar-config/keys/${encodeURIComponent(key)}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: await bffAuthHeaders(undefined, { json: false, skipActAs: true }),
   });
   if (!res.ok) {
     throw new Error(`Failed to delete scalar key (${res.status})`);
