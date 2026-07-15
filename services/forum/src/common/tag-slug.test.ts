@@ -12,8 +12,16 @@ describe('tag-slug', () => {
     assert.equal(slugifyTag('Монеты'), 'monety');
   });
 
+  it('strips hash before slugify', () => {
+    assert.equal(slugifyTag('#Керамика'), 'keramika');
+  });
+
   it('slugifies latin and spaces', () => {
     assert.equal(slugifyTag('Black Sea'), 'black-sea');
+  });
+
+  it('collapses punctuation to hyphens', () => {
+    assert.equal(slugifyTag('foo---bar!!'), 'foo-bar');
   });
 
   it('never returns empty', () => {

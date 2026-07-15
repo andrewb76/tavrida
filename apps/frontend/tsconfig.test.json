@@ -17,6 +17,8 @@
     "src/env.d.ts",
     "src/services/forum-tree.ts",
     "src/services/forum.test.ts",
+    "src/services/subscription-helpers.ts",
+    "src/services/subscription-helpers.test.ts",
     "src/utils/imageProxy.ts",
     "src/utils/renderForumMarkdown.ts",
     "src/utils/renderForumMarkdown.test.ts"

@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationsClient } from '../notifications/notifications.client';
 import { SubscriptionsClient } from './subscriptions.client';
+import {
+  collectMatchedUserIds,
+  toFanoutResult,
+  type FanoutResult,
+} from './subscription-fanout.logic';
 
-export type FanoutResult = {
-  matchedUserIds: string[];
-  notified: number;
-  skipped: number;
-};
+export type { FanoutResult };
 
 @Injectable()
 export class SubscriptionFanoutService {
@@ -28,15 +29,12 @@ export class SubscriptionFanoutService {
     contentId: string;
     excludeUserIds?: string[];
   }): Promise<FanoutResult> {
-    const exclude = new Set(input.excludeUserIds ?? []);
-    const matched = new Set<string>();
+    const batches: string[][] = [];
 
     for (const tagId of input.tagIds) {
       try {
         const { userIds } = await this.subscriptions.match('tag.content_tagged', { tagId });
-        for (const userId of userIds) {
-          if (!exclude.has(userId)) matched.add(userId);
-        }
+        batches.push(userIds);
       } catch (error) {
         this.logger.warn(
           `tag.content_tagged match failed (${tagId}): ${
@@ -46,8 +44,10 @@ export class SubscriptionFanoutService {
       }
     }
 
+    const matchedUserIds = collectMatchedUserIds(batches, input.excludeUserIds ?? []);
+
     let notified = 0;
-    for (const userId of matched) {
+    for (const userId of matchedUserIds) {
       const ok = await this.notifications.trigger({
         userId,
         workflowId: 'tag-content',
@@ -61,15 +61,14 @@ export class SubscriptionFanoutService {
       if (ok) notified += 1;
     }
 
-    const matchedUserIds = [...matched];
-    const skipped = matchedUserIds.length - notified;
+    const result = toFanoutResult(matchedUserIds, notified);
     if (matchedUserIds.length) {
       this.logger.log(
         `tag.content_tagged topic=${input.topicId} tags=${input.tagIds.length} ` +
-          `matched=${matchedUserIds.length} notified=${notified} skipped=${skipped}`,
+          `matched=${matchedUserIds.length} notified=${notified} skipped=${result.skipped}`,
       );
     }
 
-    return { matchedUserIds, notified, skipped };
+    return result;
   }
 }
