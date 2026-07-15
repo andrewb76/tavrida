@@ -23,6 +23,13 @@ export type CategoryNode = {
 
 export type CategoryRecord = Omit<CategoryNode, 'children'>;
 
+export type ForumTagItem = {
+  id: string;
+  slug: string;
+  displayName: string;
+  isOfficial: boolean;
+};
+
 export type TopicSummary = {
   id: string;
   categoryId: string;
@@ -30,7 +37,9 @@ export type TopicSummary = {
   title: string;
   excerpt: string;
   isPinned: boolean;
+  /** Tag slugs (denormalized). */
   tags?: string[];
+  tagItems?: ForumTagItem[];
   author?: ForumAuthor;
   votePlusCount?: number;
   voteMinusCount?: number;
@@ -44,8 +53,10 @@ export type TopicDetail = TopicSummary & {
   attachments: MediaAttachment[];
   author: ForumAuthor;
   tags?: string[];
+  tagItems?: ForumTagItem[];
   myVote?: 1 | -1 | null;
   canChangeVote?: boolean;
+  addedTagIds?: string[];
 };
 
 export type ForumMeta = {
@@ -333,6 +344,26 @@ export async function updateTopicTags(topicId: string, tags: string[]): Promise<
     throw new Error(err?.detail ?? 'Не удалось обновить теги');
   }
   return (await res.json()) as TopicDetail;
+}
+
+export async function listForumTags(q?: string): Promise<ForumTagItem[]> {
+  const params = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+  const res = await fetch(`${apiBase()}/forum/tags${params}`);
+  if (!res.ok) throw new Error('Не удалось загрузить теги');
+  const json = (await res.json()) as { data: ForumTagItem[] };
+  return json.data;
+}
+
+export async function getForumTag(slug: string): Promise<
+  ForumTagItem & { description: string | null; usageCount: number; topicIds: string[] }
+> {
+  const res = await fetch(`${apiBase()}/forum/tags/${encodeURIComponent(slug)}`);
+  if (!res.ok) throw new Error('Тег не найден');
+  return (await res.json()) as ForumTagItem & {
+    description: string | null;
+    usageCount: number;
+    topicIds: string[];
+  };
 }
 
 export function flattenCategories(nodes: CategoryNode[]): CategoryNode[] {

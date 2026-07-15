@@ -19,6 +19,7 @@ import {
   updateTopic,
   type ForumComment,
   type ForumMeta,
+  type ForumTagItem,
   type TopicDetail,
 } from '@/services/forum';
 import { UiButton, UiIcon } from '@tavrida/ui';
@@ -143,9 +144,9 @@ function onTopicVoteUpdated(result: {
   };
 }
 
-function onTopicTagsUpdated(tags: string[]) {
+function onTopicTagsUpdated(payload: { tags: string[]; tagItems: ForumTagItem[] }) {
   if (!topic.value) return;
-  topic.value = { ...topic.value, tags };
+  topic.value = { ...topic.value, tags: payload.tags, tagItems: payload.tagItems };
 }
 
 function focusCommentForm() {
@@ -304,6 +305,7 @@ async function submitTopicComment() {
         <ForumTopicTags
           :topic-id="topic.id"
           :tags="topic.tags ?? []"
+          :tag-items="topic.tagItems"
           :can-edit="Boolean(session.userId && topic.authorId === session.userId)"
           @updated="onTopicTagsUpdated"
         />

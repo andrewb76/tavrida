@@ -9,13 +9,15 @@ import {
   type TargetType,
 } from '@/services/subscriptions';
 import { useSessionStore } from '@/stores/session';
-import { UiButton } from '@tavrida/ui';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
   sourceDomain: SourceDomain;
   targetType: TargetType;
   targetId: string;
+  /** Icon-only control (e.g. tag chip). */
+  compact?: boolean;
 }>();
 
 const session = useSessionStore();
@@ -82,8 +84,26 @@ watch(
   <div
     v-if="session.isMember"
     class="event-subscribe"
+    :class="{ 'event-subscribe--compact': compact }"
   >
     <UiButton
+      v-if="compact"
+      intent="ghost"
+      size="icon"
+      type="button"
+      :disabled="loading || busy"
+      :aria-label="subscribed ? 'Отписаться от тега' : 'Подписаться на тег'"
+      :title="subscribed ? 'Отписаться' : 'Подписаться'"
+      :aria-pressed="subscribed"
+      @click="toggle"
+    >
+      <UiIcon
+        name="notifications"
+        :size="14"
+      />
+    </UiButton>
+    <UiButton
+      v-else
       intent="secondary"
       size="sm"
       type="button"
@@ -93,7 +113,7 @@ watch(
       {{ subscribed ? 'Отписаться' : 'Подписаться' }}
     </UiButton>
     <p
-      v-if="error"
+      v-if="error && !compact"
       class="event-subscribe__error"
     >
       {{ error }}
@@ -107,6 +127,22 @@ watch(
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25rem;
+}
+
+.event-subscribe--compact {
+  align-items: center;
+}
+
+.event-subscribe--compact :deep(button) {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: inherit;
+  opacity: 0.55;
+}
+
+.event-subscribe--compact :deep(button[aria-pressed='true']) {
+  opacity: 1;
+  color: var(--color-primary, #2563eb);
 }
 
 .event-subscribe__error {

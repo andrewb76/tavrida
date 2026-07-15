@@ -1,8 +1,11 @@
 # 🏷️ Система тегов
 
-> **Статус:** spec ready · **Версия:** 0.1 · **Schema:** `forum` (+ cross-domain refs)
+> **Статус:** implementing · **Версия:** 0.2 · **Schema:** `forum` (+ cross-domain refs)  
+> **Код:** `services/forum` — `Tag` / `ContentTag`; BFF `GET /forum/tags`; UI chips + subscribe
 
-Теги группируют контент **форума**, **аукционов** (лоты), позже **marketplace**. Подписки на тег — [subscriptions](../subscriptions/README.md).
+Теги группируют контент **форума**, позже **аукционов** и **marketplace**. Подписки на тег — [subscriptions](../subscriptions/README.md) (`targetType: TAG`, `sourceDomain: platform`).
+
+**Архитектурное решение (2026-07-15):** отдельный taxonomy-сервис **не** выделяем, пока теги реально не живут в нескольких доменах. SoT остаётся в `forum`; подпискам нужны стабильные `tagId` + событие `tag.content_tagged`, не владение каталогом.
 
 ---
 
@@ -24,11 +27,11 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID PK | — |
-| `slug` | varchar unique | `krym`, `monety` (latin, url-safe) |
+| `slug` | varchar unique | `krym`, `monety` (latin, url-safe; translit из RU) |
 | `displayName` | varchar | «Крым», «Монеты» |
 | `description` | text nullable | Для страницы тега |
 | `color` | varchar nullable | UI chip |
-| `isOfficial` | boolean | Создан admin; синий бейдж |
+| `isOfficial` | boolean | Seed/admin; бейдж «офиц.» |
 | `isHidden` | boolean | Не в autocomplete (mod only) |
 | `usageCount` | int | Denormalized counter |
 | `createdAt` | timestamptz | — |
@@ -37,18 +40,39 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `tagId` | UUID | FK |
-| `contentType` | enum | `topic` \| `comment` \| `auction` \| `marketplace_listing` |
-| `contentId` | UUID | — |
+| `tagId` | UUID | PK part |
+| `contentType` | varchar | `topic` \| `comment` \| `auction` \| `marketplace_listing` |
+| `contentId` | UUID | PK part |
 | `priority` | int nullable | Pro `forum.tagsWithPriority` |
-| `addedBy` | UUID | userId |
+| `addedBy` | varchar | userId |
 | `createdAt` | timestamptz | — |
 
-**Unique:** `(tagId, contentType, contentId)`.
+**PK / unique:** `(tagId, contentType, contentId)`.
+
+### Denormalized `topic.tags` (jsonb)
+
+Массив **slug** для списков карточек без JOIN. SoT — `Tag` + `ContentTag`. При GET topic: lazy sync legacy jsonb → formal rows.
 
 ### Связь с категориями
 
-`category.defaultTags[]` — автоматически при создании topic в ветке ([knowledge-base.md](./knowledge-base.md)).
+`category.defaultTags[]` — автоматически при создании topic в ветке ([knowledge-base.md](./knowledge-base.md)) — next.
+
+---
+
+## ✅ Реализовано
+
+| Слой | Статус |
+|------|--------|
+| Entity `tag` + `content_tag` | ✅ |
+| Seed official: krym / monety / keramika | ✅ |
+| `PUT …/topics/{id}/tags` → ensure Tag + replace ContentTag | ✅ |
+| Response `tagItems[]` + `addedTagIds` | ✅ |
+| `GET /internal/v1/tags?q=` + `GET …/tags/:slug` | ✅ |
+| BFF public same paths | ✅ |
+| UI chips + autocomplete suggest + compact subscribe (bell) | ✅ |
+| Publish `tag.content_tagged` → subscriptions match | ⏳ next (RMQ / BFF fan-out) |
+| Admin POST official / merge | ⏳ |
+| Auction / marketplace ContentTag | ⏳ |
 
 ---
 
@@ -57,21 +81,43 @@
 | Method | Path | Описание |
 |--------|------|----------|
 | GET | `/forum/tags` | Autocomplete `?q=` |
-| GET | `/forum/tags/{slug}` | Страница тега + контент |
-| POST | `/forum/tags` | Admin: создать official tag |
-| PUT | `/forum/topics/{id}/tags` | Заменить набор тегов topic (**v1:** `topic.tags` jsonb, без Tag/ContentTag) |
-| PUT | `/auctions/{id}/tags` | BFF → auction internal (mirror ContentTag) |
+| GET | `/forum/tags/{slug}` | Тег + до 50 `topicIds` |
+| PUT | `/forum/topics/{id}/tags` | Заменить набор: body `{ tags: string[] }` (labels); ответ включает `tagItems`, `addedTagIds` |
+| POST | `/forum/tags` | Admin: создать official tag — later |
+| PUT | `/auctions/{id}/tags` | later |
 
-Лимиты: `forum.tagCountMax` (plan-config) на один объект.
+Лимиты: сейчас UI/сервис max **10**; plan-config `forum.tagCountMax` — next wire.
+
+Тело detail topic:
+
+```json
+{
+  "tags": ["krym"],
+  "tagItems": [
+    { "id": "…", "slug": "krym", "displayName": "Крым", "isOfficial": true }
+  ]
+}
+```
+
+Подписка (уже есть CRUD):
+
+```json
+{
+  "sourceDomain": "platform",
+  "targetType": "TAG",
+  "targetId": "<tagUUID>"
+}
+```
 
 ---
 
-## 💳 Financial-policy
+## 💳 plan-config
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
 | `forum.tagCountMax` | 3 | 10 | ∞ | Тегов на topic/лот |
 | `forum.tagsWithPriority` | feature | false | false | true | Приоритет в ленте |
+| `subscriptions.member.tag.max` | 3 | 10 | ∞ | Подписки на теги |
 
 > Registry: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)
 
@@ -79,26 +125,26 @@
 
 ## 📨 События
 
-| Event | Когда |
-|-------|-------|
-| `forum.content_tagged` | Добавлен тег к topic/comment |
-| `auction.content_tagged` | Тег на лот (producer auction или forum sync) |
-| → subscriptions | Match `TAG` targets |
-| → OpenSearch (post-MVP) | Index facet update |
+| Event | Когда | Статус |
+|-------|-------|--------|
+| `tag.content_tagged` | Добавлен тег к контенту (`payload.tagId`) | payload готов (`addedTagIds`); publish → match ⏳ |
+| → subscriptions | Match `TAG` | match API ✅ |
+| → OpenSearch (post-MVP) | Index facet | — |
 
 ---
 
 ## 🖥️ UI
 
-- Chips под заголовком topic / на карточке лота
-- Autocomplete при создании (official + user не создаёт slug на MVP — только выбор из списка + suggest admin)
-- **Phase 2:** member-proposed tags → mod approval queue
+- Chips под заголовком topic; slug-chips в списке тем
+- Autocomplete suggest при вводе; свободный ввод создаёт non-official Tag
+- Колокольчик на chip → `EventSubscribeButton` compact (`platform` / `TAG`)
+- **Phase 2:** member-proposed → mod approval; admin merge
 
 ---
 
 ## 🔒 Модерация
 
-- Admin merge tags (`moneta` → `monety`)
+- Admin merge tags (`moneta` → `monety`) — later
 - Hidden tags для internal workflows
 - Banned tag slugs in settings: `forum.tags.bannedSlugs`
 

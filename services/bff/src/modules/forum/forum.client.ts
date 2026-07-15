@@ -188,6 +188,21 @@ export class ForumClient {
     );
   }
 
+  listTags(q?: string, limit?: number) {
+    const params = new URLSearchParams();
+    if (q?.trim()) params.set('q', q.trim());
+    if (limit != null) params.set('limit', String(limit));
+    const qs = params.toString();
+    return this.request<{ data: unknown[] }>('GET', `/internal/v1/tags${qs ? `?${qs}` : ''}`);
+  }
+
+  getTagBySlug(slug: string) {
+    return this.request<Record<string, unknown>>(
+      'GET',
+      `/internal/v1/tags/${encodeURIComponent(slug)}`,
+    );
+  }
+
   listReactions(contentId: string, contentType: 'topic' | 'comment') {
     const params = new URLSearchParams({ contentId, contentType });
     return this.request<Record<string, unknown>>('GET', `/internal/v1/reactions?${params}`);

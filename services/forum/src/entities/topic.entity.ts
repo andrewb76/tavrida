@@ -37,7 +37,7 @@ export class TopicEntity {
   @Column('int', { name: 'vote_minus_count', default: 0 })
   voteMinusCount!: number;
 
-  /** Free-form topic tags (v1; formal Tag/ContentTag later). */
+  /** Denormalized tag slugs (SoT: forum.tag + forum.content_tag). */
   @Column('jsonb', { default: () => "'[]'" })
   tags!: string[];
 

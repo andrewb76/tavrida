@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { TagsModule } from '../tags/tags.module';
 import { VotesModule } from '../votes/votes.module';
 import { InternalTopicsController } from './internal-topics.controller';
 import { TopicsService } from './topics.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TopicEntity, CategoryEntity]), VotesModule],
+  imports: [TypeOrmModule.forFeature([TopicEntity, CategoryEntity]), VotesModule, TagsModule],
   controllers: [InternalTopicsController],
   providers: [TopicsService],
   exports: [TopicsService],

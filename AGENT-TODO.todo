@@ -28,6 +28,8 @@ Subscriptions (event intent):
   ✔ Frontend subscribe UI (lot/topic) @frontend @subscriptions @done(26-07-13)
   ✔ DeliveryPreference + digest CRON stub @subscriptions @done(26-07-13)
   ✔ Internal match endpoint @subscriptions @done(26-07-13)
+  ✔ Forum Formal Tag/ContentTag + UI subscribe on tag chip @forum @subscriptions @frontend @done(26-07-15)
+  ☐ Publish tag.content_tagged (forum addedTagIds → match → notifications) @forum @subscriptions
   ☐ RMQ consumers → match → notifications (needs producers + notifications svc) @subscriptions
   ☐ Richer subscriptions UI (categories/tags/list + delivery prefs) @frontend @subscriptions
 

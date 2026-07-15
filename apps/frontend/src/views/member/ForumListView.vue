@@ -167,6 +167,17 @@ function authorOf(topic: TopicSummary) {
             >📌</span>
           </div>
           <p>{{ topic.excerpt }}</p>
+          <ul
+            v-if="topic.tags?.length"
+            class="forum-list__tags"
+          >
+            <li
+              v-for="tag in topic.tags"
+              :key="tag"
+            >
+              #{{ tag }}
+            </li>
+          </ul>
         </RouterLink>
       </li>
     </ul>
@@ -286,6 +297,17 @@ function authorOf(topic: TopicSummary) {
 .forum-list__item-body p {
   margin: 0.5rem 0 0;
   color: var(--color-text-muted, #666);
+}
+
+.forum-list__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #777);
 }
 
 .forum-list__pin {

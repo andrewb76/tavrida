@@ -242,6 +242,16 @@ export class ForumController {
     return this.forum.listCategories();
   }
 
+  @Get('tags')
+  listTags(@Query('q') q?: string, @Query('limit') limit?: string) {
+    return this.forum.listTags(q, limit ? Number(limit) : undefined);
+  }
+
+  @Get('tags/:slug')
+  getTag(@Param('slug') slug: string) {
+    return this.forum.getTagBySlug(slug);
+  }
+
   @Get('topics')
   async listTopics(@Query('categoryId') categoryId?: string, @Query('limit') limit?: string) {
     const res = await this.forum.listTopics({

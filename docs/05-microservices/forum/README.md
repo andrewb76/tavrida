@@ -34,6 +34,8 @@
 | `comment_closure` | Closure table для дерева |
 | `reaction` | emoji-реакции (`emojiKey`) |
 | `content_vote` | +/- : `userId`+`contentId` PK, `value` ±1, `createdAt` |
+| `tag` | Каталог тегов (slug, displayName, official) |
+| `content_tag` | Связь tag ↔ topic (позже auction/marketplace) |
 
 ## +/- голоса
 
@@ -59,7 +61,9 @@
 | GET | `/forum/categories` | Дерево |
 | GET/POST | `/forum/topics` | Список / создание |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote` при auth) / edit window |
-| PUT | `/forum/topics/{id}/tags` | Заменить `tags: string[]` (автор темы; v1 jsonb) |
+| GET | `/forum/tags` | Autocomplete `?q=` |
+| GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
+| PUT | `/forum/topics/{id}/tags` | Заменить теги (labels → Tag/ContentTag; ответ `tagItems`) |
 | GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth |
 | POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + перенос subtree (автор comment/topic) |
 | POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |

@@ -8,6 +8,7 @@ import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { TagsService } from '../tags/tags.service';
 import { VotesService } from '../votes/votes.service';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class TopicsService {
     private readonly categories: Repository<CategoryEntity>,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
+    private readonly tags: TagsService,
   ) {}
 
   async list(input: { categoryId?: string; limit?: number }) {
@@ -149,16 +151,20 @@ export class TopicsService {
         detail: 'Только автор может менять теги темы',
       });
     }
-    const cleaned = [
-      ...new Set(
-        input.tags
-          .map((t) => t.trim().replace(/^#/, '').slice(0, 32))
-          .filter((t) => t.length > 0),
-      ),
-    ].slice(0, 10);
-    row.tags = cleaned;
-    await this.topics.save(row);
-    return this.toDetail(row);
+    const { tagItems, slugs, addedTagIds } = await this.tags.replaceTopicTags({
+      topicId: row.id,
+      addedBy: input.authorId,
+      labels: input.tags,
+    });
+    row.tags = slugs;
+    const detail = await this.toDetail(row);
+    return {
+      ...detail,
+      tags: slugs,
+      tagItems,
+      /** For BFF / RMQ: newly attached tags → `tag.content_tagged`. */
+      addedTagIds,
+    };
   }
 
   private mediaPublicBaseUrl() {
@@ -169,7 +175,7 @@ export class TopicsService {
     );
   }
 
-  private toSummary(row: TopicEntity) {
+  private toSummary(row: TopicEntity, tagItems?: Awaited<ReturnType<TagsService['listForContent']>>) {
     return {
       id: row.id,
       categoryId: row.categoryId,
@@ -180,7 +186,8 @@ export class TopicsService {
       votePlusCount: row.votePlusCount ?? 0,
       voteMinusCount: row.voteMinusCount ?? 0,
       score: (row.votePlusCount ?? 0) - (row.voteMinusCount ?? 0),
-      tags: row.tags ?? [],
+      tags: tagItems?.map((t) => t.slug) ?? row.tags ?? [],
+      tagItems: tagItems ?? undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -199,8 +206,9 @@ export class TopicsService {
       mine?.createdAt ?? null,
       changeWindowMinutes,
     );
+    const tagItems = await this.tags.syncLegacyTopic(row);
     return {
-      ...this.toSummary(row),
+      ...this.toSummary(row, tagItems),
       body: row.body,
       attachments: row.attachments ?? [],
       myVote: vote.myVote,
