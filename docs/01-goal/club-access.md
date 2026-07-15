@@ -105,7 +105,7 @@ sequenceDiagram
 
 | Ключ | Free | Basic | Pro |
 |------|------|-------|-----|
-| `club.invitesPerMonth` | 1 | 3 | 10 |
+| `club.member.invite.monthlyMax` | 1 | 3 | 10 |
 
 ---
 

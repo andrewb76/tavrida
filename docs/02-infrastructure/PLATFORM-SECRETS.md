@@ -101,7 +101,7 @@
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
 | `KETO_ADMIN_RELATION` | нет | `admin` | Admin relation name |
 | `CLUB_INVITE_VALIDITY_DAYS` | нет | `14` | **Deprecated** — fallback если settings недоступен; primary: `club.invite.validityDays` (admin `/admin/settings`) |
-| `CLUB_INVITES_PER_MONTH` | нет | `10` | Лимит инвайтов/мес (v1 env) |
+| `CLUB_INVITES_PER_MONTH` | нет | `10` | **Deprecated** — fallback если plan-config недоступен; primary: `club.member.invite.monthlyMax` |
 | `CLUB_INVITES_UNLIMITED_ISSUER_IDS` | нет | — | CSV Logto `sub` без лимита (fallback без Keto) |
 
 > В README BFF указано `{SERVICE}_URL` — полный список зафиксирован здесь.

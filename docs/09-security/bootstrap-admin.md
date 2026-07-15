@@ -65,7 +65,7 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 
 ## Как BFF использует admin
 
-`POST /api/v1/invites` — лимит `CLUB_INVITES_PER_MONTH` (default 10). **Пропускается**, если:
+`POST /api/v1/invites` — лимит plan-config `club.member.invite.monthlyMax` (env `CLUB_INVITES_PER_MONTH` — fallback). **Пропускается**, если:
 
 1. **Keto:** `platform:tavrida-lot#admin@user:{sub}` → `allowed: true`, или
 2. **Env fallback:** `sub` в `CLUB_INVITES_UNLIMITED_ISSUER_IDS` (временный костыль без Keto).

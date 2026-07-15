@@ -117,7 +117,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 ## ⚙️ Переменные scalar-config
 
 Не владеет domain settings (не регистрирует ключи в `services/scalar-config`).  
-Потребляет `club.*` через BFF и `club.invitesPerMonth` через plan-config.
+Потребляет `club.*` через BFF и `club.member.invite.monthlyMax` через plan-config.
 
 ## 💳 Переменные plan-config
 
@@ -125,8 +125,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Ключ | Описание | Дефолты (planValues) |
 |------|----------|----------------------|
-| `club.invitesPerMonth` | Лимит новых кодов | 1 / 3 / −1 |
-
+| `club.member.invite.monthlyMax` | Лимит новых кодов / месяц | 1 / 3 / 10 |
 Целевой файл seed: `services/user-profile/src/config/plan-variables.ts` (см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md)).
 
 > [club-access.md](../../01-goal/club-access.md) · [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md)

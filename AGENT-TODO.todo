@@ -5,7 +5,6 @@ Agent backlog (Tavrida Lot):
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
   ☐ E2E: create → resolve → mock signIn → claim @bff
-  ☐ Интеграция club.invitesPerMonth через plan-config (вместо env) @bff @plan-config
 
 Vanga (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + vanga.defaults.yaml @vanga
@@ -58,6 +57,7 @@ Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 
 Archive:
+  ✔ Интеграция club.member.invite.monthlyMax через plan-config @bff @plan-config @done(26-07-16)
   ✔ Shared subscription store для tag chips (N× GET /subscriptions) @frontend @subscriptions @done(26-07-16)
   ✔ OpenAPI fragment для invites в docs/06-api/invites-api.md @bff @docs @done(26-07-16)
   ✔ BFF POST /plans/activate + billing charge (price>0) @plan-config @billing @done(26-07-16)

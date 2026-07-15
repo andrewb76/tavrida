@@ -243,7 +243,7 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     variableKey: 'club.member.invite.monthlyMax',
     free: { limitValue: 1 },
     basic: { limitValue: 3 },
-    pro: { limitValue: -1 },
+    pro: { limitValue: 10 },
   },
   {
     variableKey: 'auction.bidder.participation.activeMax',

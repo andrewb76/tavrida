@@ -47,7 +47,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Monthly invite limit exceeded
+          description: Monthly invite limit exceeded (club.member.invite.monthlyMax)
         '422':
           description: Invalid email
         '502':
