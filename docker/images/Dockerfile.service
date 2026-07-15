@@ -16,7 +16,7 @@ FROM node:20-alpine AS build
 ARG SERVICE_PKG
 ARG SERVICE_DIR
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
 
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./

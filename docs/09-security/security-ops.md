@@ -52,7 +52,7 @@ Inject: Swarm secrets → file or env at runtime. **Never** bake secrets in Dock
 
 ## 🔍 Dependency security
 
-- `pnpm audit` in CI (warn on high)
+- `pnpm audit` in CI (`--audit-level=high`; requires pnpm 11+ since npm retired legacy audit endpoints, Apr 2026)
 - Pin major versions in monorepo
 - SaaS: Logto, Novu, Grafana — vendor trust boundary
 

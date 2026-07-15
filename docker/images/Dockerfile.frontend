@@ -27,7 +27,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_LOGTO_APP_ID=$VITE_LOGTO_APP_ID \
     VITE_LOGTO_API_RESOURCE=$VITE_LOGTO_API_RESOURCE
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
 
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
