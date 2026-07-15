@@ -32,7 +32,6 @@ Subscriptions (event intent):
   ✔ Scaffold services/notifications + trigger/mock + tag-content workflow id @notifications @done(26-07-15)
   ✔ Richer subscriptions UI (list + delivery prefs) @frontend @subscriptions @done(26-07-15)
   ☐ Novu Dashboard: create workflow tag-content + set NOVU_API_KEY @notifications
-  ☐ Shared subscription store для tag chips (N× GET /subscriptions) @frontend @subscriptions
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
@@ -59,6 +58,7 @@ Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 
 Archive:
+  ✔ Shared subscription store для tag chips (N× GET /subscriptions) @frontend @subscriptions @done(26-07-16)
   ✔ OpenAPI fragment для invites в docs/06-api/invites-api.md @bff @docs @done(26-07-16)
   ✔ BFF POST /plans/activate + billing charge (price>0) @plan-config @billing @done(26-07-16)
   ✔ RMQ consumers → match → notifications @subscriptions @notifications @done(26-07-16)

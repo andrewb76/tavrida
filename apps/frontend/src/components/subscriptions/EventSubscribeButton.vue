@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import {
-  createEventSubscription,
-  deleteEventSubscription,
   findSubscription,
-  listEventSubscriptions,
-  type EventSubscription,
   type SourceDomain,
   type TargetType,
 } from '@/services/subscriptions';
 import { useSessionStore } from '@/stores/session';
+import { useSubscriptionsStore } from '@/stores/subscriptions';
 import { UiButton, UiIcon } from '@tavrida/ui';
+import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -21,61 +19,59 @@ const props = defineProps<{
 }>();
 
 const session = useSessionStore();
-const rows = ref<EventSubscription[]>([]);
-const loading = ref(false);
+const store = useSubscriptionsStore();
+const { allRows, error: storeError } = storeToRefs(store);
+
 const busy = ref(false);
-const error = ref<string | null>(null);
+const localError = ref<string | null>(null);
 
 const current = computed(() =>
-  findSubscription(rows.value, props.targetType, props.targetId),
+  findSubscription(allRows.value, props.targetType, props.targetId),
 );
 
 const subscribed = computed(() => Boolean(current.value));
+const loading = computed(() => store.isLoading(props.sourceDomain));
+const error = computed(() => localError.value ?? storeError.value);
 
-async function refresh() {
-  if (!session.isMember) {
-    rows.value = [];
-    return;
-  }
-  loading.value = true;
-  error.value = null;
+async function ensure() {
+  if (!session.isMember) return;
+  localError.value = null;
   try {
-    rows.value = await listEventSubscriptions(props.sourceDomain);
+    await store.ensureLoaded(props.sourceDomain);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка подписки';
-  } finally {
-    loading.value = false;
+    localError.value = e instanceof Error ? e.message : 'Ошибка подписки';
   }
 }
 
 async function toggle() {
   if (!session.isMember || busy.value) return;
   busy.value = true;
-  error.value = null;
+  localError.value = null;
   try {
     if (current.value) {
-      await deleteEventSubscription(current.value.id);
-      rows.value = rows.value.filter((row) => row.id !== current.value!.id);
+      await store.unsubscribe(current.value.id);
     } else {
-      const created = await createEventSubscription({
+      await store.subscribe({
         sourceDomain: props.sourceDomain,
         targetType: props.targetType,
         targetId: props.targetId,
       });
-      rows.value = [created, ...rows.value];
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Не удалось изменить подписку';
+    localError.value = e instanceof Error ? e.message : 'Не удалось изменить подписку';
   } finally {
     busy.value = false;
   }
 }
 
-onMounted(refresh);
+onMounted(() => {
+  void ensure();
+});
 watch(
   () => [props.targetId, props.targetType, props.sourceDomain, session.isMember] as const,
-  () => {
-    void refresh();
+  ([, , , isMember]) => {
+    if (!isMember) return;
+    void ensure();
   },
 );
 </script>

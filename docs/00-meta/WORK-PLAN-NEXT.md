@@ -112,7 +112,7 @@ flowchart LR
 - [x] Минимальный publish/consume `tag.content_tagged` (BFF → RMQ → subscriptions → notifications; HTTP fallback если RMQ недоступен)
 - [x] Снять await fan-out с критического write path (`mode: async`)
 - [x] Enrich subscription list titles через BFF; ссылки на TAG (`/forum/tags/:slug`)
-- [ ] (желательно) shared subscription store для chip'ов — **отложено** (не блокирует Day 3 DoD)
+- [x] shared subscription store для chip'ов (`useSubscriptionsStore` + dedupe per domain)
 
 ### Day 4 — Product slice + backlog hygiene
 

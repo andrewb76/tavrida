@@ -19,6 +19,8 @@
     "src/services/forum.test.ts",
     "src/services/subscription-helpers.ts",
     "src/services/subscription-helpers.test.ts",
+    "src/services/subscription-cache.logic.ts",
+    "src/services/subscription-cache.logic.test.ts",
     "src/utils/imageProxy.ts",
     "src/utils/renderForumMarkdown.ts",
     "src/utils/renderForumMarkdown.test.ts"

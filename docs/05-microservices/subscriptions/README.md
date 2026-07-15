@@ -23,6 +23,7 @@
 | Limit check via plan-config (`subscriptions.member.*`) | ✅ seed в `default-seed.ts` |
 | Frontend subscribe toggle (тема / лот / тег) | ✅ |
 | Frontend `/subscriptions` — список + delivery prefs | ✅ |
+| Frontend shared store (`useSubscriptionsStore`) — dedupe GET по domain для chip'ов | ✅ |
 | Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
 | BFF fan-out `tag.content_tagged` → match → notifications | ✅ async (RMQ publish; HTTP fallback) |
 | RMQ consumer `tag.content_tagged` → match → notifications | ✅ (`TagEventsConsumer`, queue `subscriptions.events`) |

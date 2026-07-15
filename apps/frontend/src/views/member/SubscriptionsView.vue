@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import {
-  deleteEventSubscription,
   getDeliveryPreference,
-  listEventSubscriptions,
   sourceDomainLabel,
   subscriptionHref,
   subscriptionLabel,
@@ -12,14 +10,17 @@ import {
   type EventSubscription,
   type SourceDomain,
 } from '@/services/subscriptions';
+import { useSubscriptionsStore } from '@/stores/subscriptions';
 import { UiButton } from '@tavrida/ui';
+import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 type FilterKey = 'all' | SourceDomain;
 
-const rows = ref<EventSubscription[]>([]);
+const subsStore = useSubscriptionsStore();
+const { allRows: rows } = storeToRefs(subsStore);
 const delivery = ref<DeliveryPreference | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -60,11 +61,10 @@ async function loadAll() {
   loading.value = true;
   error.value = null;
   try {
-    const [subs, prefs] = await Promise.all([
-      listEventSubscriptions(),
+    const [, prefs] = await Promise.all([
+      subsStore.ensureLoaded('all'),
       getDeliveryPreference(),
     ]);
-    rows.value = subs;
     delivery.value = prefs;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить подписки';
@@ -76,8 +76,7 @@ async function loadAll() {
 async function unsubscribe(row: EventSubscription) {
   busyId.value = row.id;
   try {
-    await deleteEventSubscription(row.id);
-    rows.value = rows.value.filter((r) => r.id !== row.id);
+    await subsStore.unsubscribe(row.id);
     toast.success('Подписка отменена');
   } catch (e) {
     toast.error(e instanceof Error ? e.message : 'Не удалось отписаться');

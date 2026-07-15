@@ -84,6 +84,8 @@ export function useAuth() {
     async function signOut() {
       session.stopImpersonation();
       session.clearProfile();
+      const { useSubscriptionsStore } = await import('@/stores/subscriptions');
+      useSubscriptionsStore().invalidate();
       await logto.signOut(signOutRedirectUri());
     }
 
@@ -128,6 +130,9 @@ export function useAuth() {
     },
     signOut: () => {
       session.signOutDev();
+      void import('@/stores/subscriptions').then(({ useSubscriptionsStore }) => {
+        useSubscriptionsStore().invalidate();
+      });
       void router.push({ name: 'landing' });
     },
   };
