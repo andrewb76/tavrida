@@ -4,9 +4,8 @@ Agent backlog (Tavrida Lot):
 
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
-  ☐ OpenAPI fragment для invites в docs/06-api @bff @docs
   ☐ E2E: create → resolve → mock signIn → claim @bff
-  ☐ Интеграция club.invitesPerMonth через financial-policy (вместо env) @bff
+  ☐ Интеграция club.invitesPerMonth через plan-config (вместо env) @bff @plan-config
 
 Vanga (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + vanga.defaults.yaml @vanga
@@ -14,14 +13,13 @@ Vanga (прогноз дохода):
   ✔ BFF GET/POST /admin/vanga/* @vanga @bff @done(26-07-11)
   ✔ Frontend /admin/vanga — вкладки по topic-index @vanga @frontend @done(26-07-11)
   ☐ services/vanga :3013 — saved scenarios (фаза 3) @vanga
-
-Financial-policy:
-  ✔ services/financial-policy v1 — plans, limits, subscription scaffold @financial-policy @done(26-07-11)
-  ☐ BFF plans activate + billing charge @financial-policy @billing
-  ☐ CRON автопродление подписок @financial-policy
   ☐ Экспорт CSV/PDF @vanga @docs
   ☐ Monte Carlo @vanga
   ☐ settings domain vanga.* @vanga @settings
+
+plan-config:
+  ✔ services/plan-config v1 — plans, limits, subscription scaffold @plan-config @done(26-07-11)
+  ☐ CRON автопродление подписок @plan-config @billing
 
 Subscriptions (event intent):
   ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)
@@ -61,6 +59,8 @@ Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 
 Archive:
+  ✔ OpenAPI fragment для invites в docs/06-api/invites-api.md @bff @docs @done(26-07-16)
+  ✔ BFF POST /plans/activate + billing charge (price>0) @plan-config @billing @done(26-07-16)
   ✔ RMQ consumers → match → notifications @subscriptions @notifications @done(26-07-16)
   ✔ Enrich subscription list titles (topic/tag/auction names via BFF) @frontend @subscriptions @done(26-07-16)
   ✔ Admin impersonation (X-Act-As + banner + Войти как) @bff @frontend @security @done(26-07-16)

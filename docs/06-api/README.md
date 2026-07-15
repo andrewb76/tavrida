@@ -145,7 +145,7 @@ Idempotency-Key: {uuid}
 | `/wallets` | deposit, balance, transactions | billing |
 | `/plans` | list, activate, subscription | plan-config |
 | `/profile` | get, notes | user-profile |
-| `/invites` | create, list, resolve, claim | BFF + Logto M2M — [spec](../05-microservices/bff/invites-api.md) |
+| `/invites` | create, list, resolve, claim | BFF + Logto M2M — [OpenAPI fragment](./invites-api.md) · [full spec](../05-microservices/bff/invites-api.md) |
 | `/forum/*` | topics, comments, reactions | forum |
 | `/rating` | get | rating |
 | `/feedback` | submit, status | feedback |
@@ -156,12 +156,12 @@ Idempotency-Key: {uuid}
 | `/marketplace` | listings + orders | marketplace |
 | `/settings` | get (public subset) | scalar-config |
 
-> OpenAPI spec: TODO `06-api/openapi.yaml` (генерация из NestJS decorators)
+> OpenAPI fragments: [invites-api.md](./invites-api.md), [vanga-admin-api.md](./vanga-admin-api.md). Full `openapi.yaml` — TODO (генерация из NestJS decorators).
 
 ## 🔗 Связанные разделы
 
 - [BFF](../05-microservices/bff/README.md)
-- [BFF invites API](../05-microservices/bff/invites-api.md)
+- [Invites API (fragment)](./invites-api.md) · [full invites spec](../05-microservices/bff/invites-api.md)
 - [Vanga admin API](./vanga-admin-api.md)
 - [Security](../09-security/README.md)
 - [Architecture](../03-architecture/README.md)

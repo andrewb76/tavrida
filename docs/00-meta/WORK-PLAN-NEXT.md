@@ -43,7 +43,7 @@ flowchart LR
 | **MED** | Architecture overview: `settings`, `feedback`, `auction-subscriptions` | [03-architecture/README.md](../03-architecture/README.md) | Canonical names · Day 1 |
 | **MED** | local-dev: нет marketplace / deal-feedback / periods | [local-dev.md](../04-deployment/local-dev.md) | Добавить порты · Day 1 |
 | **MED** | swarm-stacks / naming examples: старые имена | [swarm-stacks.md](../04-deployment/swarm-stacks.md), [naming.md](../13-maintenance/naming.md) | Rename · Day 1 (по возможности) |
-| **LOW** | AGENT-TODO секция «Financial-policy»; item activate+charge вероятно уже есть | [AGENT-TODO.todo](../../AGENT-TODO.todo) · `PlansController.activate` | Проверить · Day 4 |
+| **LOW** | AGENT-TODO секция «Financial-policy»; item activate+charge | [AGENT-TODO.todo](../../AGENT-TODO.todo) · `PlansController.activate` | ✔ Day 4 — rename + activate verified |
 | **LOW** | DOCS-ROADMAP «код↔docs parity ~15%» занижен относительно факта | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | Обновить после Day 1 |
 
 ---
@@ -116,10 +116,10 @@ flowchart LR
 
 ### Day 4 — Product slice + backlog hygiene
 
-- [ ] Закрыть UX titles, если не уложились в Day 3; иначе OpenAPI fragment invites в `docs/06-api`
-- [ ] Проверить `POST /plans/activate` + billing charge → ✔ в AGENT-TODO или оставить с пометкой gap
-- [ ] Переименовать секцию Financial-policy → plan-config в AGENT-TODO
-- [ ] Обновить строки в AGENT-DOCS-INDEX (дата, статусы)
+- [x] UX titles закрыты в Day 3 → OpenAPI fragment invites в [docs/06-api/invites-api.md](../06-api/invites-api.md)
+- [x] Проверен `POST /plans/activate` + billing charge (plan-config → billing) → ✔ в AGENT-TODO; CRON автопродление остаётся open
+- [x] Секция Financial-policy → plan-config в AGENT-TODO
+- [x] Обновлены строки в AGENT-DOCS-INDEX (дата, статусы)
 
 ---
 
