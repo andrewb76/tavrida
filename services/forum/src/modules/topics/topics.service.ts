@@ -82,6 +82,7 @@ export class TopicsService {
       body: input.body.trim(),
       attachments,
       isPinned: false,
+      tags: [],
     });
     await this.topics.save(row);
     return this.toDetail(row);
@@ -137,6 +138,29 @@ export class TopicsService {
     return this.toDetail(row);
   }
 
+  async updateTags(input: { topicId: string; authorId: string; tags: string[] }) {
+    const row = await this.topics.findOne({ where: { id: input.topicId } });
+    if (!row) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+    if (row.authorId !== input.authorId) {
+      throw new BadRequestException({
+        type: 'forbidden',
+        detail: 'Только автор может менять теги темы',
+      });
+    }
+    const cleaned = [
+      ...new Set(
+        input.tags
+          .map((t) => t.trim().replace(/^#/, '').slice(0, 32))
+          .filter((t) => t.length > 0),
+      ),
+    ].slice(0, 10);
+    row.tags = cleaned;
+    await this.topics.save(row);
+    return this.toDetail(row);
+  }
+
   private mediaPublicBaseUrl() {
     return (
       this.config.get<string>('MEDIA_PUBLIC_BASE_URL') ??
@@ -156,6 +180,7 @@ export class TopicsService {
       votePlusCount: row.votePlusCount ?? 0,
       voteMinusCount: row.voteMinusCount ?? 0,
       score: (row.votePlusCount ?? 0) - (row.voteMinusCount ?? 0),
+      tags: row.tags ?? [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

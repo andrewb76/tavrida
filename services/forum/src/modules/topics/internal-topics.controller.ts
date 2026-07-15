@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -156,5 +156,13 @@ export class InternalTopicsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() body: UpdateTopicRequestDto) {
     return this.topics.update({ topicId: id, ...body });
+  }
+
+  @Put(':id/tags')
+  updateTags(
+    @Param('id') id: string,
+    @Body() body: { authorId: string; tags: string[] },
+  ) {
+    return this.topics.updateTags({ topicId: id, authorId: body.authorId, tags: body.tags });
   }
 }

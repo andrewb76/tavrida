@@ -168,6 +168,26 @@ export class ForumClient {
     );
   }
 
+  promoteCommentToTopic(
+    topicId: string,
+    commentId: string,
+    input: { actorId: string; title?: string },
+  ) {
+    return this.request<Record<string, unknown>>(
+      'POST',
+      `/internal/v1/topics/${topicId}/comments/${commentId}/promote-to-topic`,
+      input,
+    );
+  }
+
+  updateTopicTags(topicId: string, input: { authorId: string; tags: string[] }) {
+    return this.request<Record<string, unknown>>(
+      'PUT',
+      `/internal/v1/topics/${topicId}/tags`,
+      input,
+    );
+  }
+
   listReactions(contentId: string, contentType: 'topic' | 'comment') {
     const params = new URLSearchParams({ contentId, contentType });
     return this.request<Record<string, unknown>>('GET', `/internal/v1/reactions?${params}`);

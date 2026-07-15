@@ -2,17 +2,28 @@
 import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
+import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
-import { createComment, forumAuthorLabel, updateComment, type CommentTreeNode, type ForumComment } from '@/services/forum';
-import { UiButton } from '@tavrida/ui';
+import {
+  createComment,
+  forumAuthorLabel,
+  promoteCommentToTopic,
+  updateComment,
+  type CommentTreeNode,
+  type ForumComment,
+} from '@/services/forum';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { computed, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
   node: CommentTreeNode;
   topicId: string;
+  topicAuthorId?: string | null;
   depth: number;
   editWindowMinutes: number;
   currentUserId?: string | null;
@@ -48,12 +59,20 @@ const editError = ref<string | null>(null);
 const replyBody = ref('');
 const posting = ref(false);
 const postError = ref<string | null>(null);
+const promoting = ref(false);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
 
 const canEdit = computed(() => {
   if (!props.currentUserId || props.node.authorId !== props.currentUserId) return false;
   return canEditForumContent(props.node.createdAt, props.editWindowMinutes);
+});
+
+const canPromote = computed(() => {
+  if (!props.currentUserId || props.node.promotedTopicId) return false;
+  return (
+    props.node.authorId === props.currentUserId || props.topicAuthorId === props.currentUserId
+  );
 });
 
 function startEdit() {
@@ -106,6 +125,20 @@ async function submitReply() {
     posting.value = false;
   }
 }
+
+async function onPromote() {
+  if (!canPromote.value || promoting.value) return;
+  promoting.value = true;
+  try {
+    const result = await promoteCommentToTopic(props.topicId, props.node.id);
+    emit('updated', { ...props.node, promotedTopicId: result.promotedTopicId });
+    toast.success('Комментарий выделен в тему');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось выделить в тему');
+  } finally {
+    promoting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -116,33 +149,76 @@ async function submitReply() {
     <article class="forum-comment__card">
       <header class="forum-comment__header">
         <UserAvatar
-          :avatar-url="node.author.avatarUrl"
+          class="forum-comment__avatar"
+          :avatar-url="node.author?.avatarUrl"
           :label="forumAuthorLabel(node.author)"
-          :user-id="node.author.userId"
+          :user-id="node.author?.userId ?? node.authorId"
           size="sm"
         />
         <div class="forum-comment__header-text">
           <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
           <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
         </div>
-        <UiButton
-          intent="ghost"
-          size="sm"
-          type="button"
-          class="forum-comment__reply-btn"
-          @click="showReply = !showReply"
+        <div
+          class="forum-comment__actions"
+          role="group"
+          aria-label="Действия с комментарием"
         >
-          {{ showReply ? 'Отмена' : 'Ответить' }}
-        </UiButton>
-        <UiButton
-          v-if="canEdit && !editing"
-          intent="ghost"
-          size="sm"
-          type="button"
-          @click="startEdit"
-        >
-          Редактировать
-        </UiButton>
+          <UiButton
+            intent="ghost"
+            size="icon"
+            type="button"
+            :aria-label="showReply ? 'Закрыть ответ' : 'Ответить'"
+            :title="showReply ? 'Закрыть ответ' : 'Ответить'"
+            @click="showReply = !showReply"
+          >
+            <UiIcon
+              name="reply"
+              :size="18"
+            />
+          </UiButton>
+          <UiButton
+            v-if="canEdit && !editing"
+            intent="ghost"
+            size="icon"
+            type="button"
+            aria-label="Редактировать"
+            title="Редактировать"
+            @click="startEdit"
+          >
+            <UiIcon
+              name="edit"
+              :size="18"
+            />
+          </UiButton>
+          <UiButton
+            v-if="canPromote"
+            intent="ghost"
+            size="icon"
+            type="button"
+            aria-label="Выделить в тему"
+            title="Выделить в тему"
+            :disabled="promoting"
+            @click="onPromote"
+          >
+            <UiIcon
+              name="promote"
+              :size="18"
+            />
+          </UiButton>
+          <RouterLink
+            v-else-if="node.promotedTopicId"
+            :to="{ name: 'forum-topic', params: { id: node.promotedTopicId } }"
+            class="forum-comment__promoted-link"
+            title="Открыть выделенную тему"
+          >
+            <UiIcon
+              name="promote"
+              :size="18"
+              label="Открыть выделенную тему"
+            />
+          </RouterLink>
+        </div>
       </header>
 
       <form
@@ -194,17 +270,24 @@ async function submitReply() {
         variant="forum"
       />
 
-      <ForumVoteBar
-        class="mt-2"
-        content-type="comment"
-        :content-id="node.id"
-        :plus-count="node.votePlusCount ?? 0"
-        :minus-count="node.voteMinusCount ?? 0"
-        :my-vote="node.myVote ?? null"
-        :can-change="node.canChangeVote ?? true"
-        :disabled="!currentUserId || node.authorId === currentUserId"
-        @updated="onVoteUpdated"
-      />
+      <div class="forum-comment__toolbar">
+        <ForumVoteBar
+          content-type="comment"
+          :content-id="node.id"
+          :plus-count="node.votePlusCount ?? 0"
+          :minus-count="node.voteMinusCount ?? 0"
+          :my-vote="node.myVote ?? null"
+          :can-change="node.canChangeVote ?? true"
+          :disabled="!currentUserId || node.authorId === currentUserId"
+          @updated="onVoteUpdated"
+        />
+        <ForumReactionBar
+          content-type="comment"
+          :content-id="node.id"
+          :current-user-id="currentUserId"
+          :disabled="!currentUserId"
+        />
+      </div>
 
       <form
         v-if="showReply"
@@ -269,6 +352,7 @@ async function submitReply() {
         :key="child.id"
         :node="child"
         :topic-id="topicId"
+        :topic-author-id="topicAuthorId"
         :depth="depth + 1"
         :edit-window-minutes="editWindowMinutes"
         :current-user-id="currentUserId"
@@ -298,6 +382,10 @@ async function submitReply() {
   margin-bottom: 0.5rem;
 }
 
+.forum-comment__avatar {
+  flex: none;
+}
+
 .forum-comment__header-text {
   display: grid;
   gap: 0.1rem;
@@ -316,8 +404,28 @@ async function submitReply() {
   color: var(--color-text-muted, #666);
 }
 
-.forum-comment__reply-btn {
+.forum-comment__actions {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.forum-comment__promoted-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--color-primary, #2563eb);
+}
+
+.forum-comment__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .forum-comment__children {

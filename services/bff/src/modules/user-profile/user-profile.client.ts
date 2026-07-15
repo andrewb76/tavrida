@@ -140,10 +140,13 @@ export class UserProfileClient {
       data: Array<{
         userId: string;
         displayName: string | null;
+        username: string | null;
         avatarUrl: string | null;
       }>;
     }>('POST', '/internal/v1/users/lookup', { ids: userIds });
-    return res.data;
+    // Nest returns `{ data: [...] }`; tolerate a bare array if the shape changes.
+    if (Array.isArray(res)) return res;
+    return Array.isArray(res?.data) ? res.data : [];
   }
 
   async getPublicProfile(userId: string) {

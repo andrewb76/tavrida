@@ -20,6 +20,10 @@ export const uiIcons = {
   chevronLeft: 'lucide:chevron-left',
   settings: 'lucide:settings',
   menu: 'lucide:menu',
+  reply: 'lucide:message-circle',
+  edit: 'lucide:pencil',
+  promote: 'lucide:split',
+  tag: 'lucide:tag',
 } as const;
 
 export type UiIconName = keyof typeof uiIcons | (string & {});

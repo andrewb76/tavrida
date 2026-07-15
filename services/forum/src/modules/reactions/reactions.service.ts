@@ -61,6 +61,10 @@ export class ReactionsService {
     });
 
     if (existing) {
+      if (existing.emojiKey === input.emojiKey) {
+        await this.reactions.remove(existing);
+        return { emojiKey: null, cleared: true, updated: false };
+      }
       existing.emojiKey = input.emojiKey;
       await this.reactions.save(existing);
       return { reactionId: existing.contentId, emojiKey: existing.emojiKey, updated: true };
@@ -74,5 +78,22 @@ export class ReactionsService {
     });
     await this.reactions.save(row);
     return { reactionId: row.contentId, emojiKey: row.emojiKey, updated: false };
+  }
+
+  async clear(input: {
+    contentId: string;
+    contentType: ForumContentType;
+    userId: string;
+  }) {
+    const existing = await this.reactions.findOne({
+      where: {
+        contentId: input.contentId,
+        contentType: input.contentType,
+        userId: input.userId,
+      },
+    });
+    if (!existing) return { cleared: false };
+    await this.reactions.remove(existing);
+    return { cleared: true };
   }
 }

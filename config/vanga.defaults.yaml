@@ -1,12 +1,26 @@
-# Vanga — defaults & ranges for revenue forecast (founder-only tool)
-# Edit manually before/after meetings. Not production settings.
+# =============================================================================
+# Vanga — диапазоны и значения по умолчанию для прогноза дохода
+# =============================================================================
+#
+# Назначение: founder/admin-симулятор (/admin/vanga), НЕ боевые настройки клуба.
+# Жизненный цикл: правим руками на совещании → commit в git.
+# Позже: overlay из plan-config / scalar-config domain vanga.*
+#
+# Формат полей-ползунков:
+#   min / max / default / step — границы UI; default = стартовое «базовое» допущение
+#   enabled — чекбокс: учитывать поток в симуляции
+#   byPlan — отдельные цифры для Free / Basic / Pro
+#
 # Spec: docs/05-microservices/vanga/vanga-config.md
-# v0.1 — placeholders; finalize on business review
+# Версия: v0.1 — плейсхолдеры; финализировать на business review
+# =============================================================================
 
 version: "0.1"
-currency: RUB
+currency: RUB  # Все денежные величины в файле — рубли, если не указано иное
 
-# ── Built-in scenario presets (UI: compare up to 3 on one chart) ─────────────
+# ── Пресеты сценариев (UI: сравнить до 3 кривых на одном графике) ───────────
+# Сценарий — именованный набор assumptions, не одна цифра «регистраций».
+# Множители к базовым ползункам — в конце файла (scenarioMultipliers).
 scenarios:
   base:
     label: Базовый
@@ -18,85 +32,102 @@ scenarios:
     label: Пессимистичный
     description: Низкий приток, высокий churn
 
-# ── Simulation horizon ─────────────────────────────────────────────────────
+# ── Горизонт симуляции ─────────────────────────────────────────────────────
 period:
-  defaultMonths: 12
-  minMonths: 1
-  maxMonths: 36
-  granularity: month
+  defaultMonths: 12   # Сколько месяцев смотрим по умолчанию (год)
+  minMonths: 1        # Минимум горизонта в UI
+  maxMonths: 36       # Максимум (3 года) — дальше шум сильных assumptions
+  granularity: month  # Шаг модели: месяц (неделя/день — не в v0.1)
 
-# ── Growth model (registrations) ───────────────────────────────────────────
-# UI: pick curve; sliders set parameters. Improves forecast vs flat linear only.
+# ── Модель роста регистраций ───────────────────────────────────────────────
+# UI выбирает кривую; ползунки задают параметры. Лучше плоского «N в месяц».
 growth:
   models: [linear, exponential, logistic_s_curve]
-  defaultModel: linear
+  defaultModel: linear  # Стартовать с линейного — проще обсуждать на совещании
   linear:
-    registrationsPerMonth: { min: 0, max: 500, default: 40, step: 5 }
+    # Чистый приток новых юзеров каждый месяц (без учёта churn)
+    registrationsPerMonth: { min: 0, max: 500, default: 40, step: 5 }  # ~1–1.5/день — скромный старт
   exponential:
-    registrationsMonth1: { min: 0, max: 200, default: 20, step: 5 }
-    monthlyGrowthRatePercent: { min: 0, max: 30, default: 8, step: 0.5 }
+    registrationsMonth1: { min: 0, max: 200, default: 20, step: 5 }           # База 1-го месяца
+    monthlyGrowthRatePercent: { min: 0, max: 30, default: 8, step: 0.5 }      # +8%/мес к базе — агрессивный виральный рост
   logistic_s_curve:
-    carryingCapacity: { min: 100, max: 50000, default: 3000, step: 100 }
-    inflectionMonth: { min: 3, max: 24, default: 9, step: 1 }
-    steepness: { min: 0.1, max: 2, default: 0.8, step: 0.1 }
+    # S-кривая: рост ускоряется до перегиба, затем насыщение «ёмкости рынка»
+    carryingCapacity: { min: 100, max: 50000, default: 3000, step: 100 }  # Потолок базы пользователей
+    inflectionMonth: { min: 3, max: 24, default: 9, step: 1 }               # Месяц самого быстрого роста
+    steepness: { min: 0.1, max: 2, default: 0.8, step: 0.1 }               # Крутизна S (выше = резче переход)
 
-# ── Cohort & plans ─────────────────────────────────────────────────────────
+# ── Когорта и планы ────────────────────────────────────────────────────────
+# Как распределяется база и как «держится» платный пользователь.
 cohort:
   planMix:
-    free:  { min: 0, max: 100, default: 70, unit: percent }
-    basic: { min: 0, max: 100, default: 25, unit: percent }
-    pro:   { min: 0, max: 100, default: 5, unit: percent }
-    # UI normalizes to 100%
-  monthlyChurnRatePercent: { min: 0, max: 25, default: 5, step: 0.5 }
-  autoRenewRatePercent:    { min: 0, max: 100, default: 60, step: 5 }
+    # Доля активных пользователей по тарифам (%). UI нормализует сумму к 100%.
+    free:  { min: 0, max: 100, default: 70, unit: percent }   # Большинство на бесплатном — типичный freemium
+    basic: { min: 0, max: 100, default: 25, unit: percent }   # Основной платный сегмент
+    pro:   { min: 0, max: 100, default: 5, unit: percent }    # Узкий Pro на старте
+  # % платящих, уходящих за месяц (отток подписки)
+  monthlyChurnRatePercent: { min: 0, max: 25, default: 5, step: 0.5 }  # 5%/мес ≈ ~46% удержания за год — осторожная оценка
+  # Доля подписок с включённым автопродлением
+  autoRenewRatePercent: { min: 0, max: 100, default: 60, step: 5 }
+  # Какая доля платящих на годовой оплате (влияет на кэшфлоу, не только на MRR)
   yearlyBillingSharePercent: { min: 0, max: 50, default: 15, step: 5 }
 
-# ── Upgrade funnel (Free → paid) ───────────────────────────────────────────
+# ── Воронка апгрейдов (Free → платный, Basic → Pro) ───────────────────────
+# Месячные вероятности перехода (% от сегмента-источника за месяц).
 conversion:
-  freeToBasicMonthlyPercent: { min: 0, max: 30, default: 3, step: 0.5 }
-  freeToProMonthlyPercent:     { min: 0, max: 10, default: 0.5, step: 0.1 }
-  basicToProMonthlyPercent:    { min: 0, max: 15, default: 1, step: 0.5 }
-  trialBasicDays:              { min: 0, max: 30, default: 0, step: 1 }
+  freeToBasicMonthlyPercent: { min: 0, max: 30, default: 3, step: 0.5 }   # 3% Free→Basic/мес
+  freeToProMonthlyPercent:   { min: 0, max: 10, default: 0.5, step: 0.1 } # Прямой Free→Pro редкий
+  basicToProMonthlyPercent:  { min: 0, max: 15, default: 1, step: 0.5 }
+  trialBasicDays:            { min: 0, max: 30, default: 0, step: 1 }     # 0 = без триала в базовом сценарии
 
-# ── Deposits (cashflow → processor fee, not revenue) ───────────────────────
+# ── Пополнения кошелька ────────────────────────────────────────────────────
+# Деньги на депозит — cashflow; в «выручку платформы» не входят.
+# Нужны для оценки комиссии платёжки (см. costs.payment_processor_percent).
 deposits:
-  avgAmountRub: { min: 100, max: 50000, default: 500, step: 50 }
-  eventsPerPayingUserPerMonth: { min: 0, max: 10, default: 1.2, step: 0.1 }
-  shareOfUsersDepositingPercent: { min: 0, max: 100, default: 40, step: 5 }
+  avgAmountRub: { min: 100, max: 50000, default: 500, step: 50 }                 # Средний чек пополнения
+  eventsPerPayingUserPerMonth: { min: 0, max: 10, default: 1.2, step: 0.1 }      # Сколько раз в месяц платящий кладёт деньги
+  shareOfUsersDepositingPercent: { min: 0, max: 100, default: 40, step: 5 }      # Доля аудитории, которая вообще депозитит
 
-# ── Refunds estimate (outflow) ─────────────────────────────────────────────
+# ── Возвраты ───────────────────────────────────────────────────────────────
 refunds:
-  chargeRefundRatePercent: { min: 0, max: 10, default: 1, step: 0.5 }
+  # Доля charges, которые уходят в refund (отток из gross)
+  chargeRefundRatePercent: { min: 0, max: 10, default: 1, step: 0.5 }  # 1% — консервативный буфер
 
-# ── One-time marketing / launch spend ──────────────────────────────────────
+# ── Маркетинг / запуск (расход) ────────────────────────────────────────────
 marketing:
-  launchCampaignOneTimeRub: { min: 0, max: 500000, default: 0, step: 5000 }
-  monthlyAdsRub: { min: 0, max: 200000, default: 0, step: 1000 }
+  launchCampaignOneTimeRub: { min: 0, max: 500000, default: 0, step: 5000 }  # Разовый «залп» на запуск (0 = без кампании)
+  monthlyAdsRub: { min: 0, max: 200000, default: 0, step: 1000 }           # Постоянные рекламные расходы/мес
 
+# ── Цены подписок (то, что реально платит пользователь) ───────────────────
+# Должны быть согласованы с plan-config при «промотировании» в прод.
 subscriptions:
   basic:
-    monthlyPrice: { min: 0, max: 999, default: 99, step: 10 }
-    yearlyPrice:  { min: 0, max: 9999, default: 990, step: 50 }
+    monthlyPrice: { min: 0, max: 999, default: 99, step: 10 }     # 99 ₽/мес — низкий порог входа
+    yearlyPrice:  { min: 0, max: 9999, default: 990, step: 50 }  # ~2 месяца «бесплатно» vs 12×99
   pro:
     monthlyPrice: { min: 0, max: 2999, default: 399, step: 50 }
     yearlyPrice:  { min: 0, max: 29999, default: 3990, step: 100 }
 
-# ── Activity → monetization attach rates ───────────────────────────────────
+# ── Активность → доля платных фич (attach rates) ───────────────────────────
+# Сколько действий делает юзер и какая доля событий «цепляет» платную опцию.
 activity:
+  # Созданных аукционов на пользователя в месяц (по тарифу)
   auctionsCreatedPerUserPerMonth:
     byPlan:
-      free:  { min: 0, max: 10, default: 0.5, step: 0.1 }
+      free:  { min: 0, max: 10, default: 0.5, step: 0.1 }   # Free редче выставляет лоты
       basic: { min: 0, max: 20, default: 2, step: 0.5 }
       pro:   { min: 0, max: 50, default: 5, step: 0.5 }
-  auctionPromotionAttachRatePercent:   { min: 0, max: 100, default: 10, step: 1 }
-  auctionReserveAttachRatePercent:     { min: 0, max: 100, default: 5, step: 1 }
+  # % аукционов, где купили продвижение / резервную цену / кастомный пресет длительности
+  auctionPromotionAttachRatePercent:    { min: 0, max: 100, default: 10, step: 1 }
+  auctionReserveAttachRatePercent:      { min: 0, max: 100, default: 5, step: 1 }
   auctionCustomPresetAttachRatePercent: { min: 0, max: 100, default: 3, step: 1 }
-  forumPaidReactionPer100Topics:       { min: 0, max: 50, default: 2, step: 0.5 }
+  # Платные реакции форума: штук на 100 тем (не на пользователя)
+  forumPaidReactionPer100Topics: { min: 0, max: 50, default: 2, step: 0.5 }
   forumTopicsPerUserPerMonth:
     byPlan:
       free:  { min: 0, max: 20, default: 0.3, step: 0.1 }
       basic: { min: 0, max: 40, default: 1, step: 0.2 }
       pro:   { min: 0, max: 80, default: 2.5, step: 0.5 }
+  # Среднее число активных webhook-подключений на пользователя (Free = 0 по продукту)
   webhooksActiveConnections:
     byPlan:
       free:  { min: 0, max: 0, default: 0, step: 1 }
@@ -107,27 +138,31 @@ activity:
       free:  { min: 0, max: 5, default: 0.1, step: 0.05 }
       basic: { min: 0, max: 10, default: 0.5, step: 0.1 }
       pro:   { min: 0, max: 20, default: 1.5, step: 0.1 }
-  # Sales volume (GMV) — informational only, NOT platform revenue
+  # Оборот аукционов (GMV) — информационно для обсуждения рынка;
+  # НЕ является выручкой платформы (комиссий отдельного «auction fee» в v0.1 нет)
   auctionSalesCountPerMonth: { min: 0, max: 1000, default: 15, step: 5 }
   auctionAvgSaleAmountRub:   { min: 0, max: 500000, default: 5000, step: 500 }
 
-# ── One-time prices (override registry defaults) ───────────────────────────
+# ── Разовые цены фич (override registry; чекбокс enabled) ──────────────────
+# default — цена в симуляции; enabled=false — поток выключен, пока не решим включать.
 oneTimePrices:
-  auction.promotion:           { min: 0, max: 1000, default: 200, enabled: true }
-  auction.reservePrice:        { min: 0, max: 500, default: 100, enabled: true }
-  auction.customDurationPreset: { min: 0, max: 200, default: 50, enabled: true }
-  forum.reaction.rocket:       { min: 0, max: 500, default: 100, enabled: true }
-  forum.reaction.fire:         { min: 0, max: 500, default: 100, enabled: false }
-  forum.reaction.brain:        { min: 0, max: 500, default: 100, enabled: false }
-  marketplace.listingPromotion: { min: 0, max: 2000, default: 0, enabled: false }
-  marketplace.platformFee:     { min: 0, max: 5000, default: 0, enabled: false }
+  auction.promotion:            { min: 0, max: 1000, default: 200, enabled: true }   # Продвижение лота
+  auction.reservePrice:         { min: 0, max: 500, default: 100, enabled: true }    # Резервная цена
+  auction.customDurationPreset: { min: 0, max: 200, default: 50, enabled: true }     # Свой пресет длительности
+  forum.reaction.rocket:        { min: 0, max: 500, default: 100, enabled: true }    # Платная реакция «ракета»
+  forum.reaction.fire:          { min: 0, max: 500, default: 100, enabled: false }   # Пока не в базовом сценарии
+  forum.reaction.brain:         { min: 0, max: 500, default: 100, enabled: false }
+  marketplace.listingPromotion: { min: 0, max: 2000, default: 0, enabled: false }    # Продвижение услуги — TBD
+  marketplace.platformFee:      { min: 0, max: 5000, default: 0, enabled: false }    # Комиссия площадки — TBD
 
-# ── Referral (money) — default OFF; separate UI tab ────────────────────────
-# Модели расчёта: docs/05-microservices/referral-rewards/requirements/referral-models-catalog.md
+# ── Реферальная программа (деньги) ─────────────────────────────────────────
+# По умолчанию ВЫКЛ — как production referralRewards.globalEnabled.
+# Отдельная вкладка UI; при включении — outflow в net («до/после» на графике).
+# Каталог моделей: docs/05-microservices/referral-rewards/requirements/referral-models-catalog.md
 referral:
-  programEnabled: { default: false }
+  programEnabled: { default: false }  # Главный рубильник симуляции реферала
   calculationModelId:
-    default: revshare_single
+    default: revshare_single  # Стартовая модель: простая доля от платежа, 1 уровень
     options:
       - id: revshare_single
         label: Доля от платежа (1 уровень)
@@ -139,80 +174,87 @@ referral:
         label: Двусторонний бонус
   models:
     revshare_single:
-      percentOfCharge: { min: 0, max: 50, default: 10, step: 1 }
+      percentOfCharge: { min: 0, max: 50, default: 10, step: 1 }  # 10% от charge рефереру
     revshare_multi_decay:
-      percentOfCharge: { min: 0, max: 30, default: 10, step: 1 }
+      percentOfCharge: { min: 0, max: 30, default: 10, step: 1 }  # База % на L1; глубже — × depthCoefficients
       maxDepth: { min: 1, max: 3, default: 2, step: 1 }
     cpa_first_charge:
-      fixedAmountRub: { min: 0, max: 5000, default: 500, step: 50 }
+      fixedAmountRub: { min: 0, max: 5000, default: 500, step: 50 }  # Фикс за первую оплату приглашённого
     bilateral_first_sub:
-      inviterBonusRub: { min: 0, max: 3000, default: 300, step: 50 }
-      inviteeBonusRub: { min: 0, max: 3000, default: 300, step: 50 }
+      inviterBonusRub: { min: 0, max: 3000, default: 300, step: 50 }  # Бонус пригласившему
+      inviteeBonusRub: { min: 0, max: 3000, default: 300, step: 50 }  # Бонус приглашённому
+  # Какая доля «оплат с реферальной меткой» реально генерит выплату
   attachRatePercent: { min: 0, max: 100, default: 25, step: 5 }
-  maxDepth: { min: 1, max: 5, default: 1, step: 1 }
+  maxDepth: { min: 1, max: 5, default: 1, step: 1 }  # Глобальный потолок глубины (для multi)
+  # Коэффициенты к % по глубине L1, L2, L3… (1.0 = полная доля на 1-м уровне)
   depthCoefficients: { default: [1.0, 0.3, 0.1] }
+  # С каких категорий charges платим реферал (default — только подписки)
   enabledChargeCategories:
     default: [SUBSCRIPTION]
     options: [SUBSCRIPTION, AUCTION_SERVICES, MARKETPLACE_SERVICES, FORUM_REACTIONS]
-  inviteeBonusEnabled: { default: false }
+  inviteeBonusEnabled: { default: false }  # Отдельный бонус invitee (поверх модели)
   inviteeBonusAmount: { min: 0, max: 5000, default: 0, step: 50 }
-  globalBudgetPerMonth: { min: 0, max: 1000000, default: null }
-  # Tree explorer: branch fan-out & depth distribution along studied path
+  globalBudgetPerMonth: { min: 0, max: 1000000, default: null }  # null = без месячного потолка выплат
+  # Исследователь дерева: fan-out и распределение выплат вдоль изучаемой ветки
   tree:
-    avgInviteesPerInviterPerMonth: { min: 0, max: 20, default: 1.2, step: 0.1 }
-    branchStudyDepth: { min: 1, max: 5, default: 3, step: 1 }
-    # Per-level share of payouts along studied branch (sum ≤ 100%)
+    avgInviteesPerInviterPerMonth: { min: 0, max: 20, default: 1.2, step: 0.1 }  # Средний fan-out
+    branchStudyDepth: { min: 1, max: 5, default: 3, step: 1 }                     # Глубина ветки на графике
+    # Доли выплат по уровням изучаемой ветки (сумма ≤ 100%)
     payoutDistributionByDepth:
-      default: [70, 20, 10]
+      default: [70, 20, 10]  # Большая часть на L1 — типичный single-level bias
 
-# ── Costs & break-even ─────────────────────────────────────────────────────
-# Rule: editing line items → recalculates totalMonthlyBurn slider.
-#       dragging totalMonthlyBurn manually → updates breakEvenMonth only (items unchanged).
+# ── Затраты и точка окупаемости ────────────────────────────────────────────
+# Правило UI:
+#   • правка line items → пересчёт суммы → ползунок totalMonthlyBurn;
+#   • ручной totalMonthlyBurn → только месяц окупаемости (статьи не трогаем).
+# Variable % (эквайринг, налог) считаются от deposits / net по формулам engine.
 costs:
   totalMonthlyBurn:
     min: 0
     max: 500000
-    default: 25000
+    default: 25000   # Сумма fixed items ниже ≈ 25k ₽/мес «лёгкий» MVP burn
     step: 1000
     label: Точка окупаемости (месячный burn, ₽)
   items:
     hosting:
       { min: 0, max: 50000, default: 8000, step: 500, unit: RUB_per_month, label: Хостинг / VPS }
     cdn_and_storage:
-      { min: 0, max: 20000, default: 1500, step: 100, unit: RUB_per_month }
+      { min: 0, max: 20000, default: 1500, step: 100, unit: RUB_per_month }  # MinIO/S3 + CDN
     logto_and_auth:
-      { min: 0, max: 30000, default: 0, step: 500, unit: RUB_per_month }
+      { min: 0, max: 30000, default: 0, step: 500, unit: RUB_per_month }     # 0 = self-host / в пределах free tier
     novu_notifications:
       { min: 0, max: 20000, default: 0, step: 500, unit: RUB_per_month }
     payment_processor_percent:
-      { min: 0, max: 10, default: 2.5, step: 0.1, unit: percent_of_deposits }
+      { min: 0, max: 10, default: 2.5, step: 0.1, unit: percent_of_deposits }  # ~2.5% от оборота депозитов
     acquiring_fixed_per_month:
-      { min: 0, max: 10000, default: 0, step: 100, unit: RUB_per_month }
+      { min: 0, max: 10000, default: 0, step: 100, unit: RUB_per_month }      # Фикс эквайринга, если есть
     tax_percent_of_net:
-      { min: 0, max: 30, default: 6, step: 0.5, unit: percent_of_net_revenue }
+      { min: 0, max: 30, default: 6, step: 0.5, unit: percent_of_net_revenue } # УСН 6% как стартовая гипотеза
     salaries:
-      { min: 0, max: 500000, default: 12000, step: 1000, unit: RUB_per_month }
+      { min: 0, max: 500000, default: 12000, step: 1000, unit: RUB_per_month } # Неполный ФОТ / founder time proxy
     moderation_contract:
-      { min: 0, max: 100000, default: 0, step: 1000, unit: RUB_per_month }
+      { min: 0, max: 100000, default: 0, step: 1000, unit: RUB_per_month }     # Внешняя модерация — по необходимости
     legal_accounting:
       { min: 0, max: 50000, default: 3000, step: 500, unit: RUB_per_month }
     misc_buffer:
-      { min: 0, max: 50000, default: 500, step: 500, unit: RUB_per_month }
+      { min: 0, max: 50000, default: 500, step: 500, unit: RUB_per_month }     # Мелочи / запас
 
-# ── Preset multipliers (applied when user picks scenario) ──────────────────
+# ── Множители пресетов сценариев ──────────────────────────────────────────
+# При выборе optimistic/pessimistic базовые ползунки × коэффициент.
+# 1.0 = без изменения; churn < 1 = меньше оттока (лучше).
 scenarioMultipliers:
   base:
-    registrations: 1.0
-    planMixPro: 1.0
-    attachRates: 1.0
+    registrations: 1.0   # Как в ползунках
+    planMixPro: 1.0      # Доля Pro без сдвига
+    attachRates: 1.0     # Платные фичи без сдвига
     churn: 1.0
   optimistic:
-    registrations: 1.5
-    planMixPro: 1.4
-    attachRates: 1.3
-    churn: 0.7
+    registrations: 1.5   # +50% притока
+    planMixPro: 1.4      # Больше Pro в mix
+    attachRates: 1.3     # Чаще покупают one-time
+    churn: 0.7           # Отток ниже
   pessimistic:
-    registrations: 0.6
+    registrations: 0.6   # −40% притока
     planMixPro: 0.7
     attachRates: 0.8
-    churn: 1.4
+    churn: 1.4           # Отток выше

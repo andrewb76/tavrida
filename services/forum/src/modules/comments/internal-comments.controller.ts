@@ -144,4 +144,18 @@ export class InternalCommentsController {
       ...body,
     });
   }
+
+  @Post(':commentId/promote-to-topic')
+  promote(
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+    @Body() body: { actorId: string; title?: string },
+  ) {
+    return this.comments.promoteToTopic({
+      topicId,
+      commentId,
+      actorId: body.actorId,
+      title: body.title,
+    });
+  }
 }

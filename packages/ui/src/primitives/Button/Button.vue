@@ -9,9 +9,10 @@ export type ButtonProps = {
   size?: ButtonVariants['size'];
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  class?: string;
 };
 
-withDefaults(defineProps<ButtonProps>(), {
+const props = withDefaults(defineProps<ButtonProps>(), {
   type: 'button',
   intent: 'primary',
   size: 'md',
@@ -21,9 +22,9 @@ withDefaults(defineProps<ButtonProps>(), {
 
 <template>
   <button
-    :type="type"
-    :disabled="disabled"
-    :class="cn(buttonVariants({ intent, size }))"
+    :type="props.type"
+    :disabled="props.disabled"
+    :class="cn(buttonVariants({ intent: props.intent, size: props.size }), props.class)"
   >
     <slot />
   </button>

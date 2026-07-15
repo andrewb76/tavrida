@@ -37,6 +37,10 @@ export class TopicEntity {
   @Column('int', { name: 'vote_minus_count', default: 0 })
   voteMinusCount!: number;
 
+  /** Free-form topic tags (v1; formal Tag/ContentTag later). */
+  @Column('jsonb', { default: () => "'[]'" })
+  tags!: string[];
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

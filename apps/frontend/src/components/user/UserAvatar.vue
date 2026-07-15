@@ -16,6 +16,8 @@ const props = withDefaults(
 
 const session = useSessionStore();
 const failed = ref(false);
+/** After proxy URL fails, retry the original source once. */
+const preferRaw = ref(false);
 
 const resizePreset = computed(() => {
   if (props.size === 'sm') return imageProxyPresets.avatarSm;
@@ -23,7 +25,11 @@ const resizePreset = computed(() => {
   return imageProxyPresets.avatarMd;
 });
 
-const displayUrl = computed(() => proxiedMediaUrl(props.avatarUrl, resizePreset.value));
+const displayUrl = computed(() => {
+  if (!props.avatarUrl) return undefined;
+  if (preferRaw.value) return props.avatarUrl;
+  return proxiedMediaUrl(props.avatarUrl, resizePreset.value) ?? props.avatarUrl;
+});
 
 const initial = computed(() => {
   const source = props.label.trim() || '?';
@@ -38,12 +44,27 @@ const profileTo = computed(() => {
   return { name: 'profile-user' as const, params: { userId: props.userId } };
 });
 
+const sizeClass = computed(() => {
+  if (props.size === 'sm') return 'user-avatar--sm';
+  if (props.size === 'lg') return 'user-avatar--lg';
+  return 'user-avatar--md';
+});
+
 watch(
   () => props.avatarUrl,
   () => {
     failed.value = false;
+    preferRaw.value = false;
   },
 );
+
+function onImageError() {
+  if (!preferRaw.value && props.avatarUrl && displayUrl.value !== props.avatarUrl) {
+    preferRaw.value = true;
+    return;
+  }
+  failed.value = true;
+}
 </script>
 
 <template>
@@ -55,9 +76,7 @@ watch(
   >
     <div
       class="user-avatar"
-      :class="[
-      size === 'sm' ? 'user-avatar--sm' : size === 'lg' ? 'user-avatar--lg' : 'user-avatar--md',
-    ]"
+      :class="sizeClass"
     >
       <span
         class="user-avatar__initial"
@@ -68,17 +87,14 @@ watch(
         :src="displayUrl"
         :alt="label"
         class="user-avatar__image"
-        referrerpolicy="no-referrer"
-        @error="failed = true"
+        @error="onImageError"
       >
     </div>
   </RouterLink>
   <div
     v-else
     class="user-avatar"
-    :class="[
-      size === 'sm' ? 'user-avatar--sm' : size === 'lg' ? 'user-avatar--lg' : 'user-avatar--md',
-    ]"
+    :class="sizeClass"
     :title="label"
   >
     <span
@@ -90,15 +106,14 @@ watch(
       :src="displayUrl"
       :alt="label"
       class="user-avatar__image"
-      referrerpolicy="no-referrer"
-      @error="failed = true"
+      @error="onImageError"
     >
   </div>
 </template>
 
 <style scoped>
 .user-avatar-link {
-  display: inline-flex;
+  display: inline-grid;
   flex-shrink: 0;
   border-radius: 9999px;
   text-decoration: none;
@@ -113,12 +128,11 @@ watch(
   outline: 2px solid var(--color-primary, #2563eb);
   outline-offset: 2px;
 }
+
 .user-avatar {
-  position: relative;
-  display: flex;
+  display: grid;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   overflow: hidden;
   border-radius: 9999px;
   background: color-mix(in srgb, var(--color-primary, #2563eb) 15%, transparent);
@@ -145,14 +159,16 @@ watch(
 }
 
 .user-avatar__initial {
+  grid-area: 1 / 1;
   line-height: 1;
 }
 
 .user-avatar__image {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   width: 100%;
   height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: cover;
 }
 </style>

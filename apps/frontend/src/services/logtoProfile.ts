@@ -1,5 +1,6 @@
 import type { useLogto } from '@logto/vue';
 import type { useSessionStore } from '@/stores/session';
+import { requireBearerToken } from './apiAuth';
 
 type LogtoClient = ReturnType<typeof useLogto>;
 type SessionStore = ReturnType<typeof useSessionStore>;
@@ -21,6 +22,10 @@ type LogtoUserInfo = {
   avatar?: string;
 };
 
+function apiBase(): string {
+  return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+}
+
 function pickAvatarUrl(...sources: Array<string | undefined | null>): string | undefined {
   for (const value of sources) {
     const trimmed = value?.trim();
@@ -29,27 +34,56 @@ function pickAvatarUrl(...sources: Array<string | undefined | null>): string | u
   return undefined;
 }
 
-/** Sync Logto user claims → Pinia session (name, email, avatar). */
+/** Persist Logto identity into user-profile (forum / admin enrich cache). */
+async function pushIdentityToProfile(input: {
+  name?: string;
+  username?: string;
+  email?: string;
+  avatarUrl?: string;
+}): Promise<void> {
+  try {
+    const token = await requireBearerToken();
+    await fetch(`${apiBase()}/me/identity`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    /* profile cache sync is best-effort; session still works */
+  }
+}
+
+/** Sync Logto user claims → Pinia session (name, email, avatar) + user-profile cache. */
 export async function syncLogtoProfile(logto: LogtoClient, session: SessionStore): Promise<void> {
   if (!logto.isAuthenticated.value) return;
 
   const claims = (await logto.getIdTokenClaims()) as LogtoClaims | undefined;
   const userInfo = (await logto.fetchUserInfo()) as LogtoUserInfo | undefined;
 
+  const name =
+    userInfo?.name ??
+    userInfo?.username ??
+    claims?.name ??
+    claims?.username ??
+    undefined;
+  const username = userInfo?.username ?? claims?.username ?? undefined;
+  const email = userInfo?.email ?? claims?.email ?? undefined;
+  const avatarUrl = pickAvatarUrl(
+    userInfo?.picture,
+    userInfo?.avatar,
+    claims?.picture,
+    claims?.avatar,
+  );
+
   session.setProfile({
     sub: claims?.sub ?? undefined,
-    name:
-      userInfo?.name ??
-      userInfo?.username ??
-      claims?.name ??
-      claims?.username ??
-      undefined,
-    email: userInfo?.email ?? claims?.email ?? undefined,
-    avatarUrl: pickAvatarUrl(
-      userInfo?.picture,
-      userInfo?.avatar,
-      claims?.picture,
-      claims?.avatar,
-    ),
+    name,
+    email,
+    avatarUrl,
   });
+
+  await pushIdentityToProfile({ name, username, email, avatarUrl });
 }

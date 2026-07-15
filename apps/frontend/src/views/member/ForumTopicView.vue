@@ -3,6 +3,8 @@ import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
+import ForumTopicTags from '@/components/forum/ForumTopicTags.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
@@ -19,7 +21,7 @@ import {
   type ForumMeta,
   type TopicDetail,
 } from '@/services/forum';
-import { UiButton } from '@tavrida/ui';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -132,6 +134,17 @@ function onTopicVoteUpdated(result: {
   };
 }
 
+function onTopicTagsUpdated(tags: string[]) {
+  if (!topic.value) return;
+  topic.value = { ...topic.value, tags };
+}
+
+function focusCommentForm() {
+  const el = document.getElementById('forum-topic-comment');
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el?.focus();
+}
+
 async function submitTopicComment() {
   if (!commentBody.value.trim()) return;
   posting.value = true;
@@ -172,9 +185,10 @@ async function submitTopicComment() {
       <article class="forum-topic__head">
         <header class="forum-topic__author-row">
           <UserAvatar
-            :avatar-url="topic.author.avatarUrl"
+            class="forum-topic__avatar"
+            :avatar-url="topic.author?.avatarUrl"
             :label="forumAuthorLabel(topic.author)"
-            :user-id="topic.author.userId"
+            :user-id="topic.author?.userId ?? topic.authorId"
             size="md"
           />
           <div class="forum-topic__author-text">
@@ -182,22 +196,43 @@ async function submitTopicComment() {
             <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           </div>
           <div
-            v-if="session.isMember || (canEditTopic && !editingTopic)"
             class="forum-topic__actions"
+            role="group"
+            aria-label="Действия с темой"
           >
             <EventSubscribeButton
+              v-if="session.isMember"
               source-domain="forum"
               target-type="FORUM_TOPIC"
               :target-id="topic.id"
             />
             <UiButton
+              v-if="session.isMember"
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Ответить"
+              title="Ответить"
+              @click="focusCommentForm"
+            >
+              <UiIcon
+                name="reply"
+                :size="18"
+              />
+            </UiButton>
+            <UiButton
               v-if="canEditTopic && !editingTopic"
               intent="ghost"
-              size="sm"
+              size="icon"
               type="button"
+              aria-label="Редактировать"
+              title="Редактировать"
               @click="startTopicEdit"
             >
-              Редактировать
+              <UiIcon
+                name="edit"
+                :size="18"
+              />
             </UiButton>
           </div>
         </header>
@@ -257,17 +292,30 @@ async function submitTopicComment() {
           :attachments="topic.attachments"
           variant="forum"
         />
-        <ForumVoteBar
-          class="mt-3"
-          content-type="topic"
-          :content-id="topic.id"
-          :plus-count="topic.votePlusCount ?? 0"
-          :minus-count="topic.voteMinusCount ?? 0"
-          :my-vote="topic.myVote ?? null"
-          :can-change="topic.canChangeVote ?? true"
-          :disabled="!session.userId || topic.authorId === session.userId"
-          @updated="onTopicVoteUpdated"
+        <ForumTopicTags
+          :topic-id="topic.id"
+          :tags="topic.tags ?? []"
+          :can-edit="Boolean(session.userId && topic.authorId === session.userId)"
+          @updated="onTopicTagsUpdated"
         />
+        <div class="forum-topic__toolbar">
+          <ForumVoteBar
+            content-type="topic"
+            :content-id="topic.id"
+            :plus-count="topic.votePlusCount ?? 0"
+            :minus-count="topic.voteMinusCount ?? 0"
+            :my-vote="topic.myVote ?? null"
+            :can-change="topic.canChangeVote ?? true"
+            :disabled="!session.userId || topic.authorId === session.userId"
+            @updated="onTopicVoteUpdated"
+          />
+          <ForumReactionBar
+            content-type="topic"
+            :content-id="topic.id"
+            :current-user-id="session.userId"
+            :disabled="!session.userId"
+          />
+        </div>
       </article>
 
       <section class="forum-topic__comments">
@@ -282,6 +330,7 @@ async function submitTopicComment() {
             :key="node.id"
             :node="node"
             :topic-id="topicId"
+            :topic-author-id="topic.authorId"
             :depth="0"
             :edit-window-minutes="forumMeta?.editWindowMinutes ?? 0"
             :current-user-id="session.userId"
@@ -303,6 +352,7 @@ async function submitTopicComment() {
           <label>
             Комментарий к теме
             <textarea
+              id="forum-topic-comment"
               v-model="commentBody"
               rows="4"
               required
@@ -371,13 +421,32 @@ async function submitTopicComment() {
   margin-bottom: 0.75rem;
 }
 
+.forum-topic__avatar {
+  flex: none;
+}
+
+.forum-topic__author-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
 .forum-topic__actions {
   margin-left: auto;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.25rem;
+}
+
+.forum-topic__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .forum-topic__edit-field {
@@ -396,12 +465,6 @@ async function submitTopicComment() {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-}
-
-.forum-topic__author-text {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
 }
 
 .forum-topic__author-name {

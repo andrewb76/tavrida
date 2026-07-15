@@ -1,4 +1,17 @@
-import { BadRequestException, Body, Controller, Get, Logger, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -154,6 +167,21 @@ class UpdateCommentDto {
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
   attachments?: MediaAttachmentDto[];
+}
+
+class PromoteCommentDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  title?: string;
+}
+
+class UpdateTopicTagsDto {
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(32, { each: true })
+  tags!: string[];
 }
 
 @Controller('forum')
@@ -323,6 +351,35 @@ export class ForumController {
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
       }) as { authorId: string },
+    );
+  }
+
+  @Post('topics/:topicId/comments/:commentId/promote-to-topic')
+  @UseGuards(JwtAuthGuard)
+  promoteComment(
+    @CurrentUser() user: AuthUser,
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+    @Body() body: PromoteCommentDto,
+  ) {
+    return this.forum.promoteCommentToTopic(topicId, commentId, {
+      actorId: user.sub,
+      title: body.title,
+    });
+  }
+
+  @Put('topics/:id/tags')
+  @UseGuards(JwtAuthGuard)
+  async updateTopicTags(
+    @CurrentUser() user: AuthUser,
+    @Param('id') topicId: string,
+    @Body() body: UpdateTopicTagsDto,
+  ) {
+    return this.authors.enrichOne(
+      (await this.forum.updateTopicTags(topicId, {
+        authorId: user.sub,
+        tags: body.tags,
+      })) as { authorId: string },
     );
   }
 

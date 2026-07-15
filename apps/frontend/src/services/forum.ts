@@ -30,6 +30,7 @@ export type TopicSummary = {
   title: string;
   excerpt: string;
   isPinned: boolean;
+  tags?: string[];
   votePlusCount?: number;
   voteMinusCount?: number;
   score?: number;
@@ -41,6 +42,7 @@ export type TopicDetail = TopicSummary & {
   body: string;
   attachments: MediaAttachment[];
   author: ForumAuthor;
+  tags?: string[];
   myVote?: 1 | -1 | null;
   canChangeVote?: boolean;
 };
@@ -229,6 +231,100 @@ export async function clearForumVote(input: {
     throw new Error(err?.detail ?? 'Не удалось снять голос');
   }
   return (await res.json()) as ForumVoteResult;
+}
+
+export type ForumReactionBucket = {
+  emojiKey: string;
+  count: number;
+  userIds: string[];
+};
+
+export type ForumReactionsResponse = {
+  contentId: string;
+  contentType: 'topic' | 'comment';
+  reactions: ForumReactionBucket[];
+};
+
+export async function listForumReactions(
+  contentId: string,
+  contentType: 'topic' | 'comment',
+): Promise<ForumReactionsResponse> {
+  const params = new URLSearchParams({ contentId, contentType });
+  const res = await fetch(`${apiBase()}/forum/reactions?${params}`);
+  if (!res.ok) throw new Error('Не удалось загрузить реакции');
+  return (await res.json()) as ForumReactionsResponse;
+}
+
+export async function upsertForumReaction(input: {
+  contentId: string;
+  contentType: 'topic' | 'comment';
+  emojiKey: string;
+}): Promise<{ emojiKey: string | null; cleared?: boolean; updated?: boolean; allowed?: boolean }> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/forum/reactions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось поставить реакцию');
+  }
+  return (await res.json()) as {
+    emojiKey: string | null;
+    cleared?: boolean;
+    updated?: boolean;
+    allowed?: boolean;
+  };
+}
+
+export async function promoteCommentToTopic(
+  topicId: string,
+  commentId: string,
+  input?: { title?: string },
+): Promise<{ commentId: string; sourceTopicId: string; promotedTopicId: string; title: string }> {
+  const token = await requireBearerToken();
+  const res = await fetch(
+    `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}/promote-to-topic`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input ?? {}),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось выделить в тему');
+  }
+  return (await res.json()) as {
+    commentId: string;
+    sourceTopicId: string;
+    promotedTopicId: string;
+    title: string;
+  };
+}
+
+export async function updateTopicTags(topicId: string, tags: string[]): Promise<TopicDetail> {
+  const token = await requireBearerToken();
+  const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/tags`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ tags }),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось обновить теги');
+  }
+  return (await res.json()) as TopicDetail;
 }
 
 export function flattenCategories(nodes: CategoryNode[]): CategoryNode[] {

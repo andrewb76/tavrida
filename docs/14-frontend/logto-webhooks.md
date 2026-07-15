@@ -69,6 +69,11 @@ pnpm sync:logto-users
 
 Скрипт: Logto `GET /api/users` → `user-profile` `sync-logto` для каждого.
 
+Дополнительно без скрипта:
+
+- SPA после логина: `POST /api/v1/me/identity` (claims/userinfo → user-profile)
+- BFF forum enrich: если в профиле пусто name/avatar — lazy backfill через Logto Management `GET /api/users/{id}` (нужен M2M)
+
 ## Безопасность
 
 - Заголовок `logto-signature-sha-256` — HMAC-SHA256 hex от **raw body**

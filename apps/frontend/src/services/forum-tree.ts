@@ -1,6 +1,7 @@
 export type ForumAuthor = {
   userId: string;
   displayName: string | null;
+  username?: string | null;
   avatarUrl: string | null;
 };
 
@@ -30,7 +31,7 @@ export type ForumComment = {
 export type CommentTreeNode = ForumComment & { children: CommentTreeNode[] };
 
 export function forumAuthorLabel(author: ForumAuthor | undefined): string {
-  return author?.displayName?.trim() || 'Участник';
+  return author?.displayName?.trim() || author?.username?.trim() || 'Участник';
 }
 
 /** Builds a nested tree from a flat comment list (parentId links). */

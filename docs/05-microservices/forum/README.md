@@ -59,12 +59,13 @@
 | GET | `/forum/categories` | Дерево |
 | GET/POST | `/forum/topics` | Список / создание |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote` при auth) / edit window |
+| PUT | `/forum/topics/{id}/tags` | Заменить `tags: string[]` (автор темы; v1 jsonb) |
 | GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth |
+| POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить комментарий в тему (автор comment/topic) |
 | POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |
 | POST | `/forum/votes/clear` | Снять голос |
-| POST | `/forum/reactions` | `{ contentId, contentType, emojiKey }` |
+| GET/POST | `/forum/reactions` | Список / upsert emoji (`+1`, `-1`, `heart`, `surprised`, `thinking`) |
 | POST | `/forum/content/report` | Жалоба → `forum.content_reported` |
-| POST | `/internal/.../comments/{id}/promote-to-topic` | Moderator only |
 
 Лимиты UI → [requirements](./requirements/README.md) + [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md).
 

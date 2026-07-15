@@ -59,7 +59,7 @@
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Страница тега + контент |
 | POST | `/forum/tags` | Admin: создать official tag |
-| PUT | `/forum/topics/{id}/tags` | Заменить набор тегов topic |
+| PUT | `/forum/topics/{id}/tags` | Заменить набор тегов topic (**v1:** `topic.tags` jsonb, без Tag/ContentTag) |
 | PUT | `/auctions/{id}/tags` | BFF → auction internal (mirror ContentTag) |
 
 Лимиты: `forum.tagCountMax` (plan-config) на один объект.

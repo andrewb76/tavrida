@@ -183,4 +183,41 @@ export class LogtoManagementService {
 
     return (await res.json()) as LogtoUserRow[];
   }
+
+  async getUser(userId: string): Promise<LogtoUserRow | null> {
+    if (!this.isConfigured || !userId.trim()) return null;
+
+    const endpoint = this.config.get<string>('LOGTO_ENDPOINT')!.replace(/\/$/, '');
+    const accessToken = await this.getM2MToken();
+    const res = await fetch(`${endpoint}/api/users/${encodeURIComponent(userId)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new ServiceUnavailableException({
+        type: 'upstream-error',
+        detail: `Logto get user failed: ${res.status} ${detail}`,
+      });
+    }
+
+    const json = (await res.json()) as {
+      id: string;
+      username?: string | null;
+      primaryEmail?: string | null;
+      name?: string | null;
+      avatar?: string | null;
+      createdAt?: number;
+    };
+
+    return {
+      id: json.id,
+      username: json.username ?? null,
+      primaryEmail: json.primaryEmail ?? null,
+      name: json.name ?? null,
+      avatar: json.avatar ?? null,
+      createdAt: json.createdAt ?? 0,
+    };
+  }
 }

@@ -237,6 +237,77 @@ export class CommentsService {
     };
   }
 
+  /**
+   * Promote comment → new topic in the same category.
+   * v1: creates topic from comment body; keeps marker link on original comment.
+   * Subtree move is deferred (children stay under marker in source topic).
+   */
+  async promoteToTopic(input: {
+    topicId: string;
+    commentId: string;
+    actorId: string;
+    title?: string;
+  }) {
+    const sourceTopic = await this.topics.findOne({ where: { id: input.topicId } });
+    if (!sourceTopic) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+
+    const comment = await this.comments.findOne({
+      where: { id: input.commentId, topicId: input.topicId },
+    });
+    if (!comment) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${input.commentId} not found in topic`,
+      });
+    }
+
+    if (comment.promotedTopicId) {
+      throw new BadRequestException({
+        type: 'conflict',
+        detail: 'Комментарий уже выделен в тему',
+        promotedTopicId: comment.promotedTopicId,
+      });
+    }
+
+    if (comment.authorId !== input.actorId && sourceTopic.authorId !== input.actorId) {
+      throw new BadRequestException({
+        type: 'forbidden',
+        detail: 'Выделить в тему может автор комментария или темы',
+      });
+    }
+
+    const firstLine = comment.body.trim().split('\n')[0]?.trim() ?? '';
+    const title = (
+      input.title?.trim() ||
+      firstLine.replace(/^#+\s*/, '').slice(0, 120) ||
+      'Тема из комментария'
+    ).slice(0, 256);
+
+    const newTopic = this.topics.create({
+      id: randomUUID(),
+      categoryId: sourceTopic.categoryId,
+      authorId: comment.authorId,
+      title,
+      body: comment.body,
+      attachments: comment.attachments ?? [],
+      isPinned: false,
+      tags: [],
+    });
+    await this.topics.save(newTopic);
+
+    comment.promotedTopicId = newTopic.id;
+    await this.comments.save(comment);
+
+    return {
+      commentId: comment.id,
+      sourceTopicId: sourceTopic.id,
+      promotedTopicId: newTopic.id,
+      title: newTopic.title,
+    };
+  }
+
   private mediaPublicBaseUrl() {
     return (
       this.config.get<string>('MEDIA_PUBLIC_BASE_URL') ??
