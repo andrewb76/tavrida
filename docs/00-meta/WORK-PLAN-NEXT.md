@@ -100,12 +100,12 @@ flowchart LR
 
 ### Day 2 — Notifications hardening
 
-- [ ] Ops: Novu Dashboard workflow `tag-content` + `NOVU_API_KEY` (или явно mock-only на staging)
-- [ ] Reject unknown `workflowId` → 400
-- [ ] `idempotencyKey` на trigger + дедуп в log
-- [ ] Учитывать `pushEnabled` (+ quiet hours если дёшево) перед trigger
-- [ ] BFF clients: `AbortSignal` timeout ~2s
-- [ ] Заложить service-token для `/internal/v1/*` (env в PLATFORM-SECRETS)
+- [x] Ops: Novu Dashboard workflow `tag-content` + `NOVU_API_KEY` (или явно mock-only на staging) — **docs: mock without key**; Dashboard остаётся ops checklist
+- [x] Reject unknown `workflowId` → 400
+- [x] `idempotencyKey` на trigger + дедуп в log
+- [x] Учитывать `pushEnabled` (+ quiet hours) перед trigger
+- [x] BFF clients: `AbortSignal` timeout ~2s
+- [x] Заложить service-token для `/internal/v1/*` (env `INTERNAL_SERVICE_TOKEN` в PLATFORM-SECRETS)
 
 ### Day 3 — Async fan-out + UX titles
 

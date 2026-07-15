@@ -25,6 +25,8 @@ export type DeliveryPreferenceDto = {
   updatedAt: string | null;
 };
 
+const DEFAULT_TIMEOUT_MS = 2000;
+
 @Injectable()
 export class SubscriptionsClient {
   constructor(private readonly config: ConfigService) {}
@@ -35,6 +37,14 @@ export class SubscriptionsClient {
       this.config.get<string>('AUCTION_SUBSCRIPTIONS_URL') ??
       'http://localhost:3004';
     return url.replace(/\/$/, '');
+  }
+
+  private headers(hasBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (hasBody) headers['Content-Type'] = 'application/json';
+    const token = this.config.get<string>('INTERNAL_SERVICE_TOKEN')?.trim();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
   }
 
   list(userId: string, sourceDomain?: string) {
@@ -104,8 +114,9 @@ export class SubscriptionsClient {
     try {
       res = await fetch(`${this.baseUrl()}${path}`, {
         method,
-        headers: body ? { 'Content-Type': 'application/json' } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
+        headers: this.headers(body !== undefined),
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
       });
     } catch {
       throw new ServiceUnavailableException('subscriptions unavailable');

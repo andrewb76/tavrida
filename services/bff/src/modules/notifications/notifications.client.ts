@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+const DEFAULT_TIMEOUT_MS = 2000;
+
 /**
  * Best-effort HTTP client for `services/notifications` (may be absent locally).
  * Never throws — fan-out must not fail the primary write path.
@@ -17,6 +19,13 @@ export class NotificationsClient {
     return url.replace(/\/$/, '');
   }
 
+  private headers(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = this.config.get<string>('INTERNAL_SERVICE_TOKEN')?.trim();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
+
   /**
    * @returns true if upstream accepted the trigger; false if skipped/unavailable.
    */
@@ -24,6 +33,7 @@ export class NotificationsClient {
     userId: string;
     workflowId: string;
     payload?: Record<string, unknown>;
+    idempotencyKey?: string;
   }): Promise<boolean> {
     const base = this.baseUrl();
     if (!base) {
@@ -36,12 +46,14 @@ export class NotificationsClient {
     try {
       const res = await fetch(`${base}/internal/v1/notifications/trigger`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.headers(),
         body: JSON.stringify({
           userId: input.userId,
           workflowId: input.workflowId,
           payload: input.payload ?? {},
+          idempotencyKey: input.idempotencyKey,
         }),
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
       });
       if (!res.ok) {
         const detail = await res.text().catch(() => '');

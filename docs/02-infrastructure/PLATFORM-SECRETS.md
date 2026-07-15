@@ -93,6 +93,7 @@
 | `SCALAR_CONFIG_URL` | нет | `http://localhost:3008` | Upstream settings |
 | `FORUM_URL` | нет | `http://localhost:3009` | Upstream forum |
 | `NOTIFICATIONS_URL` | нет | `http://localhost:3010` | Upstream notifications |
+| `INTERNAL_SERVICE_TOKEN` | нет* | — | Bearer к `notifications` / `subscriptions` `/internal/v1/*` (пусто = open) |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
 | `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
@@ -237,6 +238,7 @@
 | `NOVU_API_KEY` | нет* | — | Novu secret; без ключа — **mock** trigger |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | — | Public id |
 | `NOVU_API_URL` | нет | — | default `https://api.novu.co` |
+| `INTERNAL_SERVICE_TOKEN` | нет* | — | Shared Bearer for `/internal/v1/*`; empty = open (dev) |
 | `RABBITMQ_URL` | нет* | — | Consume domain events *(next)* |
 
 ---

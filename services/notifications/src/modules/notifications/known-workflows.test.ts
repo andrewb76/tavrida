@@ -17,4 +17,8 @@ describe('KNOWN_WORKFLOWS', () => {
   it('has a stable non-empty catalog', () => {
     assert.ok(KNOWN_WORKFLOWS.size >= 10);
   });
+
+  it('does not include arbitrary unknown ids', () => {
+    assert.equal(KNOWN_WORKFLOWS.has('not-a-real-workflow'), false);
+  });
 });

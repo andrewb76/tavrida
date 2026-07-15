@@ -1,9 +1,19 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryColumn,
+} from 'typeorm';
 
 export type NotificationChannel = 'email' | 'push' | 'in_app' | 'unknown';
 export type NotificationStatus = 'pending' | 'sent' | 'failed' | 'delivered';
 
 @Entity({ schema: 'notifications', name: 'notification_log' })
+@Index('uq_notification_log_user_idempotency', ['userId', 'idempotencyKey'], {
+  unique: true,
+  where: '"idempotency_key" IS NOT NULL',
+})
 export class NotificationLogEntity {
   @PrimaryColumn('uuid')
   id!: string;
@@ -16,6 +26,9 @@ export class NotificationLogEntity {
 
   @Column('varchar', { name: 'transaction_id', length: 128 })
   transactionId!: string;
+
+  @Column('varchar', { name: 'idempotency_key', length: 256, nullable: true })
+  idempotencyKey!: string | null;
 
   @Column('varchar', { length: 32, default: 'unknown' })
   channel!: NotificationChannel;

@@ -163,7 +163,7 @@
 ## 🔒 Безопасность
 
 - CRUD — только `userId === jwt.sub`
-- Internal match — service token only
+- Internal API — `INTERNAL_SERVICE_TOKEN` Bearer when set (empty = open for local/dev); match + delivery prefs + CRUD
 
 ## 📎 Связанные разделы
 

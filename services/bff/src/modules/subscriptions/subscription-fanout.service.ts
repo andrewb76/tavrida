@@ -3,6 +3,7 @@ import { NotificationsClient } from '../notifications/notifications.client';
 import { SubscriptionsClient } from './subscriptions.client';
 import {
   collectMatchedUserIds,
+  shouldSendPush,
   toFanoutResult,
   type FanoutResult,
 } from './subscription-fanout.logic';
@@ -20,7 +21,7 @@ export class SubscriptionFanoutService {
 
   /**
    * For each newly attached tag: match TAG subscribers → trigger `tag-content` workflow.
-   * Best-effort; never throws.
+   * Best-effort; never throws. Honors pushEnabled + quiet hours before trigger.
    */
   async notifyTagContentTagged(input: {
     tagIds: string[];
@@ -45,12 +46,35 @@ export class SubscriptionFanoutService {
     }
 
     const matchedUserIds = collectMatchedUserIds(batches, input.excludeUserIds ?? []);
+    const eligibleUserIds: string[] = [];
+
+    for (const userId of matchedUserIds) {
+      try {
+        const pref = await this.subscriptions.getDelivery(userId);
+        if (
+          !shouldSendPush({
+            pushEnabled: pref.pushEnabled,
+            quietHours: pref.quietHours,
+          })
+        ) {
+          continue;
+        }
+        eligibleUserIds.push(userId);
+      } catch (error) {
+        // Fail-open if prefs unavailable (default push = on).
+        this.logger.debug(
+          `delivery prefs for ${userId}: ${error instanceof Error ? error.message : error}`,
+        );
+        eligibleUserIds.push(userId);
+      }
+    }
 
     let notified = 0;
-    for (const userId of matchedUserIds) {
+    for (const userId of eligibleUserIds) {
       const ok = await this.notifications.trigger({
         userId,
         workflowId: 'tag-content',
+        idempotencyKey: `tag-content:${input.contentId}:${userId}`,
         payload: {
           topicId: input.topicId,
           contentType: input.contentType,
@@ -65,7 +89,8 @@ export class SubscriptionFanoutService {
     if (matchedUserIds.length) {
       this.logger.log(
         `tag.content_tagged topic=${input.topicId} tags=${input.tagIds.length} ` +
-          `matched=${matchedUserIds.length} notified=${notified} skipped=${result.skipped}`,
+          `matched=${matchedUserIds.length} eligible=${eligibleUserIds.length} ` +
+          `notified=${notified} skipped=${result.skipped}`,
       );
     }
 

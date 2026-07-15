@@ -1,5 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { InternalServiceTokenGuard } from '../auth/internal-service-token.guard';
 import { NotificationsService } from './notifications.service';
 
 class TriggerDto {
@@ -16,6 +17,11 @@ class TriggerDto {
   @IsOptional()
   @IsObject()
   payload?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  idempotencyKey?: string | null;
 }
 
 class UpsertSubscriberDto {
@@ -36,6 +42,7 @@ class UpsertSubscriberDto {
 }
 
 @Controller('internal/v1/notifications')
+@UseGuards(InternalServiceTokenGuard)
 export class InternalNotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 

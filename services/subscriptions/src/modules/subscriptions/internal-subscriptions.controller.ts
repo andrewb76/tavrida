@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   IsBoolean,
@@ -26,6 +27,7 @@ import {
   SOURCE_DOMAINS,
   TARGET_TYPES,
 } from '../../common/subscription.types';
+import { InternalServiceTokenGuard } from '../auth/internal-service-token.guard';
 import { SubscriptionsService } from './subscriptions.service';
 
 class ListQueryDto {
@@ -123,6 +125,7 @@ class MatchDto {
 }
 
 @Controller('internal/v1/subscriptions')
+@UseGuards(InternalServiceTokenGuard)
 export class InternalSubscriptionsController {
   constructor(private readonly subscriptions: SubscriptionsService) {}
 

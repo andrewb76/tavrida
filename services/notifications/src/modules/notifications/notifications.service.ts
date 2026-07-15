@@ -73,9 +73,12 @@ export class NotificationsService {
     userId: string;
     workflowId: string;
     payload?: Record<string, unknown>;
+    idempotencyKey?: string | null;
   }) {
     const userId = input.userId.trim();
     const workflowId = input.workflowId.trim();
+    const idempotencyKey = input.idempotencyKey?.trim() || null;
+
     if (!userId || !workflowId) {
       throw new BadRequestException({
         type: 'validation',
@@ -83,7 +86,22 @@ export class NotificationsService {
       });
     }
     if (!KNOWN_WORKFLOWS.has(workflowId)) {
-      this.logger.warn(`unknown workflowId=${workflowId} — still attempting trigger`);
+      throw new BadRequestException({
+        type: 'validation',
+        detail: `unknown workflowId=${workflowId}`,
+      });
+    }
+
+    if (idempotencyKey) {
+      const existing = await this.logs.findOne({ where: { userId, idempotencyKey } });
+      if (existing) {
+        return {
+          transactionId: existing.transactionId,
+          mode: this.novu.isConfigured() ? ('novu' as const) : ('mock' as const),
+          status: existing.status,
+          deduped: true as const,
+        };
+      }
     }
 
     const subscriber = await this.ensureSubscriber(userId);
@@ -106,39 +124,68 @@ export class NotificationsService {
       transactionId = `failed-${randomUUID()}`;
       mode = this.novu.isConfigured() ? 'novu' : 'mock';
       status = 'failed';
-      await this.logs.save(
-        this.logs.create({
-          id: randomUUID(),
-          userId,
-          workflowId,
-          transactionId,
-          channel: 'unknown',
-          status,
-          payload: {
-            ...(input.payload ?? {}),
-            error: error instanceof Error ? error.message : String(error),
-          },
-        }),
-      );
+      await this.saveLog({
+        userId,
+        workflowId,
+        transactionId,
+        status,
+        idempotencyKey,
+        payload: {
+          ...(input.payload ?? {}),
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
       throw new ServiceUnavailableException({
         type: 'upstream-error',
         detail: error instanceof Error ? error.message : 'Novu trigger failed',
       });
     }
 
-    await this.logs.save(
-      this.logs.create({
-        id: randomUUID(),
-        userId,
-        workflowId,
-        transactionId,
-        channel: 'unknown',
-        status,
-        payload: input.payload ?? null,
-      }),
-    );
+    await this.saveLog({
+      userId,
+      workflowId,
+      transactionId,
+      status,
+      idempotencyKey,
+      payload: input.payload ?? null,
+    });
 
-    return { transactionId, mode, status };
+    return { transactionId, mode, status, deduped: false as const };
+  }
+
+  private async saveLog(input: {
+    userId: string;
+    workflowId: string;
+    transactionId: string;
+    status: NotificationLogEntity['status'];
+    idempotencyKey: string | null;
+    payload: Record<string, unknown> | null;
+  }) {
+    try {
+      await this.logs.save(
+        this.logs.create({
+          id: randomUUID(),
+          userId: input.userId,
+          workflowId: input.workflowId,
+          transactionId: input.transactionId,
+          idempotencyKey: input.idempotencyKey,
+          channel: 'unknown',
+          status: input.status,
+          payload: input.payload,
+        }),
+      );
+    } catch (error) {
+      // Race on unique idempotency — treat as success if a row already exists.
+      if (input.idempotencyKey) {
+        const existing = await this.logs.findOne({
+          where: { userId: input.userId, idempotencyKey: input.idempotencyKey },
+        });
+        if (existing) return;
+      }
+      this.logger.warn(
+        `notification_log save failed: ${error instanceof Error ? error.message : error}`,
+      );
+    }
   }
 
   private async ensureSubscriber(userId: string): Promise<SubscriberEntity> {
