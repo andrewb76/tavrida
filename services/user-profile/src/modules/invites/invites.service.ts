@@ -2,6 +2,7 @@ import {
   ConflictException,
   GoneException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +11,7 @@ import { formatInviteCode, normalizeInviteCode } from '../../common/invite-code'
 import { InvitationEntity } from '../../entities/invitation.entity';
 import { InviteCodeEntity } from '../../entities/invite-code.entity';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
+import { InviteEventsPublisher } from '../events/invite-events.publisher';
 
 export type InviteStatus = 'active' | 'redeemed' | 'expired';
 
@@ -29,6 +31,7 @@ export type ClaimInviteInput = {
 
 @Injectable()
 export class InvitesService {
+  private readonly logger = new Logger(InvitesService.name);
   private readonly maxCodeAttempts = 8;
 
   constructor(
@@ -38,6 +41,7 @@ export class InvitesService {
     private readonly profiles: Repository<UserProfileEntity>,
     @InjectRepository(InvitationEntity)
     private readonly invitations: Repository<InvitationEntity>,
+    private readonly inviteEvents: InviteEventsPublisher,
   ) {}
 
   async createInvite(input: CreateInviteInput): Promise<InviteCodeEntity> {
@@ -168,12 +172,24 @@ export class InvitesService {
       }),
     );
 
-    // TODO: emit invitation.redeemed via RabbitMQ
+    const acceptedAtIso = acceptedAt.toISOString();
+    try {
+      await this.inviteEvents.publishInvitationRedeemed({
+        inviteeId: input.userId,
+        inviterId,
+        inviteCodeId: inviteCodeId ?? null,
+        acceptedAt: acceptedAtIso,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `invitation.redeemed publish failed: ${error instanceof Error ? error.message : error}`,
+      );
+    }
 
     return {
       userId: profile.userId,
       inviterId,
-      invitationAcceptedAt: acceptedAt.toISOString(),
+      invitationAcceptedAt: acceptedAtIso,
       claimed: true,
     };
   }

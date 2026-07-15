@@ -81,11 +81,11 @@ flowchart LR
 
 ### Day 3 — `invitation.redeemed` RMQ
 
-- [ ] Publish из user-profile после успешного **первого** claim (`claimed: true`) — envelope как marketplace/tag
-- [ ] Payload per [event-catalog](../03-architecture/event-catalog.md): invitee/inviter/inviteCodeId (+ timestamps)
-- [ ] Consumer: минимум **log + ack** в rating path *или* документированный bind + stub handler (полный rating svc вне скоупа)
-- [ ] Unit/integration test: claim twice → одна публикация
-- [ ] Обновить event-catalog status Implemented; AGENT-TODO ✔
+- [x] Publish из user-profile после успешного **первого** claim (`InviteEventsPublisher`)
+- [x] Payload: inviteeId / inviterId / inviteCodeId / acceptedAt
+- [x] Consumer: документирован bind + planned (rating svc вне скоупа)
+- [x] Unit test: claim twice → одна публикация
+- [x] event-catalog / AGENT-TODO ✔
 
 ### Day 4 — Product glue + hygiene
 

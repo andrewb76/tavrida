@@ -4,7 +4,6 @@ Agent backlog (Tavrida Lot):
 
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
-  ☐ Emit invitation.redeemed (RMQ) after claim @user-profile @bff
 
 Vanga (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + vanga.defaults.yaml @vanga
@@ -58,6 +57,7 @@ Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
 
 Archive:
+  ✔ Emit invitation.redeemed (RMQ) after claim @user-profile @done(26-07-16)
   ✔ Internal renew/run + billing charge + expire fail path @plan-config @billing @done(26-07-16)
   ✔ E2E: create → resolve → mock signIn → claim @bff @done(26-07-16)
   ✔ Интеграция club.member.invite.monthlyMax через plan-config @bff @plan-config @done(26-07-16)

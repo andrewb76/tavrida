@@ -134,7 +134,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
-| produce | `invitation.redeemed` | `{ inviteeId, inviterId, inviteCodeId }` → rating, **referral-rewards** |
+| produce | `invitation.redeemed` | RMQ after first claim (`InviteEventsPublisher`); consumers rating / referral-rewards — planned |
 | consume | `rating.updated` | Update cached rating fields |
 | consume | `feedback.submitted` | Optional refresh |
 | consume | `subscription.activated` | Invalidate BFF cache (optional) |
@@ -161,7 +161,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | Переменная | Обяз. | Описание |
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `user_profile` |
-| `RABBITMQ_URL` | да | Consume rating events |
+| `RABBITMQ_URL` | нет* | Publish `invitation.redeemed` (skip if unset) |
 | `MINIO_*` | да | bucket `avatars` |
 | `PORT` | нет | HTTP |
 
