@@ -16,6 +16,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { ForumModule } from './modules/forum/forum.module';
 import { AuctionModule } from './modules/auction/auction.module';
 import { KetoModule } from './modules/keto/keto.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { LogtoWebhooksModule } from './modules/logto-webhooks/logto-webhooks.module';
 import { MediaModule } from './modules/media/media.module';
 import { MediaUploadIntentEntity } from './modules/media/media-upload-intent.entity';
@@ -44,6 +45,7 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     KetoModule,
+    AuthModule,
     MeModule,
     ScalarConfigModule,
     InvitesModule,
