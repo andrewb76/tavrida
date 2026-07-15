@@ -11,7 +11,11 @@ const props = withDefaults(
     size?: 'sm' | 'md' | 'lg';
     userId?: string;
   }>(),
-  { size: 'md' },
+  {
+    avatarUrl: undefined,
+    size: 'md',
+    userId: undefined,
+  },
 );
 
 const session = useSessionStore();

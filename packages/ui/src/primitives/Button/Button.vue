@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<ButtonProps>(), {
   intent: 'primary',
   size: 'md',
   disabled: false,
+  class: undefined,
 });
 </script>
 

@@ -140,7 +140,9 @@ function shortId(id: string | null): string {
         class="subs__card"
         aria-labelledby="subs-delivery-title"
       >
-        <h2 id="subs-delivery-title">Доставка</h2>
+        <h2 id="subs-delivery-title">
+          Доставка
+        </h2>
         <div class="subs__prefs">
           <label class="subs__switch">
             <input
@@ -213,9 +215,13 @@ function shortId(id: string | null): string {
         class="subs__muted"
       >
         Пока нет подписок.
-        <RouterLink to="/forum">Открыть форум</RouterLink>
+        <RouterLink to="/forum">
+          Открыть форум
+        </RouterLink>
         или
-        <RouterLink to="/auctions">аукционы</RouterLink>
+        <RouterLink to="/auctions">
+          аукционы
+        </RouterLink>
         и нажмите «Подписаться».
       </p>
 

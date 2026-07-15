@@ -647,7 +647,7 @@ onMounted(load);
               v-else
               class="rounded border border-border px-2 py-1"
               :type="field.type === 'integer' || field.type === 'number' ? 'number' : 'text'"
-              :value="metaFieldValue(field.key) as string | number"
+              :value="String(metaFieldValue(field.key))"
               @input="setMetaField(field, ($event.target as HTMLInputElement).value)"
             >
           </label>

@@ -237,7 +237,9 @@ async function submit() {
           class="create-lot__hint"
         >
           Голландский аукцион доступен на Basic и Pro.
-          <RouterLink to="/plans">Тарифы →</RouterLink>
+          <RouterLink to="/plans">
+            Тарифы →
+          </RouterLink>
         </p>
       </fieldset>
 

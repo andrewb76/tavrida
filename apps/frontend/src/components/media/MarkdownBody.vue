@@ -10,11 +10,14 @@ const html = computed(() => renderForumMarkdown(props.body));
 </script>
 
 <template>
+  <!-- HTML from renderForumMarkdown (sanitized). -->
+  <!-- eslint-disable vue/no-v-html -->
   <div
     v-if="html"
     class="markdown-body prose prose-sm max-w-none"
     v-html="html"
   />
+  <!-- eslint-enable vue/no-v-html -->
 </template>
 
 <style scoped>

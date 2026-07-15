@@ -377,11 +377,11 @@ async function submitTopicComment() {
               class="forum-topic__attachments-toggle"
               @click="commentAttachmentsExpanded = !commentAttachmentsExpanded"
             >
-            Вложения
-            <span
-              v-if="commentUpload.count.value > 0"
-            >📎 {{ commentUpload.count.value }}</span>
-            <span>{{ commentAttachmentsExpanded ? '▼' : '▶' }}</span>
+              Вложения
+              <span
+                v-if="commentUpload.count.value > 0"
+              >📎 {{ commentUpload.count.value }}</span>
+              <span>{{ commentAttachmentsExpanded ? '▼' : '▶' }}</span>
             </button>
             <div v-if="commentAttachmentsExpanded">
               <MediaUploader

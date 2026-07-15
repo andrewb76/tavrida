@@ -18,6 +18,8 @@ const props = withDefaults(
   }>(),
   {
     size: 20,
+    class: undefined,
+    label: undefined,
   },
 );
 
