@@ -61,7 +61,7 @@ export class SubscriptionFanoutService {
       if (ok) notified += 1;
     }
 
-    const result = toFanoutResult(matchedUserIds, notified);
+    const result = toFanoutResult(matchedUserIds.length, notified);
     if (matchedUserIds.length) {
       this.logger.log(
         `tag.content_tagged topic=${input.topicId} tags=${input.tagIds.length} ` +

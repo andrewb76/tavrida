@@ -10,12 +10,13 @@
 
 | Контекст | Формат | Пример |
 |----------|--------|--------|
-| Каталог в `services/` | **kebab-case** | `auction-subscriptions/` |
-| npm package | `@tavrida/{kebab-name}` | `@tavrida/auction-subscriptions` |
-| Документ docs (целевой) | **kebab-case** | `docs/05-microservices/auction-subscriptions/README.md` |
-| Human name | kebab или пробел | auction-subscriptions |
+| Каталог в `services/` | **kebab-case** | `subscriptions/`, `deal-feedback/` |
+| npm package | `@tavrida/{kebab-name}` | `@tavrida/subscriptions` |
+| Документ docs (целевой) | **kebab-case** | `docs/05-microservices/subscriptions/README.md` |
+| Human name | kebab или пробел | subscriptions |
 
-> **Legacy docs path:** `auction_subscriptions/` → целевой `auction-subscriptions/` (см. [naming.md](./naming.md)).
+> **Legacy:** `auction-subscriptions` → `subscriptions`; `feedback` → `deal-feedback` ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).  
+> **Legacy docs path:** `auction_subscriptions/` → stubs only.
 
 ---
 

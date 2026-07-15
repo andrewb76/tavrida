@@ -78,10 +78,14 @@ Legacy aliases (удалить после миграции кода): `PLAN_CONF
 | plan-config | `PLAN_CONFIG_PORT` | 3002 |
 | auction | `AUCTION_PORT` | 3003 |
 | subscriptions | `SUBSCRIPTIONS_PORT` | 3004 |
+| deal-feedback | `DEAL_FEEDBACK_PORT` | 3006 |
 | user-profile | `USER_PROFILE_PORT` | 3007 |
 | scalar-config | `SCALAR_CONFIG_PORT` | 3008 |
 | forum | `FORUM_PORT` | 3009 |
 | notifications | `NOTIFICATIONS_PORT` | 3010 |
+| marketplace | `MARKETPLACE_PORT` | **3011** |
+| periods | `PERIODS_PORT` | 3014 |
+| webhooks (draft) | — | **3015** |
 
 **Не задавайте `PORT=3000` в `.env.local`** — при `pnpm dev` turbo передаёт один env всем процессам, и несколько сервисов попытаются занять один порт (`EADDRINUSE`). Используйте только `*_PORT` или полагайтесь на дефолты в `package.json` dev-скриптах.
 

@@ -1,5 +1,4 @@
 export type FanoutResult = {
-  matchedUserIds: string[];
   notified: number;
   skipped: number;
 };
@@ -19,7 +18,8 @@ export function collectMatchedUserIds(
   return [...matched];
 }
 
-export function toFanoutResult(matchedUserIds: string[], notified: number): FanoutResult {
-  const skipped = Math.max(0, matchedUserIds.length - notified);
-  return { matchedUserIds, notified, skipped };
+/** Public stats only — never expose matched user IDs to API clients. */
+export function toFanoutResult(matchedCount: number, notified: number): FanoutResult {
+  const skipped = Math.max(0, matchedCount - notified);
+  return { notified, skipped };
 }

@@ -399,7 +399,7 @@ export class ForumController {
 
     const enriched = await this.authors.enrichOne(updated);
     const addedTagIds = Array.isArray(updated.addedTagIds) ? updated.addedTagIds : [];
-    let tagFanout = { matchedUserIds: [] as string[], notified: 0, skipped: 0 };
+    let tagFanout = { notified: 0, skipped: 0 };
     if (addedTagIds.length) {
       tagFanout = await this.subscriptionFanout.notifyTagContentTagged({
         tagIds: addedTagIds,

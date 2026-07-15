@@ -31,13 +31,14 @@
 | `plan_config`           | plan-config           | `plan`, `plan_variable`, `plan_parameter`, `user_subscription` | Тарифы, plan variables, подписки |
 | `scalar_config`         | scalar-config         | `setting_key`, `setting`                                      | Скалярные конфиги  |
 | `auction`               | auction               | `auction`, `bid`                                              | Лоты, ставки       |
-| `auction_subscriptions` | auction-subscriptions | `subscription`, `digest_preference`                           | Подписки           |
+| `subscriptions`         | subscriptions         | `subscription`, `delivery_preference`                         | Event-подписки     |
 | `rating`                | rating                | `user_rating`, `vote_log`                                     | Рейтинг, карма     |
-| `feedback`              | feedback              | `deal_feedback`, `pending_feedback`, `feedback_bonus`         | Отзывы             |
+| `deal_feedback`         | deal-feedback         | `deal_feedback`, `pending_feedback`, `feedback_bonus`         | Отзывы             |
 | `user_profile`          | user-profile          | `user_profile`, `profile_note`, `user_rating`, `reputation_change_log` | Bio, avatar, notes; temporary rating SoT until `rating` svc |
-| `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure` | Контент форума     |
+| `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure`, `tag`, `content_tag` | Контент форума     |
 | `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`          | Маркет услуг       |
-| `notifications`         | notifications-adapter | `notification_log`, `subscriber`                              | Audit уведомлений  |
+| `notifications`         | notifications         | `notification_log`, `subscriber`                              | Audit уведомлений  |
+| `periods`               | periods               | categories / periods                                          | Исторические периоды |
 | `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
 
 > **Legacy schemas (migration pending):** `plan_config`, `scalar-config` → `plan_config`, `scalar_config` ([ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md)). Таблицы `charge_target`, `plan_charge_price` сливаются в `plan_parameter.priceAmount` для `valueType: price`.
@@ -53,9 +54,9 @@
 
 | Cache field                   | Хранится в   | Source of truth | Sync                                            |
 | ----------------------------- | ------------ | --------------- | ----------------------------------------------- |
-| `user_profile.rating`         | user-profile | rating          | event `rating.updated` / `feedback.submitted`   |
+| `user_profile.rating`         | user-profile | rating          | event `rating.updated` / `deal_feedback.submitted`   |
 | `user_profile.verified_sales` | user-profile | rating          | event                                           |
-| `user_profile.pending_sales`  | user-profile | rating          | event `auction.completed`, `feedback.submitted` |
+| `user_profile.pending_sales`  | user-profile | rating          | event `auction.completed`, `deal_feedback.submitted` |
 
 
 

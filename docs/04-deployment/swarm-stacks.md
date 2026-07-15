@@ -29,7 +29,7 @@
 | billing | 3001 | no |
 | plan-config | 3002 | no |
 | auction | 3003 | no |
-| auction-subscriptions | 3004 | no |
+| subscriptions | 3004 | no |
 | … domain services | 3005+ | no |
 
 **Deploy config (пример):**

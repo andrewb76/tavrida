@@ -47,19 +47,20 @@ flowchart TB
         subgraph core [Core Services]
             billing
             fp[plan-config]
-            settings
+            sc[scalar-config]
         end
         subgraph domain [Domain Services]
             auction
             forum
             rating
-            feedback
+            dealFeedback[deal-feedback]
             profile[user-profile]
             marketplace
-            subs[auction-subscriptions]
+            periods
+            subs[subscriptions]
         end
         subgraph support [Support]
-            notif[notifications-adapter]
+            notif[notifications]
         end
     end
 
@@ -93,7 +94,7 @@ flowchart TB
 | Паттерн | Когда | Пример |
 |---------|-------|--------|
 | **Sync HTTP** | Нужен немедленный ответ | BFF → `plan-config.limits/check` |
-| **Async event** | Side effects, fan-out | `auction.completed` → feedback, rating, webhooks — [messaging](./messaging.md) |
+| **Async event** | Side effects, fan-out | `marketplace.order_completed` → deal-feedback — [messaging](./messaging.md) |
 | **WS relay** | Realtime UI | auction → Redis pub/sub → BFF → client |
 | **Denormalized cache** | Частое чтение агрегата | user-profile ← rating |
 | **Saga (choreography)** | Мulti-step без оркестратора | activate plan: plan-config → billing.charge → plan-config.subscription |

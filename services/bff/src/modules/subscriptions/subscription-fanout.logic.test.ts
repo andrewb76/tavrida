@@ -19,8 +19,7 @@ describe('collectMatchedUserIds', () => {
 
 describe('toFanoutResult', () => {
   it('computes skipped from notified', () => {
-    assert.deepEqual(toFanoutResult(['u1', 'u2', 'u3'], 1), {
-      matchedUserIds: ['u1', 'u2', 'u3'],
+    assert.deepEqual(toFanoutResult(3, 1), {
       notified: 1,
       skipped: 2,
     });

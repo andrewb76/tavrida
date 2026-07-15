@@ -1,7 +1,8 @@
 # 🔗 Сервис: webhooks
 
-> **Статус:** spec ready · **Версия:** 0.4 · **Schema:** `webhooks` · **Port (draft):** 3011  
-> **ADR:** [011-centralized-outbound-webhooks](../../03-architecture/adr/011-centralized-outbound-webhooks.md)
+> **Статус:** spec ready · **Версия:** 0.4 · **Schema:** `webhooks` · **Port (draft):** 3015  
+> **ADR:** [011-centralized-outbound-webhooks](../../03-architecture/adr/011-centralized-outbound-webhooks.md)  
+> **Примечание:** порт **3011** занят `marketplace`; draft webhooks = **3015**.
 
 ## 🎯 Назначение
 
@@ -323,7 +324,7 @@ X-Tavrida-Timestamp: 1730000000
 | `RABBITMQ_URL` | да | Consumer `webhooks.events` |
 | `SCALAR_CONFIG_URL` | да | — |
 | `PLAN_CONFIG_URL` | да | — |
-| `PORT` | нет | `3011` |
+| `PORT` | нет | `3015` |
 
 ## 📎 Связанные разделы
 

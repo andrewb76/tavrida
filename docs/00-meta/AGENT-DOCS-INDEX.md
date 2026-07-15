@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-15 (member /subscriptions UI + delivery prefs)
+**Последнее обновление индекса:** 2026-07-16 (WORK-PLAN-NEXT audit + sprint plan)
 
 ---
 
@@ -53,6 +53,7 @@
 | **Новый микросервис** | scaffold + docs | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) → [naming.md](../13-maintenance/naming.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | — |
 | **Документация (meta)** | структура, roadmap, guidelines | [docs-guidelines.md](../13-maintenance/docs-guidelines.md) → [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | [docs/README.md](../README.md) | — |
 | **Очередь задач (AI)** | backlog, «сделай потом» | [AGENT-TODO.todo](../../AGENT-TODO.todo) (Todo+ sidebar) | `.cursor/rules/agent-tasks.mdc` | — |
+| **Sprint / work plan** | ближайшие дни, docs↔код audit | [WORK-PLAN-NEXT.md](./WORK-PLAN-NEXT.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) · [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | living · 2026-07-16 |
 
 ---
 
