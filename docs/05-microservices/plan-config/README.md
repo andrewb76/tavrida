@@ -1,6 +1,6 @@
 # 📋 Сервис: plan-config
 
-> **Статус:** v1 scaffold · **Версия:** 0.4 · **Schema:** `plan_config` · **Код:** `services/plan-config` :3002 · **billing:** wired ✅  
+> **Статус:** v1 · **Версия:** 0.5 · **Schema:** `plan_config` · **Код:** `services/plan-config` :3002 · **billing:** activate + renew ✅  
 > **Legacy name:** financial-policy · [ADR-017](../../03-architecture/adr/017-plan-config-scalar-config-rename.md)
 
 ## 🎯 Назначение
@@ -78,6 +78,7 @@ Plan variables попадают в БД **только** через sync/registe
 | `planId` | varchar | Текущий план |
 | `startsAt`, `expiresAt` | timestamptz | Период |
 | `autoRenew` | boolean | Автопродление |
+| `billingPeriod` | `monthly` \| `yearly` \| null | Цикл последней активации/renew; null → infer |
 | `status` | enum | `ACTIVE` \| `EXPIRED` \| `CANCELLED` |
 
 ## 🔌 API
@@ -102,7 +103,36 @@ Plan variables попадают в БД **только** через sync/registe
 | POST | `/limits/check` | domain, BFF | Проверка лимита |
 | POST | `/features/can-use` | domain, BFF | Проверка feature |
 | GET | `/subscription?userId=` | BFF, domain | План пользователя |
+| POST | `/subscription/renew/run` | external CRON / ops | Автопродление due + expire без renew |
 | GET | `/health`, `/health/ready` | orchestrator | — |
+
+### Автопродление (`POST /internal/v1/subscription/renew/run`)
+
+Вызов снаружи (Swarm cron / k8s CronJob / ручной curl). Логика:
+
+| Условие | Действие |
+|---------|----------|
+| `ACTIVE` ∧ `autoRenew` ∧ `expiresAt <= now` | `billing.charge` target `plan-config.renew-plan:{planId}` → extend `expiresAt`; idempotency `plan-config.renew:{userId}:{expiresAtISO}` |
+| Charge fail / plan missing | `status = EXPIRED` (resolvePlanId → `free`) |
+| `ACTIVE` ∧ `!autoRenew` ∧ `expiresAt <= now` | `status = EXPIRED` (без charge) |
+
+Free (`expiresAt` null) не попадает в выборку. Цена 0 → extend без charge.
+
+Ответ:
+
+```json
+{
+  "scanned": 3,
+  "renewed": 1,
+  "expired": 1,
+  "failed": 1,
+  "results": [
+    { "userId": "…", "action": "renewed", "planId": "basic", "transactionId": "…", "expiresAt": "…" }
+  ]
+}
+```
+
+Ops: `curl -X POST "$PLAN_CONFIG_URL/internal/v1/subscription/renew/run"` (рекомендуемый интервал — hourly).
 
 ### `POST /internal/v1/limits/check`
 
@@ -152,7 +182,7 @@ POST /internal/v1/plan-variables/sync
 | Переменная | Обяз. | Описание | Пример |
 |------------|-------|----------|--------|
 | `DATABASE_URL` | да | schema `plan_config` | postgres://… |
-| `BILLING_URL` | да | Internal billing | http://billing:3001 |
+| `BILLING_URL` | да | Internal billing (activate + renew charge) | http://billing:3001 |
 | `RABBITMQ_URL` | да | Events | amqp://… |
 | `PLAN_CONFIG_PORT` / `PORT` | нет | HTTP | `3002` |
 
@@ -169,4 +199,4 @@ POST /internal/v1/plan-variables/sync
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.4-spec
+**Автор:** команда разработки · **Версия:** 0.5

@@ -67,17 +67,17 @@ flowchart LR
 
 ### Day 1 — Design + renew skeleton (plan-config)
 
-- [ ] Spec slice в [plan-config/README.md](../05-microservices/plan-config/README.md): кто due (`autoRenew=true`, `status=ACTIVE`, `expiresAt <= now+window`), charge → extend `expiresAt`, fail path (balance → status?)
-- [ ] Internal endpoint **или** Nest `@Cron` / external CRON → `POST /internal/v1/subscription/renew/run` (как digests: вызов снаружи ок для Swarm)
-- [ ] Pure logic unit tests: select due rows, compute next `expiresAt` (monthly/yearly)
-- [ ] Env keys → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) (`PLAN_RENEW_*` / cron secret если нужен)
+- [x] Spec slice в [plan-config/README.md](../05-microservices/plan-config/README.md): due / charge / fail → `EXPIRED`
+- [x] `POST /internal/v1/subscription/renew/run` (external CRON)
+- [x] Pure logic unit tests + `runRenew` service test
+- [x] PLATFORM-SECRETS ops note (curl/CRON); колонка `billingPeriod`
 
 ### Day 2 — Billing charge + harden activate
 
-- [ ] Wire renew → существующий `BillingClient.charge` (target вроде `plan-config.renew-plan:{planId}`)
-- [ ] Stable **idempotencyKey** на renew и по возможности на activate (не `randomUUID()` каждый retry)
-- [ ] Tests: charge success extends; charge fail does not extend (и явный статус/лог)
-- [ ] Docs: event-catalog note если появится `subscription.renewed` / reuse `subscription.activated`
+- [x] Wire renew → `BillingClient.charge` (`plan-config.renew-plan:{planId}`) — сделано вместе с Day 1
+- [x] Stable idempotencyKey: renew + activate (day-scoped)
+- [x] Tests: success extends; fail → `EXPIRED` без extend
+- [ ] Docs: event-catalog — publish `subscription.activated` / `subscription.expired` ещё не из кода (опционально Day 2 хвост или с Day 3)
 
 ### Day 3 — `invitation.redeemed` RMQ
 

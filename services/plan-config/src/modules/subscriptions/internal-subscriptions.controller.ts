@@ -47,4 +47,13 @@ export class InternalSubscriptionsController {
   cancelAutoRenew(@Body() body: CancelAutoRenewDto) {
     return this.subscriptions.cancelAutoRenew(body.userId);
   }
+
+  /**
+   * External CRON / ops: renew due autoRenew subscriptions and expire the rest.
+   * Example: `curl -X POST $PLAN_CONFIG_URL/internal/v1/subscription/renew/run`
+   */
+  @Post('renew/run')
+  runRenew() {
+    return this.subscriptions.runRenew();
+  }
 }

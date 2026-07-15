@@ -19,6 +19,10 @@ export class UserSubscriptionEntity {
   @Column('boolean', { name: 'auto_renew', default: false })
   autoRenew!: boolean;
 
+  /** Billing cycle used at last activate/renew; null → infer from dates. */
+  @Column('varchar', { name: 'billing_period', length: 16, nullable: true })
+  billingPeriod!: 'monthly' | 'yearly' | null;
+
   @Column('varchar', { length: 16, default: 'ACTIVE' })
   status!: SubscriptionStatus;
 
