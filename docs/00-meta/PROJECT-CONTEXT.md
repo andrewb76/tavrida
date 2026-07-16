@@ -16,7 +16,7 @@
 
 ## Стек
 
-NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO · Docker Swarm · Traefik · Logto · **Ory Keto** · Novu Cloud Free · Grafana · Sentry · pnpm/turbo monorepo
+NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO · Docker Swarm · Traefik · Logto · **Ory Keto** · **Novu CE self-host** ([ADR-019](../03-architecture/adr/019-novu-self-host.md)) · Grafana · Sentry · pnpm/turbo monorepo
 
 ## Принятые ADR
 
@@ -25,7 +25,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 | 001 | PostgreSQL **schema per service**, одна БД `tavrida_lot` |
 | 002 | **BFF**: REST `/api/v1` + WebSocket `/ws/v1` |
 | 003 | **scalar-config** (скаляр) + **plan-config** (лимиты per tariff) — [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md), [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) |
-| 004 | **Novu Cloud Free** + `notifications` adapter |
+| 004 | **Novu adapter** (`notifications`) — deployment: [ADR-019](../03-architecture/adr/019-novu-self-host.md) self-host |
 | 005 | **Forum entities:** `topic` + `comment`; `post` deprecated — [ADR-005](../03-architecture/adr/005-forum-terminology.md) |
 | 006 | **Renames:** `deal-feedback`, `subscriptions` — [ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md) |
 | 007 | **Expert** scoped to category tree — [ADR-007](../03-architecture/adr/007-category-scoped-expert.md) |
@@ -34,6 +34,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 | 013 | **referral-rewards** — денежные бонусы (rules scalar-config + plan-config) — [ADR-013](../03-architecture/adr/013-referral-rewards-service.md) |
 | 017 | **Rename** settings → scalar-config, financial-policy → plan-config — [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) |
 | 018 | **Admin impersonation** via `X-Act-As` — [ADR-018](../03-architecture/adr/018-admin-impersonation.md) |
+| 019 | **Novu self-host** (local compose → Swarm) — [ADR-019](../03-architecture/adr/019-novu-self-host.md) |
 | 008–010 | OpenSearch, E2EE chat, JWT Traefik — **proposed** |
 
 ## Ключевые docs (читать первым)
@@ -68,7 +69,7 @@ NestJS · Vue · PostgreSQL (schema per service) · Redis · RabbitMQ · MinIO �
 **Только docs (нет `package.json`):** `rating`, `webhooks`  
 **Порты:** bff 3000 · billing 3001 · plan-config 3002 · auction 3003 · subscriptions 3004 · deal-feedback 3006 · user-profile 3007 · scalar-config 3008 · forum 3009 · notifications 3010 · marketplace **3011** · referral-rewards 3012 (draft) · vanga 3013 (draft) · periods 3014 · webhooks **3015** (draft)
 
-См. также [AGENTS.md](../../AGENTS.md) · план дней: [WORK-PLAN-NEXT.md](./WORK-PLAN-NEXT.md)
+См. также [AGENTS.md](../../AGENTS.md) · **план дней:** [WORK-PLAN-NEXT.md](./WORK-PLAN-NEXT.md) (renew/run + `invitation.redeemed` ✅ · Novu onboarding deferred)
 
 ## Роли (кратко)
 

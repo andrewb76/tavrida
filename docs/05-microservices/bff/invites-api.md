@@ -412,6 +412,17 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 
 **Без Keto (временно):** `CLUB_INVITES_UNLIMITED_ISSUER_IDS=<sub>` в `.env.local`.
 
+### Smoke: claim после Logto callback
+
+Путь фронта: resolve → Logto sign-in → callback → `POST /api/v1/invites/claim` (JWT + `inviteCodeId` / sessionStorage).
+
+Локально без браузера: unit/orchestration test `invites.service.test.ts` (mock Logto). Ручной smoke:
+
+1. Member создаёт invite → открыть `link` в инкогнито.
+2. Пройти Logto → после callback фронт должен вызвать claim (без 4xx/5xx в Network).
+3. Повторный claim → `claimed: false` (идемпотентность).
+4. В RMQ (если подключён) — одно событие `invitation.redeemed` на первый claim.
+
 ---
 
 ## Окружение BFF (дополнение)

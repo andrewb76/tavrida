@@ -28,9 +28,12 @@
 | bff | 3000 | via Traefik |
 | billing | 3001 | no |
 | plan-config | 3002 | no |
+| plan-config-renew | — | no (hourly curl → renew/run) |
 | auction | 3003 | no |
 | subscriptions | 3004 | no |
 | … domain services | 3005+ | no |
+
+**Dev Swarm auto-renew:** контейнер `plan-config-renew` (`curlimages/curl`) раз в час дергает `POST http://plan-config:3002/internal/v1/subscription/renew/run`. Если позже включат `INTERNAL_SERVICE_TOKEN` — добавить `Authorization: Bearer` в command.
 
 **Deploy config (пример):**
 

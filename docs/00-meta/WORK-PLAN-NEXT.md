@@ -16,9 +16,9 @@
 | **Фаза** | Scaffold+ · BFF/SPA живые · docs в целом в паритете по портам/именам |
 | **Live RMQ** | `marketplace.order_completed` → deal-feedback · `tag.content_tagged` → subscriptions → notifications |
 | **Live sync fallback** | BFF PUT tags → HTTP match/trigger если RMQ недоступен (`mode: async`) |
-| **Plans** | `POST /plans/activate` + billing charge при `price>0` ✅ · **auto-renew CRON ❌** |
-| **Invites** | create/resolve/claim + plan-config quota ✅ · BFF flow test ✅ · **`invitation.redeemed` RMQ stub** |
-| **Ops open** | Novu onboarding **deferred** — compose есть; mock OK ([novu-local.md](../04-deployment/novu-local.md)) |
+| **Plans** | activate + charge ✅ · **`renew/run` ✅** · Swarm `plan-config-renew` hourly ✅ |
+| **Invites** | create/resolve/claim + quota ✅ · flow test ✅ · **`invitation.redeemed` ✅** |
+| **Ops open** | Novu onboarding **deferred** ([novu-local.md](../04-deployment/novu-local.md)) |
 
 ```mermaid
 flowchart LR
@@ -36,8 +36,8 @@ flowchart LR
 
 | Sev | Проблема | Где | Когда |
 |-----|----------|-----|-------|
-| **HIGH** | Paid plan не продлевается после `expiresAt` | plan-config · нет CRON/job | **Day 1–2** |
-| **HIGH** | Claim не публикует domain event | user-profile TODO · [event-catalog](../03-architecture/event-catalog.md) `invitation.redeemed` | **Day 3** |
+| **HIGH** | Paid plan не продлевается после `expiresAt` | plan-config · нет CRON/job | **✔** renew/run + Swarm `plan-config-renew` |
+| **HIGH** | Claim не публикует domain event | user-profile · `invitation.redeemed` | **✔** |
 | **MED** | Activate idempotencyKey = `randomUUID()` каждый раз | plan-config `subscriptions.service` | Day 2 (stable key) |
 | **MED** | Digest CRON stub `triggered: 0` | subscriptions | backlog (после Novu) |
 | **MED** | `INTERNAL_SERVICE_TOKEN` optional (fail-open unset) | notifications/subscriptions | harden later / ops |
@@ -89,10 +89,11 @@ flowchart LR
 
 ### Day 4 — Product glue + hygiene
 
-- [ ] BFF/frontend: убедиться что claim path после Logto callback не ломается; при необходимости smoke note в invites-api
-- [ ] Ops: Novu `tag-content` / API key — **deferred** ([novu-local.md](../04-deployment/novu-local.md), AGENT-TODO)
-- [ ] AGENT-DOCS-INDEX + PROJECT-CONTEXT pointer на этот work plan
-- [ ] (если успеем) quiet-hours UI **или** DOCS-ROADMAP parity refresh — одно небольшое
+- [x] BFF/docs: smoke note claim после Logto callback ([invites-api.md](../05-microservices/bff/invites-api.md))
+- [x] Ops: Novu onboarding — **deferred** ([novu-local.md](../04-deployment/novu-local.md))
+- [x] PROJECT-CONTEXT + AGENT-DOCS-INDEX pointer на work plan / ADR-019
+- [x] Swarm: `plan-config-renew` hourly → renew/run
+- [ ] (опц.) quiet-hours UI **или** DOCS-ROADMAP parity — backlog
 
 ---
 

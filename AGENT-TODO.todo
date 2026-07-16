@@ -18,7 +18,7 @@ Vanga (прогноз дохода):
 plan-config:
   ✔ services/plan-config v1 — plans, limits, subscription scaffold @plan-config @done(26-07-11)
   ✔ Internal renew/run + billing charge + expire fail path @plan-config @billing @done(26-07-16)
-  ☐ Swarm/ops: schedule hourly POST …/subscription/renew/run @plan-config @ops
+  ✔ Swarm: plan-config-renew hourly → renew/run @plan-config @ops @done(26-07-16)
 
 Subscriptions (event intent):
   ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)

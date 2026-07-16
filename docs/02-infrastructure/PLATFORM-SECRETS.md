@@ -129,7 +129,7 @@
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Activate + renew charge |
 | `SENTRY_DSN` | **да** | — | — | Опционально |
 
-**Ops (не env сервиса):** внешний CRON/hourly → `POST {PLAN_CONFIG_URL}/internal/v1/subscription/renew/run` (см. [plan-config README](../05-microservices/plan-config/README.md)).
+**Ops (не env сервиса):** hourly job → `POST {PLAN_CONFIG_URL}/internal/v1/subscription/renew/run`. Dev Swarm: сервис `plan-config-renew` в `stack-platform.dev.yml`. Local: curl вручную ([plan-config README](../05-microservices/plan-config/README.md)).
 
 ---
 

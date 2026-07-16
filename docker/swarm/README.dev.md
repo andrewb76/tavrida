@@ -21,7 +21,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 | Файл | Назначение |
 |------|------------|
 | `stack-infra.dev.yml` | Traefik, Postgres, Redis, RabbitMQ, MinIO, imgproxy, Keto |
-| `stack-platform.dev.yml` | BFF + billing, plan-config, auction, user-profile, scalar-config, forum, frontend (**GHCR**) |
+| `stack-platform.dev.yml` | BFF + domain services + frontend (**GHCR**) + `plan-config-renew` (hourly) |
 | `dev.env.example` | Публичный конфиг → `dev.env` (домены, GHCR, Logto URLs) |
 | `dev.secrets.env.example` | Секреты → `dev.secrets.env` (**только на ноутбуке**, gitignore) |
 | `secrets-manifest.dev` | Список ключей → Swarm secret `tavrida_dev_*` |

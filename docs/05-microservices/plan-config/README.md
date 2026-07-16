@@ -132,7 +132,7 @@ Free (`expiresAt` null) не попадает в выборку. Цена 0 → 
 }
 ```
 
-Ops: `curl -X POST "$PLAN_CONFIG_URL/internal/v1/subscription/renew/run"` (рекомендуемый интервал — hourly).
+Ops (dev Swarm): сервис `plan-config-renew` в `stack-platform.dev.yml` — hourly `curl` → этот endpoint. Local/manual: `curl -X POST "$PLAN_CONFIG_URL/internal/v1/subscription/renew/run"`.
 
 ### `POST /internal/v1/limits/check`
 
