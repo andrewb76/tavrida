@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-16 (auction bid/close · ops-hygiene · tariff proposal)
+**Последнее обновление индекса:** 2026-07-16 (Dutch bidding MVP)
 
 ---
 
@@ -28,7 +28,7 @@
 | **Auth / JWT / Logto** | Guards, OIDC, M2M, Keto | [09-security/README.md](../09-security/README.md) → [keto-schema.md](../09-security/keto-schema.md) → [bootstrap-admin.md](../09-security/bootstrap-admin.md) → [logto-setup.md](../14-frontend/logto-setup.md) | [ADR-010](../03-architecture/adr/010-jwt-validation-traefik.md) · [moderator-mapping.md](../09-security/moderator-mapping.md) · [impersonation.md](../09-security/impersonation.md) · [ADR-018](../03-architecture/adr/018-admin-impersonation.md) | `GET /me/roles` · `/admin` UI · `X-Act-As` · bff guards |
 | **Frontend SPA** | Vue routes, API layer, UI | [14-frontend/README.md](../14-frontend/README.md) → [stack-decisions.md](../14-frontend/stack-decisions.md) | [screen-tree.md](../11-ux-ui/screen-tree.md) · [design-tokens.md](../11-ux-ui/design-tokens.md) | `UiIcon` = Iconify+Lucide · `apps/frontend` |
 | **User profile** | Профиль, notes, internal API | [user-profile/README.md](../05-microservices/user-profile/README.md) → [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) | [10-data/README.md](../10-data/README.md) · ADR-001 · [logto-webhooks.md](../14-frontend/logto-webhooks.md) | `POST /me/identity` · forum enrich Logto backfill |
-| **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) | [catalog-listing.md](../05-microservices/auction/requirements/catalog-listing.md) · [financial-features.md](../05-microservices/auction/requirements/financial-features.md) · [wireframes/auctions.md](../11-ux-ui/wireframes/auctions.md) · [event-catalog.md](../03-architecture/event-catalog.md) | `:3003` · catalog + **English bid** + close/run + RMQ · FE live bid |
+| **Аукционы / ставки** | auction domain | [auction/README.md](../05-microservices/auction/README.md) → [dutch-bidding.md](../05-microservices/auction/requirements/dutch-bidding.md) | [catalog-listing.md](../05-microservices/auction/requirements/catalog-listing.md) · [financial-features.md](../05-microservices/auction/requirements/financial-features.md) · [wireframes/auctions.md](../11-ux-ui/wireframes/auctions.md) · [event-catalog.md](../03-architecture/event-catalog.md) | `:3003` · English bid · **Dutch accept** · close/run (+ ask drop) · RMQ · FE |
 | **Биллинг / кошелёк** | balance, deposit, charges | [billing/README.md](../05-microservices/billing/README.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | `services/billing` v1 · BFF `/api/v1/wallets` · `/wallet` UI |
 | **Тарифы / лимиты** | Free/Basic/Pro, plan variables, sync | [registry-keys.md](../13-maintenance/registry-keys.md) → [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) → [ADR-016](../03-architecture/adr/016-financial-policy-parameter-registration.md) → [plan-config/README.md](../05-microservices/plan-config/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) · **[proposal Seller/Buyer](../01-goal/tariff-seller-buyer-proposal.md)** · [swarm-stacks.md](../04-deployment/swarm-stacks.md) | activate + renew ✅ · **Basic→Seller/Buyer proposal (discussion)** |
 | **Vanga / прогноз дохода** | Admin симулятор | [glossary.md](../05-microservices/vanga/glossary.md) → [overview.md](../05-microservices/vanga/overview.md) → [topic-index.md](../05-microservices/vanga/topic-index.md) → [IMPLEMENTATION-PLAN.md](../05-microservices/vanga/IMPLEMENTATION-PLAN.md) | [topics/](../05-microservices/vanga/topics/) · [ADR-015](../03-architecture/adr/015-monetization-engine.md) · `packages/monetization-engine` · `config/vanga.defaults.yaml` | BFF + `/admin/vanga` UI ✅ · checkpoint 0 |
@@ -53,7 +53,7 @@
 | **Новый микросервис** | scaffold + docs | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) → [naming.md](../13-maintenance/naming.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | — |
 | **Документация (meta)** | структура, roadmap, guidelines | [docs-guidelines.md](../13-maintenance/docs-guidelines.md) → [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) | [ops-hygiene.md](../13-maintenance/ops-hygiene.md) · [docs/README.md](../README.md) | cron + session checklist |
 | **Очередь задач (AI)** | backlog, «сделай потом» | [AGENT-TODO.todo](../../AGENT-TODO.todo) (Todo+ sidebar) | `.cursor/rules/agent-tasks.mdc` | — |
-| **Sprint / work plan** | ближайшие дни, docs↔код audit | [WORK-PLAN-NEXT.md](./WORK-PLAN-NEXT.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) · [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | **auction MVP** (bids/close/RMQ) · tariff proposal discussion |
+| **Sprint / work plan** | ближайшие дни, docs↔код audit | [WORK-PLAN-NEXT.md](./WORK-PLAN-NEXT.md) | [DOCS-ROADMAP.md](./DOCS-ROADMAP.md) · [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | Dutch MVP ✅ · promote/expert/WS backlog |
 
 ---
 

@@ -6,11 +6,11 @@
 
 Управление **аукционами** Tavrida Lot: лоты, ставки, завершение сделок, экспертные оценки.
 
-- Каталог list/get/create ✅ · English **bid** ✅ · **close** / `close/run` ✅
+- Каталог list/get/create ✅ · English **bid** ✅ · Dutch **accept** ✅ · **close** / `close/run` ✅
 - RMQ: `auction.created` / `bid_placed` / `completed` (если задан `RABBITMQ_URL`)
 - Проверка лимитов через plan-config — ✅ (BFF `limits/check`, `features/can-use`, `resolve-tier`)
 - Платные фичи / Redis WS live — next
-- Dutch bidding — not yet
+- Dutch: ask step-down в `close/run`; live clock — later
 
 ## ✅ Реализовано (v0.3)
 
@@ -19,12 +19,13 @@
 | Catalog list/get + create | ✅ |
 | Seed demo lots | ✅ |
 | `POST …/bids` (ENGLISH) | ✅ |
-| `POST …/close` + `POST …/close/run` | ✅ |
+| `POST …/bids` (DUTCH accept → immediate ENDED) | ✅ |
+| `POST …/close` + `POST …/close/run` (+ Dutch ask drop) | ✅ |
 | `winnerId` + reserve rule | ✅ |
 | RMQ domain events | ✅ (optional RMQ) |
 | BFF plan-config policy (create/list) | ✅ |
 | `GET /health/ready` DB ping | ✅ |
-| Dutch bid / promote charge / expert POST / WS | ⏳ |
+| promote charge / expert POST / WS | ⏳ |
 
 ## 📖 Термины
 
@@ -42,6 +43,7 @@
 |----------|----------|
 | [financial-features.md](./requirements/financial-features.md) | Лимиты и платные фичи по планам |
 | [catalog-listing.md](./requirements/catalog-listing.md) | Каталог `/auctions`: фильтры, поиск, сортировка, API list |
+| [dutch-bidding.md](./requirements/dutch-bidding.md) | Голландский аукцион: accept, step-down, close |
 
 ## 🗄️ Сущности
 
@@ -118,7 +120,7 @@ stateDiagram-v2
 | POST | `/auctions` | Создание (seller) |
 | PATCH | `/auctions/{id}` | Редактирование (DRAFT / до startsAt) |
 | POST | `/auctions/{id}/publish` | DRAFT → SCHEDULED/ACTIVE |
-| POST | `/auctions/{id}/bids` | Ставка |
+| POST | `/auctions/{id}/bids` | Ставка (English) / accept ask (Dutch → immediate ENDED) |
 | GET | `/auctions/{id}/bids` | История ставок |
 | POST | `/auctions/{id}/promote` | Платное продвижение |
 | POST | `/auctions/{id}/expert-appraisals` | Expert only |
@@ -144,7 +146,7 @@ stateDiagram-v2
 | Method | Path | Описание |
 |--------|------|----------|
 | POST | `/auctions/{id}/close` | CRON / worker — принудительное завершение |
-| POST | `/auctions/close/run` | Batch: SCHEDULED→ACTIVE due + ACTIVE→ENDED by `endsAt`; hourly dev Swarm `auction-close` |
+| POST | `/auctions/close/run` | Batch: SCHEDULED→ACTIVE · Dutch ask −step · ACTIVE→ENDED by `endsAt`; hourly `auction-close` |
 | GET | `/health`, `/health/ready` | Liveness; readiness pings DB (`SELECT 1`) |
 
 ### `POST /api/v1/auctions` — создание

@@ -66,6 +66,7 @@ const auctionProgress = computed(() => {
 });
 
 const canBid = computed(() => Boolean(lot.value?.isLive));
+const isDutch = computed(() => lot.value?.type === 'DUTCH');
 
 watch(
   () => lot.value?.minNextBid,
@@ -106,7 +107,7 @@ async function load() {
 }
 
 function addBidStep(step: number) {
-  if (!lot.value || bidAmount.value == null) return;
+  if (!lot.value || bidAmount.value == null || isDutch.value) return;
   bidAmount.value = Math.max(lot.value.minNextBid, bidAmount.value + step);
 }
 
@@ -115,7 +116,8 @@ async function confirmBid() {
   bidSubmitting.value = true;
   bidError.value = null;
   try {
-    const result = await placeBid(lot.value.id, bidAmount.value);
+    const amount = isDutch.value ? lot.value.currentPrice : bidAmount.value;
+    const result = await placeBid(lot.value.id, amount);
     lot.value = result.auction;
     bids.value = await listAuctionBids(lot.value.id);
     bidOpen.value = false;
@@ -382,20 +384,37 @@ async function confirmBid() {
           class="lot-page__bid-cta"
           @click="bidOpen = true"
         >
-          Сделать ставку · {{ formatMoney(lot.minNextBid, lot.currency) }}
+          <template v-if="isDutch">
+            Купить по цене · {{ formatMoney(lot.currentPrice, lot.currency) }}
+          </template>
+          <template v-else>
+            Сделать ставку · {{ formatMoney(lot.minNextBid, lot.currency) }}
+          </template>
         </UiButton>
       </div>
 
       <UiModal
         v-model:open="bidOpen"
-        title="Ставка на лот"
+        :title="isDutch ? 'Купить лот' : 'Ставка на лот'"
         :description="lot.title"
       >
         <p class="lot-page__modal-meta">
-          Текущая: {{ formatMoney(lot.currentPrice, lot.currency) }}
-          · мин.: {{ formatMoney(lot.minNextBid, lot.currency) }}
+          <template v-if="isDutch">
+            Голландский аукцион: цена снижается. Accept = текущий ask
+            {{ formatMoney(lot.currentPrice, lot.currency) }}
+            <template v-if="lot.bidIncrement">
+              · шаг снижения {{ formatMoney(lot.bidIncrement, lot.currency) }}
+            </template>
+          </template>
+          <template v-else>
+            Текущая: {{ formatMoney(lot.currentPrice, lot.currency) }}
+            · мин.: {{ formatMoney(lot.minNextBid, lot.currency) }}
+          </template>
         </p>
-        <label class="lot-page__modal-input">
+        <label
+          v-if="!isDutch"
+          class="lot-page__modal-input"
+        >
           Сумма
           <input
             v-model.number="bidAmount"
@@ -404,7 +423,16 @@ async function confirmBid() {
             :step="lot.bidIncrement"
           >
         </label>
-        <div class="lot-page__chips">
+        <p
+          v-else
+          class="lot-page__modal-meta"
+        >
+          К оплате: <strong>{{ formatMoney(lot.currentPrice, lot.currency) }}</strong>
+        </p>
+        <div
+          v-if="!isDutch"
+          class="lot-page__chips"
+        >
           <button
             type="button"
             @click="addBidStep(lot.bidIncrement)"
@@ -433,10 +461,22 @@ async function confirmBid() {
         <UiButton
           intent="primary"
           class="w-full"
-          :disabled="bidSubmitting || bidAmount == null || bidAmount < lot.minNextBid"
+          :disabled="
+            bidSubmitting ||
+              bidAmount == null ||
+              (!isDutch && bidAmount < lot.minNextBid)
+          "
           @click="confirmBid"
         >
-          {{ bidSubmitting ? 'Отправка…' : 'Подтвердить ставку' }}
+          <template v-if="bidSubmitting">
+            Отправка…
+          </template>
+          <template v-else-if="isDutch">
+            Подтвердить покупку
+          </template>
+          <template v-else>
+            Подтвердить ставку
+          </template>
         </UiButton>
       </UiModal>
     </template>

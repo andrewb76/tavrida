@@ -256,7 +256,7 @@ async function submit() {
             >
           </label>
           <label>
-            Шаг ставки (₽)
+            {{ type === 'DUTCH' ? 'Шаг снижения цены (₽)' : 'Шаг ставки (₽)' }}
             <input
               v-model.number="bidIncrement"
               type="number"

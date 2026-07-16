@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { minNextBid, validatePlaceBid } from './auction-bid.logic';
+import {
+  dropDutchAsk,
+  dutchAskFloor,
+  minNextBid,
+  validatePlaceBid,
+} from './auction-bid.logic';
 
 const base = {
   status: 'ACTIVE',
@@ -21,7 +26,10 @@ describe('validatePlaceBid', () => {
       now: new Date('2026-06-01T00:00:00Z'),
     });
     assert.equal(r.ok, true);
-    if (r.ok) assert.equal(r.activate, false);
+    if (r.ok) {
+      assert.equal(r.activate, false);
+      assert.equal(r.completeImmediately, false);
+    }
   });
 
   it('rejects seller', () => {
@@ -36,14 +44,24 @@ describe('validatePlaceBid', () => {
     if (!r.ok) assert.equal(r.code, 'amount_too_low');
   });
 
-  it('rejects dutch', () => {
+  it('accepts dutch at current ask and completes immediately', () => {
+    const r = validatePlaceBid({
+      auction: { ...base, type: 'DUTCH' },
+      bidderId: 'b',
+      amount: 1000,
+    });
+    assert.equal(r.ok, true);
+    if (r.ok) assert.equal(r.completeImmediately, true);
+  });
+
+  it('rejects dutch amount mismatch', () => {
     const r = validatePlaceBid({
       auction: { ...base, type: 'DUTCH' },
       bidderId: 'b',
       amount: 900,
     });
     assert.equal(r.ok, false);
-    if (!r.ok) assert.equal(r.code, 'dutch_unsupported');
+    if (!r.ok) assert.equal(r.code, 'amount_mismatch');
   });
 
   it('activates scheduled when startsAt passed', () => {
@@ -74,7 +92,28 @@ describe('validatePlaceBid', () => {
 });
 
 describe('minNextBid', () => {
-  it('adds increment', () => {
-    assert.equal(minNextBid(1000, 100), 1100);
+  it('adds increment for english', () => {
+    assert.equal(minNextBid(1000, 100, 'ENGLISH'), 1100);
+  });
+
+  it('equals ask for dutch', () => {
+    assert.equal(minNextBid(1000, 100, 'DUTCH'), 1000);
+  });
+});
+
+describe('dropDutchAsk', () => {
+  it('drops by increment until reserve floor', () => {
+    const a = dropDutchAsk(1000, 100, 850);
+    assert.deepEqual(a, { nextPrice: 900, dropped: true, atFloor: false });
+    const b = dropDutchAsk(900, 100, 850);
+    assert.deepEqual(b, { nextPrice: 850, dropped: true, atFloor: true });
+    const c = dropDutchAsk(850, 100, 850);
+    assert.deepEqual(c, { nextPrice: 850, dropped: false, atFloor: true });
+  });
+
+  it('uses bidIncrement as floor when no reserve', () => {
+    assert.equal(dutchAskFloor(null, 50), 50);
+    const r = dropDutchAsk(120, 50, null);
+    assert.deepEqual(r, { nextPrice: 70, dropped: true, atFloor: false });
   });
 });

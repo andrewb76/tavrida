@@ -40,7 +40,8 @@ Subscriptions (event intent):
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)
   ✔ English bid + close/run + RMQ + FE placeBid @auction @bff @frontend @done(26-07-16)
-  ☐ Dutch bidding · promote billing charge · expert POST · WS live @auction
+  ✔ Dutch accept bid + ask step-down in close/run + FE CTA @auction @frontend @done(26-07-16)
+  ☐ promote billing charge · expert POST · WS live @auction
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
@@ -68,6 +69,7 @@ Docs / workflow:
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)
 
 Archive:
+  ✔ Dutch accept bid + ask step-down in close/run + FE CTA @auction @frontend @done(26-07-16)
   ✔ plan-config HTTP limits (replace BFF hardcoded policy) @auction @bff @done(26-07-16)
   ✔ Swarm cron: POST …/auctions/close/run @auction @ops @done(26-07-16)
   ✔ Health /ready DB ping @auction @done(26-07-16)

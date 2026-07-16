@@ -10,7 +10,7 @@ import { AuctionEntity } from '../../entities/auction.entity';
 import { BidEntity } from '../../entities/bid.entity';
 import { ExpertAppraisalEntity } from '../../entities/expert-appraisal.entity';
 import { AuctionEventsPublisher } from '../events/auction-events.publisher';
-import { validatePlaceBid } from './auction-bid.logic';
+import { dropDutchAsk, minNextBid, validatePlaceBid } from './auction-bid.logic';
 import { resolveClose } from './auction-close.logic';
 import {
   clampLimit,
@@ -140,6 +140,12 @@ export class AuctionsService {
 
     row.currentPrice = String(input.amount);
     row.bidCount = (row.bidCount ?? 0) + 1;
+
+    if (check.completeImmediately) {
+      row.status = 'ENDED';
+      row.winnerId = input.bidderId;
+    }
+
     await this.auctions.save(row);
 
     const participantIds = await this.participantIds(row.id, row.sellerId);
@@ -153,6 +159,18 @@ export class AuctionsService {
       currency: bid.currency,
       placedAt: bid.placedAt.toISOString(),
     });
+
+    if (check.completeImmediately) {
+      void this.events.publishCompleted({
+        auctionId: row.id,
+        sellerId: row.sellerId,
+        buyerId: input.bidderId,
+        participantIds,
+        finalPrice: Number(bid.amount),
+        currency: row.currency,
+        completedAt: now.toISOString(),
+      });
+    }
 
     return {
       bid: {
@@ -224,7 +242,7 @@ export class AuctionsService {
     };
   }
 
-  /** Activate due SCHEDULED + close due ACTIVE (endsAt <= now). */
+  /** Activate due SCHEDULED + Dutch ask step-down + close due ACTIVE (endsAt <= now). */
   async runCloseDue(now = new Date()) {
     const toActivate = await this.auctions.find({
       where: {
@@ -241,6 +259,23 @@ export class AuctionsService {
       row.status = 'ACTIVE';
       await this.auctions.save(row);
       activated += 1;
+    }
+
+    const dutchLive = await this.auctions.find({
+      where: { status: 'ACTIVE', type: 'DUTCH' },
+    });
+    let dutchDropped = 0;
+    for (const row of dutchLive) {
+      if (row.endsAt && row.endsAt.getTime() <= now.getTime()) continue;
+      const drop = dropDutchAsk(
+        Number(row.currentPrice),
+        Number(row.bidIncrement),
+        row.reservePrice != null ? Number(row.reservePrice) : null,
+      );
+      if (!drop.dropped) continue;
+      row.currentPrice = String(drop.nextPrice);
+      await this.auctions.save(row);
+      dutchDropped += 1;
     }
 
     const toClose = await this.auctions.find({
@@ -266,8 +301,9 @@ export class AuctionsService {
     }
 
     return {
-      scanned: toActivate.length + toClose.length,
+      scanned: toActivate.length + dutchLive.length + toClose.length,
       activated,
+      dutchDropped,
       closed,
       results,
     };
@@ -364,7 +400,7 @@ export class AuctionsService {
       hasExpertAppraisal: row.hasExpertAppraisal,
       isLive: isLive(listRow, now),
       isPromoted: isPromoted(listRow, now),
-      minNextBid: currentPrice + bidIncrement,
+      minNextBid: minNextBid(currentPrice, bidIncrement, row.type),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
