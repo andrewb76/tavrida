@@ -1,6 +1,8 @@
 # ADR-004: Notifications — Novu Cloud (Free plan) + adapter
 
-> **Статус:** accepted · **Дата:** 2026-07-06
+> **Статус:** superseded (deployment) · **Дата:** 2026-07-06  
+> **Deployment target:** [ADR-019](./019-novu-self-host.md) — self-host Novu (Cloud недоступен в Крыму).  
+> **Сохраняет силу:** thin `services/notifications` adapter, mock без ключа, audit log.
 
 ## 🎯 Контекст
 

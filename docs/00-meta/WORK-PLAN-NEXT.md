@@ -18,7 +18,7 @@
 | **Live sync fallback** | BFF PUT tags → HTTP match/trigger если RMQ недоступен (`mode: async`) |
 | **Plans** | `POST /plans/activate` + billing charge при `price>0` ✅ · **auto-renew CRON ❌** |
 | **Invites** | create/resolve/claim + plan-config quota ✅ · BFF flow test ✅ · **`invitation.redeemed` RMQ stub** |
-| **Ops open** | Novu Dashboard `tag-content` (не блокирует код) |
+| **Ops open** | Novu onboarding **deferred** — compose есть; mock OK ([novu-local.md](../04-deployment/novu-local.md)) |
 
 ```mermaid
 flowchart LR
@@ -90,7 +90,7 @@ flowchart LR
 ### Day 4 — Product glue + hygiene
 
 - [ ] BFF/frontend: убедиться что claim path после Logto callback не ломается; при необходимости smoke note в invites-api
-- [ ] Ops checklist: Novu `tag-content` остаётся ☐ (не блокер кода) — явно в AGENT-TODO
+- [ ] Ops: Novu `tag-content` / API key — **deferred** ([novu-local.md](../04-deployment/novu-local.md), AGENT-TODO)
 - [ ] AGENT-DOCS-INDEX + PROJECT-CONTEXT pointer на этот work plan
 - [ ] (если успеем) quiet-hours UI **или** DOCS-ROADMAP parity refresh — одно небольшое
 

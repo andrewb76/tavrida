@@ -41,7 +41,9 @@ docker compose -f docker/compose/infra.local.yml up -d
 ```
 
 Поднимает: PostgreSQL (`tavrida_lot`), Redis, RabbitMQ, MinIO, **imgproxy**, **Keto** (read `:4466` / write `:4467`, schema `keto`). Сеть `tavrida-local`.  
-Только Keto: `pnpm keto:up`. Logto — Cloud или `logto.local.yml`. Bootstrap admin: [bootstrap-admin](../09-security/bootstrap-admin.md).
+Только Keto: `pnpm keto:up`. Logto — Cloud или `logto.local.yml`.  
+**Novu** (self-host, отдельно): `pnpm novu:up` — Dashboard `:4000`, API `:3020`. Чеклист ключа + workflow `tag-content`: [novu-local.md](./novu-local.md) ([ADR-019](../03-architecture/adr/019-novu-self-host.md)).  
+Bootstrap admin: [bootstrap-admin](../09-security/bootstrap-admin.md).
 
 ## 🌐 Local URLs
 
@@ -56,6 +58,9 @@ docker compose -f docker/compose/infra.local.yml up -d
 | `http://localhost:3009` | forum (internal — debug only) |
 | `http://localhost:9000` | MinIO (S3 API) |
 | `http://localhost:8080` | imgproxy (resize / WebP для медиа) |
+| `http://localhost:4000` | Novu Dashboard (`pnpm novu:up`) |
+| `http://localhost:3020` | Novu API (self-host) |
+| `http://localhost:3022` | Novu WS (Inbox realtime) |
 
 Предпочтительно: **только BFF** с фронта; direct service ports — для отладки.
 

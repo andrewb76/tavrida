@@ -16,6 +16,8 @@
     "sync:logto-users": "node scripts/sync-logto-users.mjs",
     "grant:admin": "sh scripts/grant-admin.sh",
     "keto:up": "docker compose -f docker/compose/infra.local.yml up -d keto",
+    "novu:up": "docker compose -f docker/compose/novu.local.yml --env-file docker/compose/novu.local.env up -d",
+    "novu:down": "docker compose -f docker/compose/novu.local.yml --env-file docker/compose/novu.local.env down",
     "docs:dev": "pnpm --filter @tavrida/docs-site dev",
     "docs:build": "pnpm --filter @tavrida/docs-site build",
     "docs:preview": "pnpm --filter @tavrida/docs-site preview",

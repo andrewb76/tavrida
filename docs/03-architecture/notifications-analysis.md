@@ -1,20 +1,21 @@
-# 📬 Notifications — Novu Cloud
+# 📬 Notifications — Novu self-host
 
-> **Статус:** accepted · **Решение:** [ADR-004](./adr/004-notifications-adapter.md) · **План:** Novu Cloud Free
+> **Статус:** accepted · **Решение:** [ADR-019](./adr/019-novu-self-host.md) (adapter: [ADR-004](./adr/004-notifications-adapter.md))  
+> **Почему не Cloud:** Novu Cloud недоступен в Крыму.
 
 ## 🎯 Назначение
 
-Стратегия уведомлений Tavrida Lot на базе **Novu Cloud (Free plan)**.
+Стратегия уведомлений Tavrida Lot на базе **Novu Community Edition (self-host)**.
 
 ## ✅ Принятое решение
 
 | Параметр | Значение |
 |----------|----------|
-| Платформа | [Novu Cloud](https://web.novu.co) |
-| Тариф | **Free plan** (MVP + ранний prod) |
-| Интеграция | `services/notifications/` — adapter на `@novu/node` |
-| Workflows | Novu Dashboard (dev / prod environments) |
-| Self-host | Не используем на MVP; опция при росте (Novu MIT) |
+| Платформа | Novu CE self-host (`docker/compose/novu.local.yml`) |
+| Local | `pnpm novu:up` — Dashboard `:4000`, API `:3020` |
+| Интеграция | `services/notifications/` — HTTP trigger / mock |
+| Workflows | Self-host Dashboard |
+| Cloud | Не используем (geo) |
 
 ## 📋 Сценарии → Novu Workflows
 
@@ -39,7 +40,7 @@
 sequenceDiagram
     participant S as upstream service
     participant A as notifications-adapter
-    participant Novu as Novu Cloud
+    participant Novu as Novu CE
     participant BFF as BFF
     participant U as User
 
@@ -53,19 +54,26 @@ sequenceDiagram
     BFF->>U: WS user:{id}
 ```
 
-## ⚙️ Novu Cloud — настройка
+## ⚙️ Self-host — настройка (local)
 
-### 1. Аккаунт и environments
+### 1. Compose
 
-1. Регистрация на [web.novu.co](https://web.novu.co)
-2. Environments: `Development`, `Production`
-3. API Keys → Bitwarden (`NOVU_API_KEY_DEV`, `NOVU_API_KEY_PROD`)
+```bash
+pnpm novu:up
+# http://localhost:4000 — Dashboard
+# http://localhost:3020 — API
+```
+
+1. Создать org / admin в Dashboard
+2. API Keys → `.env.local` как `NOVU_API_KEY` (или bootstrap `NOVU_SECRET_KEY` из `docker/compose/novu.local.env`)
+3. `NOVU_API_URL=http://localhost:3020`
+4. Создать workflow `tag-content`
 
 ### 2. Integration providers (в Novu Dashboard)
 
 | Канал | Provider (рекомендация) |
 |-------|-------------------------|
-| Email | Novu Email (dev) → custom SMTP / SendGrid (prod) |
+| Email | SMTP (local Mailhog / prod mail) |
 | Push | Firebase FCM |
 | In-app | Novu Inbox (built-in) |
 
@@ -75,17 +83,11 @@ sequenceDiagram
 - Email/phone/device tokens — синхронизация при регистрации/логине через adapter
 - `POST /internal/v1/notifications/subscribers/upsert`
 
-## 📊 Free plan — мониторинг
+## 🔄 Путь дальше
 
-- Dashboard → Usage: events/month, subscribers
-- Alert в Grafana при 80% лимита (TODO: observability)
-- Fallback: отключить digest, оставить только transactional
-
-## 🔄 Путь миграции при росте
-
-1. **Novu Cloud Paid** — white-label, больше events
-2. **Novu self-host** — Docker Swarm, полный контроль (MIT)
-3. Adapter API **не меняется** — меняется только `NOVU_API_URL` + key
+1. Проверить local CE → опционально merge в `infra.local.yml`
+2. Swarm stack Novu (dev/prod) + SMTP/FCM
+3. Adapter API **не меняется** — только `NOVU_API_URL` + key
 
 ## 🔗 Связанные документы
 

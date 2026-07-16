@@ -9,7 +9,7 @@ export type NovuTriggerResult = {
 
 /**
  * Thin Novu HTTP client. Without NOVU_API_KEY — mock transaction (local/dev).
- * Spec: ADR-004.
+ * Spec: ADR-004 adapter · ADR-019 self-host default URL.
  */
 @Injectable()
 export class NovuAdapter {
@@ -37,7 +37,7 @@ export class NovuAdapter {
     }
 
     const base = (
-      this.config.get<string>('NOVU_API_URL') ?? 'https://api.novu.co'
+      this.config.get<string>('NOVU_API_URL') ?? 'http://localhost:3020'
     ).replace(/\/$/, '');
 
     const body: Record<string, unknown> = {

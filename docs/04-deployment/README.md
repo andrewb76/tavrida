@@ -40,7 +40,7 @@ docker/
     └── Dockerfile.frontend  # Vue static + nginx
 ```
 
-> `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO, imgproxy, **Keto**. Logto — `logto.local.yml` или Logto Cloud. Bootstrap: [bootstrap-admin](../09-security/bootstrap-admin.md).
+> `docker/compose/infra.local.yml` — PostgreSQL, Redis, RabbitMQ, MinIO, imgproxy, **Keto**. Logto — `logto.local.yml` или Logto Cloud. Novu CE — `novu.local.yml` / `pnpm novu:up` ([ADR-019](../03-architecture/adr/019-novu-self-host.md)). Bootstrap: [bootstrap-admin](../09-security/bootstrap-admin.md).
 
 ## 🔄 CI/CD (целевой pipeline)
 

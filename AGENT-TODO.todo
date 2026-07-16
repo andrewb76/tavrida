@@ -30,7 +30,10 @@ Subscriptions (event intent):
   ✔ Publish tag.content_tagged (BFF addedTagIds → match → notifications) @forum @subscriptions @bff @done(26-07-15)
   ✔ Scaffold services/notifications + trigger/mock + tag-content workflow id @notifications @done(26-07-15)
   ✔ Richer subscriptions UI (list + delivery prefs) @frontend @subscriptions @done(26-07-15)
-  ☐ Novu Dashboard: create workflow tag-content + set NOVU_API_KEY @notifications
+  ✔ Local compose Novu CE + ADR-019 + pnpm novu:up @notifications @done(26-07-16)
+  ☐ Novu ops: задокументировать onboarding Dashboard + API key + workflow tag-content (отложено) @notifications @docs
+  ☐ Novu: настроить local (ключ + tag-content) после чеклиста @notifications
+  ☐ После проверки local Novu — merge в infra.local.yml (как Keto) @notifications @ops
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)

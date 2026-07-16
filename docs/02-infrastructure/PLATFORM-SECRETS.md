@@ -61,9 +61,9 @@
 | `LOGTO_WEBHOOK_ENDPOINT_URL` | нет | setup script | — | Публичный URL для `pnpm setup:logto-webhook` |
 | `KETO_READ_URL` | нет | bff, domain services | `http://localhost:4466` | Ory Keto read API |
 | `KETO_WRITE_URL` | нет | bff, admin flows | `http://localhost:4467` | Ory Keto write API |
-| `NOVU_API_KEY` | **да** | notifications | — | Secret key Novu Cloud ([ADR-004](../03-architecture/adr/004-notifications-adapter.md)) |
-| `NOVU_API_URL` | нет | notifications | `https://api.novu.co` | API URL (self-host: свой endpoint) |
-| `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox |
+| `NOVU_API_KEY` | **да** | notifications | — | Secret Novu CE / Cloud ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); local ≈ `NOVU_SECRET_KEY` из `docker/compose/novu.local.env` |
+| `NOVU_API_URL` | нет | notifications | `http://localhost:3020` | Self-host API ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); Cloud был `https://api.novu.co` |
+| `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox (из Dashboard) |
 | `SENTRY_DSN` | **да** | все NestJS, опц. | — | Backend error tracking |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector |
 | `OTEL_SERVICE_NAME` | нет | каждый сервис | имя сервиса | Идентификатор в трейсах |
@@ -238,8 +238,8 @@
 | `DATABASE_URL` | **да** | `notifications` | Audit log + subscribers |
 | `REDIS_URL` | нет* | — | Pub/sub → BFF *(next)* |
 | `NOVU_API_KEY` | нет* | — | Novu secret; без ключа — **mock** trigger |
-| `NOVU_APPLICATION_IDENTIFIER` | нет | — | Public id |
-| `NOVU_API_URL` | нет | — | default `https://api.novu.co` |
+| `NOVU_APPLICATION_IDENTIFIER` | нет | — | Public id (Dashboard) |
+| `NOVU_API_URL` | нет | `http://localhost:3020` | Self-host (`pnpm novu:up`); без ключа mock не ходит в API |
 | `INTERNAL_SERVICE_TOKEN` | нет* | — | Shared Bearer for `/internal/v1/*`; empty = open (dev) |
 | `RABBITMQ_URL` | нет* | — | Consume domain events *(next)* |
 
@@ -279,7 +279,7 @@
 - [ ] `RABBITMQ_URL`
 - [ ] `MINIO_ACCESS_KEY` + `MINIO_SECRET_KEY`
 - [ ] `LOGTO_*` (tenant dev)
-- [ ] `NOVU_API_KEY` (Novu Development environment)
+- [ ] `NOVU_API_KEY` + `NOVU_API_URL=http://localhost:3020` (`pnpm novu:up`)
 - [ ] `SENTRY_DSN` (backend + frontend projects)
 - [ ] `KETO_READ_URL` / `KETO_WRITE_URL` (если Keto поднят)
 
