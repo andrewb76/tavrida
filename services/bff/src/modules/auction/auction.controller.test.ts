@@ -4,11 +4,12 @@ import { describe, it } from 'node:test';
 import { ForbiddenException } from '@nestjs/common';
 
 import type { AuthUser } from '../auth/current-user.decorator';
-import type { PlanConfigClient } from '../plan-config/plan-config.client';
 import type { MediaLimitsService } from '../media/media-limits.service';
 import type { MediaStorageService } from '../media/media-storage.service';
 import { AuctionController } from './auction.controller';
 import type { AuctionClient } from './auction.client';
+import type { AuctionPlanPolicyService } from './auction-plan-policy.service';
+import { buildSellerPlanOptions } from './auction-plan-policy.logic';
 
 const USER: AuthUser = { sub: 'seller-1' };
 
@@ -21,6 +22,27 @@ const validCreateBody = {
   startsAt: new Date().toISOString(),
   endsAt: new Date(Date.now() + 3600_000).toISOString(),
 };
+
+function freeSellerOptions(lotsCreatedToday: number) {
+  const options = buildSellerPlanOptions({
+    planId: 'free',
+    allowedTypes: ['ENGLISH'],
+    maxDurationHours: 72,
+    promotionEnabled: false,
+    reserveEnabled: false,
+    dailyLimit: 3,
+    promotionUnitPrice: 200,
+    reserveUnitPrice: 100,
+  });
+  return {
+    ...options,
+    dailyLimitSummary: {
+      limit: 3,
+      used: lotsCreatedToday,
+      remaining: Math.max(0, 3 - lotsCreatedToday),
+    },
+  };
+}
 
 function createHarness(planId: string, lotsCreatedToday = 0) {
   const calls = {
@@ -63,12 +85,35 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     },
   } as unknown as AuctionClient;
 
-  const planConfig = {
-    getSubscription: async (userId: string) => {
-      assert.equal(userId, USER.sub);
-      return { planId };
+  const auctionPlanPolicy = {
+    resolveSearchScope: async () => {
+      if (planId === 'pro') return 'FULL_TEXT,FILTERS' as const;
+      if (planId === 'basic') return 'FULL_TEXT' as const;
+      return 'TITLE' as const;
     },
-  } as unknown as PlanConfigClient;
+    resolveSellerPlanOptions: async (_userId: string, used: number) => {
+      const base =
+        planId === 'free'
+          ? freeSellerOptions(used)
+          : {
+              ...buildSellerPlanOptions({
+                planId,
+                allowedTypes: ['ENGLISH', 'DUTCH'],
+                maxDurationHours: planId === 'pro' ? null : 336,
+                promotionEnabled: planId === 'pro',
+                reserveEnabled: planId === 'pro',
+                dailyLimit: planId === 'pro' ? null : 10,
+                promotionUnitPrice: 200,
+                reserveUnitPrice: 100,
+              }),
+              dailyLimitSummary:
+                planId === 'pro'
+                  ? { limit: null, used, remaining: null }
+                  : { limit: 10, used, remaining: Math.max(0, 10 - used) },
+            };
+      return base;
+    },
+  } as unknown as AuctionPlanPolicyService;
 
   const mediaLimits = {
     getLimits: async () => ({
@@ -83,7 +128,12 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     publicBaseUrl: () => 'http://localhost:9000',
   } as unknown as MediaStorageService;
 
-  const controller = new AuctionController(auction, planConfig, mediaLimits, mediaStorage);
+  const controller = new AuctionController(
+    auction,
+    auctionPlanPolicy,
+    mediaLimits,
+    mediaStorage,
+  );
 
   return { controller, calls };
 }

@@ -90,6 +90,27 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     valueType: 'limit',
   },
   {
+    key: 'auction.seller.lot.durationMaxHours',
+    service: 'auction',
+    name: 'Макс. длительность лота (ч)',
+    description: 'Макс. длительность аукциона в часах. −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
+    key: 'auction.bidder.auctionTypes.allowed',
+    service: 'auction',
+    name: 'Доступные типы аукциона',
+    description: 'ENGLISH | DUTCH | all',
+    valueType: 'enum',
+  },
+  {
+    key: 'auction.seller.reservePrice.enabled',
+    service: 'auction',
+    name: 'Резервная цена (тариф)',
+    description: 'Доступ к резервной цене по тарифу',
+    valueType: 'feature',
+  },
+  {
     key: 'auction.seller.promotion.enabled',
     service: 'auction',
     name: 'Продвижение лота (тариф)',
@@ -262,6 +283,24 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { limitValue: 3 },
     basic: { limitValue: 10 },
     pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'auction.seller.lot.durationMaxHours',
+    free: { limitValue: 72 },
+    basic: { limitValue: 336 },
+    pro: { limitValue: -1 },
+  },
+  {
+    variableKey: 'auction.bidder.auctionTypes.allowed',
+    free: { enumValues: ['ENGLISH'] },
+    basic: { enumValues: ['ENGLISH', 'DUTCH'] },
+    pro: { enumValues: ['all'] },
+  },
+  {
+    variableKey: 'auction.seller.reservePrice.enabled',
+    free: { isFeatureEnabled: false },
+    basic: { isFeatureEnabled: false },
+    pro: { isFeatureEnabled: true },
   },
   {
     variableKey: 'auction.seller.promotion.enabled',

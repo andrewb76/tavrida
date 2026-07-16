@@ -1,146 +1,169 @@
 # 🧹 Ops hygiene — регулярное сопровождение
 
-> **Статус:** draft · **Версия:** 0.1 · **Дата:** 2026-07-16  
+> **Статус:** draft · **Версия:** 0.2 · **Дата:** 2026-07-16  
 > **Аудитория:** dev, ops, AI-сессии
 
 ## 🎯 Назначение
 
-**Ops hygiene** — набор регулярных, **воспроизводимых** действий, которые держат инфраструктуру, документацию и код в предсказуемом состоянии.
+**Ops hygiene** — регулярные, **воспроизводимые** действия, которые держат инфраструктуру, документацию и код в «чистом» и предсказуемом состоянии.
 
 Не заменяет incident runbooks и не дублирует [security-ops.md](../09-security/security-ops.md) (ротация секретов, аудит). Здесь — **рутина «чтобы не копилось»**.
 
----
-
-## 📅 Ритм (шпаргалка)
-
-| Когда | Что | Где смотреть |
-|-------|-----|--------------|
-| **Начало сессии / задачи** | `AGENT-TODO.todo` + [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md) + строка темы в [AGENT-DOCS-INDEX.md](../00-meta/AGENT-DOCS-INDEX.md) | `.cursor/rules/agent-tasks.mdc`, `docs-workflow.mdc` |
-| **После фичи / ADR** | Обновить README сервиса, event-catalog, PLATFORM-SECRETS при новых env, строку индекса | [docs-guidelines.md](./docs-guidelines.md) |
-| **Перед merge / релизом** | `pnpm lint` · `pnpm build` (или affected) · `pnpm docs:build` | CI: [github-actions.md](../04-deployment/github-actions.md) |
-| **Hourly (dev Swarm)** | Автопродление подписок | `plan-config-renew` → `POST …/subscription/renew/run` |
-| **Hourly (рекомендуется)** | Закрытие due-аукционов | `POST …/auctions/close/run` — см. § Cron ниже |
-| **Weekly** | Prune GHCR dev images · сверка DOCS-ROADMAP parity | [prune-ghcr-dev workflow](../../.github/workflows/prune-ghcr-dev.yml) |
-| **90d prod** | Ротация DB / API keys (чеклист) | [security-ops.md](../09-security/security-ops.md) |
+Связанные планы: [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md) · [AGENT-TODO.todo](../../AGENT-TODO.todo)
 
 ---
 
-## 🐳 Инфраструктура (local)
+## ☀️ Ежедневно
+
+Для **каждой рабочей сессии** (dev или AI).
+
+### Старт сессии
+
+| # | Действие | Команда / файл |
+|---|----------|----------------|
+| 1 | Прочитать очередь задач | `AGENT-TODO.todo` — активные `☐` |
+| 2 | Сверить фокус недели | [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md) |
+| 3 | Найти тему в индексе | [AGENT-DOCS-INDEX.md](../00-meta/AGENT-DOCS-INDEX.md) → колонка «Читать» |
+| 4 | Поднять infra (если нужен E2E) | `docker compose -f docker/compose/infra.local.yml up -d` |
+
+### Во время работы
+
+| # | Действие | Когда |
+|---|----------|-------|
+| 5 | Сверять код со spec | README сервиса, ADR, event-catalog |
+| 6 | Не коммитить мусор | `.vitepress/cache/`, `.env.local`, случайные бинарники `content/` |
+| 7 | Тесты затронутого пакета | `pnpm exec turbo run test --filter=@tavrida/<pkg>` |
+
+### Конец сессии / перед push
+
+| # | Действие | Команда / файл |
+|---|----------|----------------|
+| 8 | `git status` — без cache и secrets | — |
+| 9 | Обновить docs при смене поведения | см. § «После фичи» ниже |
+| 10 | Закрыть пункты TODO / WORK-PLAN | `✔` + `@done(YY-MM-DD)` → Archive |
+
+### Локальные health-checks (при отладке)
 
 ```bash
-# Базовая платформа
-docker compose -f docker/compose/infra.local.yml up -d
-
-# Опционально: Logto local, Novu CE (отдельно — RAM)
-docker compose -f docker/compose/logto.local.yml up -d
-pnpm novu:up   # Novu onboarding deferred — см. novu-local.md
+pg_isready -h localhost -U postgres
+redis-cli ping
+curl -s -u guest:guest http://localhost:15672/api/overview
+curl -s http://localhost:4466/health/ready          # Keto
+curl -s http://localhost:3003/health/ready          # auction (DB ping)
+curl -X POST http://localhost:3002/internal/v1/subscription/renew/run
+curl -X POST http://localhost:3003/internal/v1/auctions/close/run
 ```
-
-| Проверка | Команда |
-|----------|---------|
-| Postgres | `pg_isready -h localhost -U postgres` |
-| Redis | `redis-cli ping` |
-| RabbitMQ | `curl -s -u guest:guest http://localhost:15672/api/overview` |
-| Keto | `curl -s http://localhost:4466/health/ready` |
-| Auction API | `curl -s http://localhost:3020/v1/health-check` *(Novu)* / `curl -s http://localhost:3003/health` |
-
-**Не коммитить:** `.vitepress/cache/`, локальные артефакты `content/` вне пакета `@tavrida/content`.
 
 ---
 
-## ⏱️ Cron / batch jobs (Swarm & manual)
+## 📆 Еженедельно
+
+| # | Действие | Где |
+|---|----------|-----|
+| 1 | Сверка DOCS-ROADMAP parity | [DOCS-ROADMAP.md](../00-meta/DOCS-ROADMAP.md) — ghost-планы, % готовности |
+| 2 | Prune GHCR dev images | [prune-ghcr-dev.yml](../../.github/workflows/prune-ghcr-dev.yml) — пн 06:00 UTC или manual |
+| 3 | Проверить dev Swarm health | `https://api.${DEV_DOMAIN}/health` · [README.dev.md](../../docker/swarm/README.dev.md) |
+| 4 | Убедиться, что cron jobs живы | `plan-config-renew` (hourly renew/run) · auction `close/run` (manual local / ⏳ Swarm) |
+| 5 | Обновить PROJECT-CONTEXT | Только при новом ADR или смене фазы |
+
+---
+
+## 🚀 Перед деплоем
+
+Чеклист **перед merge в `master`** (автодеплой dev) или **ручным `deploy-dev.sh`**.
+
+### Код и CI gate
+
+```bash
+pnpm install
+pnpm lint
+pnpm build                    # или turbo --filter affected
+pnpm docs:build
+pnpm exec turbo run test --filter=@tavrida/auction   # для затронутых сервисов
+```
+
+| # | Проверка | Критерий |
+|---|----------|----------|
+| 1 | Lint + build + docs:build | зелёный локально или в CI |
+| 2 | Нет секретов в diff | `.env.local`, tokens, keys |
+| 3 | Новые env задокументированы | [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) |
+| 4 | Новые endpoints / events | README сервиса + [event-catalog.md](../03-architecture/event-catalog.md) |
+| 5 | AGENT-DOCS-INDEX обновлён | строка темы, дата |
+| 6 | Migrations expand-only | [migrations.md](../04-deployment/migrations.md) — job **до** rolling update |
+
+### Dev Swarm (VPS)
+
+| # | Действие | Команда |
+|---|----------|---------|
+| 1 | Sync secrets (если менялись) | `docker/swarm/sync-secrets-dev.sh` |
+| 2 | Deploy | `deploy-dev.sh` или GitHub Actions workflow |
+| 3 | Smoke после деплоя | `GET /health` + `GET /health/ready` на BFF и ключевых сервисах |
+| 4 | Проверить renew cron | логи `plan-config-renew` |
+
+См. [github-actions.md](../04-deployment/github-actions.md) · [swarm-stacks.md](../04-deployment/swarm-stacks.md).
+
+### Proposal-only docs
+
+Документы вроде [tariff-seller-buyer-proposal.md](../01-goal/tariff-seller-buyer-proposal.md) **не** каскадят в PLATFORM-REGISTRY / seed / код до командного консенсуса.
+
+---
+
+## ⏱️ Cron / batch jobs (автоматика)
 
 | Job | Endpoint | Интервал | Dev Swarm | Local manual |
 |-----|----------|----------|-----------|--------------|
-| **Subscription renew** | `POST {PLAN_CONFIG_URL}/internal/v1/subscription/renew/run` | hourly | ✅ `plan-config-renew` в `stack-platform.dev.yml` | `curl -X POST http://localhost:3002/internal/v1/subscription/renew/run` |
-| **Auction close** | `POST {AUCTION_URL}/internal/v1/auctions/close/run` | hourly (рекомендуется) | ⏳ добавить `auction-close` sidecar по аналогии | `curl -X POST http://localhost:3003/internal/v1/auctions/close/run` |
+| **Subscription renew** | `POST …/subscription/renew/run` | hourly | ✅ `plan-config-renew` | `curl -X POST http://localhost:3002/internal/v1/subscription/renew/run` |
+| **Auction close** | `POST …/auctions/close/run` | hourly (рекомендуется) | ✅ `auction-close` sidecar | `curl -X POST http://localhost:3003/internal/v1/auctions/close/run` |
 
-Оба endpoint **идемпотентны** на уровне бизнес-логики (повторный close уже закрытого лота — no-op).
-
-При включении `INTERNAL_SERVICE_TOKEN` на internal API — добавить `Authorization: Bearer …` в curl/Swarm command ([PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md)).
+Оба endpoint **идемпотентны**. При `INTERNAL_SERVICE_TOKEN` — `Authorization: Bearer …` в curl/Swarm ([PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md)).
 
 ---
 
-## 📚 Документация (docs-first hygiene)
+## 📚 После фичи (docs-first)
 
-### После изменения поведения
+1. Spec / README сервиса.
+2. [event-catalog.md](../03-architecture/event-catalog.md) — RMQ events.
+3. [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) — env.
+4. [AGENT-DOCS-INDEX.md](../00-meta/AGENT-DOCS-INDEX.md).
+5. [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md).
+6. `AGENT-TODO.todo` → Archive.
 
-1. Spec / README сервиса (если меняется API или домен).
-2. [event-catalog.md](../03-architecture/event-catalog.md) — новые/изменённые RMQ events.
-3. [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) — новые env.
-4. [AGENT-DOCS-INDEX.md](../00-meta/AGENT-DOCS-INDEX.md) — колонка «Статус / заметка» по теме.
-5. [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md) — чеклисты дня / DoD недели.
-6. `AGENT-TODO.todo` — `✔` + `@done(YY-MM-DD)` → Archive.
-
-### Proposal / discussion-only
-
-Документы вроде [tariff-seller-buyer-proposal.md](../01-goal/tariff-seller-buyer-proposal.md) **не** каскадят в PLATFORM-REGISTRY до командного консенсуса.
-
-### Периодическая сверка
-
-- [DOCS-ROADMAP.md](../00-meta/DOCS-ROADMAP.md) — % parity, устаревшие «ghost» планы.
-- [PROJECT-CONTEXT.md](../00-meta/PROJECT-CONTEXT.md) — при новом ADR или смене фазы.
-- Порты / имена сервисов — [local-dev.md](../04-deployment/local-dev.md), [AGENTS.md](../../AGENTS.md).
+Правила форматирования: [docs-guidelines.md](./docs-guidelines.md).
 
 ---
 
-## 💻 Код и monorepo
+## 🐳 Локальная инфраструктура
 
-| Действие | Команда / правило |
-|----------|-------------------|
-| Установка зависимостей | `pnpm install` (корень) |
-| Линт | `pnpm lint` |
-| Сборка gate | `pnpm build` или `pnpm exec turbo run build --filter=…` |
-| Тесты сервиса | `pnpm exec turbo run test --filter=@tavrida/auction` |
-| Один `PORT=3000` в `.env.local` | **не задавать** глобальный `PORT` — только `*_PORT` ([local-dev.md](../04-deployment/local-dev.md)) |
+```bash
+docker compose -f docker/compose/infra.local.yml up -d
+docker compose -f docker/compose/logto.local.yml up -d   # опционально
+pnpm novu:up   # Novu CE — onboarding deferred, см. novu-local.md
+```
 
-**Перед push:** убедиться, что в diff нет cache VitePress, `.env.local`, бинарников `content/periods/*.jpg` без явного intent.
+**Порты:** не задавать глобальный `PORT=3000` в `.env.local` — только `*_PORT` ([local-dev.md](../04-deployment/local-dev.md)).
 
 ---
 
-## 🚀 Dev Swarm (VPS)
-
-См. [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md).
-
-| Действие | Когда |
-|----------|-------|
-| `sync-secrets-dev.sh` | После смены секретов в `dev.secrets.env` |
-| `deploy-dev.sh` | После merge в `master` (или manual workflow) |
-| Проверка health | `https://api.${DEV_DOMAIN}/health` |
-
----
-
-## 📬 Отложенное (не блокирует hygiene, но в backlog)
+## 📬 Backlog (не блокирует hygiene)
 
 | Тема | Статус |
 |------|--------|
 | Novu CE onboarding (Dashboard, API key, `tag-content`) | deferred — [novu-local.md](../04-deployment/novu-local.md) |
-| Swarm `auction-close` hourly sidecar | ⏳ AGENT-TODO |
-| `subscription.activated` / `expired` из plan-config в RMQ | ⏳ WORK-PLAN хвост |
-| Digest CRON real delivery (subscriptions) | после Novu |
-
----
-
-## ✅ Чеклист «сессия в порядке»
-
-- [ ] Прочитан `AGENT-TODO` + релевантная строка AGENT-DOCS-INDEX
-- [ ] Локальная infra поднята (или осознанно mock-only)
-- [ ] Изменения отражены в docs (если менялось поведение)
-- [ ] `pnpm build` / `test` для затронутых пакетов
-- [ ] Нет мусора в git status (cache, secrets, случайные бинарники)
-- [ ] WORK-PLAN / TODO обновлены при закрытии дня
+| Swarm `auction-close` hourly sidecar | ✅ dev Swarm |
+| `subscription.activated` / `expired` из plan-config в RMQ | ⏳ WORK-PLAN |
+| Digest CRON real delivery | после Novu |
+| Ротация секретов prod (90d) | [security-ops.md](../09-security/security-ops.md) |
 
 ---
 
 ## 🔗 Связанные разделы
 
+- [04-deployment/README.md](../04-deployment/README.md) — health checks, CI/CD
 - [local-dev.md](../04-deployment/local-dev.md)
 - [swarm-stacks.md](../04-deployment/swarm-stacks.md)
 - [security-ops.md](../09-security/security-ops.md)
 - [docs-guidelines.md](./docs-guidelines.md)
-- [WORK-PLAN-NEXT.md](../00-meta/WORK-PLAN-NEXT.md)
-- [AGENT-TODO.todo](../../AGENT-TODO.todo)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.1-draft
+**Автор:** команда разработки · **Версия:** 0.2-draft

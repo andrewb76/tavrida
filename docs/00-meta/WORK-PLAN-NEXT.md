@@ -12,8 +12,8 @@
 
 | | |
 |---|---|
-| **Auction сейчас** | Catalog list/get/create + seed + FE pages; **bid = mock**; нет close/RMQ/`winnerId` |
-| **Цель недели** | English bid flow E2E · close/run · RMQ `created` / `bid_placed` / `completed` · FE live bid |
+| **Auction сейчас** | Catalog + English bid + close/run + RMQ + FE live bid ✅ |
+| **Цель недели** | Harden: `/ready` DB · plan-config limits · Swarm `close/run` cron ✅ |
 
 ---
 
@@ -35,9 +35,10 @@
 ### Day 3 — Harden (если успеем)
 
 - [x] SCHEDULED→ACTIVE при startsAt (в close/run и на bid)
-- [ ] Health `/ready` с ping DB
+- [x] Health `/ready` с ping DB
 - [x] Docs README status implementing · index sync
-- [ ] (опц.) plan-config HTTP check вместо hardcoded BFF policy
+- [x] Dev Swarm `auction-close` hourly → `POST /internal/v1/auctions/close/run`
+- [x] plan-config HTTP check вместо hardcoded BFF policy
 
 ### Вне скоупа
 

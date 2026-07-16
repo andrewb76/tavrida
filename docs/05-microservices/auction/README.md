@@ -8,7 +8,7 @@
 
 - Каталог list/get/create ✅ · English **bid** ✅ · **close** / `close/run` ✅
 - RMQ: `auction.created` / `bid_placed` / `completed` (если задан `RABBITMQ_URL`)
-- Проверка лимитов через plan-config — частично (BFF hardcoded policy; HTTP check later)
+- Проверка лимитов через plan-config — ✅ (BFF `limits/check`, `features/can-use`, `resolve-tier`)
 - Платные фичи / Redis WS live — next
 - Dutch bidding — not yet
 
@@ -22,7 +22,8 @@
 | `POST …/close` + `POST …/close/run` | ✅ |
 | `winnerId` + reserve rule | ✅ |
 | RMQ domain events | ✅ (optional RMQ) |
-| BFF + FE place bid | ✅ |
+| BFF plan-config policy (create/list) | ✅ |
+| `GET /health/ready` DB ping | ✅ |
 | Dutch bid / promote charge / expert POST / WS | ⏳ |
 
 ## 📖 Термины
@@ -143,8 +144,8 @@ stateDiagram-v2
 | Method | Path | Описание |
 |--------|------|----------|
 | POST | `/auctions/{id}/close` | CRON / worker — принудительное завершение |
-| POST | `/auctions/close/run` | Batch: SCHEDULED→ACTIVE due + ACTIVE→ENDED by `endsAt` |
-| GET | `/health`, `/health/ready` | — |
+| POST | `/auctions/close/run` | Batch: SCHEDULED→ACTIVE due + ACTIVE→ENDED by `endsAt`; hourly dev Swarm `auction-close` |
+| GET | `/health`, `/health/ready` | Liveness; readiness pings DB (`SELECT 1`) |
 
 ### `POST /api/v1/auctions` — создание
 

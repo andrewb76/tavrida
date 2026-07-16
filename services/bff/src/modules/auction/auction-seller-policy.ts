@@ -11,41 +11,6 @@ export type SellerPlanOptions = {
   reserveUnitPrice: number;
 };
 
-const SELLER_OPTIONS: Record<string, Omit<SellerPlanOptions, 'planId'>> = {
-  free: {
-    allowedTypes: ['ENGLISH'],
-    maxDurationHours: 72,
-    promotionEnabled: false,
-    reserveEnabled: false,
-    dailyLimit: 3,
-    promotionUnitPrice: 200,
-    reserveUnitPrice: 100,
-  },
-  basic: {
-    allowedTypes: ['ENGLISH', 'DUTCH'],
-    maxDurationHours: 336,
-    promotionEnabled: false,
-    reserveEnabled: false,
-    dailyLimit: 10,
-    promotionUnitPrice: 200,
-    reserveUnitPrice: 100,
-  },
-  pro: {
-    allowedTypes: ['ENGLISH', 'DUTCH'],
-    maxDurationHours: null,
-    promotionEnabled: true,
-    reserveEnabled: true,
-    dailyLimit: null,
-    promotionUnitPrice: 200,
-    reserveUnitPrice: 100,
-  },
-};
-
-export function resolveSellerPlanOptions(planId: string): SellerPlanOptions {
-  const base = SELLER_OPTIONS[planId] ?? SELLER_OPTIONS.free;
-  return { planId, ...base };
-}
-
 export type CreateAuctionBody = {
   title: string;
   description: string;

@@ -176,6 +176,20 @@ export class PlanConfigClient {
     return result.limit;
   }
 
+  async resolveTier(userId: string, variableKey: string) {
+    const qs = new URLSearchParams({ userId, key: variableKey });
+    return this.request<{
+      planId: string;
+      found: boolean;
+      key: string;
+      limitValue?: number | null;
+      isFeatureEnabled?: boolean;
+      enumValues?: string[] | null;
+      priceAmount?: number | null;
+      isEnabled?: boolean;
+    }>('GET', `/internal/v1/plan-variables/resolve-tier?${qs}`);
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,

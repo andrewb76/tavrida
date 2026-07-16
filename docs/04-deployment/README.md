@@ -117,6 +117,7 @@ registry.example.com/tavrida/billing:{semver}  # release tags only
 | [migrations.md](./migrations.md) | TypeORM migrations job |
 | [runbook-rollback.md](./runbook-rollback.md) | Откат релиза |
 | [local-dev.md](./local-dev.md) | Локальный запуск |
+| [ops-hygiene.md](../13-maintenance/ops-hygiene.md) | Ежедневно / еженедельно / перед деплоем |
 
 ## 🔗 Связанные разделы
 

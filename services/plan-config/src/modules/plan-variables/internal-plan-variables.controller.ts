@@ -133,6 +133,25 @@ export class InternalPlanVariablesController {
     );
   }
 
+  @Get('resolve-tier')
+  async resolveTier(@Query('userId') userId: string, @Query('key') key: string) {
+    const planId = await this.subscriptions.resolvePlanId(userId);
+    const row = await this.planVariables.getTier(planId, key);
+    if (!row) {
+      return { planId, found: false as const, key };
+    }
+    return {
+      planId,
+      found: true as const,
+      key,
+      limitValue: row.limitValue,
+      isFeatureEnabled: row.isFeatureEnabled,
+      enumValues: row.enumValues,
+      priceAmount: row.priceAmount != null ? Number(row.priceAmount) : null,
+      isEnabled: row.isEnabled,
+    };
+  }
+
   @Patch(':key')
   patchMatrix(@Param('key') key: string, @Body() body: PatchPlanVariableMatrixDto) {
     return this.planVariables.patchMatrix(key, body.tierValues);

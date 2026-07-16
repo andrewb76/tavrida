@@ -100,6 +100,7 @@ Plan variables попадают в БД **только** через sync/registe
 | POST | `/plan-variables/sync` | domain @ startup | Полный манифест; stale для отсутствующих |
 | DELETE | `/plan-variables/:key` | admin via BFF | Удаление stale plan variable |
 | GET | `/charges/resolve?key=` | auction, forum, billing | Цена по plan user (`valueType: price`) |
+| GET | `/plan-variables/resolve-tier?userId=&key=` | BFF | Tier matrix row (limit/feature/enum/price) |
 | POST | `/limits/check` | domain, BFF | Проверка лимита |
 | POST | `/features/can-use` | domain, BFF | Проверка feature |
 | GET | `/subscription?userId=` | BFF, domain | План пользователя |

@@ -15,16 +15,12 @@ import {
 import { assertMediaUrlsAllowed } from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { AuctionClient } from './auction.client';
-import { applySearchPolicy, resolveSearchScope } from './auction-search-policy';
-import {
-  applySellerCreatePolicy,
-  dailyLimitSummary,
-  resolveSellerPlanOptions,
-} from './auction-seller-policy';
+import { AuctionPlanPolicyService } from './auction-plan-policy.service';
+import { applySearchPolicy } from './auction-search-policy';
+import { applySellerCreatePolicy } from './auction-seller-policy';
 
 class ListAuctionsQuery {
   @IsOptional()
@@ -139,38 +135,35 @@ class PlaceBidDto {
 export class AuctionController {
   constructor(
     private readonly auction: AuctionClient,
-    private readonly planConfig: PlanConfigClient,
+    private readonly auctionPlanPolicy: AuctionPlanPolicyService,
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
   ) {}
 
-  private async resolvePlanId(userId: string) {
-    try {
-      const sub = await this.planConfig.getSubscription(userId);
-      return sub.planId ?? 'free';
-    } catch {
-      return 'free';
-    }
-  }
-
   @Get('create-options')
   async createOptions(@CurrentUser() user: AuthUser) {
-    const planId = await this.resolvePlanId(user.sub);
-    const options = resolveSellerPlanOptions(planId);
     const meta = await this.auction.getSellerMeta(user.sub);
+    const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptions(
+      user.sub,
+      meta.lotsCreatedToday,
+    );
+    const { dailyLimitSummary, ...options } = resolved;
     const imageLimits = await this.mediaLimits.getLimits(user.sub, 'auction');
     return {
       ...options,
-      dailyLimit: dailyLimitSummary(options, meta.lotsCreatedToday),
+      dailyLimit: dailyLimitSummary,
       imageLimits,
     };
   }
 
   @Post()
   async create(@CurrentUser() user: AuthUser, @Body() body: CreateAuctionDto) {
-    const planId = await this.resolvePlanId(user.sub);
-    const options = resolveSellerPlanOptions(planId);
     const meta = await this.auction.getSellerMeta(user.sub);
+    const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptions(
+      user.sub,
+      meta.lotsCreatedToday,
+    );
+    const { dailyLimitSummary: _dailyLimitSummary, ...options } = resolved;
     const payload = applySellerCreatePolicy(body, options, meta.lotsCreatedToday);
     const imageLimits = await this.mediaLimits.getLimits(user.sub, 'auction');
 
@@ -202,8 +195,7 @@ export class AuctionController {
 
   @Get()
   async list(@CurrentUser() user: AuthUser, @Query() query: ListAuctionsQuery) {
-    const planId = await this.resolvePlanId(user.sub);
-    const scope = resolveSearchScope(planId);
+    const scope = await this.auctionPlanPolicy.resolveSearchScope(user.sub);
     const policy = applySearchPolicy(query, scope);
     const result = await this.auction.listAuctions({
       ...policy.query,
