@@ -1,15 +1,29 @@
 # 🔨 Сервис: auction
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `auction`
+> **Статус:** implementing · **Версия:** 0.3 · **Schema:** `auction` · **Port:** 3003
 
 ## 🎯 Назначение
 
 Управление **аукционами** Tavrida Lot: лоты, ставки, завершение сделок, экспертные оценки.
 
-- Типы аукционов (English, Dutch, … — по тарифу)
-- Проверка лимитов через plan-config
-- Платные фичи через billing (promotion, reserve price)
-- События в RabbitMQ + Redis pub/sub для live UI
+- Каталог list/get/create ✅ · English **bid** ✅ · **close** / `close/run` ✅
+- RMQ: `auction.created` / `bid_placed` / `completed` (если задан `RABBITMQ_URL`)
+- Проверка лимитов через plan-config — частично (BFF hardcoded policy; HTTP check later)
+- Платные фичи / Redis WS live — next
+- Dutch bidding — not yet
+
+## ✅ Реализовано (v0.3)
+
+| Слой | Статус |
+|------|--------|
+| Catalog list/get + create | ✅ |
+| Seed demo lots | ✅ |
+| `POST …/bids` (ENGLISH) | ✅ |
+| `POST …/close` + `POST …/close/run` | ✅ |
+| `winnerId` + reserve rule | ✅ |
+| RMQ domain events | ✅ (optional RMQ) |
+| BFF + FE place bid | ✅ |
+| Dutch bid / promote charge / expert POST / WS | ⏳ |
 
 ## 📖 Термины
 
@@ -129,6 +143,7 @@ stateDiagram-v2
 | Method | Path | Описание |
 |--------|------|----------|
 | POST | `/auctions/{id}/close` | CRON / worker — принудительное завершение |
+| POST | `/auctions/close/run` | Batch: SCHEDULED→ACTIVE due + ACTIVE→ENDED by `endsAt` |
 | GET | `/health`, `/health/ready` | — |
 
 ### `POST /api/v1/auctions` — создание

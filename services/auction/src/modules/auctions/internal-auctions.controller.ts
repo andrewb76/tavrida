@@ -144,6 +144,17 @@ class CreateAuctionDto {
   mediaPublicBaseUrl?: string;
 }
 
+class PlaceBidDto {
+  @IsString()
+  @MinLength(1)
+  bidderId!: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+}
+
 @Controller('internal/v1/auctions')
 export class InternalAuctionsController {
   constructor(private readonly auctions: AuctionsService) {}
@@ -151,6 +162,11 @@ export class InternalAuctionsController {
   @Get('meta/seller')
   sellerMeta(@Query('sellerId') sellerId: string) {
     return this.auctions.countSellerLotsToday(sellerId);
+  }
+
+  @Post('close/run')
+  closeRun() {
+    return this.auctions.runCloseDue();
   }
 
   @Post()
@@ -161,6 +177,20 @@ export class InternalAuctionsController {
   @Get()
   list(@Query() query: ListAuctionsQuery) {
     return this.auctions.list(query);
+  }
+
+  @Post(':id/bids')
+  placeBid(@Param('id') id: string, @Body() body: PlaceBidDto) {
+    return this.auctions.placeBid({
+      auctionId: id,
+      bidderId: body.bidderId,
+      amount: body.amount,
+    });
+  }
+
+  @Post(':id/close')
+  close(@Param('id') id: string) {
+    return this.auctions.closeAuction(id);
   }
 
   @Get(':id/bids')

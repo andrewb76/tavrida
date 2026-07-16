@@ -19,6 +19,7 @@ import {
   getAuction,
   listAuctionBids,
   listExpertAppraisals,
+  placeBid,
   type AuctionBid,
   type AuctionDetail,
   type ExpertAppraisal,
@@ -39,6 +40,8 @@ const error = ref<string | null>(null);
 const activeTab = ref<'description' | 'bids' | 'expert'>('description');
 const bidOpen = ref(false);
 const bidAmount = ref<number | null>(null);
+const bidSubmitting = ref(false);
+const bidError = ref<string | null>(null);
 
 const { remainingMs, start: startCountdown } = useCountdown(() => lot.value?.endsAt);
 
@@ -72,6 +75,10 @@ watch(
   { immediate: true },
 );
 
+watch(bidOpen, (open) => {
+  if (open) bidError.value = null;
+});
+
 onMounted(load);
 
 async function load() {
@@ -103,8 +110,21 @@ function addBidStep(step: number) {
   bidAmount.value = Math.max(lot.value.minNextBid, bidAmount.value + step);
 }
 
-function confirmBidMock() {
-  bidOpen.value = false;
+async function confirmBid() {
+  if (!lot.value || bidAmount.value == null) return;
+  bidSubmitting.value = true;
+  bidError.value = null;
+  try {
+    const result = await placeBid(lot.value.id, bidAmount.value);
+    lot.value = result.auction;
+    bids.value = await listAuctionBids(lot.value.id);
+    bidOpen.value = false;
+    if (result.auction.isLive) startCountdown();
+  } catch (e) {
+    bidError.value = e instanceof Error ? e.message : 'Не удалось сделать ставку';
+  } finally {
+    bidSubmitting.value = false;
+  }
 }
 </script>
 
@@ -404,12 +424,19 @@ function confirmBidMock() {
             +{{ lot.bidIncrement * 5 }}
           </button>
         </div>
+        <p
+          v-if="bidError"
+          class="lot-page__status lot-page__status--err"
+        >
+          {{ bidError }}
+        </p>
         <UiButton
           intent="primary"
           class="w-full"
-          @click="confirmBidMock"
+          :disabled="bidSubmitting || bidAmount == null || bidAmount < lot.minNextBid"
+          @click="confirmBid"
         >
-          Подтвердить (mock)
+          {{ bidSubmitting ? 'Отправка…' : 'Подтвердить ставку' }}
         </UiButton>
       </UiModal>
     </template>

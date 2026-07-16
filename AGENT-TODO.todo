@@ -19,6 +19,8 @@ plan-config:
   ✔ services/plan-config v1 — plans, limits, subscription scaffold @plan-config @done(26-07-11)
   ✔ Internal renew/run + billing charge + expire fail path @plan-config @billing @done(26-07-16)
   ✔ Swarm: plan-config-renew hourly → renew/run @plan-config @ops @done(26-07-16)
+  ☐ Team review: tariff Seller/Buyer/Pro proposal @plan-config @docs
+  ☐ После консенсуса — каскад docs + seed (basic → seller/buyer) @plan-config @docs
 
 Subscriptions (event intent):
   ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)
@@ -34,6 +36,14 @@ Subscriptions (event intent):
   ☐ Novu ops: задокументировать onboarding Dashboard + API key + workflow tag-content (отложено) @notifications @docs
   ☐ Novu: настроить local (ключ + tag-content) после чеклиста @notifications
   ☐ После проверки local Novu — merge в infra.local.yml (как Keto) @notifications @ops
+
+Auction:
+  ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)
+  ✔ English bid + close/run + RMQ + FE placeBid @auction @bff @frontend @done(26-07-16)
+  ☐ Health /ready DB ping @auction
+  ☐ plan-config HTTP limits (replace BFF hardcoded policy) @auction @bff
+  ☐ Dutch bidding · promote billing charge · expert POST · WS live @auction
+  ☐ Swarm cron: POST …/auctions/close/run @auction @ops
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)
@@ -58,8 +68,10 @@ Reputation log:
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
+  ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)
 
 Archive:
+  ✔ Auction English bid + close/run + RMQ events + FE placeBid @auction @bff @frontend @done(26-07-16)
   ✔ Emit invitation.redeemed (RMQ) after claim @user-profile @done(26-07-16)
   ✔ Internal renew/run + billing charge + expire fail path @plan-config @billing @done(26-07-16)
   ✔ E2E: create → resolve → mock signIn → claim @bff @done(26-07-16)

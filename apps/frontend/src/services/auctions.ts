@@ -71,6 +71,7 @@ export type AuctionDetail = {
   isLive: boolean;
   isPromoted: boolean;
   minNextBid: number;
+  winnerId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -200,4 +201,18 @@ export async function getAuctionCreateOptions(): Promise<AuctionCreateOptions> {
 
 export async function createAuction(input: CreateAuctionInput): Promise<AuctionDetail> {
   return authPost<AuctionDetail>('/auctions', input);
+}
+
+export type PlaceBidResult = {
+  bid: AuctionBid;
+  auction: AuctionDetail;
+};
+
+export async function placeBid(
+  auctionId: string,
+  amount: number,
+): Promise<PlaceBidResult> {
+  return authPost<PlaceBidResult>(`/auctions/${encodeURIComponent(auctionId)}/bids`, {
+    amount,
+  });
 }

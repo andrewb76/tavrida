@@ -139,7 +139,9 @@
 |------------|--------|--------|---------|----------|
 | `PORT` | нет | — | `3003` | HTTP |
 | `DATABASE_URL` | **да** | `auction` | см. платформа | PostgreSQL |
-| `RABBITMQ_URL` | **да** | — | см. платформа | `auction.completed`, `bid.placed` |
+| `RABBITMQ_URL` | **да** | — | см. платформа | `auction.created` / `bid_placed` / `completed` |
+
+**Ops:** hourly `POST {AUCTION_URL}/internal/v1/auctions/close/run` — activate due SCHEDULED + close due ACTIVE (аналог plan-config renew).
 | `REDIS_URL` | **да** | — | см. платформа | Live bids cache |
 | `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты / фичи |
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Платные фичи (promotion) |

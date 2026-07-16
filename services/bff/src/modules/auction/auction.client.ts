@@ -62,6 +62,14 @@ export class AuctionClient {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/auctions', body);
   }
 
+  placeBid(auctionId: string, body: { bidderId: string; amount: number }) {
+    return this.request<{ bid: unknown; auction: Record<string, unknown> }>(
+      'POST',
+      `/internal/v1/auctions/${auctionId}/bids`,
+      body,
+    );
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     let response: Response;
     try {

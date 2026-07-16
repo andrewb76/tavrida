@@ -127,6 +127,13 @@ class CreateAuctionDto {
   promote?: boolean;
 }
 
+class PlaceBidDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+}
+
 @Controller('auctions')
 @UseGuards(JwtAuthGuard)
 export class AuctionController {
@@ -215,6 +222,11 @@ export class AuctionController {
   @Get(':id/bids')
   listBids(@Param('id') id: string) {
     return this.auction.listBids(id);
+  }
+
+  @Post(':id/bids')
+  placeBid(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() body: PlaceBidDto) {
+    return this.auction.placeBid(id, { bidderId: user.sub, amount: body.amount });
   }
 
   @Get(':id/expert-appraisals')

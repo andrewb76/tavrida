@@ -53,6 +53,9 @@ export class AuctionEntity {
   @Column('timestamptz', { name: 'ends_at', nullable: true })
   endsAt!: Date | null;
 
+  @Column('varchar', { name: 'winner_id', length: 128, nullable: true })
+  winnerId!: string | null;
+
   @Column('timestamptz', { name: 'promoted_until', nullable: true })
   promotedUntil!: Date | null;
 
