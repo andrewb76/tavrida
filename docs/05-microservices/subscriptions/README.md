@@ -25,7 +25,7 @@
 | Frontend `/subscriptions` — список + delivery prefs | ✅ |
 | Frontend shared store (`useSubscriptionsStore`) — dedupe GET по domain для chip'ов | ✅ |
 | Digest → notifications trigger | ⏳ stub (`triggered: 0`) |
-| BFF fan-out `tag.content_tagged` → match → notifications | ✅ async (RMQ publish; HTTP fallback) |
+| `forum` outbox `tag.content_tagged` → match → notifications | ✅ async RMQ + retry/DLQ |
 | RMQ consumer `tag.content_tagged` → match → notifications | ✅ (`TagEventsConsumer`, queue `subscriptions.events`) |
 | BFF list enrich `targetTitle` / `targetSlug` | ✅ |
 
@@ -45,7 +45,7 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID PK | — |
-| `userId` | UUID | Подписчик |
+| `userId` | varchar(128) | Logto `sub` (opaque id, не обязательно UUID) |
 | `sourceDomain` | enum | `auction` \| `forum` \| `marketplace` \| `platform` |
 | `targetType` | enum | см. таблицу ниже |
 | `targetId` | UUID nullable | ID объекта (null для global digest) |
@@ -70,7 +70,7 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `userId` | UUID PK | — |
+| `userId` | varchar(128) PK | Logto `sub` (opaque id, не обязательно UUID) |
 | `emailDigestEnabled` | boolean | Pro via plan-config |
 | `pushEnabled` | boolean | — |
 | `digestFrequency` | enum | `DAILY` \| `WEEKLY` |
@@ -114,7 +114,8 @@
 | POST | `/internal/v1/subscriptions/digest/run` | External CRON: due users (notifications stub) |
 | GET | `/health`, `/health/ready` | — |
 
-> **Fan-out contract:** producer event → subscriptions `match` → HTTP trigger `notifications` (RMQ consumer later).
+> **Fan-out contract:** live RMQ consumer обрабатывает `tag.content_tagged`;
+> остальные event types пока доступны только через HTTP `match`.
 > **Digest CRON:** external scheduler → `digest/run` (как deal-feedback `reminders/run`); пока `triggered: 0`.
 
 ### Match mapping
@@ -140,18 +141,16 @@
 | `subscriptions.member.tag.max` | 3 | 10 | ∞ | Подписки на теги |
 | `subscriptions.member.notify.emailDigestEnabled` | feature | false | false | true |
 
-> Legacy keys `auction_subscriptions.*` → migrate to `subscriptions.*` ([ADR-006](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
+> Legacy keys `auction_subscriptions.*` retired; register only
+> `subscriptions.*` ([ADR-006](../../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
 
 ## 📨 События
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
-| consume | `auction.created` | Match AUCTION_CATEGORY |
-| consume | `auction.bid_placed` | Match AUCTION |
-| consume | `forum.topic_created` | Match FORUM_CATEGORY |
-| consume | `forum.comment_created` | Match FORUM_TOPIC |
-| consume | `tag.content_tagged` | Match TAG (produce from forum/auction) |
-| — | CRON digest | `subscriptions.digest_due` → notifications |
+| HTTP match only | auction/forum event types | Mapping implemented; RMQ binding planned |
+| consume | `tag.content_tagged` | Live RMQ binding, Match TAG |
+| planned | CRON digest | `subscriptions.digest_due` → notifications |
 
 ## 🔗 Взаимодействие
 

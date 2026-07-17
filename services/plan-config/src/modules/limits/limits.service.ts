@@ -29,7 +29,16 @@ export class LimitsService {
     }
 
     const limit = row.limitValue;
-    if (limit === null || limit === -1) {
+    if (!row.isEnabled || limit === null) {
+      return {
+        allowed: false,
+        planId,
+        limit: null,
+        remaining: 0,
+        reason: !row.isEnabled ? 'tier_disabled' : 'invalid_limit',
+      };
+    }
+    if (limit === -1) {
       return { allowed: true, planId, limit: null, remaining: null };
     }
 
@@ -43,9 +52,8 @@ export class LimitsService {
     const planId = await this.subscriptions.resolvePlanId(input.userId);
     const row = await this.planVariables.getTier(planId, input.featureKey);
 
-    return {
-      allowed: row?.isFeatureEnabled ?? false,
-      planId,
-    };
+    if (!row) return { allowed: false, planId, reason: 'unknown_variable' };
+    if (!row.isEnabled) return { allowed: false, planId, reason: 'tier_disabled' };
+    return { allowed: row.isFeatureEnabled, planId };
   }
 }

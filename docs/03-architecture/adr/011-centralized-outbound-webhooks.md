@@ -10,7 +10,7 @@
 - подпись payload, таймауты, retry;
 - журнал доставки и DLQ.
 
-При этом **settings** хранит скаляры, но не endpoints и не delivery log.
+При этом **scalar-config** хранит скаляры, но не endpoints и не delivery log.
 
 > **Не путать:** входящие webhooks платёжного провайдера (billing) и Novu — остаются в своих адаптерах. ADR-011 — только **исходящие** (outbound) вызовы **наружу**.
 

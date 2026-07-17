@@ -34,9 +34,9 @@
 | subscriptions | 3004 | no |
 | … domain services | 3005+ | no |
 
-**Dev Swarm auto-renew:** контейнер `plan-config-renew` (`curlimages/curl`) раз в час дергает `POST http://plan-config:3002/internal/v1/subscription/renew/run`. Если позже включат `INTERNAL_SERVICE_TOKEN` — добавить `Authorization: Bearer` в command.
+**Dev Swarm auto-renew:** контейнер `plan-config-renew` (`curlimages/curl`) раз в час дергает `POST http://plan-config:3002/internal/v1/subscription/renew/run` с Bearer из Swarm secret `internal_service_token`.
 
-**Dev Swarm auction-close:** контейнер `auction-close` (`curlimages/curl`) раз в час дергает `POST http://auction:3003/internal/v1/auctions/close/run`. Он активирует due `SCHEDULED` и завершает due `ACTIVE` лоты. Если позже включат `INTERNAL_SERVICE_TOKEN` — добавить `Authorization: Bearer` в command.
+**Dev Swarm auction-close:** контейнер `auction-close` (`curlimages/curl`) раз в час дергает `POST http://auction:3003/internal/v1/auctions/close/run` с тем же Bearer. Он активирует due `SCHEDULED` и завершает due `ACTIVE` лоты.
 
 **Deploy config (пример):**
 
@@ -101,6 +101,7 @@ labels:
 | `tavrida_database_url` | `DATABASE_URL` |
 | `tavrida_rabbitmq_url` | `RABBITMQ_URL` |
 | `tavrida_novu_api_key` | `NOVU_API_KEY` |
+| `tavrida_internal_service_token` | `INTERNAL_SERVICE_TOKEN_FILE` → `INTERNAL_SERVICE_TOKEN` |
 | `tavrida_sentry_dsn` | `SENTRY_DSN` |
 
 Полный список: [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md).

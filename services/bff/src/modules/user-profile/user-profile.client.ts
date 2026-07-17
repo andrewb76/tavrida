@@ -7,6 +7,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 export type InternalInviteRecord = {
   id: string;
@@ -256,7 +257,10 @@ export class UserProfileClient {
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: internalServiceHeaders(
+        this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+        body ? { 'Content-Type': 'application/json' } : {},
+      ),
       body: body ? JSON.stringify(body) : undefined,
     });
 

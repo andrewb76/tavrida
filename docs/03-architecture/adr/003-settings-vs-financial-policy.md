@@ -23,7 +23,8 @@
 - **Одно значение** на ключ (global или per-user)
 - **Не зависят от тарифа**
 - Примеры: `rating.authorityExponent`, `forum.bannedWordsList`, `auction.bid.incrementDefault`
-- Сервис регистрирует ключи при деплое (`POST /internal/v1/settings/sync`)
+- Сервис регистрирует ключи при деплое
+  (`POST /internal/v1/scalar-variables/sync`)
 - Admin меняет через BFF → scalar-config
 - Schema PG: `scalar_config`
 

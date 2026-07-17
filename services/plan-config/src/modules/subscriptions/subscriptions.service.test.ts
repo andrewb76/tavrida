@@ -7,6 +7,25 @@ import type { PlansService } from '../plans/plans.service';
 import { SubscriptionsService } from './subscriptions.service';
 
 describe('SubscriptionsService.runRenew', () => {
+  it('resolves an expired ACTIVE subscription as free before cron runs', async () => {
+    const repo = {
+      findOne: async () =>
+        ({
+          userId: 'u-expired',
+          planId: 'pro',
+          status: 'ACTIVE',
+          expiresAt: new Date(Date.now() - 60_000),
+        }) as UserSubscriptionEntity,
+    } as unknown as Repository<UserSubscriptionEntity>;
+    const service = new SubscriptionsService(
+      repo,
+      {} as PlansService,
+      {} as BillingClient,
+    );
+
+    assert.equal(await service.resolvePlanId('u-expired'), 'free');
+  });
+
   it('charges and extends autoRenew due; expires others; fails mark EXPIRED', async () => {
     const now = new Date('2026-07-16T12:00:00.000Z');
     const rows: UserSubscriptionEntity[] = [

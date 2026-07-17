@@ -5,7 +5,7 @@ import {
   getTopic,
   type TopicDetail,
 } from '@/services/forum';
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -14,14 +14,17 @@ const error = ref<string | null>(null);
 const tag = ref<Awaited<ReturnType<typeof getForumTag>> | null>(null);
 const topics = ref<Array<Pick<TopicDetail, 'id' | 'title' | 'createdAt' | 'authorId' | 'author'>>>([]);
 
-async function load() {
-  const slug = String(route.params.slug ?? '');
+let loadGeneration = 0;
+
+async function load(slug: string) {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
   tag.value = null;
   topics.value = [];
   try {
     const row = await getForumTag(slug);
+    if (generation !== loadGeneration) return;
     tag.value = row;
     const details = await Promise.all(
       row.topicIds.slice(0, 50).map(async (id) => {
@@ -32,16 +35,21 @@ async function load() {
         }
       }),
     );
+    if (generation !== loadGeneration) return;
     topics.value = details.filter((t): t is TopicDetail => Boolean(t));
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить тег';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
-onMounted(load);
-watch(() => route.params.slug, load);
+watch(
+  () => String(route.params.slug ?? ''),
+  (slug) => void load(slug),
+  { immediate: true },
+);
 </script>
 
 <template>

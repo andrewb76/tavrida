@@ -36,7 +36,7 @@ services/{service-name}/
 └── README.md                 # краткий: как запустить локально
 ```
 
-**Именование каталога:** kebab-case (`auction-subscriptions`, не `auction_subscriptions`).
+**Именование каталога:** kebab-case (`deal-feedback`, не `deal_feedback`).
 
 ---
 
@@ -96,16 +96,17 @@ services/{service-name}/
 
 - Ключ: `{service}.{parameterName}` в camelCase.
 - **Полный реестр:** [PLATFORM-REGISTRY.md](./PLATFORM-REGISTRY.md) — добавляйте каждую новую переменную туда.
-- При старте сервис **регистрирует** ключи через `POST /internal/v1/settings/sync` (рекомендуется) или `register`.
+- При старте сервис **регистрирует** ключи через
+  `POST /internal/v1/scalar-variables/sync` (рекомендуется) или `register`.
 - Зависшие ключи: см. [ADR-016](../../03-architecture/adr/016-financial-policy-parameter-registration.md).
-- Чтение: `GET /internal/v1/settings/{domain}` (internal HTTP; API path legacy).
+- Чтение: `GET /internal/v1/scalar-variables/{domain}`.
 - Изменение: только admin через BFF → scalar-config.
 
 ---
 
 ## 💳 Раздел «Переменные plan-config»
 
-**Financial-policy** хранит **пакет значений по тарифам** (Free/Basic/Pro) для переменных, влияющих на **стоимость, лимиты или доступность фич**.
+**Plan-config** хранит **пакет значений по тарифам** (Free/Basic/Pro) для переменных, влияющих на **стоимость, лимиты или доступность фич**.
 
 ### Формат в README сервиса
 
@@ -149,7 +150,8 @@ services/{service-name}/
 
 - Префикс: `/api/v1/`
 - Ошибки: RFC 7807 Problem Details
-- Internal endpoints: `/internal/v1/` (не через BFF)
+- Internal endpoints: `/internal/v1/`; обязательный production Bearer
+  `INTERNAL_SERVICE_TOKEN` применяется глобально по path prefix
 - Health: `GET /health`, Ready: `GET /health/ready`
 - Correlation ID: заголовок `X-Request-Id`
 
@@ -176,7 +178,8 @@ services/{service-name}/
 
 ## 🔒 Безопасность
 
-- JWT от Logto — валидация на BFF; internal calls — service token или mTLS (TODO: ADR).
+- JWT от Logto — валидация на BFF; internal calls — shared service token
+  (production fail-closed, constant-time comparison), mTLS/service JWT — future hardening.
 - Ory Keto — проверка admin-операций.
 - Секреты — Bitwarden Secrets Manager, не в git.
 

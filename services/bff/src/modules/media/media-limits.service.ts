@@ -1,9 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import {
   acceptAttributeForDomain,
   isAllowedContentType,
-  normalizeCountLimit,
-  sizeLimitToBytes,
   type MediaDomain,
   type MediaLimits,
 } from '@tavrida/object-storage';
@@ -24,18 +22,6 @@ const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
   },
 };
 
-const COUNT_FALLBACK: Record<MediaDomain, number> = {
-  auction: 3,
-  forum: 1,
-  marketplace: 5,
-};
-
-const SIZE_FALLBACK_MB: Record<MediaDomain, number> = {
-  auction: 3,
-  forum: 2,
-  marketplace: 3,
-};
-
 @Injectable()
 export class MediaLimitsService {
   constructor(private readonly planConfig: PlanConfigClient) {}
@@ -47,9 +33,15 @@ export class MediaLimitsService {
       this.planConfig.resolveLimitValue(userId, keys.size),
     ]);
 
-    const countMax = normalizeCountLimit(countRaw, COUNT_FALLBACK[domain]);
-    const sizeMaxMb = sizeRaw == null || sizeRaw <= 0 ? SIZE_FALLBACK_MB[domain] : sizeRaw;
-    const sizeMaxBytes = sizeLimitToBytes(sizeMaxMb, SIZE_FALLBACK_MB[domain]);
+    if (sizeRaw == null || sizeRaw < 0) {
+      throw new ServiceUnavailableException({
+        type: 'plan_policy_unavailable',
+        detail: `Media size policy for ${domain} is not enforceable`,
+      });
+    }
+    const countMax = countRaw == null || countRaw === -1 ? 999 : Math.max(0, countRaw);
+    const sizeMaxMb = sizeRaw;
+    const sizeMaxBytes = sizeMaxMb * 1024 * 1024;
 
     return {
       countMax,

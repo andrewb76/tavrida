@@ -120,7 +120,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 | Method | Path | Caller | Описание |
 |--------|------|--------|----------|
-| POST | `/rating/bonuses/apply` | feedback | EARLY / PHOTO / BOTH |
+| POST | `/rating/bonuses/apply` | deal-feedback | EARLY / PHOTO / BOTH |
 | POST | `/rating/check-ban` | auction, forum, BFF | `{ banned, until? }` |
 | POST | `/rating/votes/apply` | feedback, forum | Применить голос после submit |
 | POST | `/rating/referral/recompute` | user-profile, CRON | Пересчёт referral для inviter chain |
@@ -182,7 +182,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | Direction | Event | Когда |
 |-----------|-------|-------|
 | consume | `auction.completed` | `pendingSales++` seller/buyer |
-| consume | `feedback.submitted` | Recalc rating, `pendingSales--` |
+| consume | `deal_feedback.submitted` | Recalc rating, `pendingSales--` |
 | consume | `marketplace.order_completed` | pending для provider/customer |
 | consume | `invitation.redeemed` | Referral recompute inviter chain |
 | produce | `rating.updated` | Изменение агрегата |
@@ -195,7 +195,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 |--------|----------|
 | scalar-config | HTTP GET settings/rating |
 | plan-config | limits для pending |
-| feedback | bonuses/apply, votes |
+| deal-feedback | bonuses/apply, votes |
 | forum | karma от реакций |
 | user-profile | invitation edges, consume `rating.updated` → cache |
 | auction, forum | check-ban перед mutate |
@@ -222,7 +222,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 
 - [karma-and-rating.md](../../01-goal/karma-and-rating.md)
 - [club-access.md](../../01-goal/club-access.md)
-- [feedback](../feedback/README.md)
+- [deal-feedback](../deal_feedback/README.md)
 - [scalar-config](../scalar-config/README.md)
 - [Event catalog](../../03-architecture/event-catalog.md)
 - [MICROSERVICE-SPEC](../MICROSERVICE-SPEC.md)

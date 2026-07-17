@@ -1,14 +1,14 @@
 # 🌐 Сервис: bff
 
-> **Статус:** spec ready · **Версия:** 0.2
+> **Статус:** REST v1 implemented · **Версия:** 0.3
 
 ## 🎯 Назначение
 
 **Backend-for-Frontend** — единая точка входа для Vue SPA Tavrida Lot.
 
 - **REST** `/api/v1/*` — агрегация и proxy к domain services
-- **WebSocket** `/ws/v1` — realtime (ставки, баланс, уведомления, форум)
-- JWT validation (Logto), rate limiting, Idempotency-Key proxy
+- **WebSocket** `/ws/v1` — target, пока не реализован
+- JWT validation (Logto), internal Bearer, `Idempotency-Key` для paid writes
 - Скрывает internal topology от клиента
 
 > [ADR-002 REST + WSS](../../03-architecture/adr/002-bff-rest-wss.md)
@@ -24,63 +24,39 @@
 
 ## 🔌 REST — routing table
 
-BFF **не дублирует** domain logic — validate JWT, map paths, forward headers.
+BFF **не дублирует** domain logic: валидирует JWT/DTO, применяет policy и
+обращается к internal API.
 
-| BFF path | Methods | Upstream | Internal path |
-|----------|---------|----------|---------------|
-| `/api/v1/auctions` | GET, POST | auction | `/internal/v1/auctions` |
-| `/api/v1/auctions/{id}` | GET, PATCH | auction | `/internal/v1/auctions/{id}` |
-| `/api/v1/auctions/{id}/bids` | GET, POST | auction | `/internal/v1/auctions/{id}/bids` |
-| `/api/v1/auctions/{id}/promote` | POST | auction | `/internal/v1/auctions/{id}/promote` |
-| `/api/v1/auctions/{id}/expert-appraisals` | GET, POST | auction | `/internal/v1/…` |
-| `/api/v1/wallets/balance` | GET | billing | `/internal/v1/wallets/balance` |
-| `/api/v1/wallets/transactions` | GET | billing | `/internal/v1/wallets/transactions` |
-| `/api/v1/wallets/deposit` | POST | billing | `/internal/v1/wallets/deposit` |
-| `/api/v1/plans` | GET | plan-config | `/internal/v1/plans` |
-| `/api/v1/plans/subscription` | GET | plan-config | `/internal/v1/subscription` |
-| `/api/v1/plans/activate` | POST | plan-config | `/internal/v1/plans/activate` |
-| `/api/v1/profile` | GET, PATCH | user-profile | `/internal/v1/profile` |
-| `/api/v1/profile/notes` | GET, POST | user-profile | `/internal/v1/profile/notes` |
-| `/api/v1/invites` | GET, POST | BFF orchestration | [invites-api.md](./invites-api.md) |
-| `/api/v1/invites/resolve` | GET | BFF orchestration | public, см. [invites-api.md](./invites-api.md) |
-| `/api/v1/invites/claim` | POST | BFF orchestration | см. [invites-api.md](./invites-api.md) |
-| `/api/v1/me/roles` | GET | BFF + Keto | JWT (+ optional `X-Act-As`) → platform roles |
-| `/api/v1/me/identity` | POST | BFF → user-profile | Sync Logto claims → profile cache (name/avatar for forum) |
-| `/api/v1/admin/settings/club` | GET, PATCH | BFF + settings | Admin: значения домена `club.*` |
-| `/api/v1/admin/settings/registry` | GET | scalar-config | Реестр ключей (вкл. зависшие) |
-| `/api/v1/admin/settings/keys/:key` | DELETE | scalar-config | Удаление зависшего ключа |
-| `/api/v1/admin/financial/parameters/:key` | DELETE | plan-config | Удаление зависшего параметра |
-| `/api/v1/admin/vanga/defaults` | GET | BFF + monetization-engine | Admin: YAML ranges + overlay |
-| `/api/v1/admin/vanga/simulate` | POST | BFF + monetization-engine | Admin: revenue forecast |
-| `/api/v1/admin/vanga/compare` | POST | BFF + monetization-engine | Admin: до 3 сценариев |
-| `/api/v1/settings/public` | GET | settings (via BFF TBD) | Публичное подмножество |
-| `/api/v1/forum/categories` | GET | forum | `/internal/v1/forum/categories` |
-| `/api/v1/forum/tags` | GET | forum | `/internal/v1/tags` |
-| `/api/v1/forum/topics` | GET, POST | forum | `/internal/v1/forum/topics` |
-| `/api/v1/forum/topics/{id}/tags` | PUT | forum + subscriptions match + notifications | tags + fan-out `tag.content_tagged` |
-| `/api/v1/forum/topics/{id}/comments` | GET, POST | forum | `/internal/v1/…` |
-| `/api/v1/webhooks/logto` | POST | BFF → user-profile | Logto inbound; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
-| `/api/v1/admin/users` | GET, PATCH, POST | BFF + user-profile + Keto + billing | Admin list / roles / deposit; UI «Подключиться» |
+| BFF path | Methods | Upstream / orchestration |
+|----------|---------|--------------------------|
+| `/api/v1/auctions`, `/auctions/create-options`, `/auctions/{id}` | GET, POST | auction + plan-config + billing |
+| `/api/v1/auctions/{id}/bids`, `/expert-appraisals` | GET; bids POST | auction |
+| `/api/v1/wallets/*` | balance/transactions GET, deposit POST | billing |
+| `/api/v1/plans/*` | list/subscription GET, activate/cancel-auto-renew POST | plan-config |
+| `/api/v1/charges/quote` | GET | plan-config |
+| `/api/v1/profile/{userId}`, `/profile/notes`, rating log | GET/POST/PATCH/DELETE | user-profile |
+| `/api/v1/invites/*` | create/list/resolve/claim | BFF + Logto + user-profile |
+| `/api/v1/forum/*` | categories, topics, comments, tags, reactions, votes | forum |
+| `/api/v1/marketplace/*` | listings, portfolio, orders, my listings | marketplace |
+| `/api/v1/subscriptions`, `/subscriptions/delivery` | CRUD / GET/PATCH | subscriptions |
+| `/api/v1/deal-feedback/{pending,status,submit}` | GET/POST | deal-feedback |
+| `/api/v1/media/*` | limits, upload intents | BFF + object storage |
+| `/api/v1/periods/*`, `/api/v1/admin/periods/*` | read / admin CRUD | periods |
+| `/api/v1/admin/scalar-config/*` | registry/domain values | scalar-config |
+| `/api/v1/admin/plan-config/*` | plans/variables | plan-config |
+| `/api/v1/admin/users/*`, `/api/v1/admin/vanga/*` | admin operations | mixed |
+| `/api/v1/me/roles`, `/api/v1/me/identity` | GET/POST | Keto + user-profile |
+| `/api/v1/webhooks/logto` | POST | Logto inbound → user-profile |
 
-> **`X-Act-As`:** admin JWT + header target user id → effective `sub`. [impersonation.md](../../09-security/impersonation.md) · [ADR-018](../../03-architecture/adr/018-admin-impersonation.md).
-| `/api/v1/rating/{userId}` | GET | rating | `/internal/v1/rating/{userId}` |
-| `/api/v1/feedback` | POST, GET | feedback | `/internal/v1/feedback` |
-| `/api/v1/marketplace/*` | GET, POST, PATCH, DELETE | marketplace | `/internal/v1/marketplace/…` |
-| `/api/v1/subscriptions` | GET, POST, DELETE | subscriptions | `/internal/v1/subscriptions` |
-| `/api/v1/settings/public` | GET | scalar-config | `/internal/v1/settings/public` |
-| `/api/v1/webhooks` | GET, POST | webhooks | `/internal/v1/webhooks` |
-| `/api/v1/webhooks/{id}` | GET, PATCH, DELETE | webhooks | `/internal/v1/webhooks/{id}` |
-| `/api/v1/webhooks/{id}/deliveries` | GET | webhooks | `/internal/v1/webhooks/{id}/deliveries` |
-| `/api/v1/admin/webhooks` | GET, POST, PATCH, DELETE | webhooks | `/internal/v1/admin/webhooks` |
-| `/api/v1/admin/*` | * | mixed | admin + Keto `admin` role |
+> **`X-Act-As`:** admin JWT + target user id → effective identity.
+> [impersonation](../../09-security/impersonation.md) · [ADR-018](../../03-architecture/adr/018-admin-impersonation.md).
 
-Полные соглашения: [06-api/README.md](../../06-api/README.md)
+Полные соглашения: [06-api](../../06-api/README.md).
 
 ### Aggregation patterns
 
 | Endpoint | Upstreams | Пример ответа |
 |----------|-----------|---------------|
-| `GET /profile/me` | user-profile + rating | `{ profile, rating, subscription }` |
 | `GET /auctions/{id}` | auction + expert-appraisals (parallel) | merged JSON |
 | `GET /plans` | plan-config | pass-through |
 
@@ -132,14 +108,14 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 |-----------|----------|-------------|
 | Domain services | HTTP `/internal/v1/` | BFF → upstream |
 | Logto | JWKS | BFF → OIDC |
-| Redis | pub/sub + optional session | bidirectional |
+| Redis | target для будущего WS relay | planned |
 | Traefik | TLS termination | edge → BFF |
 
 ## 🔒 Безопасность
 
 - Единственный public HTTP/WS для SPA
 - Internal services — private network (Swarm overlay)
-- Rate limit: 120 req/min auth, 30 anonymous ([06-api](../../06-api/README.md))
+- Rate limit: локально реализован для invite resolve; глобальный throttling — planned
 - CORS: `*.tavrida-lot.ru`, localhost dev
 - `Idempotency-Key` — proxy на billing/plan-config без изменения
 - Admin routes — Keto `platform:tavrida-lot#admin`
@@ -153,13 +129,12 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 | `LOGTO_M2M_APP_SECRET` | да | M2M secret |
 | `LOGTO_M2M_RESOURCE` | да | `https://default.logto.app/api` |
 | `FRONTEND_ORIGIN` | да | Invite links, CORS ref |
-| `REDIS_URL` | да | WS relay |
+| `REDIS_URL` | нет | Будущий WS relay |
 | `AUCTION_URL` | да | Upstream |
 | `BILLING_URL` | да | Upstream |
 | `PLAN_CONFIG_URL` | да | Upstream |
 | `FORUM_URL` | нет | Upstream |
-| `RATING_URL` | нет | Upstream |
-| `FEEDBACK_URL` | нет | Upstream |
+| `DEAL_FEEDBACK_URL` | нет | Upstream deal-feedback |
 | `USER_PROFILE_URL` | нет | Upstream |
 | `SCALAR_CONFIG_URL` | нет | Upstream |
 | `PORT` | нет | default `3000` |
@@ -173,7 +148,7 @@ BFF **не дублирует** domain logic — validate JWT, map paths, forwar
 - [ ] OpenAPI generation from NestJS controllers
 - [ ] WS sticky sessions / Redis adapter at scale
 - [ ] Circuit breaker per upstream
-- [ ] admin-ui routing (`/api/v1/admin/*`)
+- [x] admin REST routing (`/api/v1/admin/*`)
 
 ## 📎 Связанные разделы
 

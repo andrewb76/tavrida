@@ -37,12 +37,28 @@ const publicProfile = ref<PublicProfile | null>(null);
 const publicLoading = ref(false);
 const publicError = ref<string | null>(null);
 
+const effectiveProfileId = computed(() =>
+  session.isImpersonating ? session.actAsUserId : session.userId,
+);
+const effectiveDisplayName = computed(() => {
+  if (!session.isImpersonating) return session.displayName;
+  return publicProfile.value
+    ? publicProfileLabel(publicProfile.value)
+    : session.actAsDisplayName || 'Участник';
+});
+const effectiveAvatarUrl = computed(() =>
+  session.isImpersonating ? publicProfile.value?.avatarUrl : session.avatarUrl,
+);
+const effectiveEmail = computed(() =>
+  session.isImpersonating ? undefined : session.email,
+);
+
 const canCreateInvite = computed(
   () => isMe.value && session.isMember && !session.isLoading,
 );
 
 const avatarInitial = computed(() => {
-  const source = session.displayName.trim() || session.userId || '?';
+  const source = effectiveDisplayName.value.trim() || effectiveProfileId.value || '?';
   return source.charAt(0).toUpperCase();
 });
 
@@ -51,14 +67,14 @@ const publicLabel = computed(() =>
 );
 
 watch(
-  () => session.avatarUrl,
+  effectiveAvatarUrl,
   () => {
     avatarLoadFailed.value = false;
   },
 );
 
 async function refreshProfile() {
-  if (!isMe.value || !logto?.isAuthenticated.value) return;
+  if (!isMe.value || session.isImpersonating || !logto?.isAuthenticated.value) return;
   await syncLogtoProfile(logto, session);
 }
 
@@ -67,50 +83,46 @@ async function refreshHistory() {
   history.value = await listInvites();
 }
 
-async function loadMyRating() {
-  if (!isMe.value || !session.userId) return;
-  try {
-    const profile = await fetchPublicProfile(session.userId);
-    publicProfile.value = profile;
-  } catch {
-    /* rating optional on own profile */
-  }
-}
+let profileGeneration = 0;
 
-async function loadPublicProfile() {
-  if (isMe.value || !userId.value) return;
+async function loadDisplayedProfile() {
+  const generation = ++profileGeneration;
+  const ownProfile = isMe.value;
+  const id = ownProfile ? effectiveProfileId.value : userId.value;
+  publicProfile.value = null;
+  publicError.value = null;
+  publicLoading.value = !ownProfile && Boolean(id);
+  if (!id) return;
 
-  if (session.userId && session.userId === userId.value) {
+  if (!ownProfile && effectiveProfileId.value === id) {
+    publicLoading.value = false;
     await router.replace({ name: 'profile-me' });
     return;
   }
 
-  publicLoading.value = true;
-  publicError.value = null;
   try {
-    publicProfile.value = await fetchPublicProfile(userId.value);
+    const profile = await fetchPublicProfile(id);
+    if (generation !== profileGeneration) return;
+    publicProfile.value = profile;
   } catch (e) {
-    publicProfile.value = null;
-    publicError.value = e instanceof Error ? e.message : 'Не удалось загрузить профиль';
+    if (generation !== profileGeneration || ownProfile) return;
+    publicError.value =
+      e instanceof Error ? e.message : 'Не удалось загрузить профиль';
   } finally {
-    publicLoading.value = false;
+    if (generation === profileGeneration) publicLoading.value = false;
   }
 }
 
 onMounted(() => {
   void refreshProfile();
   void refreshHistory();
-  void loadMyRating();
-  void loadPublicProfile();
 });
 
-watch(() => session.userId, () => {
-  void loadMyRating();
-});
-
-watch(userId, () => {
-  void loadPublicProfile();
-});
+watch(
+  [isMe, userId, effectiveProfileId],
+  () => void loadDisplayedProfile(),
+  { immediate: true },
+);
 
 function onRatingUpdated(rating: PublicProfile['rating']) {
   if (publicProfile.value) {
@@ -127,7 +139,7 @@ async function openAvatarPreview(url: string | null | undefined, label: string) 
 }
 
 const canPreviewMyAvatar = computed(
-  () => Boolean(session.avatarUrl && !avatarLoadFailed.value),
+  () => Boolean(effectiveAvatarUrl.value && !avatarLoadFailed.value),
 );
 
 const canPreviewPublicAvatar = computed(
@@ -172,17 +184,17 @@ async function copyInviteLink() {
           class="profile-avatar-trigger"
           :class="{ 'profile-avatar-trigger--interactive': canPreviewMyAvatar }"
           :disabled="!canPreviewMyAvatar"
-          :aria-label="canPreviewMyAvatar ? `Открыть аватар ${session.displayName}` : undefined"
-          @click="openAvatarPreview(session.avatarUrl, session.displayName)"
+          :aria-label="canPreviewMyAvatar ? `Открыть аватар ${effectiveDisplayName}` : undefined"
+          @click="openAvatarPreview(effectiveAvatarUrl, effectiveDisplayName)"
         >
           <div
             class="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xl font-semibold text-primary"
           >
             <span aria-hidden="true">{{ avatarInitial }}</span>
             <img
-              v-if="session.avatarUrl && !avatarLoadFailed"
-              :src="session.avatarUrl"
-              :alt="session.displayName"
+              v-if="effectiveAvatarUrl && !avatarLoadFailed"
+              :src="effectiveAvatarUrl"
+              :alt="effectiveDisplayName"
               class="absolute inset-0 size-full object-cover"
               referrerpolicy="no-referrer"
               @error="avatarLoadFailed = true"
@@ -192,19 +204,19 @@ async function copyInviteLink() {
 
         <div class="min-w-0 flex-1">
           <p class="truncate text-lg font-semibold text-text">
-            {{ session.displayName }}
+            {{ effectiveDisplayName }}
           </p>
           <p
-            v-if="session.email"
+            v-if="effectiveEmail"
             class="truncate text-sm text-text-muted"
           >
-            {{ session.email }}
+            {{ effectiveEmail }}
           </p>
           <p
-            v-if="session.userId"
+            v-if="effectiveProfileId"
             class="mt-1 truncate font-mono text-xs text-text-muted"
           >
-            ID: {{ session.userId }}
+            ID: {{ effectiveProfileId }}
           </p>
           <p class="mt-2 text-xs text-text-muted">
             Участник клуба

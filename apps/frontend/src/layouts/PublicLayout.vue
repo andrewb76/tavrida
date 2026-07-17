@@ -11,7 +11,7 @@ const theme = useThemeStore();
 </script>
 
 <template>
-  <div class="min-h-dvh bg-bg">
+  <div class="min-h-dvh">
     <header class="border-b border-border bg-surface">
       <div
         class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"

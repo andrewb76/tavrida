@@ -8,7 +8,7 @@ import {
   type TopicSummary,
 } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -36,25 +36,30 @@ const activeCategory = computed(() => {
   return walk(categories.value);
 });
 
-async function load() {
+let loadGeneration = 0;
+
+async function load(selectedCategoryId: string | undefined) {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
+  topics.value = [];
   try {
     const [topicList, categoryTree] = await Promise.all([
-      listTopics(categoryId.value),
+      listTopics(selectedCategoryId),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
     ]);
+    if (generation !== loadGeneration || selectedCategoryId !== categoryId.value) return;
     topics.value = topicList;
     if (!categories.value.length) categories.value = categoryTree;
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
-onMounted(load);
-watch(categoryId, load);
+watch(categoryId, (id) => void load(id), { immediate: true });
 
 function clearCategoryFilter() {
   return { path: '/forum' };

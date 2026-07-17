@@ -13,6 +13,7 @@ function hydrateSecretEnv(keys: readonly string[]): void {
 hydrateSecretEnv([
   'DATABASE_URL',
   'RABBITMQ_URL',
+  'INTERNAL_SERVICE_TOKEN',
   'LOGTO_M2M_APP_SECRET',
   'MINIO_SECRET_KEY',
 ]);

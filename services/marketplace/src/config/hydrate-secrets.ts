@@ -10,4 +10,4 @@ export function hydrateSecretEnv(keys: string[] = []): void {
   }
 }
 
-hydrateSecretEnv(['RABBITMQ_URL']);
+hydrateSecretEnv(['RABBITMQ_URL', 'INTERNAL_SERVICE_TOKEN']);

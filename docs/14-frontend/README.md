@@ -1,12 +1,14 @@
 # 💻 Фронтенд-приложение (`@tavrida/frontend`)
 
-> **Статус:** spec ready · **Версия:** 0.2
+> **Статус:** SPA v1 implemented · **Версия:** 0.3
 >
 > Техническая спецификация SPA. Продуктовая сторона (что видит пользователь) — [platform-for-users.md](../01-goal/platform-for-users.md). Wireframes и дизайн — [11-ux-ui](../11-ux-ui/README.md).
 
 ## 🎯 Назначение
 
-Единственное публичное клиентское приложение Tavrida Lot: аукционы, форум, профиль, баланс, маркет услуг. Реализовано как **Vue 3 SPA** (Vite, client-side rendering), общается с бэкендом **только через BFF** (REST + WebSocket). Внутренняя топология микросервисов клиенту не видна.
+Единственное публичное клиентское приложение Tavrida Lot: аукционы, форум,
+профиль, баланс, подписки и маркет услуг. Реализовано как **Vue 3 SPA** и
+общается с backend через BFF REST. WebSocket/realtime остаётся target.
 
 - Каталог и страница лота, ставки в реальном времени
 - Форум: темы, комментарии, реакции, чат *(Pro)*
@@ -23,16 +25,16 @@
 | Язык | **TypeScript** (strict) | базовый tsconfig `@tavrida/tsconfig/vue.json` |
 | Роутинг | **vue-router 4** | history mode |
 | State (клиентский) | **Pinia** | сессия, UI-состояние, черновики |
-| State (серверный) | **TanStack Query (Vue Query)** | кэш, инвалидция, retry для REST |
-| HTTP-клиент | тонкая обёртка над `fetch` (`ofetch`) | JWT + `Idempotency-Key` + базовый URL |
-| Realtime | нативный `WebSocket` в composable | реконнект, подписка на каналы |
+| State (серверный) | direct services + Pinia stores | TanStack Query — target, не runtime layer |
+| HTTP-клиент | тонкие service wrappers над native `fetch` | JWT + `Idempotency-Key` + базовый URL |
+| Realtime | planned | WS client/channel registry пока отсутствуют |
 | Auth | **Logto Vue SDK** (`@logto/vue`) | OIDC PKCE, silent refresh |
 | Стили | **Tailwind CSS v4** + CSS variables | mobile-first, [stack-decisions](./stack-decisions.md) |
-| UI-компоненты | **`@tavrida/ui`** на headless-базе (**Reka UI**) | общие примитивы + токены |
+| UI-компоненты | local components + **`@tavrida/ui`** | Reka UI — target |
 | Стек (детали) | [stack-decisions.md](./stack-decisions.md) | Tailwind v4, d3, RxJS, tiers |
 | i18n | **vue-i18n** | `ru` по умолчанию (ключи готовы к мультиязычности) |
-| Уведомления | **Novu Inbox** (Vue-компонент) | in-app inbox |
-| Тесты | **Vitest** + `@vue/test-utils`, **Playwright** (e2e) | — |
+| Уведомления | service integration planned | Novu Inbox component пока отсутствует |
+| Тесты | Node test runner / build checks | Vitest + Playwright — target |
 | Линт | общий flat-config из `tools/config` | `eslint-plugin-vue` |
 
 > **Решение по API:** фронт использует REST + WS согласно [ADR-002](../03-architecture/adr/002-bff-rest-wss.md). GraphQL **не применяется**; пакет `@tavrida/graphql` — легаси (см. [Открытые вопросы](#-открытые-вопросы)).
@@ -50,7 +52,8 @@
 
 ## 🗂️ Структура каталогов
 
-Целевая структура (текущий каркас — только `main.ts` + `App.vue`):
+Упрощённая целевая карта. Runtime уже содержит router, stores, services,
+composables и member/admin views; имена ниже не являются точным snapshot:
 
 ```
 apps/frontend/
@@ -124,6 +127,18 @@ Idempotency-Key: <uuid>
 ```
 
 Server-state кэшируется через TanStack Query; ключи запросов централизованы в `src/api`. Мутации инвалидируют связанные запросы (например, ставка → инвалидация лота и истории ставок).
+
+### Конкурентные запросы и смена identity
+
+Текущие экраны, которые ещё используют прямой `fetch`, применяют правило
+**latest request wins**: route/filter generation проверяется перед изменением
+data, error и loading. Detail views наблюдают route param с
+`{ immediate: true }`, потому что Vue Router переиспользует component instance.
+
+Identity-scoped состояние (`roles`, balance, subscriptions) коммитится только
+если effective identity (`actAsUserId ?? userId`) не изменилась. Logout,
+impersonation start/stop инвалидируют cache epoch; завершившийся старый запрос
+не может записать данные предыдущего пользователя.
 
 ### WebSocket
 

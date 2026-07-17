@@ -44,7 +44,8 @@ async function pushIdentityToProfile(input: {
   try {
     await fetch(`${apiBase()}/me/identity`, {
       method: 'POST',
-      headers: await bffAuthHeaders(),
+      // These claims belong to the real JWT actor, never to an impersonation target.
+      headers: await bffAuthHeaders(undefined, { skipActAs: true }),
       body: JSON.stringify(input),
     });
   } catch {

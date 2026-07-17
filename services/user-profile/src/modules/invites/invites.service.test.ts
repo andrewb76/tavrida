@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { Repository } from 'typeorm';
-import type { InvitationEntity } from '../../entities/invitation.entity';
-import type { InviteCodeEntity } from '../../entities/invite-code.entity';
-import type { UserProfileEntity } from '../../entities/user-profile.entity';
+import type { DataSource, EntityManager, Repository } from 'typeorm';
+import { InvitationEntity } from '../../entities/invitation.entity';
+import { InviteCodeEntity } from '../../entities/invite-code.entity';
+import { UserProfileEntity } from '../../entities/user-profile.entity';
 import type { InviteEventsPublisher } from '../events/invite-events.publisher';
 import { InvitesService } from './invites.service';
 
@@ -25,14 +25,40 @@ describe('InvitesService.claim', () => {
     const published: unknown[] = [];
 
     const inviteCodes = {
-      findOne: async ({ where }: { where: { id?: string } }) =>
-        where.id === code.id ? code : null,
+      createQueryBuilder: () => {
+        let inviteCodeId = '';
+        return {
+          setLock() {
+            return this;
+          },
+          where(_sql: string, params: { inviteCodeId: string }) {
+            inviteCodeId = params.inviteCodeId;
+            return this;
+          },
+          async getOne() {
+            return inviteCodeId === code.id ? code : null;
+          },
+        };
+      },
       save: async (row: InviteCodeEntity) => row,
     } as unknown as Repository<InviteCodeEntity>;
 
     const profileRepo = {
-      findOne: async ({ where }: { where: { userId: string } }) =>
-        profiles.get(where.userId) ?? null,
+      createQueryBuilder: () => {
+        let userId = '';
+        return {
+          setLock() {
+            return this;
+          },
+          where(_sql: string, params: { userId: string }) {
+            userId = params.userId;
+            return this;
+          },
+          async getOne() {
+            return profiles.get(userId) ?? null;
+          },
+        };
+      },
       create: (data: Partial<UserProfileEntity>) =>
         ({
           inviterId: null,
@@ -51,13 +77,25 @@ describe('InvitesService.claim', () => {
     } as unknown as Repository<InvitationEntity>;
 
     const inviteEvents = {
-      publishInvitationRedeemed: async (payload: unknown) => {
+      enqueueInvitationRedeemed: async (_manager: EntityManager, payload: unknown) => {
         published.push(payload);
-        return { published: true, eventId: 'evt-1' };
       },
+      flush() {},
     } as unknown as InviteEventsPublisher;
 
-    const service = new InvitesService(inviteCodes, profileRepo, invitations, inviteEvents);
+    const manager = {
+      getRepository(entity: unknown) {
+        if (entity === UserProfileEntity) return profileRepo;
+        if (entity === InviteCodeEntity) return inviteCodes;
+        if (entity === InvitationEntity) return invitations;
+        throw new Error('Unexpected repository');
+      },
+    } as unknown as EntityManager;
+    const dataSource = {
+      transaction: (run: (manager: EntityManager) => unknown) => run(manager),
+    } as unknown as DataSource;
+
+    const service = new InvitesService(inviteCodes, inviteEvents, dataSource);
 
     const first = await service.claim({
       userId: 'invitee-1',

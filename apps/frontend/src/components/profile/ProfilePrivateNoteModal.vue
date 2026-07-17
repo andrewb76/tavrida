@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UiButton, UiModal } from '@tavrida/ui';
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import {
   deleteProfileNote,
@@ -24,25 +24,39 @@ const draft = ref('');
 
 const label = () => publicProfileLabel(props.profile);
 
-async function load() {
+let loadGeneration = 0;
+
+async function load(userId: string) {
+  const generation = ++loadGeneration;
   loading.value = true;
+  note.value = null;
+  draft.value = '';
   try {
-    note.value = await fetchProfileNote(props.profile.userId);
+    const loaded = await fetchProfileNote(userId);
+    if (generation !== loadGeneration || userId !== props.profile.userId) return;
+    note.value = loaded;
     draft.value = note.value?.text ?? '';
   } catch (e) {
+    if (generation !== loadGeneration) return;
     toast.error(e instanceof Error ? e.message : 'Не удалось загрузить заметку');
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
-watch(open, (isOpen) => {
-  if (isOpen) void load();
-});
-
-onMounted(() => {
-  if (open.value) void load();
-});
+watch(
+  [open, () => props.profile.userId],
+  ([isOpen, userId]) => {
+    if (isOpen) void load(userId);
+    else {
+      loadGeneration += 1;
+      note.value = null;
+      draft.value = '';
+      loading.value = false;
+    }
+  },
+  { immediate: true },
+);
 
 async function save() {
   const text = draft.value.trim();
@@ -52,8 +66,11 @@ async function save() {
   }
 
   saving.value = true;
+  const userId = props.profile.userId;
   try {
-    note.value = await saveProfileNote(props.profile.userId, text);
+    const saved = await saveProfileNote(userId, text);
+    if (userId !== props.profile.userId) return;
+    note.value = saved;
     draft.value = note.value.text;
     toast.success('Заметка сохранена');
     open.value = false;

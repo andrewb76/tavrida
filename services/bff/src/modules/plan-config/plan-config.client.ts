@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 export type PlanSummary = {
   id: string;
@@ -155,11 +156,16 @@ export class PlanConfigClient {
       planId: string;
       limit: number | null;
       remaining: number | null;
+      reason?: 'unknown_variable' | 'tier_disabled' | 'invalid_limit';
     }>('POST', '/internal/v1/limits/check', body);
   }
 
   async canUseFeature(body: { userId: string; featureKey: string }) {
-    return this.request<{ allowed: boolean; planId: string }>(
+    return this.request<{
+      allowed: boolean;
+      planId: string;
+      reason?: 'unknown_variable' | 'tier_disabled';
+    }>(
       'POST',
       '/internal/v1/features/can-use',
       body,
@@ -173,6 +179,14 @@ export class PlanConfigClient {
       requestedValue: 0,
       currentUsage: 0,
     });
+    if (result.reason) {
+      throw new ServiceUnavailableException({
+        type: 'plan_policy_unavailable',
+        detail: `Plan limit ${variableKey} is not enforceable: ${result.reason}`,
+        variableKey,
+        reason: result.reason,
+      });
+    }
     return result.limit;
   }
 
@@ -191,11 +205,25 @@ export class PlanConfigClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.baseUrl()}${path}`, {
-      method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl()}${path}`, {
+        method,
+        signal: AbortSignal.timeout(5_000),
+        headers: internalServiceHeaders(
+          this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+          body ? { 'Content-Type': 'application/json' } : {},
+        ),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (error) {
+      throw new ServiceUnavailableException({
+        type: 'plan_policy_unavailable',
+        detail: `plan-config ${method} ${path}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      });
+    }
 
     if (!res.ok) {
       let payload: Record<string, unknown> = {};

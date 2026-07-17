@@ -2,11 +2,10 @@ import {
   ConflictException,
   GoneException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { formatInviteCode, normalizeInviteCode } from '../../common/invite-code';
 import { InvitationEntity } from '../../entities/invitation.entity';
 import { InviteCodeEntity } from '../../entities/invite-code.entity';
@@ -31,17 +30,13 @@ export type ClaimInviteInput = {
 
 @Injectable()
 export class InvitesService {
-  private readonly logger = new Logger(InvitesService.name);
   private readonly maxCodeAttempts = 8;
 
   constructor(
     @InjectRepository(InviteCodeEntity)
     private readonly inviteCodes: Repository<InviteCodeEntity>,
-    @InjectRepository(UserProfileEntity)
-    private readonly profiles: Repository<UserProfileEntity>,
-    @InjectRepository(InvitationEntity)
-    private readonly invitations: Repository<InvitationEntity>,
     private readonly inviteEvents: InviteEventsPublisher,
+    private readonly dataSource: DataSource,
   ) {}
 
   async createInvite(input: CreateInviteInput): Promise<InviteCodeEntity> {
@@ -110,103 +105,114 @@ export class InvitesService {
   }
 
   async claim(input: ClaimInviteInput) {
-    const profile = await this.ensureProfile(input.userId);
+    const result = await this.dataSource.transaction(async (manager) => {
+      const profiles = manager.getRepository(UserProfileEntity);
+      const inviteCodes = manager.getRepository(InviteCodeEntity);
+      const invitations = manager.getRepository(InvitationEntity);
+      let profile = await profiles
+        .createQueryBuilder('profile')
+        .setLock('pessimistic_write')
+        .where('profile.user_id = :userId', { userId: input.userId })
+        .getOne();
+      if (!profile) {
+        profile = await profiles.save(
+          profiles.create({
+            userId: input.userId,
+            inviterId: null,
+            invitationAcceptedAt: null,
+          }),
+        );
+      }
 
-    if (profile.inviterId) {
-      return {
-        userId: profile.userId,
-        inviterId: profile.inviterId,
-        invitationAcceptedAt: profile.invitationAcceptedAt?.toISOString() ?? null,
-        claimed: false,
-      };
-    }
+      if (profile.inviterId) {
+        return {
+          userId: profile.userId,
+          inviterId: profile.inviterId,
+          invitationAcceptedAt: profile.invitationAcceptedAt?.toISOString() ?? null,
+          claimed: false,
+        };
+      }
 
-    let inviterId = input.inviterId;
-    let inviteCodeId = input.inviteCodeId;
+      let inviterId = input.inviterId;
+      let inviteCodeId = input.inviteCodeId;
+      if (inviteCodeId) {
+        const code = await inviteCodes
+          .createQueryBuilder('invite')
+          .setLock('pessimistic_write')
+          .where('invite.id = :inviteCodeId', { inviteCodeId })
+          .getOne();
+        if (!code) {
+          throw new NotFoundException({
+            type: 'not-found',
+            detail: 'Invite code not found',
+          });
+        }
+        if (code.expiresAt < new Date() || code.usesCount >= code.maxUses) {
+          throw new ConflictException({
+            type: 'invite-exhausted',
+            detail: 'Invite code is expired or already used',
+          });
+        }
+        if (inviterId && inviterId !== code.issuerId) {
+          throw new ConflictException({
+            type: 'conflict',
+            detail: 'inviterId does not match invite code',
+          });
+        }
+        inviterId = code.issuerId;
+        inviteCodeId = code.id;
+        code.usesCount += 1;
+        await inviteCodes.save(code);
+      }
 
-    if (inviteCodeId) {
-      const code = await this.inviteCodes.findOne({ where: { id: inviteCodeId } });
-      if (!code) {
+      if (!inviterId) {
         throw new NotFoundException({
           type: 'not-found',
-          detail: 'Invite code not found',
+          detail: 'inviterId or inviteCodeId required',
         });
       }
-      if (inviterId && inviterId !== code.issuerId) {
+      if (inviterId === input.userId) {
         throw new ConflictException({
           type: 'conflict',
-          detail: 'inviterId does not match invite code',
+          detail: 'Cannot claim self-invite',
         });
       }
-      inviterId = code.issuerId;
-      inviteCodeId = code.id;
-      code.usesCount += 1;
-      await this.inviteCodes.save(code);
-    }
 
-    if (!inviterId) {
-      throw new NotFoundException({
-        type: 'not-found',
-        detail: 'inviterId or inviteCodeId required',
-      });
-    }
+      const acceptedAt = new Date();
+      profile.inviterId = inviterId;
+      profile.invitationAcceptedAt = acceptedAt;
+      await profiles.save(profile);
+      await invitations.save(
+        invitations.create({
+          inviteeId: input.userId,
+          inviterId,
+          inviteCodeId: inviteCodeId ?? null,
+          acceptedAt,
+        }),
+      );
 
-    if (inviterId === input.userId) {
-      throw new ConflictException({
-        type: 'conflict',
-        detail: 'Cannot claim self-invite',
-      });
-    }
-
-    const acceptedAt = new Date();
-    profile.inviterId = inviterId;
-    profile.invitationAcceptedAt = acceptedAt;
-    await this.profiles.save(profile);
-
-    await this.invitations.save(
-      this.invitations.create({
-        inviteeId: input.userId,
-        inviterId,
-        inviteCodeId: inviteCodeId ?? null,
-        acceptedAt,
-      }),
-    );
-
-    const acceptedAtIso = acceptedAt.toISOString();
-    try {
-      await this.inviteEvents.publishInvitationRedeemed({
+      const acceptedAtIso = acceptedAt.toISOString();
+      await this.inviteEvents.enqueueInvitationRedeemed(manager, {
         inviteeId: input.userId,
         inviterId,
         inviteCodeId: inviteCodeId ?? null,
         acceptedAt: acceptedAtIso,
       });
-    } catch (error) {
-      this.logger.warn(
-        `invitation.redeemed publish failed: ${error instanceof Error ? error.message : error}`,
-      );
-    }
-
-    return {
-      userId: profile.userId,
-      inviterId,
-      invitationAcceptedAt: acceptedAtIso,
-      claimed: true,
-    };
+      return {
+        userId: profile.userId,
+        inviterId,
+        invitationAcceptedAt: acceptedAtIso,
+        claimed: true,
+      };
+    });
+    if (result.claimed) this.inviteEvents.flush();
+    return result;
   }
 
   statusOf(record: InviteCodeEntity): InviteStatus {
     if (record.expiresAt < new Date()) return 'expired';
     if (record.usesCount >= record.maxUses) return 'redeemed';
     return 'active';
-  }
-
-  private async ensureProfile(userId: string): Promise<UserProfileEntity> {
-    let profile = await this.profiles.findOne({ where: { userId } });
-    if (!profile) {
-      profile = this.profiles.create({ userId, inviterId: null, invitationAcceptedAt: null });
-      profile = await this.profiles.save(profile);
-    }
-    return profile;
   }
 
   private async generateUniqueCode(): Promise<string> {

@@ -56,7 +56,7 @@ MarketplaceListPage:
 |------|----------|-----------|
 | Gallery | Portfolio carousel | MinIO |
 | Info | Description, price, provider | → profile |
-| CTA | «Заказать» | Modal → `POST /orders` |
+| CTA | «Заказать» | Modal → `POST /marketplace/orders` |
 
 **API:** `GET /marketplace/listings/:id`, `POST /marketplace/orders`
 
@@ -128,7 +128,7 @@ MyListingsPage:
 |------|----------|-----------|
 | Context | Услуга, поставщик, базовая цена | From listing page |
 | Notes | Комментарий к заказу | Optional |
-| Confirm | «Оформить заказ» | `POST /orders` |
+| Confirm | «Оформить заказ» | `POST /marketplace/orders` |
 | Errors | Low balance, limit | Link wallet / plans |
 
 **States:** submitting · success redirect to order/chat TBD.

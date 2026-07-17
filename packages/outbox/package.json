@@ -1,0 +1,24 @@
+{
+  "name": "@tavrida/outbox",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "eslint src",
+    "pretest": "tsc -p tsconfig.test.json",
+    "test": "node --test dist-test/**/*.test.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "reflect-metadata": "^0.2.0",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@tavrida/tsconfig": "workspace:*",
+    "@types/amqplib": "^0.10.8",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}

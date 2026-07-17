@@ -1,33 +1,26 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { verifyInternalServiceToken } from '@tavrida/internal-auth';
 import type { Request } from 'express';
 
 /**
- * Optional shared secret for `/internal/v1/*`.
- * When `INTERNAL_SERVICE_TOKEN` is unset/empty — allow (local/dev).
- * When set — require `Authorization: Bearer <token>`.
+ * Controller-level defense in depth; global path middleware protects all
+ * current and future `/internal/v1/*` routes.
  */
 @Injectable()
 export class InternalServiceTokenGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const expected = this.config.get<string>('INTERNAL_SERVICE_TOKEN')?.trim();
-    if (!expected) return true;
-
     const request = context.switchToHttp().getRequest<Request>();
-    const header = request.headers.authorization;
-    if (!header?.startsWith('Bearer ')) {
+    const result = verifyInternalServiceToken(request.headers.authorization, {
+      NODE_ENV: this.config.get<string>('NODE_ENV'),
+      INTERNAL_SERVICE_TOKEN: this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+    });
+    if (!result.ok) {
       throw new UnauthorizedException({
         type: 'unauthorized',
-        detail: 'Missing internal service token',
-      });
-    }
-    const token = header.slice('Bearer '.length).trim();
-    if (token !== expected) {
-      throw new UnauthorizedException({
-        type: 'unauthorized',
-        detail: 'Invalid internal service token',
+        detail: result.detail,
       });
     }
     return true;

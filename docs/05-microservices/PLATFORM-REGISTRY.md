@@ -261,7 +261,8 @@ Default `rating.contextWeights`:
 | `subscriptions.member.tag.max` | limit | 3 | 10 | ∞ | Подписок на теги |
 | `subscriptions.member.notify.emailDigestEnabled` | feature | false | false | true | Email digest |
 
-> Legacy: `auction_subscriptions.*` → migrate ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
+> Legacy `auction_subscriptions.*` retired; register only `subscriptions.*`
+> ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).
 
 ### webhooks
 
@@ -303,7 +304,7 @@ Default `rating.contextWeights`:
 ## 🔄 Как обновлять реестр
 
 1. Новая переменная в сервисе → строка в этот файл + [registry-keys.md](../13-maintenance/registry-keys.md).
-2. Scalar → `POST /internal/v1/settings/sync` при деплое (scalar-config).
+2. Scalar → `POST /internal/v1/scalar-variables/sync` при деплое.
 3. Plan variable → `POST /internal/v1/plan-variables/sync` + `planValues` (plan-config).
 4. Разовая цена → plan variable `valueType: price` (не отдельный charge_target).
 5. Изменение лимита для пользователя → обновить [platform-for-users.md](../01-goal/platform-for-users.md) если UX затронут.

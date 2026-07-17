@@ -433,7 +433,7 @@
 | Форум                    | [forum/requirements](../05-microservices/forum/requirements/README.md)                                                                 |
 | Рейтинг, карма, инвайты  | [karma-and-rating.md](./karma-and-rating.md), [rating](../05-microservices/rating/README.md)                                           |
 | Клуб и доступ            | [club-access.md](./club-access.md)                                                                                                     |
-| Отзывы после сделок      | [feedback](../05-microservices/feedback/README.md)                                                                                     |
+| Отзывы после сделок      | [deal-feedback](../05-microservices/deal_feedback/README.md)                                                                            |
 | Профиль                  | [user-profile](../05-microservices/user-profile/README.md)                                                                             |
 | Баланс и платежи         | [billing](../05-microservices/billing/README.md)                                                                                       |
 | Подписки Free/Basic/Pro  | [plan-config](../05-microservices/plan-config/README.md), [реестр](../05-microservices/PLATFORM-REGISTRY.md)                 |

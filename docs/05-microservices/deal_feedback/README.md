@@ -9,10 +9,10 @@
 
 | Слой | Статус |
 |------|--------|
-| Pending create (HTTP + RMQ `marketplace.order_completed`) | ✅ |
+| Pending create (HTTP + RMQ completed events) | ✅ |
 | Submit rating → user-profile `DEAL_FEEDBACK` log | ✅ |
 | BFF `/api/v1/deal-feedback/*` | ✅ |
-| Auction.completed consumer handler | ⏳ bind only |
+| `auction.completed` consumer handler | ✅ |
 | Reminder CRON / notifications | ⏳ |
 
 
@@ -20,7 +20,8 @@
 
 - `DealFeedback` — финальные оценки сторон
 - `PendingDealFeedback` — трекинг неоценённых сделок + CRON reminders
-- Триггер `deal_feedback.submitted` → rating, user-profile cache
+- Сейчас submit синхронно применяет adjustment в user-profile;
+  `deal_feedback.submitted` — planned
 
 ## 📖 Термины
 
@@ -67,13 +68,16 @@
 | GET | `/deal-feedback/status` | Статус по `dealType` + id сделки |
 | GET | `/deal-feedback/pending` | Список pending для текущего user |
 
-> **Deprecated alias:** `/api/v1/feedback/*` — 1 релиз.
+> Runtime alias `/api/v1/feedback/*` retired; canonical prefix only.
 
 ### Internal
 
 | Method | Path | Описание |
 |--------|------|----------|
 | POST | `/internal/v1/deal-feedback/pending/create` | Из event consumer |
+| GET | `/internal/v1/deal-feedback/pending` | Pending для пользователя |
+| GET | `/internal/v1/deal-feedback/status` | Статус отзывов по сделке |
+| POST | `/internal/v1/deal-feedback/submit` | Отзыв + sync adjustment в user-profile |
 | POST | `/internal/v1/deal-feedback/reminders/run` | CRON |
 
 ## 📨 События
@@ -82,10 +86,10 @@
 |-----------|-------|-------|
 | consume | `auction.completed` | Pending ×2 |
 | consume | `marketplace.order_completed` | Pending ×2 |
-| produce | `deal_feedback.submitted` | Finalised deal |
-| produce | `deal_feedback.reminder_due` | CRON → notifications |
+| planned | `deal_feedback.submitted` | Сейчас submit синхронно обновляет rating в user-profile |
+| planned | `deal_feedback.reminder_due` | `reminders/run` пока возвращает `triggered: 0` |
 
-> Legacy consumer alias: `feedback.submitted` → `deal_feedback.submitted`
+> Legacy event name: `feedback.submitted`; runtime producer пока не реализован.
 
 ## 🔗 Взаимодействие
 

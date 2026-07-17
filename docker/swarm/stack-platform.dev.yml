@@ -6,6 +6,9 @@
 name: tavrida-dev
 
 secrets:
+  internal_service_token:
+    external: true
+    name: tavrida_dev_internal_service_token
   rabbitmq_url:
     external: true
     name: tavrida_dev_rabbitmq_url
@@ -53,6 +56,7 @@ x-nest-env: &nest-env
   NODE_ENV: production
   REDIS_URL: redis://redis:6379
   RABBITMQ_URL_FILE: /run/secrets/rabbitmq_url
+  INTERNAL_SERVICE_TOKEN_FILE: /run/secrets/internal_service_token
 
 x-nest-deploy: &nest-deploy
   replicas: 1
@@ -68,6 +72,7 @@ services:
   billing:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-billing:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - billing_database_url
     environment:
@@ -87,6 +92,7 @@ services:
   plan-config:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-plan-config:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - plan_config_database_url
     environment:
@@ -107,6 +113,8 @@ services:
   # (no docker.sock; simple loop — see docs/04-deployment/swarm-stacks.md)
   plan-config-renew:
     image: curlimages/curl:8.12.1
+    secrets:
+      - internal_service_token
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -115,7 +123,9 @@ services:
         echo "plan-config-renew: starting (interval 3600s)"
         while true; do
           echo "plan-config-renew: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
-          curl -sf -X POST http://plan-config:3002/internal/v1/subscription/renew/run \
+          curl -sf -X POST \
+            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            http://plan-config:3002/internal/v1/subscription/renew/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
         done
@@ -128,6 +138,8 @@ services:
   # Hourly auction hygiene: activate due SCHEDULED + close due ACTIVE lots
   auction-close:
     image: curlimages/curl:8.12.1
+    secrets:
+      - internal_service_token
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -136,7 +148,9 @@ services:
         echo "auction-close: starting (interval 3600s)"
         while true; do
           echo "auction-close: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
-          curl -sf -X POST http://auction:3003/internal/v1/auctions/close/run \
+          curl -sf -X POST \
+            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            http://auction:3003/internal/v1/auctions/close/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
         done
@@ -149,6 +163,7 @@ services:
   auction:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-auction:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - auction_database_url
     environment:
@@ -169,6 +184,7 @@ services:
   subscriptions:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-subscriptions:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - subscriptions_database_url
     environment:
@@ -188,6 +204,7 @@ services:
   user-profile:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-user-profile:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - user_profile_database_url
     environment:
@@ -207,6 +224,7 @@ services:
   scalar-config:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-scalar-config:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - scalar_config_database_url
     environment:
@@ -226,6 +244,7 @@ services:
   forum:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-forum:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - forum_database_url
     environment:
@@ -246,6 +265,7 @@ services:
   periods:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-periods:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - periods_database_url
     environment:
@@ -265,6 +285,7 @@ services:
   marketplace:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-marketplace:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - marketplace_database_url
     environment:
@@ -284,6 +305,7 @@ services:
   notifications:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-notifications:${GIT_SHA}
     secrets:
+      - internal_service_token
       - notifications_database_url
     environment:
       <<: *nest-env
@@ -303,6 +325,7 @@ services:
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
+      - internal_service_token
       - rabbitmq_url
       - bff_database_url
       - logto_m2m_app_secret
@@ -367,3 +390,7 @@ services:
         - traefik.http.routers.frontend.entrypoints=websecure
         - traefik.http.routers.frontend.tls.certresolver=le
         - traefik.http.services.frontend.loadbalancer.server.port=80
+
+networks:
+  tavrida_net:
+    external: true

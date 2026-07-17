@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Request } from 'express';
 import { ActAsService, ACT_AS_HEADER } from './act-as.service';
+import { resolveAuthMode } from './auth-config';
 import type { AuthUser } from './current-user.decorator';
 
 @Injectable()
@@ -37,33 +38,30 @@ export class JwtAuthGuard implements CanActivate {
     const audience = this.config.get<string>('LOGTO_AUDIENCE');
     const endpoint = this.config.get<string>('LOGTO_ENDPOINT');
 
-    if (!jwksUrl || jwksUrl.includes('example.com')) {
+    const mode = resolveAuthMode({
+      NODE_ENV: this.config.get<string>('NODE_ENV'),
+      BFF_ALLOW_DEV_TOKENS: this.config.get<string>('BFF_ALLOW_DEV_TOKENS'),
+      LOGTO_ENDPOINT: endpoint,
+      LOGTO_JWKS_URL: jwksUrl,
+      LOGTO_AUDIENCE: audience,
+    });
+    if (mode === 'dev-token') {
       return this.verifyDevToken(token);
     }
 
     if (!this.jwks) {
-      this.jwks = createRemoteJWKSet(new URL(jwksUrl));
+      this.jwks = createRemoteJWKSet(new URL(jwksUrl!));
     }
 
-    const verifyOptions: Parameters<typeof jwtVerify>[2] = {};
-    if (audience) verifyOptions.audience = audience;
-    if (endpoint) verifyOptions.issuer = `${endpoint.replace(/\/$/, '')}/oidc`;
+    const verifyOptions: Parameters<typeof jwtVerify>[2] = {
+      audience: audience!,
+      issuer: `${endpoint!.replace(/\/$/, '')}/oidc`,
+    };
 
     try {
       return this.payloadToUser(await jwtVerify(token, this.jwks, verifyOptions));
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-
-      const isDev = this.config.get<string>('NODE_ENV') !== 'production';
-      if (isDev && audience && verifyOptions.issuer) {
-        try {
-          return this.payloadToUser(
-            await jwtVerify(token, this.jwks, { issuer: verifyOptions.issuer }),
-          );
-        } catch {
-          /* fall through to error below */
-        }
-      }
 
       throw new UnauthorizedException({
         type: 'unauthorized',
@@ -81,28 +79,16 @@ export class JwtAuthGuard implements CanActivate {
     return { sub };
   }
 
-  /** Local dev when JWKS is not configured: `Bearer dev-{uuid}`. */
+  /** Explicit local-only fallback when BFF_ALLOW_DEV_TOKENS=true. */
   private verifyDevToken(token: string): AuthUser {
     if (token.startsWith('dev-') && token.length > 4) {
       return { sub: token.slice(4) };
     }
 
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as {
-          sub?: string;
-        };
-        if (payload.sub) return { sub: payload.sub };
-      }
-    } catch {
-      /* fall through */
-    }
-
     throw new UnauthorizedException({
       type: 'unauthorized',
       detail:
-        'Invalid dev token. Use Bearer dev-{uuid}, or configure LOGTO_JWKS_URL and API resource token.',
+        'Invalid dev token. Use Bearer dev-{userId}, or configure Logto JWT validation.',
     });
   }
 }

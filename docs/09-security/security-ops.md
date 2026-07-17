@@ -6,7 +6,7 @@
 
 | Угроза | Митигация |
 |--------|-----------|
-| Public access to internal APIs | Swarm overlay, no Traefik route; BFF only |
+| Public access to internal APIs | Swarm overlay + mandatory production Bearer on every `/internal/v1/*`; no Traefik route |
 | JWT theft | HTTPS, short-lived tokens, Logto rotation |
 | Privilege escalation | Keto checks; admin-only moderator assign |
 | Secret leak in git | Bitwarden, `.env.local` gitignored, pre-commit scan TBD |
@@ -26,6 +26,11 @@ flowchart TB
 ```
 
 **Правило:** domain services **не** publish ports на host в prod.
+
+Все internal HTTP routes дополнительно проверяют общий
+`INTERNAL_SERVICE_TOKEN`. Middleware применяется по path prefix, поэтому новые
+internal controllers защищены автоматически; `/health` и `/health/ready`
+остаются публичными для orchestrator probes. Сравнение токена constant-time.
 
 ## 🔐 Secrets lifecycle
 

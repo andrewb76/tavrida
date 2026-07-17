@@ -17,7 +17,7 @@
 | npm | `@tavrida/feedback` | `@tavrida/deal-feedback` |
 | PostgreSQL schema | `feedback` | `deal_feedback` |
 | Docs | `feedback/` | `deal_feedback/` |
-| BFF prefix | `/api/v1/feedback` | `/api/v1/deal-feedback` (alias `/feedback` deprecated 1 release) |
+| BFF prefix | `/api/v1/feedback` | `/api/v1/deal-feedback` (legacy alias retired) |
 | Event | `feedback.submitted` | `deal_feedback.submitted` (+ consumer alias) |
 
 Сущности без изменения смысла: `DealFeedback`, `PendingFeedback`, `FeedbackBonus` — в schema `deal_feedback`.
@@ -26,7 +26,7 @@
 
 | Слой | Было | Стало |
 |------|------|-------|
-| Каталог `services/` | `auction-subscriptions/` | `subscriptions/` (migrate при реализации) |
+| Каталог `services/` | `auction-subscriptions/` | `subscriptions/` (completed) |
 | npm | `@tavrida/auction-subscriptions` | `@tavrida/subscriptions` |
 | PostgreSQL schema | `auction_subscriptions` | `subscriptions` |
 | Docs | `auction_subscriptions/` | `subscriptions/` |
@@ -46,8 +46,8 @@
 ## 📌 Последствия
 
 - Обновить [naming.md](../../13-maintenance/naming.md), event-catalog, BFF routes, PLATFORM-REGISTRY.
-- Код `services/auction-subscriptions/` — rename при следующем коммите в implementation phase.
-- Legacy aliases в consumers 1 релиз для zero-downtime migration.
+- Код перенесён в `services/subscriptions/`.
+- Legacy docs redirect-stubs сохранены для старых ссылок; runtime aliases retired.
 
 ---
 

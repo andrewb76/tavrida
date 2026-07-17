@@ -83,9 +83,8 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/profile/me` | Свой профиль (+ subscription via BFF agg) |
 | GET | `/profile/{userId}` | Публичный профиль |
-| PATCH | `/profile/me` | bio, displayName, avatar upload URL |
+| GET | `/profile/{userId}/rating/log` | История rating/karma |
 | GET | `/profile/notes?ownerId=` | Заметки (author or owner only) |
 | POST | `/profile/notes` | Создать/обновить заметку |
 | DELETE | `/profile/notes/{id}` | Удалить (author only) |
@@ -110,8 +109,11 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | GET | `/internal/v1/users` | Список профилей (admin BFF) |
 | POST | `/internal/v1/users/sync-logto` | Upsert из Logto webhook/backfill |
 | POST | `/internal/v1/users/ensure` | Пустой профиль (lazy) |
+| POST | `/internal/v1/users/lookup` | Batch lookup профилей |
+| GET | `/internal/v1/users/{userId}` | Профиль для BFF |
+| GET | `/internal/v1/users/{userId}/public` | Публичная проекция |
 | POST | `/internal/v1/users/{userId}/mark-deleted` | Soft delete |
-| GET | `/internal/v1/users/{userId}/ancestor-chain` | Цепочка inviter → … (для referral-rewards, rating) |
+| GET/POST/DELETE | `/internal/v1/profile-notes/*` | Приватные заметки |
 | GET | `/health`, `/health/ready` | — |
 
 ## ⚙️ Переменные scalar-config
@@ -134,9 +136,9 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Direction | Event | Действие |
 |-----------|-------|----------|
-| produce | `invitation.redeemed` | RMQ after first claim (`InviteEventsPublisher`); consumers rating / referral-rewards — planned |
+| produce | `invitation.redeemed` | Transactional outbox при первом claim; consumers rating / referral-rewards — planned |
 | consume | `rating.updated` | Update cached rating fields |
-| consume | `feedback.submitted` | Optional refresh |
+| planned consume | `deal_feedback.submitted` | Сейчас deal-feedback вызывает sync adjustment |
 | consume | `subscription.activated` | Invalidate BFF cache (optional) |
 
 ## 🔗 Взаимодействие
@@ -144,14 +146,14 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | Сервис | Протокол |
 |--------|----------|
 | rating | events → cache; referral recompute on claim |
-| referral-rewards | ancestor-chain HTTP | referral-rewards → user-profile |
-| BFF | aggregation `/profile/me` |
+| referral-rewards | ancestor-chain target | пока не реализовано |
+| BFF | `/profile/{userId}` + notes/rating log |
 | MinIO | avatars bucket |
 | Logto | webhooks → BFF → `sync-logto`; см. [logto-webhooks.md](../../14-frontend/logto-webhooks.md) |
 
 ## 🔒 Безопасность
 
-- PATCH `/profile/me` — только owner
+- Изменение профиля — target; runtime BFF сейчас предоставляет read API
 - Notes — **never** exposed in public profile JSON
 - GET notes — Keto: `authorId === sub` OR `ownerId === sub`
 - Avatar upload — presigned URL, max size TBD
@@ -161,7 +163,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | Переменная | Обяз. | Описание |
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `user_profile` |
-| `RABBITMQ_URL` | нет* | Publish `invitation.redeemed` (skip if unset) |
+| `RABBITMQ_URL` | нет* | Relay `invitation.redeemed`; без URL событие остаётся pending в outbox |
 | `MINIO_*` | да | bucket `avatars` |
 | `PORT` | нет | HTTP |
 

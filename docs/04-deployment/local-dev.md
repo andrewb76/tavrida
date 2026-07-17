@@ -72,7 +72,7 @@ Bootstrap admin: [bootstrap-admin](../09-security/bootstrap-admin.md).
 | `SCALAR_CONFIG_URL` | `http://localhost:3008` | scalar-config (скалярные ключи) |
 | `FORUM_URL` | `http://localhost:3009` | forum (темы, комментарии) |
 
-Legacy aliases (удалить после миграции кода): `PLAN_CONFIG_URL`, `SCALAR_CONFIG_URL`.
+Retired legacy aliases: `FINANCIAL_POLICY_URL`, `SETTINGS_URL`.
 
 ### Порты (локально)
 

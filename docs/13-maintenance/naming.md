@@ -12,7 +12,7 @@
 |----------|--------|--------|
 | Каталог в `services/` | **kebab-case** | `subscriptions/`, `deal-feedback/` |
 | npm package | `@tavrida/{kebab-name}` | `@tavrida/subscriptions` |
-| Документ docs (целевой) | **kebab-case** | `docs/05-microservices/subscriptions/README.md` |
+| Документ docs | kebab-case by default; accepted `deal_feedback/` exception per ADR-006 | `subscriptions/`, `deal_feedback/` |
 | Human name | kebab или пробел | subscriptions |
 
 > **Legacy:** `auction-subscriptions` → `subscriptions`; `feedback` → `deal-feedback` ([ADR-006](../03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md)).  
@@ -24,7 +24,7 @@
 
 | Контекст | Формат | Пример |
 |----------|--------|--------|
-| Schema | **snake_case** (имя сервиса) | `auction_subscriptions`, `plan_config`, `scalar_config` |
+| Schema | **snake_case** (canonical service name) | `subscriptions`, `plan_config`, `scalar_config` |
 | Таблицы | **snake_case** | `service_order`, `comment_closure` |
 | Одна БД | `tavrida_lot` | [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) |
 
@@ -57,7 +57,7 @@
 | Контекст | Формат | Пример |
 |----------|--------|--------|
 | eventType | `{domain}.{action_past}` | `auction.bid_placed`, `forum.comment_promoted_to_topic` |
-| domain | snake_case, совпадает с schema/service | `auction_subscriptions` → события от сервиса используют `auction.` или отдельный prefix по ADR |
+| domain | snake_case canonical domain | `deal_feedback.submitted`, `subscriptions.*` |
 
 ---
 
@@ -87,7 +87,7 @@
 | `docs/.../auction_subscriptions/` | `subscriptions` (service/docs) |
 | `docs/.../feedback/` | `deal_feedback` |
 | `post`, `postId` | `topic` / `comment`, `contentId` + `contentType` |
-| `auction-subscriptions.*` (registry) | `auction_subscriptions.*` |
+| `auction-subscriptions.*` / `auction_subscriptions.*` | `subscriptions.*` |
 | `order`, `review` (marketplace tables) | `service_order`; отзывы — schema `deal_feedback` |
 | `feedback` (service/docs) | `deal-feedback` / `deal_feedback` |
 | `auction-subscriptions` (service) | `subscriptions` |

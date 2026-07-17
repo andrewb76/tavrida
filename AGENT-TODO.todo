@@ -67,8 +67,20 @@ Reputation log:
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)
+  ☐ Visual Lab W03: выбрать направление A/B/C → tokens pilot @docs @frontend
+
+Review remediation:
 
 Archive:
+  ✔ Review P2: legacy naming/API/status documentation audit @docs @done(26-07-17)
+  ✔ Review P1: frontend identity/route/filter stale state races @frontend @done(26-07-17)
+  ✔ Review P1: fail-closed plan enforcement для paid/limited writes @plan-config @bff @done(26-07-17)
+  ✔ Review P1: transactional outbox + retry/DLQ для domain events @backend @rabbitmq @done(26-07-17)
+  ✔ Review P1: production service-token middleware для всех internal HTTP endpoints @security @backend @done(26-07-17)
+  ✔ Review P0: BFF JWT fail-closed + explicit local dev-token @security @bff @done(26-07-17)
+  ✔ Review P0: hydrated DATABASE_URL используется TypeORM во всех сервисах @backend @ops @done(26-07-17)
+  ✔ Review P0: versioned baseline migrations для 12 PostgreSQL schemas @backend @ops @done(26-07-17)
+  ✔ Review P0: transactional auction bid/close + cron advisory lock @auction @done(26-07-17)
   ✔ Dutch accept bid + ask step-down in close/run + FE CTA @auction @frontend @done(26-07-16)
   ✔ plan-config HTTP limits (replace BFF hardcoded policy) @auction @bff @done(26-07-16)
   ✔ Swarm cron: POST …/auctions/close/run @auction @ops @done(26-07-16)

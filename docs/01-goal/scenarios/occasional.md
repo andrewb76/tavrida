@@ -51,10 +51,10 @@
 
 | | |
 |---|---|
-| **G** | Under `auction_subscriptions.*` limits |
+| **G** | Under `subscriptions.*` limits |
 | **W** | Subscribe |
 | **T** | Notify on `auction.created` / `bid_placed` |
-| **Компоненты** | `auction-subscriptions`, RMQ, `notifications` |
+| **Компоненты** | `subscriptions`, RMQ, `notifications` |
 | **Тест** | INT fan-out |
 
 ### S-024 · Маркет: заказ услуги
@@ -64,7 +64,7 @@
 | **G** | Listing ACTIVE; `ordersPerMonth` OK |
 | **W** | Order lifecycle → COMPLETED |
 | **T** | `marketplace.order_completed` → feedback (как S-015) |
-| **Компоненты** | `marketplace`, `feedback`, `rating` |
+| **Компоненты** | `marketplace`, `deal-feedback`, `rating` |
 | **Тест** | INT; E2E v1.1 |
 
 ### S-025 · Платная реакция Pro

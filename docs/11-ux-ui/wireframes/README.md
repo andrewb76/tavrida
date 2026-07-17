@@ -18,6 +18,10 @@ Low-fi спецификации для `apps/frontend`. Figma — optional; ка
 
 Шаблон: [TEMPLATE.md](./TEMPLATE.md) · обоснование форматов: [format-lab](./format-lab/README.md) (выбор: A + C + содержание).
 
+## 🎨 Visual direction lab (графика)
+
+Эталон **W03**: три направления на одной структуре — [visual-lab](./visual-lab/README.md) · [W03-visual-directions.html](./visual-lab/W03-visual-directions.html).
+
 ## 📋 Экраны
 
 | ID | Экран | Документ | MVP | WF |

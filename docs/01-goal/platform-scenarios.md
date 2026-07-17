@@ -61,7 +61,10 @@ flowchart LR
     plan-config --> BL[billing]
 ```
 
-Позвоночник событий: `auction.completed` → `feedback.submitted` → `rating.updated` → `billing.charge_completed`.
+Целевой позвоночник событий: `auction.completed` →
+`deal_feedback.submitted` → `rating.updated` → `billing.charge_completed`.
+Сегодня первый event и pending-feedback consumer live, а feedback/rating events
+ещё planned.
 
 ---
 

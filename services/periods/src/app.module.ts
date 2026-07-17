@@ -8,6 +8,7 @@ import { HealthController } from './modules/health/health.controller';
 import { PeriodsModule } from './modules/periods/periods.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
 @Module({
   imports: [
@@ -17,13 +18,20 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 5432),
-      username: process.env.DB_USER ?? 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
-      database: process.env.DB_NAME ?? 'tavrida_lot',
+      ...(databaseUrl
+        ? { url: databaseUrl }
+        : {
+            host: process.env.DB_HOST ?? 'localhost',
+            port: Number(process.env.DB_PORT ?? 5432),
+            username: process.env.DB_USER ?? 'postgres',
+            password: process.env.DB_PASSWORD ?? 'postgres',
+            database: process.env.DB_NAME ?? 'tavrida_lot',
+          }),
       schema: 'periods',
       entities: [PeriodCategoryEntity, PeriodEntity],
+      migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
+      migrationsTableName: 'periods_migrations',
+      migrationsRun: process.env.NODE_ENV === 'production',
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     PeriodsModule,

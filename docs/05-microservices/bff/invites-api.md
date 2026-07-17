@@ -94,7 +94,9 @@ Content-Type: application/json
 
 1. Validate JWT → `issuerId = sub`.
 2. Check Keto: caller is member (JWT достаточен в v1).
-3. Check `club.member.invite.monthlyMax` via plan-config (admin / `CLUB_INVITES_UNLIMITED_ISSUER_IDS` — skip). Env `CLUB_INVITES_PER_MONTH` — fallback only.
+3. Check `club.member.invite.monthlyMax` via plan-config (admin /
+   `CLUB_INVITES_UNLIMITED_ISSUER_IDS` — skip). Unknown policy or unavailable
+   plan-config returns `503`; quota enforcement never falls back to env.
 4. `POST {LOGTO_ENDPOINT}/api/one-time-tokens` (M2M token):
 
 ```json
@@ -435,7 +437,6 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 | `FRONTEND_ORIGIN` | да | `https://tavrida-lot.ru` — для `link` |
 | `USER_PROFILE_URL` | да | Upstream |
 | `CLUB_INVITE_VALIDITY_DAYS` | нет | **deprecated** — fallback если settings недоступен; источник: `club.invite.validityDays` |
-| `CLUB_INVITES_PER_MONTH` | нет | **deprecated** fallback; primary: plan-config `club.member.invite.monthlyMax` (1/3/10) |
 | `CLUB_INVITES_UNLIMITED_ISSUER_IDS` | нет | CSV Logto `sub` без лимита (fallback без Keto) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` — admin check для invite quota |
 | `KETO_NAMESPACE` | нет | default `TavridaLot` |
@@ -455,7 +456,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 - [x] OpenAPI fragment в `06-api/invites-api.md`
 - [x] `club.invite.validityDays` / `club.invite.codeType` — BFF читает из scalar-config (`ClubSettingsReader`)
 - [x] `club.registration.inviteOnly` — `GET /api/v1/settings/public` + landing/join UI
-- [x] `club.member.invite.monthlyMax` — BFF quota via plan-config (`CLUB_INVITES_PER_MONTH` fallback)
+- [x] `club.member.invite.monthlyMax` — fail-closed BFF quota via plan-config
 - [x] E2E (BFF orchestration test): create → resolve → mock signIn → claim (`invites.service.test.ts`)
 - [x] RMQ `invitation.redeemed` publish из user-profile при первом claim (consumers — planned)
 

@@ -10,4 +10,10 @@ export function hydrateSecretEnv(keys: string[] = []): void {
   }
 }
 
-hydrateSecretEnv(['NOVU_API_KEY', 'NOVU_WEBHOOK_SECRET', 'REDIS_URL', 'RABBITMQ_URL']);
+hydrateSecretEnv([
+  'NOVU_API_KEY',
+  'NOVU_WEBHOOK_SECRET',
+  'REDIS_URL',
+  'RABBITMQ_URL',
+  'INTERNAL_SERVICE_TOKEN',
+]);

@@ -28,20 +28,20 @@
 | Schema                  | Сервис                | Основные таблицы                                              | Source of truth    |
 | ----------------------- | --------------------- | ------------------------------------------------------------- | ------------------ |
 | `billing`               | billing               | `user_wallet`, `transaction`                                  | Баланс, транзакции |
-| `plan_config`           | plan-config           | `plan`, `plan_variable`, `plan_parameter`, `user_subscription` | Тарифы, plan variables, подписки |
-| `scalar_config`         | scalar-config         | `setting_key`, `setting`                                      | Скалярные конфиги  |
-| `auction`               | auction               | `auction`, `bid`                                              | Лоты, ставки       |
+| `plan_config`           | plan-config           | `plan`, `plan_variable`, `plan_variable_tier`, `user_subscription` | Тарифы, plan variables, подписки |
+| `scalar_config`         | scalar-config         | `scalar_variable`, `scalar_value`                                      | Скалярные конфиги  |
+| `auction`               | auction               | `auction`, `bid`, `expert_appraisal`, `outbox_message`, `expert_appraisal`, `outbox_message`                                              | Лоты, ставки       |
 | `subscriptions`         | subscriptions         | `subscription`, `delivery_preference`                         | Event-подписки     |
 | `rating`                | rating                | `user_rating`, `vote_log`                                     | Рейтинг, карма     |
-| `deal_feedback`         | deal-feedback         | `deal_feedback`, `pending_feedback`, `feedback_bonus`         | Отзывы             |
-| `user_profile`          | user-profile          | `user_profile`, `profile_note`, `user_rating`, `reputation_change_log` | Bio, avatar, notes; temporary rating SoT until `rating` svc |
-| `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure`, `tag`, `content_tag` | Контент форума     |
-| `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`          | Маркет услуг       |
+| `deal_feedback`         | deal-feedback         | `deal_feedback`, `pending_deal_feedback`, `processed_event`         | Отзывы             |
+| `user_profile`          | user-profile          | `user_profile`, `profile_note`, `user_rating`, `reputation_change_log`, `outbox_message`, `outbox_message` | Bio, avatar, notes; temporary rating SoT until `rating` svc |
+| `forum`                 | forum                 | `category`, `topic`, `comment`, `reaction`, `comment_closure`, `tag`, `content_tag`, `outbox_message`, `outbox_message` | Контент форума     |
+| `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`, `outbox_message`, `outbox_message`          | Маркет услуг       |
 | `notifications`         | notifications         | `notification_log`, `subscriber`                              | Audit уведомлений  |
 | `periods`               | periods               | categories / periods                                          | Исторические периоды |
 | `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
 
-> **Legacy schemas (migration pending):** `plan_config`, `scalar-config` → `plan_config`, `scalar_config` ([ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md)). Таблицы `charge_target`, `plan_charge_price` сливаются в `plan_parameter.priceAmount` для `valueType: price`.
+> **Retired schemas:** `financial_policy` → `plan_config`, `settings` → `scalar_config`. Canonical schemas перечислены выше.
 
 
 > **Инфраструктура:** `keto` — не NestJS-сервис; таблицы и миграции ведёт `keto migrate up`. Микросервисы обращаются только к Keto HTTP API. При росте нагрузки — отдельная БД (смена DSN).
@@ -54,9 +54,9 @@
 
 | Cache field                   | Хранится в   | Source of truth | Sync                                            |
 | ----------------------------- | ------------ | --------------- | ----------------------------------------------- |
-| `user_profile.rating`         | user-profile | rating          | event `rating.updated` / `deal_feedback.submitted`   |
+| `user_profile.rating`         | user-profile | rating          | event `rating.updated` / synchronous `DEAL_FEEDBACK` adjustment today   |
 | `user_profile.verified_sales` | user-profile | rating          | event                                           |
-| `user_profile.pending_sales`  | user-profile | rating          | event `auction.completed`, `deal_feedback.submitted` |
+| `user_profile.pending_sales`  | user-profile | rating          | event `auction.completed`; deal-feedback event planned |
 
 
 
@@ -66,7 +66,6 @@
 
 | Key pattern                | Owner    | TTL  | Назначение       |
 | -------------------------- | -------- | ---- | ---------------- |
-| `scalar_config:{domain}:latest` | scalar-config | 300s | Кэш scalar конфигов |
 | `auction:{id}:bids`        | auction  | —    | Live bids cache  |
 | `ws:channel:{name}`        | BFF      | —    | Pub/sub relay    |
 | `idempotency:{key}`        | billing  | 24h  | Idempotency keys |
@@ -114,9 +113,10 @@ export class UserWallet { }
 ## 📋 Миграции
 
 - Именование: `{timestamp}-{description}.ts`
-- Запуск: `pnpm --filter billing migration:run`
+- Production: pending migrations выполняются сервисом до открытия HTTP-порта
 - **Запрещено:** ручной DDL в prod без migration file
-- Rollback: `migration:revert` + runbook в [04-deployment](../04-deployment/README.md)
+- Rollback migration не автоматизируется; порядок и baseline guard описаны в
+  [migrations.md](../04-deployment/migrations.md)
 
 
 

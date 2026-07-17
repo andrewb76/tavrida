@@ -122,7 +122,7 @@ sequenceDiagram
 sequenceDiagram
     participant A as auction
     participant RMQ as RabbitMQ
-    participant F as feedback
+    participant F as deal-feedback
     participant R as rating
     participant N as notifications
 

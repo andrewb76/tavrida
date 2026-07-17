@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
 import {
   ORDER_TRANSITIONS,
   type OrderStatus,
@@ -22,6 +22,7 @@ export class OrdersService {
     @InjectRepository(ServiceListingEntity)
     private readonly listings: Repository<ServiceListingEntity>,
     private readonly events: MarketplaceEventsPublisher,
+    private readonly dataSource: DataSource,
   ) {}
 
   async countCustomerOrdersThisMonth(customerId: string) {
@@ -71,49 +72,56 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, userId: string, status: OrderStatus) {
-    const row = await this.orders.findOne({ where: { id } });
-    if (!row) throw new NotFoundException('Order not found');
+    const order = await this.dataSource.transaction(async (manager) => {
+      const orders = manager.getRepository(ServiceOrderEntity);
+      const row = await orders
+        .createQueryBuilder('order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
+      if (!row) throw new NotFoundException('Order not found');
 
-    const allowed = ORDER_TRANSITIONS[row.status] ?? [];
-    if (!allowed.includes(status)) {
-      throw new BadRequestException(`Cannot transition ${row.status} → ${status}`);
-    }
-
-    if (status === 'CANCELLED') {
-      if (row.providerId !== userId && row.customerId !== userId) {
-        throw new ForbiddenException('Not your order');
+      const allowed = ORDER_TRANSITIONS[row.status] ?? [];
+      if (!allowed.includes(status)) {
+        throw new BadRequestException(`Cannot transition ${row.status} → ${status}`);
       }
-    } else {
-      if (row.providerId !== userId) {
+
+      if (status === 'CANCELLED') {
+        if (row.providerId !== userId && row.customerId !== userId) {
+          throw new ForbiddenException('Not your order');
+        }
+      } else if (row.providerId !== userId) {
         throw new ForbiddenException('Only provider can change this status');
       }
-    }
 
-    row.status = status;
-    if (status === 'COMPLETED') row.completedAt = new Date();
-    const saved = await this.orders.save(row);
-    const order = this.toOrder(saved);
+      row.status = status;
+      if (status === 'COMPLETED') row.completedAt = new Date();
+      const saved = await orders.save(row);
+      const result = this.toOrder(saved);
 
-    if (status === 'COMPLETED') {
-      void this.events.publishOrderCompleted({
-        orderId: order.id,
-        listingId: order.listingId,
-        providerId: order.providerId,
-        customerId: order.customerId,
-        price: order.agreedPrice,
-        currency: order.currency,
-        completedAt: order.completedAt ?? new Date().toISOString(),
-      });
-    } else if (status === 'CANCELLED') {
-      void this.events.publishOrderCancelled({
-        orderId: order.id,
-        providerId: order.providerId,
-        customerId: order.customerId,
-        reason: 'user_cancelled',
-        cancelledAt: new Date().toISOString(),
-      });
-    }
+      if (status === 'COMPLETED') {
+        await this.events.enqueueOrderCompleted(manager, {
+          orderId: result.id,
+          listingId: result.listingId,
+          providerId: result.providerId,
+          customerId: result.customerId,
+          price: result.agreedPrice,
+          currency: result.currency,
+          completedAt: result.completedAt ?? new Date().toISOString(),
+        });
+      } else if (status === 'CANCELLED') {
+        await this.events.enqueueOrderCancelled(manager, {
+          orderId: result.id,
+          providerId: result.providerId,
+          customerId: result.customerId,
+          reason: 'user_cancelled',
+          cancelledAt: new Date().toISOString(),
+        });
+      }
+      return result;
+    });
 
+    this.events.flush();
     return order;
   }
 

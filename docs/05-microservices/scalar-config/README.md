@@ -1,6 +1,6 @@
 # ⚙️ Сервис: scalar-config
 
-> **Статус:** scaffold v0.1 · **Версия:** 0.4 · **Schema:** `scalar_config`  
+> **Статус:** DB-backed registry/admin v1 · **Версия:** 0.5 · **Schema:** `scalar_config`
 > **Legacy name:** settings · **Код:** `services/scalar-config` :3008 · [ADR-017](../../03-architecture/adr/017-plan-config-scalar-config-rename.md)
 
 ## 🎯 Назначение
@@ -8,7 +8,6 @@
 Единый реестр **скалярных настроек** платформы (одно значение на ключ).
 
 - Хранит JSON-значения: формулы rating, TTL, списки forum, defaults auction
-- Redis cache (`scalar_config:{domain}:latest`, TTL из `scalar_config.cache.ttlSeconds`)
 - Регистрация ключей domain-сервисами при деплое (**sync-манифест**)
 - Изменение значений — **admin only**
 - Stale ключи — видимы в admin, удаление **только вручную**
@@ -20,34 +19,18 @@
 | Термин | Описание |
 |--------|----------|
 | **key** | `{domain}.{group}.{name}` — min 2 сегмента |
-| **setting_key** | Метаданные ключа (тип, default, владелец, `syncStatus`) |
-| **setting** | Текущее JSON-значение (линейный список, не матрица) |
+| **scalar_variable** | Метаданные ключа (тип, default, владелец, `syncStatus`) |
+| **scalar_value** | Текущее глобальное JSON-значение |
 | **syncStatus** | `active` / `stale` — ключ в / вне последнего sync (legacy: `registrationStatus: orphaned`) |
-| **scope** | `global` или `user:{userId}` (редко) |
 | **domain** | Префикс до первой точки (`rating`, `forum`) |
 
 ## 🗄️ Сущности
 
-### `SettingKey` (`scalar_config.setting_key`)
+### `ScalarVariable` / `ScalarValue`
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `key` | varchar PK | `rating.authorityExponent` |
-| `type` | varchar | `number`, `boolean`, `string[]`, … |
-| `defaultValue` | jsonb | Дефолт при первой регистрации |
-| `service` | varchar | Владелец (кто вызывает sync) |
-| `description` | text | Admin UI |
-| `syncStatus` | varchar | `active` \| `stale` |
-
-### `Setting` (`scalar_config.setting`)
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `key` | varchar PK | FK на `setting_key` |
-| `value` | jsonb | Текущее значение |
-| `scope` | varchar | `global` default |
-| `userId` | UUID nullable | Per-user override |
-| `updatedBy` | UUID nullable | Admin audit |
+Runtime-таблицы: `scalar_config.scalar_variable` (metadata, default,
+`syncStatus`) и `scalar_config.scalar_value` (текущее глобальное JSON-значение).
+Per-user overrides и Redis cache пока не реализованы.
 
 ## 🔌 API
 
@@ -57,18 +40,19 @@
 |--------|------|----------|
 | GET | `/settings/public` | Безопасное подмножество для клиента |
 
-### Internal (`/internal/v1/`)
+### Internal (`/internal/v1/scalar-variables`)
 
-| Method | Path | Caller | Описание |
-|--------|------|--------|----------|
-| GET | `/settings/{domain}` | domain services | Объект ключей домена |
-| POST | `/settings/register` | services @ startup | Batch register (legacy) |
-| POST | `/settings/sync` | services @ startup | **Рекомендуется:** полный манифест → stale для отсутствующих |
-| GET | `/settings/registry` | BFF admin | Все ключи + syncStatus |
-| DELETE | `/settings/keys/:key` | admin via BFF | Удаление stale ключа |
-| POST | `/settings/{domain}` | admin via BFF | Patch domain keys |
+| Method | Path | Описание |
+|--------|------|----------|
+| GET | `/scalar-variables/{domain}` | Значения домена |
+| POST | `/scalar-variables/register` | Регистрация одного/набора ключей |
+| POST | `/scalar-variables/sync` | Полный манифест → stale |
+| GET | `/scalar-variables/registry` | Реестр для admin |
+| DELETE | `/scalar-variables/{key}` | Удаление stale ключа |
+| POST | `/scalar-variables/{domain}` | Patch значений домена |
+| GET | `/scalar-variables/public` | Публичное подмножество |
 
-### `POST /internal/v1/settings/sync`
+### `POST /internal/v1/scalar-variables/sync`
 
 ```json
 {
@@ -91,13 +75,11 @@
 
 Если сервис убрал ключ из манифеста — **автоудаления нет**. Ключ помечается `syncStatus: stale`. Admin удаляет вручную.
 
-## ⚙️ Meta keys
+## 🚧 Planned
 
-| Ключ | Default | Описание |
-|------|---------|----------|
-| `scalar_config.cache.ttlSeconds` | 300 | TTL Redis |
-
-Полный каталог: [PLATFORM-REGISTRY.md](../PLATFORM-REGISTRY.md) (секция Scalar config).
+- Redis cache и TTL policy.
+- Per-user overrides.
+- Sync-манифесты остальных domain-сервисов помимо живых owners.
 
 ## 💳 Plan config
 
@@ -118,7 +100,6 @@
 | Переменная | Обяз. | Описание |
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `scalar_config` |
-| `REDIS_URL` | да | Cache |
 | `SCALAR_CONFIG_PORT` / `PORT` | нет | HTTP (`3008`) |
 
 > BFF: `SCALAR_CONFIG_URL=http://localhost:3008` · [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)

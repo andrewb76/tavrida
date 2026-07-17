@@ -65,7 +65,9 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 
 ## Как BFF использует admin
 
-`POST /api/v1/invites` — лимит plan-config `club.member.invite.monthlyMax` (env `CLUB_INVITES_PER_MONTH` — fallback). **Пропускается**, если:
+`POST /api/v1/invites` — fail-closed лимит plan-config
+`club.member.invite.monthlyMax`; при недоступной/неполной policy возвращается
+`503`. Проверка **пропускается**, если:
 
 1. **Keto:** `platform:tavrida-lot#admin@user:{sub}` → `allowed: true`, или
 2. **Env fallback:** `sub` в `CLUB_INVITES_UNLIMITED_ISSUER_IDS` (временный костыль без Keto).
@@ -93,17 +95,17 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 | Тема | Статус |
 |------|--------|
 | Локальный Keto | ✅ Postgres schema `keto` в `tavrida_lot` |
-| Admin API (`POST /admin/users/{sub}/roles`) | не реализован — только CLI bootstrap |
-| Admin UI фаза 2 | назначение moderator/expert через UI — backlog |
+| Admin API (`PATCH /api/v1/admin/users/{userId}/roles`) | ✅ |
+| Admin UI roles | ✅ `AdminRolesView`; bootstrap первого admin остаётся CLI |
 
 ---
 
 ## Следующие фазы
 
 1. **Admin UI фаза 1** — `GET /api/v1/me/roles`, `/admin` во фронте, пункт «Админ» в header ✅
-2. **Admin API** — `POST /api/v1/admin/users/{sub}/roles` (только существующий admin через Keto)
+2. **Admin API** — `PATCH /api/v1/admin/users/{userId}/roles` ✅
 3. **Keto + Postgres** — персистентные tuples в local dev ✅ (`schema keto`)
-4. **Admin UI фаза 2** — назначение moderator/expert/admin через UI
+4. **Admin UI roles** — назначение moderator/expert/admin через UI ✅
 
 ---
 

@@ -97,7 +97,7 @@
 | Spec-ready сервисы | 14 (+ BFF) |
 | GitHub Pages + автосайдбар | ✅ |
 | OpenAPI, legal тексты, link-check CI | ⏳ см. roadmap |
-| Реализация кода | каркас 4 сервисов |
+| Реализация кода | 12 PostgreSQL NestJS services + Vue SPA; maturity differs by domain |
 
 ---
 

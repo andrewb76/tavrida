@@ -25,7 +25,7 @@ import {
   type ExpertAppraisal,
 } from '@/services/auctions';
 import { UiButton, UiModal } from '@tavrida/ui';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -80,18 +80,24 @@ watch(bidOpen, (open) => {
   if (open) bidError.value = null;
 });
 
-onMounted(load);
+let loadGeneration = 0;
 
-async function load() {
+async function load(id: string) {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
+  lot.value = null;
+  bids.value = [];
+  appraisals.value = [];
+  bidOpen.value = false;
   try {
     const [detail, bidRows, expertRows, categoryTree] = await Promise.all([
-      getAuction(auctionId.value),
-      listAuctionBids(auctionId.value),
-      listExpertAppraisals(auctionId.value),
+      getAuction(id),
+      listAuctionBids(id),
+      listExpertAppraisals(id),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
     ]);
+    if (generation !== loadGeneration || id !== auctionId.value) return;
     lot.value = detail;
     bids.value = bidRows;
     appraisals.value = expertRows;
@@ -99,12 +105,15 @@ async function load() {
     if (detail.isLive) startCountdown();
     if (detail.hasExpertAppraisal && expertRows.length) activeTab.value = 'description';
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
     lot.value = null;
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
+
+watch(auctionId, (id) => void load(id), { immediate: true });
 
 function addBidStep(step: number) {
   if (!lot.value || bidAmount.value == null || isDutch.value) return;

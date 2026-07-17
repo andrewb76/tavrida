@@ -36,6 +36,7 @@
 | `content_vote` | +/- : `userId`+`contentId` PK, `value` ±1, `createdAt` |
 | `tag` | Каталог тегов (slug, displayName, official) |
 | `content_tag` | Связь tag ↔ topic (позже auction/marketplace) |
+| `outbox_message` | Надёжная доставка domain events после commit |
 
 ## +/- голоса
 
@@ -114,6 +115,7 @@
 
 | Direction | Event | Когда |
 |-----------|-------|-------|
+| produce | `tag.content_tagged` | Новый `content_tag`; запись атомарна с outbox |
 | produce | `forum.content_reported` | Report submitted |
 | produce | `forum.comment_promoted_to_topic` | Moderator promote |
 | consume | `rating.user_banned` | Block write |

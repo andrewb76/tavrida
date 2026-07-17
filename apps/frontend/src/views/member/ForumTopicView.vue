@@ -24,7 +24,7 @@ import {
 } from '@/services/forum';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
 
@@ -58,26 +58,35 @@ const canEditTopic = computed(() => {
   return canEditForumContent(topic.value.createdAt, forumMeta.value.editWindowMinutes);
 });
 
-onMounted(load);
+let loadGeneration = 0;
 
-async function load() {
+async function load(id: string) {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
+  topic.value = null;
+  comments.value = [];
+  editingTopic.value = false;
+  postError.value = null;
   try {
     const [topicRow, commentRows, meta] = await Promise.all([
-      getTopic(topicId.value),
-      listComments(topicId.value),
+      getTopic(id),
+      listComments(id),
       fetchForumMeta(),
     ]);
+    if (generation !== loadGeneration || id !== topicId.value) return;
     topic.value = topicRow;
     comments.value = commentRows;
     forumMeta.value = meta;
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
+
+watch(topicId, (id) => void load(id), { immediate: true });
 
 function startTopicEdit() {
   if (!topic.value) return;

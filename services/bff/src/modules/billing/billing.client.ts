@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 export type WalletBalance = {
   userId: string;
@@ -48,10 +49,38 @@ export class BillingClient {
     );
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async charge(input: {
+    userId: string;
+    amount: number;
+    target: string;
+    description: string;
+    idempotencyKey: string;
+  }) {
+    return this.request<{ transactionId: string; status: string; balanceAfter: number }>(
+      'POST',
+      '/internal/v1/wallets/charge',
+      {
+        userId: input.userId,
+        amount: input.amount,
+        target: input.target,
+        description: input.description,
+      },
+      { 'Idempotency-Key': input.idempotencyKey },
+    );
+  }
+
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    extraHeaders: Record<string, string> = {},
+  ): Promise<T> {
     const res = await fetch(`${this.baseUrl()}${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: internalServiceHeaders(
+        this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+        body ? { 'Content-Type': 'application/json', ...extraHeaders } : extraHeaders,
+      ),
       body: body ? JSON.stringify(body) : undefined,
     });
 

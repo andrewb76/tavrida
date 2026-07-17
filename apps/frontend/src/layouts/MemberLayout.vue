@@ -50,7 +50,7 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col bg-bg">
+  <div class="flex min-h-dvh flex-col">
     <ImpersonationBanner />
     <header
       class="sticky z-40 border-b border-border bg-surface"

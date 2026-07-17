@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { DataSource, In, LessThanOrEqual, Repository } from 'typeorm';
 import { AuctionEntity } from '../../entities/auction.entity';
 import { BidEntity } from '../../entities/bid.entity';
 import { ExpertAppraisalEntity } from '../../entities/expert-appraisal.entity';
@@ -39,6 +39,8 @@ export class AuctionsService {
     private readonly bids: Repository<BidEntity>,
     @InjectRepository(ExpertAppraisalEntity)
     private readonly expertAppraisals: Repository<ExpertAppraisalEntity>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     private readonly events: AuctionEventsPublisher,
   ) {}
 
@@ -84,93 +86,110 @@ export class AuctionsService {
       hasExpertAppraisal: false,
     });
 
-    await this.auctions.save(row);
-    void this.events.publishCreated({
-      auctionId: row.id,
-      sellerId: row.sellerId,
-      categoryId: row.categoryId,
-      type: row.type,
-      startsAt: row.startsAt?.toISOString() ?? null,
-      endsAt: row.endsAt?.toISOString() ?? null,
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(AuctionEntity).save(row);
+      await this.events.enqueueCreated(manager, {
+        auctionId: row.id,
+        sellerId: row.sellerId,
+        categoryId: row.categoryId,
+        type: row.type,
+        startsAt: row.startsAt?.toISOString() ?? null,
+        endsAt: row.endsAt?.toISOString() ?? null,
+      });
     });
+    this.events.flush();
     return this.toDetail(row);
   }
 
   async placeBid(input: { auctionId: string; bidderId: string; amount: number }) {
     const now = new Date();
-    const row = await this.auctions.findOne({ where: { id: input.auctionId } });
-    if (!row || row.status === 'DRAFT' || row.status === 'CANCELLED') {
-      throw new NotFoundException({ type: 'not-found', detail: `Auction ${input.auctionId} not found` });
-    }
+    const result = await this.dataSource.transaction(async (manager) => {
+      const auctions = manager.getRepository(AuctionEntity);
+      const bids = manager.getRepository(BidEntity);
+      const row = await auctions
+        .createQueryBuilder('auction')
+        .setLock('pessimistic_write')
+        .where('auction.id = :id', { id: input.auctionId })
+        .getOne();
+      if (!row || row.status === 'DRAFT' || row.status === 'CANCELLED') {
+        throw new NotFoundException({
+          type: 'not-found',
+          detail: `Auction ${input.auctionId} not found`,
+        });
+      }
 
-    const check = validatePlaceBid({
-      auction: {
-        status: row.status,
-        type: row.type,
-        sellerId: row.sellerId,
-        currentPrice: Number(row.currentPrice),
-        bidIncrement: Number(row.bidIncrement),
-        startsAt: row.startsAt,
-        endsAt: row.endsAt,
-      },
-      bidderId: input.bidderId,
-      amount: input.amount,
-      now,
-    });
+      const check = validatePlaceBid({
+        auction: {
+          status: row.status,
+          type: row.type,
+          sellerId: row.sellerId,
+          currentPrice: Number(row.currentPrice),
+          bidIncrement: Number(row.bidIncrement),
+          startsAt: row.startsAt,
+          endsAt: row.endsAt,
+        },
+        bidderId: input.bidderId,
+        amount: input.amount,
+        now,
+      });
 
-    if (!check.ok) {
-      throw new BadRequestException({ type: check.code, detail: check.detail });
-    }
+      if (!check.ok) {
+        throw new BadRequestException({ type: check.code, detail: check.detail });
+      }
 
-    if (check.activate) {
-      row.status = 'ACTIVE';
-    }
+      if (check.activate) row.status = 'ACTIVE';
+      await bids.update({ auctionId: row.id, isWinning: true }, { isWinning: false });
 
-    await this.bids.update({ auctionId: row.id, isWinning: true }, { isWinning: false });
+      const bid = bids.create({
+        id: randomUUID(),
+        auctionId: row.id,
+        bidderId: input.bidderId,
+        amount: String(input.amount),
+        currency: row.currency,
+        isWinning: true,
+      });
+      await bids.save(bid);
 
-    const bid = this.bids.create({
-      id: randomUUID(),
-      auctionId: row.id,
-      bidderId: input.bidderId,
-      amount: String(input.amount),
-      currency: row.currency,
-      isWinning: true,
-    });
-    await this.bids.save(bid);
-
-    row.currentPrice = String(input.amount);
-    row.bidCount = (row.bidCount ?? 0) + 1;
-
-    if (check.completeImmediately) {
-      row.status = 'ENDED';
-      row.winnerId = input.bidderId;
-    }
-
-    await this.auctions.save(row);
-
-    const participantIds = await this.participantIds(row.id, row.sellerId);
-    void this.events.publishBidPlaced({
-      auctionId: row.id,
-      sellerId: row.sellerId,
-      participantIds,
-      bidId: bid.id,
-      bidderId: bid.bidderId,
-      amount: Number(bid.amount),
-      currency: bid.currency,
-      placedAt: bid.placedAt.toISOString(),
-    });
-
-    if (check.completeImmediately) {
-      void this.events.publishCompleted({
+      row.currentPrice = String(input.amount);
+      row.bidCount = (row.bidCount ?? 0) + 1;
+      if (check.completeImmediately) {
+        row.status = 'ENDED';
+        row.winnerId = input.bidderId;
+      }
+      await auctions.save(row);
+      const participantIds = await this.participantIds(row.id, row.sellerId, bids);
+      await this.events.enqueueBidPlaced(manager, {
         auctionId: row.id,
         sellerId: row.sellerId,
-        buyerId: input.bidderId,
         participantIds,
-        finalPrice: Number(bid.amount),
-        currency: row.currency,
-        completedAt: now.toISOString(),
+        bidId: bid.id,
+        bidderId: bid.bidderId,
+        amount: Number(bid.amount),
+        currency: bid.currency,
+        placedAt: bid.placedAt.toISOString(),
       });
-    }
+      if (check.completeImmediately) {
+        await this.events.enqueueCompleted(manager, {
+          auctionId: row.id,
+          sellerId: row.sellerId,
+          buyerId: input.bidderId,
+          participantIds,
+          finalPrice: Number(bid.amount),
+          currency: row.currency,
+          completedAt: now.toISOString(),
+        });
+      }
+
+      return {
+        row,
+        bid,
+        completeImmediately: check.completeImmediately,
+        participantIds,
+      };
+    });
+    const { row, bid } = result;
+
+    this.events.flush();
 
     return {
       bid: {
@@ -186,64 +205,130 @@ export class AuctionsService {
   }
 
   async closeAuction(auctionId: string, now = new Date()) {
-    const row = await this.auctions.findOne({ where: { id: auctionId } });
-    if (!row) {
-      throw new NotFoundException({ type: 'not-found', detail: `Auction ${auctionId} not found` });
-    }
-    if (row.status === 'ENDED' || row.status === 'CANCELLED') {
-      return { ...this.toDetail(row), alreadyClosed: true as const };
-    }
-    if (row.status !== 'ACTIVE' && row.status !== 'SCHEDULED') {
-      throw new BadRequestException({
-        type: 'invalid_status',
-        detail: `Cannot close auction in status ${row.status}`,
+    const result = await this.dataSource.transaction(async (manager) => {
+      const auctions = manager.getRepository(AuctionEntity);
+      const bids = manager.getRepository(BidEntity);
+      const row = await auctions
+        .createQueryBuilder('auction')
+        .setLock('pessimistic_write')
+        .where('auction.id = :id', { id: auctionId })
+        .getOne();
+      if (!row) {
+        throw new NotFoundException({ type: 'not-found', detail: `Auction ${auctionId} not found` });
+      }
+      if (row.status === 'ENDED' || row.status === 'CANCELLED') {
+        return {
+          response: { ...this.toDetail(row), alreadyClosed: true as const },
+          completedEvent: null,
+        };
+      }
+      if (row.status !== 'ACTIVE' && row.status !== 'SCHEDULED') {
+        throw new BadRequestException({
+          type: 'invalid_status',
+          detail: `Cannot close auction in status ${row.status}`,
+        });
+      }
+
+      if (
+        row.status === 'SCHEDULED' &&
+        row.startsAt &&
+        row.startsAt.getTime() <= now.getTime() &&
+        (!row.endsAt || row.endsAt.getTime() > now.getTime())
+      ) {
+        row.status = 'ACTIVE';
+        await auctions.save(row);
+        return {
+          response: { ...this.toDetail(row), activatedOnly: true as const },
+          completedEvent: null,
+        };
+      }
+
+      const winning = await bids.findOne({
+        where: { auctionId: row.id, isWinning: true },
       });
-    }
+      const closed = resolveClose({
+        currentPrice: Number(row.currentPrice),
+        reservePrice: row.reservePrice != null ? Number(row.reservePrice) : null,
+        winningBidderId: winning?.bidderId ?? null,
+      });
 
-    if (
-      row.status === 'SCHEDULED' &&
-      row.startsAt &&
-      row.startsAt.getTime() <= now.getTime() &&
-      (!row.endsAt || row.endsAt.getTime() > now.getTime())
-    ) {
-      row.status = 'ACTIVE';
-      await this.auctions.save(row);
-      return { ...this.toDetail(row), activatedOnly: true as const };
-    }
+      row.status = 'ENDED';
+      row.winnerId = closed.winnerId;
+      await auctions.save(row);
+      const participantIds = await this.participantIds(row.id, row.sellerId, bids);
+      const completedEvent = {
+        auctionId: row.id,
+        sellerId: row.sellerId,
+        buyerId: closed.winnerId,
+        participantIds,
+        finalPrice: closed.finalPrice,
+        currency: row.currency,
+        completedAt: now.toISOString(),
+      };
+      await this.events.enqueueCompleted(manager, completedEvent);
 
-    const winning = await this.bids.findOne({
-      where: { auctionId: row.id, isWinning: true },
-    });
-    const closed = resolveClose({
-      currentPrice: Number(row.currentPrice),
-      reservePrice: row.reservePrice != null ? Number(row.reservePrice) : null,
-      winningBidderId: winning?.bidderId ?? null,
-    });
-
-    row.status = 'ENDED';
-    row.winnerId = closed.winnerId;
-    await this.auctions.save(row);
-
-    const participantIds = await this.participantIds(row.id, row.sellerId);
-    void this.events.publishCompleted({
-      auctionId: row.id,
-      sellerId: row.sellerId,
-      buyerId: closed.winnerId,
-      participantIds,
-      finalPrice: closed.finalPrice,
-      currency: row.currency,
-      completedAt: now.toISOString(),
+      return {
+        response: {
+          ...this.toDetail(row),
+          sold: closed.sold,
+          alreadyClosed: false as const,
+        },
+        completedEvent,
+      };
     });
 
-    return {
-      ...this.toDetail(row),
-      sold: closed.sold,
-      alreadyClosed: false as const,
-    };
+    if (result.completedEvent) this.events.flush();
+    return result.response;
   }
 
   /** Activate due SCHEDULED + Dutch ask step-down + close due ACTIVE (endsAt <= now). */
   async runCloseDue(now = new Date()) {
+    const lock = this.dataSource.createQueryRunner();
+    await lock.connect();
+    try {
+      const [{ acquired }] = (await lock.query(
+        'SELECT pg_try_advisory_lock(hashtext($1)) AS acquired',
+        ['auction.run-close-due'],
+      )) as Array<{ acquired: boolean }>;
+      if (!acquired) {
+        return {
+          scanned: 0,
+          activated: 0,
+          dutchDropped: 0,
+          closed: 0,
+          results: [],
+          skippedConcurrent: true as const,
+        };
+      }
+
+      try {
+        return await this.runCloseDueLocked(now);
+      } finally {
+        await lock.query('SELECT pg_advisory_unlock(hashtext($1))', ['auction.run-close-due']);
+      }
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async runCloseDueLocked(now: Date) {
+    let closed = 0;
+    const results: Array<{ auctionId: string; sold: boolean; winnerId: string | null }> = [];
+    const recordClose = (
+      auctionId: string,
+      result: Awaited<ReturnType<AuctionsService['closeAuction']>>,
+    ) => {
+      const alreadyClosed = 'alreadyClosed' in result && result.alreadyClosed;
+      const activatedOnly = 'activatedOnly' in result && result.activatedOnly;
+      if (activatedOnly || alreadyClosed) return;
+      closed += 1;
+      results.push({
+        auctionId,
+        sold: 'sold' in result ? Boolean(result.sold) : false,
+        winnerId: 'winnerId' in result ? (result.winnerId as string | null) : null,
+      });
+    };
+
     const toActivate = await this.auctions.find({
       where: {
         status: 'SCHEDULED',
@@ -252,13 +337,9 @@ export class AuctionsService {
     });
     let activated = 0;
     for (const row of toActivate) {
-      if (row.endsAt && row.endsAt.getTime() <= now.getTime()) {
-        await this.closeAuction(row.id, now);
-        continue;
-      }
-      row.status = 'ACTIVE';
-      await this.auctions.save(row);
-      activated += 1;
+      const result = await this.closeAuction(row.id, now);
+      if ('activatedOnly' in result && result.activatedOnly) activated += 1;
+      else recordClose(row.id, result);
     }
 
     const dutchLive = await this.auctions.find({
@@ -266,16 +347,7 @@ export class AuctionsService {
     });
     let dutchDropped = 0;
     for (const row of dutchLive) {
-      if (row.endsAt && row.endsAt.getTime() <= now.getTime()) continue;
-      const drop = dropDutchAsk(
-        Number(row.currentPrice),
-        Number(row.bidIncrement),
-        row.reservePrice != null ? Number(row.reservePrice) : null,
-      );
-      if (!drop.dropped) continue;
-      row.currentPrice = String(drop.nextPrice);
-      await this.auctions.save(row);
-      dutchDropped += 1;
+      if (await this.dropDutchAskIfLive(row.id, now)) dutchDropped += 1;
     }
 
     const toClose = await this.auctions.find({
@@ -284,20 +356,8 @@ export class AuctionsService {
         endsAt: LessThanOrEqual(now),
       },
     });
-    let closed = 0;
-    const results: Array<{ auctionId: string; sold: boolean; winnerId: string | null }> = [];
     for (const row of toClose) {
-      const r = await this.closeAuction(row.id, now);
-      const alreadyClosed = 'alreadyClosed' in r && r.alreadyClosed;
-      const activatedOnly = 'activatedOnly' in r && r.activatedOnly;
-      if (!activatedOnly && !alreadyClosed) {
-        closed += 1;
-        results.push({
-          auctionId: row.id,
-          sold: 'sold' in r ? Boolean(r.sold) : false,
-          winnerId: 'winnerId' in r ? (r.winnerId as string | null) : null,
-        });
-      }
+      recordClose(row.id, await this.closeAuction(row.id, now));
     }
 
     return {
@@ -307,6 +367,35 @@ export class AuctionsService {
       closed,
       results,
     };
+  }
+
+  private async dropDutchAskIfLive(auctionId: string, now: Date): Promise<boolean> {
+    return this.dataSource.transaction(async (manager) => {
+      const auctions = manager.getRepository(AuctionEntity);
+      const row = await auctions
+        .createQueryBuilder('auction')
+        .setLock('pessimistic_write')
+        .where('auction.id = :id', { id: auctionId })
+        .getOne();
+      if (
+        !row ||
+        row.status !== 'ACTIVE' ||
+        row.type !== 'DUTCH' ||
+        (row.endsAt && row.endsAt.getTime() <= now.getTime())
+      ) {
+        return false;
+      }
+
+      const drop = dropDutchAsk(
+        Number(row.currentPrice),
+        Number(row.bidIncrement),
+        row.reservePrice != null ? Number(row.reservePrice) : null,
+      );
+      if (!drop.dropped) return false;
+      row.currentPrice = String(drop.nextPrice);
+      await auctions.save(row);
+      return true;
+    });
   }
 
   async getById(auctionId: string) {
@@ -355,8 +444,12 @@ export class AuctionsService {
     };
   }
 
-  private async participantIds(auctionId: string, sellerId: string): Promise<string[]> {
-    const bidderRows = await this.bids.find({
+  private async participantIds(
+    auctionId: string,
+    sellerId: string,
+    bids: Repository<BidEntity> = this.bids,
+  ): Promise<string[]> {
+    const bidderRows = await bids.find({
       where: { auctionId },
       select: ['bidderId'],
     });

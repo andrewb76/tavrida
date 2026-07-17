@@ -1,5 +1,16 @@
-import { BadRequestException, Controller, Get, Param, Post, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Type } from 'class-transformer';
+import { createHash } from 'node:crypto';
 import {
   IsBoolean,
   IsIn,
@@ -15,6 +26,7 @@ import {
 import { assertMediaUrlsAllowed } from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BillingClient } from '../billing/billing.client';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { AuctionClient } from './auction.client';
@@ -138,12 +150,13 @@ export class AuctionController {
     private readonly auctionPlanPolicy: AuctionPlanPolicyService,
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
+    private readonly billing: BillingClient,
   ) {}
 
   @Get('create-options')
   async createOptions(@CurrentUser() user: AuthUser) {
     const meta = await this.auction.getSellerMeta(user.sub);
-    const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptions(
+    const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptionsForDisplay(
       user.sub,
       meta.lotsCreatedToday,
     );
@@ -157,14 +170,17 @@ export class AuctionController {
   }
 
   @Post()
-  async create(@CurrentUser() user: AuthUser, @Body() body: CreateAuctionDto) {
+  async create(
+    @CurrentUser() user: AuthUser,
+    @Body() body: CreateAuctionDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
     const meta = await this.auction.getSellerMeta(user.sub);
     const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptions(
       user.sub,
       meta.lotsCreatedToday,
     );
-    const { dailyLimitSummary: _dailyLimitSummary, ...options } = resolved;
-    const payload = applySellerCreatePolicy(body, options, meta.lotsCreatedToday);
+    const payload = applySellerCreatePolicy(body, resolved, meta.lotsCreatedToday);
     const imageLimits = await this.mediaLimits.getLimits(user.sub, 'auction');
 
     if (payload.images?.length) {
@@ -183,6 +199,48 @@ export class AuctionController {
             : 'Недопустимые URL изображений';
         throw new BadRequestException({ type: 'validation', detail });
       }
+    }
+
+    const charges = [
+      ...(payload.promote
+        ? [
+            {
+              amount: resolved.promotionUnitPrice,
+              target: 'auction.promotion',
+              description: 'Продвижение лота',
+              suffix: 'promotion',
+            },
+          ]
+        : []),
+      ...(payload.reservePrice != null
+        ? [
+            {
+              amount: resolved.reserveUnitPrice,
+              target: 'auction.reservePrice',
+              description: 'Резервная цена лота',
+              suffix: 'reserve',
+            },
+          ]
+        : []),
+    ];
+    const requestKey = idempotencyKey?.trim();
+    if (charges.length && (!requestKey || requestKey.length > 80)) {
+      throw new BadRequestException({
+        type: 'idempotency_key_required',
+        detail: 'Для платных опций требуется Idempotency-Key (до 80 символов)',
+      });
+    }
+    const chargeKey = requestKey
+      ? createHash('sha256').update(`${user.sub}:${requestKey}`).digest('hex')
+      : '';
+    for (const charge of charges) {
+      await this.billing.charge({
+        userId: user.sub,
+        amount: charge.amount,
+        target: charge.target,
+        description: charge.description,
+        idempotencyKey: `auction.create:${chargeKey}:${charge.suffix}`,
+      });
     }
 
     return this.auction.createAuction({

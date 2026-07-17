@@ -22,6 +22,7 @@ const error = ref('');
 const orders = ref<MarketplaceOrder[]>([]);
 const listingTitles = ref<Record<string, string>>({});
 const updatingId = ref<string | null>(null);
+let loadGeneration = 0;
 
 const emptyMessage = computed(() =>
   role.value === 'customer'
@@ -51,16 +52,21 @@ async function loadListingTitles(rows: MarketplaceOrder[]) {
 }
 
 async function load() {
+  const generation = ++loadGeneration;
+  const selectedRole = role.value;
   loading.value = true;
   error.value = '';
+  orders.value = [];
   try {
-    const rows = await listOrders(role.value);
+    const rows = await listOrders(selectedRole);
+    if (generation !== loadGeneration || selectedRole !== role.value) return;
     orders.value = rows;
     await loadListingTitles(rows);
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 

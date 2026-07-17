@@ -15,16 +15,16 @@
 
 | Параметр | Free | Basic | Pro | Описание |
 |----------|------|-------|-----|----------|
-| `auction.activeAuctions` | 5 | 20 | ∞ | **Bidder:** чужих торгов, где одновременно участвуешь ставками |
-| `auction.sellerActiveLots` | 2 | 5 | ∞ | **Seller:** своих лотов ACTIVE на торгах одновременно |
-| `auction.bidsPerHour` | 20 | 100 | ∞ | Ставок в час (антибот) |
-| `auction.auctionsCreatedPerDay` | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
-| `auction.auctionDurationMaxHours` | 72 | 336 | ∞ | Макс. длительность аукциона (часов) |
-| `auction.promotionEnabled` | ❌ | ❌ | ✅ | Возможность «раскрутить» аукцион |
-| `auction.reservePriceEnabled` | ❌ | ❌ | ✅ | Установка резервной цены |
-| `auction.auctionTypes` | ENGLISH | ENGLISH, DUTCH | all | Доступные типы аукционов |
-| `auction.customDurationPresets` | ❌ | ❌ | ✅ | Настройка шаблонов длительности |
-| `auction.analyticsDashboard` | ❌ | ❌ | ✅ | Статистика по аукционам (просмотры, ставки) |
+| `auction.bidder.participation.activeMax` | 5 | 20 | ∞ | **Bidder:** чужих торгов, где одновременно участвуешь ставками |
+| `auction.seller.lot.activeMax` | 2 | 5 | ∞ | **Seller:** своих лотов ACTIVE на торгах одновременно |
+| `auction.bidder.bid.hourlyMax` | 20 | 100 | ∞ | Ставок в час (антибот) |
+| `auction.seller.lot.dailyCreateMax` | 3 | 10 | ∞ | **Seller:** новых лотов за календарные сутки |
+| `auction.seller.lot.durationMaxHours` | 72 | 336 | ∞ | Макс. длительность аукциона (часов) |
+| `auction.seller.promotion.enabled` | ❌ | ❌ | ✅ | Возможность «раскрутить» аукцион |
+| `auction.seller.reservePrice.enabled` | ❌ | ❌ | ✅ | Установка резервной цены |
+| `auction.bidder.auctionTypes.allowed` | ENGLISH | ENGLISH, DUTCH | all | Доступные типы аукционов |
+| `auction.seller.durationPreset.customEnabled` | ❌ | ❌ | ✅ | Настройка шаблонов длительности |
+| `auction.seller.analytics.dashboardEnabled` | ❌ | ❌ | ✅ | Статистика по аукционам (просмотры, ставки) |
 
 ---
 
@@ -32,9 +32,9 @@
 
 | Функция | Платная? | Сумма | Заметки |
 |---------|----------|-------|---------|
-| `auction.promotion` | ✅ | 200 ₽ | Повышение видимости в списке |
-| `auction.reservePrice` | ✅ | 100 ₽ | Установка минимальной цены (резерв) |
-| `auction.customDurationPreset` | ✅ | 50 ₽ | Добавление шаблона (3ч, 12ч и т.д.) |
+| `auction.seller.promotion.unitPrice` | ✅ | 200 ₽ | Повышение видимости в списке |
+| `auction.seller.reservePrice.unitPrice` | ✅ | 100 ₽ | Установка минимальной цены (резерв) |
+| `auction.seller.durationPreset.unitPrice` | ✅ | 50 ₽ | Добавление шаблона (3ч, 12ч и т.д.) |
 
 ---
 
@@ -49,10 +49,15 @@
 | Ставка / вступление в торг | bidder | `auction.activeAuctions` | auction (COUNT active participations) |
 | Продвижение лота | seller | `auction.promotionEnabled` + charge `auction.promotion` | feature check only |
 
-1. **Публикация лота** → `plan-config.check(userId, 'auction.sellerActiveLots')`
-2. **Создание лота** → `plan-config.check(userId, 'auction.auctionsCreatedPerDay')`
-3. **Ставка** → `plan-config.check(userId, 'auction.activeAuctions')`
-4. **Продвижение** → `canUseFeature('auction.promotionEnabled')` → `GET /charges/quote?target=auction.promotion` → `billing.charge()`
+1. **Создание лота** → strict `limits/check` по
+   `auction.seller.lot.dailyCreateMax`; incomplete policy → `503`.
+2. **Платные опции** → strict feature + `resolve-price` → `billing.charge`
+   до создания. Клиент передаёт `Idempotency-Key`; promotion/reserve получают
+   отдельные производные ключи.
+3. Read-only `GET /auctions/create-options` может вернуть conservative Free
+   fallback с `degraded=true`, но этот результат не используется для write.
+4. Active-lot, participation и hourly-bid enforcement остаются следующим
+   этапом: счётчик должен резервироваться атомарно в auction domain.
 
 > Лимит `−1` в plan-config = без ограничений.
 

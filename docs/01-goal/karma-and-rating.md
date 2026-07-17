@@ -339,13 +339,13 @@ karma(u) += Σ delta_reaction
 | **feedback** | Триггер обновления rating |
 | **forum** | Триггер delta karma |
 | **user-profile** | `inviterId`, cache для UI |
-| **settings** | Коэффициенты формул |
+| **scalar-config** | Коэффициенты формул |
 | **plan-config** | Лимиты pending, invites |
 | **auction / forum** | `check-ban`, enforce limits |
 
 | Event | Эффект |
 |-------|--------|
-| `feedback.submitted` | Recalc `totalRating` |
+| `deal_feedback.submitted` | Recalc `totalRating` |
 | `rating.updated` | Referral recompute upstream |
 | `rating.user_banned` | Block mutations |
 

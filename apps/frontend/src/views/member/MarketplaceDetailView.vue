@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import {
@@ -22,15 +22,22 @@ const error = ref('');
 const item = ref<MarketplaceListing | null>(null);
 const ordering = ref(false);
 
-async function load() {
+let loadGeneration = 0;
+
+async function load(listingId: string) {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = '';
+  item.value = null;
   try {
-    item.value = await getMarketplaceListing(id.value);
+    const listing = await getMarketplaceListing(listingId);
+    if (generation !== loadGeneration || listingId !== id.value) return;
+    item.value = listing;
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
@@ -55,7 +62,7 @@ async function order() {
   }
 }
 
-onMounted(load);
+watch(id, (listingId) => void load(listingId), { immediate: true });
 </script>
 
 <template>

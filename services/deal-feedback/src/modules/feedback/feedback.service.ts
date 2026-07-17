@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 import { IsNull, Repository } from 'typeorm';
 import { DealFeedbackEntity, type DealType } from '../../entities/deal-feedback.entity';
 import { PendingDealFeedbackEntity } from '../../entities/pending-deal-feedback.entity';
@@ -54,6 +55,32 @@ export class FeedbackService {
       this.processed.create({
         eventId,
         eventType: 'marketplace.order_completed',
+      }),
+    );
+    return { ok: true as const, duplicate: false };
+  }
+
+  async handleAuctionCompleted(
+    eventId: string,
+    payload: {
+      auctionId: string;
+      sellerId: string;
+      buyerId: string;
+    },
+  ) {
+    const seen = await this.processed.findOne({ where: { eventId } });
+    if (seen) return { ok: true as const, duplicate: true };
+
+    await this.createPendingPair({
+      dealType: 'auction',
+      auctionId: payload.auctionId,
+      sellerId: payload.sellerId,
+      buyerId: payload.buyerId,
+    });
+    await this.processed.save(
+      this.processed.create({
+        eventId,
+        eventType: 'auction.completed',
       }),
     );
     return { ok: true as const, duplicate: false };
@@ -241,7 +268,9 @@ export class FeedbackService {
     try {
       const res = await fetch(`${base}/internal/v1/ratings/${input.targetUserId}/adjust`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: internalServiceHeaders(this.config.get<string>('INTERNAL_SERVICE_TOKEN'), {
+          'Content-Type': 'application/json',
+        }),
         body: JSON.stringify({
           ratingDelta: input.delta,
           actorId: input.actorId,

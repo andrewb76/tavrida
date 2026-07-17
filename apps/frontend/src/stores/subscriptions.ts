@@ -29,19 +29,22 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
   const ownerUserId = ref<string | null>(null);
   const inflight = new Map<CacheScope, Promise<void>>();
   const error = ref<string | null>(null);
+  let cacheEpoch = 0;
 
   const allRows = computed(() => rows.value);
 
   function assertOwner() {
     const session = useSessionStore();
-    const uid = session.userId ?? null;
-    if (ownerUserId.value && uid && ownerUserId.value !== uid) {
+    const uid = session.actAsUserId ?? session.userId ?? null;
+    if (ownerUserId.value !== null && ownerUserId.value !== uid) {
       invalidate();
     }
+    return uid;
   }
 
   async function ensureLoaded(scope: CacheScope = 'all') {
-    assertOwner();
+    const uid = assertOwner();
+    const epoch = cacheEpoch;
     const need = scopesToFetch(loadedScopes.value, scope);
     if (!need) return;
 
@@ -59,17 +62,24 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
           need === 'all'
             ? await listEventSubscriptions()
             : await listEventSubscriptions(need);
+        const current = useSessionStore();
+        const currentUid = current.actAsUserId ?? current.userId ?? null;
+        if (epoch !== cacheEpoch || uid !== currentUid) return;
         rows.value = mergeFetchedRows(rows.value, fetched);
         loadedScopes.value = new Set([...loadedScopes.value, need]);
-        ownerUserId.value = useSessionStore().userId ?? null;
+        ownerUserId.value = uid;
       } catch (e) {
-        error.value = e instanceof Error ? e.message : 'Ошибка подписки';
+        if (epoch === cacheEpoch) {
+          error.value = e instanceof Error ? e.message : 'Ошибка подписки';
+        }
         throw e;
       } finally {
-        const next = new Set(loadingScopes.value);
-        next.delete(need);
-        loadingScopes.value = next;
-        inflight.delete(need);
+        if (epoch === cacheEpoch) {
+          const next = new Set(loadingScopes.value);
+          next.delete(need);
+          loadingScopes.value = next;
+        }
+        if (epoch === cacheEpoch) inflight.delete(need);
       }
     })();
 
@@ -93,19 +103,32 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     targetId: string;
     options?: Record<string, unknown>;
   }) {
+    const uid = assertOwner();
+    const epoch = cacheEpoch;
+    error.value = null;
     const created = await createEventSubscription(input);
+    const session = useSessionStore();
+    if (epoch !== cacheEpoch || uid !== (session.actAsUserId ?? session.userId ?? null)) {
+      return created;
+    }
     rows.value = upsertSubscription(rows.value, created);
     loadedScopes.value = new Set([...loadedScopes.value, input.sourceDomain, 'all']);
     return created;
   }
 
   async function unsubscribe(id: string) {
+    const uid = assertOwner();
+    const epoch = cacheEpoch;
+    error.value = null;
     await deleteEventSubscription(id);
+    const session = useSessionStore();
+    if (epoch !== cacheEpoch || uid !== (session.actAsUserId ?? session.userId ?? null)) return;
     rows.value = removeSubscriptionById(rows.value, id);
   }
 
   /** Drop cache (e.g. after logout). */
   function invalidate() {
+    cacheEpoch += 1;
     rows.value = [];
     loadedScopes.value = new Set();
     loadingScopes.value = new Set();
@@ -116,8 +139,11 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
 
   /** Replace cache from a full list fetch (Subscriptions page). */
   function replaceAll(data: EventSubscription[]) {
+    const session = useSessionStore();
     rows.value = [...data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     loadedScopes.value = new Set(['all']);
+    ownerUserId.value = session.actAsUserId ?? session.userId ?? null;
+    error.value = null;
   }
 
   return {

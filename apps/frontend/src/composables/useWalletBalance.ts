@@ -5,11 +5,17 @@ import { useSessionStore } from '@/stores/session';
 export async function refreshSessionBalance(): Promise<void> {
   const session = useSessionStore();
   if (!session.isMember) return;
+  const identity = session.actAsUserId ?? session.userId;
+  if (!identity) return;
+  session.setBalance(0, 'RUB');
 
   try {
     const wallet = await getBalance();
-    session.setBalance(wallet.balance, wallet.currency);
+    const current = useSessionStore();
+    if ((current.actAsUserId ?? current.userId) === identity) {
+      current.setBalance(wallet.balance, wallet.currency);
+    }
   } catch {
-    /* keep previous balance on transient errors */
+    /* Identity-scoped balance remains cleared on transient errors. */
   }
 }

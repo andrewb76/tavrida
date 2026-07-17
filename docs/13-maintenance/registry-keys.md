@@ -120,7 +120,7 @@ referralRewards.earning.monthlyMax
 | `limit` | `limitValue` (int; `-1` = без лимита) | `POST /limits/check` + `currentUsage` от domain |
 | `feature` | `isFeatureEnabled` (boolean) | `POST /features/can-use` |
 | `enum` | `enumValues` (jsonb string[]) | allow-list значений per plan |
-| `price` | `priceAmount` (decimal, ₽) | `GET /charges/resolve?key=` → billing.charge |
+| `price` | `priceAmount` (decimal, ₽) | `GET /plan-variables/resolve-price?userId=&key=` → billing.charge |
 
 **`price` заменяет** отдельную сущность `charge_target` + `plan_charge_price`. Одна plan variable = одна разовая услуга; цена **может отличаться по plan** (например, скидка Pro).
 

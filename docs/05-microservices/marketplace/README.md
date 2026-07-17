@@ -49,7 +49,7 @@ sequenceDiagram
     participant P as Provider
     participant M as marketplace
     participant C as Customer
-    participant F as feedback
+    participant F as deal-feedback
     participant R as rating
 
     P->>M: POST /listings (проверка listingsMax)
@@ -58,7 +58,7 @@ sequenceDiagram
     M->>F: marketplace.order_completed
     F->>C: запрос отзыва
     F->>P: запрос отзыва
-    F->>R: feedback.submitted → рейтинг, карма
+    F->>R: sync user-profile adjustment (event planned)
 ```
 
 ### Статусы заказа
@@ -188,14 +188,14 @@ PATCH /api/v1/marketplace/listings/{id}
 DELETE /api/v1/marketplace/listings/{id}
 ```
 
-Перед созданием: `plan-config` → `marketplace.listingsMax`.
+Перед созданием: `plan-config` → `marketplace.seller.listing.activeMax`.
 
 ```http
 POST /api/v1/marketplace/listings/{id}/portfolio
 DELETE /api/v1/marketplace/listings/{id}/portfolio/{itemId}
 ```
 
-Лимит: `marketplace.portfolioItemsMax` per listing.
+Лимит: `marketplace.seller.portfolio.itemMax` per listing.
 
 ### Заказы
 
@@ -209,7 +209,7 @@ GET /api/v1/marketplace/orders?role=provider|customer
 
 | Method | Path | Описание |
 |--------|------|----------|
-| POST | `/marketplace/orders/{id}/complete` | Завершение заказа (provider) |
+| PATCH | `/marketplace/orders/{id}/status` | Переход статуса заказа, включая COMPLETED |
 | GET | `/health`, `/health/ready` | — |
 
 ---
@@ -279,9 +279,9 @@ Authorization: Bearer {expert-token}
 
 | Ключ | Free | Basic | Pro | Описание |
 |------|------|-------|-----|----------|
-| `marketplace.listingsMax` | **0** | 3 | ∞ | Активных услуг в справочнике |
-| `marketplace.ordersPerMonth` | 2 | 10 | ∞ | Заказов в месяц (заказчик) |
-| `marketplace.portfolioItemsMax` | — | 5 | 20 | Фото в портфолио на услугу |
+| `marketplace.seller.listing.activeMax` | **0** | 3 | ∞ | Активных услуг в справочнике |
+| `marketplace.buyer.order.monthlyMax` | 2 | 10 | ∞ | Заказов в месяц (заказчик) |
+| `marketplace.seller.portfolio.itemMax` | — | 5 | 20 | Фото в портфолио на услугу |
 
 > Free = **0** → бесплатный тариф **не может** публиковать услуги, только заказывать (в лимите).
 
@@ -294,6 +294,9 @@ Authorization: Bearer {expert-token}
 | `marketplace.order_completed` | status → COMPLETED |
 | `marketplace.order_cancelled` | status → CANCELLED |
 
+Оба события записываются в `marketplace.outbox_message` в одной транзакции со
+сменой статуса заказа; relay доставляет их в RabbitMQ at-least-once.
+
 → [event-catalog.md](../../03-architecture/event-catalog.md)
 
 ---
@@ -303,7 +306,7 @@ Authorization: Bearer {expert-token}
 | Сервис | Взаимодействие |
 |--------|----------------|
 | plan-config | `limits/check` при создании listing/order |
-| feedback | `marketplace.order_completed` → PendingFeedback |
+| deal-feedback | `marketplace.order_completed` → PendingFeedback |
 | rating | через feedback |
 | user-profile | provider profile, portfolio links |
 | auction | expert appraisals (роль Expert) |
@@ -335,7 +338,7 @@ Authorization: Bearer {expert-token}
 ## 📎 Связанные разделы
 
 - [requirements](./requirements/README.md)
-- [feedback](../feedback/README.md)
+- [deal-feedback](../deal_feedback/README.md)
 - [roles](../../01-goal/roles.md)
 - [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md)
 

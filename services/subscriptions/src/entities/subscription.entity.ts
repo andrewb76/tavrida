@@ -15,7 +15,8 @@ export class SubscriptionEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid' })
+  /** Logto `sub` is an opaque identity ID and is not guaranteed to be a UUID. */
+  @Column({ type: 'varchar', length: 128 })
   userId!: string;
 
   @Column({ type: 'varchar', length: 32 })

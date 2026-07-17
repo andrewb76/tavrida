@@ -14,6 +14,7 @@ import { SeedModule } from './modules/seed/seed.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
 @Module({
   imports: [
@@ -23,13 +24,20 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 5432),
-      username: process.env.DB_USER ?? 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
-      database: process.env.DB_NAME ?? 'tavrida_lot',
+      ...(databaseUrl
+        ? { url: databaseUrl }
+        : {
+            host: process.env.DB_HOST ?? 'localhost',
+            port: Number(process.env.DB_PORT ?? 5432),
+            username: process.env.DB_USER ?? 'postgres',
+            password: process.env.DB_PASSWORD ?? 'postgres',
+            database: process.env.DB_NAME ?? 'tavrida_lot',
+          }),
       schema: 'plan_config',
       entities: [PlanEntity, PlanVariableEntity, PlanVariableTierEntity, UserSubscriptionEntity],
+      migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
+      migrationsTableName: 'plan_config_migrations',
+      migrationsRun: process.env.NODE_ENV === 'production',
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     SeedModule,

@@ -47,6 +47,7 @@ export class SubscriptionsService {
   async resolvePlanId(userId: string): Promise<string> {
     const sub = await this.subscriptions.findOne({ where: { userId } });
     if (!sub || sub.status !== 'ACTIVE') return DEFAULT_PLAN_ID;
+    if (sub.expiresAt && sub.expiresAt.getTime() <= Date.now()) return DEFAULT_PLAN_ID;
     return sub.planId;
   }
 

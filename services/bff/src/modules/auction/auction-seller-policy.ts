@@ -46,8 +46,18 @@ export function applySellerCreatePolicy(
     allowedTypes: options.allowedTypes,
   };
 
-  if (!options.reserveEnabled) delete next.reservePrice;
-  if (!options.promotionEnabled) next.promote = false;
+  if (body.reservePrice != null && !options.reserveEnabled) {
+    throw new ForbiddenException({
+      type: 'feature_not_available',
+      detail: 'Резервная цена недоступна на текущем тарифе',
+    });
+  }
+  if (body.promote === true && !options.promotionEnabled) {
+    throw new ForbiddenException({
+      type: 'feature_not_available',
+      detail: 'Продвижение недоступно на текущем тарифе',
+    });
+  }
 
   return next;
 }

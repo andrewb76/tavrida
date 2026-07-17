@@ -23,7 +23,8 @@ Authorization: Bearer {jwt}
 ```
 
 - JWT от Logto, валидация на BFF
-- Internal: service token `Authorization: Bearer {service-jwt}` (TODO: ADR mTLS)
+- Internal: shared opaque service token
+  `Authorization: Bearer {INTERNAL_SERVICE_TOKEN}`; это не JWT.
 
 ## 📄 Формат запросов
 
@@ -80,7 +81,7 @@ GET /api/v1/auctions?cursor=eyJpZCI6...&limit=20
 ### Offset (admin, редкие списки)
 
 ```http
-GET /api/v1/admin/parameters?offset=0&limit=50
+GET /api/v1/admin/plan-config/variables?offset=0&limit=50
 ```
 
 ## 🔁 Идемпотентность
@@ -88,19 +89,20 @@ GET /api/v1/admin/parameters?offset=0&limit=50
 Платёжные и mutating операции:
 
 ```http
-POST /api/v1/wallets/charge
+POST /api/v1/auctions
 Idempotency-Key: {uuid}
 ```
 
-- BFF проксирует ключ в billing
+- Для create-time paid options BFF связывает клиентский ключ с user и
+  передаёт derived idempotency key в billing
 - Повтор с тем же ключом → тот же `transactionId`, HTTP 200
 
 ## 🚦 Rate limiting
 
 | Scope | Limit | Header |
 |-------|-------|--------|
-| Anonymous | 30 req/min | `X-RateLimit-Remaining` |
-| Authenticated | 120 req/min | |
+| Invite resolve | локальный guard | endpoint-specific |
+| Global anonymous/authenticated | planned | target: 30/120 req/min |
 | Bids | `auction.bidsPerHour` via plan-config | |
 
 ## 📡 WebSocket Protocol
@@ -141,20 +143,22 @@ Idempotency-Key: {uuid}
 
 | Domain | Methods | Upstream |
 |--------|---------|----------|
-| `/auctions` | CRUD, bids | auction |
+| `/auctions` | list/get/create, create-options, bids, appraisal read | auction |
 | `/wallets` | deposit, balance, transactions | billing |
 | `/plans` | list, activate, subscription | plan-config |
 | `/profile` | get, notes | user-profile |
 | `/invites` | create, list, resolve, claim | BFF + Logto M2M — [OpenAPI fragment](./invites-api.md) · [full spec](../05-microservices/bff/invites-api.md) |
 | `/forum/*` | topics, comments, reactions | forum |
-| `/rating` | get | rating |
-| `/feedback` | submit, status | feedback |
-| `/marketplace/*` | listings, orders | marketplace |
+| `/profile/:userId/rating/log` | get | user-profile |
+| `/deal-feedback/*` | pending, submit, status | deal-feedback |
 | `/subscriptions` | CRUD + delivery prefs | subscriptions |
 | `/periods` | historical reference (read) | periods |
 | `/admin/periods` | categories + periods CRUD | periods |
-| `/marketplace` | listings + orders | marketplace |
-| `/settings` | get (public subset) | scalar-config |
+| `/marketplace` | listings + portfolio + orders | marketplace |
+| `/media` | limits + upload intents | BFF / object storage |
+| `/charges/quote` | quote paid option | plan-config |
+| `/admin/scalar-config` | registry/domain CRUD | scalar-config |
+| `/admin/plan-config` | plans/variables CRUD | plan-config |
 
 > OpenAPI fragments: [invites-api.md](./invites-api.md), [vanga-admin-api.md](./vanga-admin-api.md). Full `openapi.yaml` — TODO (генерация из NestJS decorators).
 

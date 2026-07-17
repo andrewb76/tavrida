@@ -182,10 +182,14 @@ export type CreateAuctionInput = {
   promote?: boolean;
 };
 
-async function authPost<T>(path: string, body: unknown): Promise<T> {
+async function authPost<T>(
+  path: string,
+  body: unknown,
+  extraHeaders: Record<string, string> = {},
+): Promise<T> {
   const res = await fetch(`${apiBase()}${path}`, {
     method: 'POST',
-    headers: await bffAuthHeaders(),
+    headers: { ...(await bffAuthHeaders()), ...extraHeaders },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -199,8 +203,13 @@ export async function getAuctionCreateOptions(): Promise<AuctionCreateOptions> {
   return authGet<AuctionCreateOptions>('/auctions/create-options');
 }
 
-export async function createAuction(input: CreateAuctionInput): Promise<AuctionDetail> {
-  return authPost<AuctionDetail>('/auctions', input);
+export async function createAuction(
+  input: CreateAuctionInput,
+  idempotencyKey: string,
+): Promise<AuctionDetail> {
+  return authPost<AuctionDetail>('/auctions', input, {
+    'Idempotency-Key': idempotencyKey,
+  });
 }
 
 export type PlaceBidResult = {

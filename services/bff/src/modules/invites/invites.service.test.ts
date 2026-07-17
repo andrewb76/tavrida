@@ -130,6 +130,7 @@ function createFakeUserProfile() {
 function createService(opts?: {
   planAllowed?: boolean;
   planLimit?: number | null;
+  planError?: Error;
   isAdmin?: boolean;
 }) {
   const up = createFakeUserProfile();
@@ -161,6 +162,7 @@ function createService(opts?: {
       requestedValue: number;
       currentUsage: number;
     }) => {
+      if (opts?.planError) throw opts.planError;
       assert.equal(body.variableKey, INVITE_MONTHLY_LIMIT_KEY);
       const limit = opts?.planLimit === undefined ? 10 : opts.planLimit;
       const allowed = opts?.planAllowed ?? true;
@@ -177,7 +179,6 @@ function createService(opts?: {
     get: (key: string) => {
       if (key === 'FRONTEND_ORIGIN') return 'http://localhost:5173';
       if (key === 'CLUB_INVITES_UNLIMITED_ISSUER_IDS') return '';
-      if (key === 'CLUB_INVITES_PER_MONTH') return '10';
       return undefined;
     },
   } as unknown as ConfigService;
@@ -251,5 +252,17 @@ describe('InvitesService flow', () => {
     const created = await service.createInvite('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
     assert.ok(created.code);
     assert.equal(logtoCalls.length, 1);
+  });
+
+  it('fails closed when plan-config is unavailable', async () => {
+    const { service, logtoCalls } = createService({
+      planError: new Error('plan-config unavailable'),
+    });
+
+    await assert.rejects(
+      () => service.createInvite('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),
+      /plan-config unavailable/,
+    );
+    assert.equal(logtoCalls.length, 0);
   });
 });

@@ -1,12 +1,18 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import amqp, { type Channel, type ChannelModel, type ConsumeMessage } from 'amqplib';
+import amqp, {
+  type ChannelModel,
+  type ConfirmChannel,
+  type ConsumeMessage,
+} from 'amqplib';
 import { filterEligibleUserIds } from '../../common/delivery-filter';
 import { NotificationsClient } from '../notifications/notifications.client';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 const EXCHANGE = 'tavrida-lot.events';
 const QUEUE = 'subscriptions.events';
+const DEAD_QUEUE = `${QUEUE}.dlq`;
+const MAX_RETRIES = 5;
 const ROUTING_KEYS = ['tag.content_tagged'] as const;
 
 type Envelope = {
@@ -27,7 +33,7 @@ type TagContentTaggedPayload = {
 export class TagEventsConsumer implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TagEventsConsumer.name);
   private conn: ChannelModel | null = null;
-  private channel: Channel | null = null;
+  private channel: ConfirmChannel | null = null;
 
   constructor(
     private readonly config: ConfigService,
@@ -43,9 +49,10 @@ export class TagEventsConsumer implements OnModuleInit, OnModuleDestroy {
     }
     try {
       const conn = await amqp.connect(url);
-      const ch = await conn.createChannel();
+      const ch = await conn.createConfirmChannel();
       await ch.assertExchange(EXCHANGE, 'topic', { durable: true });
       await ch.assertQueue(QUEUE, { durable: true });
+      await ch.assertQueue(DEAD_QUEUE, { durable: true });
       for (const key of ROUTING_KEYS) {
         await ch.bindQueue(QUEUE, EXCHANGE, key);
       }
@@ -80,8 +87,48 @@ export class TagEventsConsumer implements OnModuleInit, OnModuleDestroy {
       this.channel.ack(msg);
     } catch (err) {
       this.logger.warn(`Failed to process message: ${String(err)}`);
-      this.channel.nack(msg, false, false);
+      this.scheduleRetry(msg, err);
     }
+  }
+
+  private scheduleRetry(msg: ConsumeMessage, error: unknown): void {
+    const channel = this.channel;
+    if (!channel) return;
+    const attempt = Number(msg.properties.headers?.['x-retry-count'] ?? 0) + 1;
+    const detail = error instanceof Error ? error.message : String(error);
+    const delayMs = Math.min(1_000 * 2 ** (attempt - 1), 30_000);
+
+    setTimeout(() => {
+      void (async () => {
+        try {
+          if (attempt > MAX_RETRIES) {
+            channel.sendToQueue(DEAD_QUEUE, msg.content, {
+              ...msg.properties,
+              persistent: true,
+              headers: {
+                ...msg.properties.headers,
+                'x-retry-count': attempt - 1,
+                'x-last-error': detail.slice(0, 1_000),
+              },
+            });
+          } else {
+            channel.publish(EXCHANGE, msg.fields.routingKey, msg.content, {
+              ...msg.properties,
+              persistent: true,
+              headers: {
+                ...msg.properties.headers,
+                'x-retry-count': attempt,
+              },
+            });
+          }
+          await channel.waitForConfirms();
+          channel.ack(msg);
+        } catch (retryError) {
+          this.logger.warn(`Failed to schedule event retry: ${String(retryError)}`);
+          channel.nack(msg, false, true);
+        }
+      })();
+    }, delayMs).unref();
   }
 
   async handleTagContentTagged(payload: TagContentTaggedPayload): Promise<{

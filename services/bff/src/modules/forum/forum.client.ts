@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 @Injectable()
 export class ForumClient {
@@ -253,7 +254,10 @@ export class ForumClient {
     try {
       response = await fetch(`${this.baseUrl()}${path}`, {
         method,
-        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        headers: internalServiceHeaders(
+          this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+          body ? { 'Content-Type': 'application/json' } : {},
+        ),
         body: body ? JSON.stringify(body) : undefined,
       });
     } catch {

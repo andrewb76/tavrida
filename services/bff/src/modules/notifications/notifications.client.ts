@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 const DEFAULT_TIMEOUT_MS = 2000;
 
@@ -20,10 +21,9 @@ export class NotificationsClient {
   }
 
   private headers(): Record<string, string> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = this.config.get<string>('INTERNAL_SERVICE_TOKEN')?.trim();
-    if (token) headers.Authorization = `Bearer ${token}`;
-    return headers;
+    return internalServiceHeaders(this.config.get<string>('INTERNAL_SERVICE_TOKEN'), {
+      'Content-Type': 'application/json',
+    });
   }
 
   /**

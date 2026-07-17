@@ -90,6 +90,17 @@ flowchart TB
 | `accent-warm` | `sand` | Теги, декоративные акценты |
 | `surface-inverse` | `ink` / `ink-soft` | Шапка, hero scrim |
 
+#### Фоновая фактура приложения
+
+Глобальный page background реализован в `apps/frontend/src/assets/main.css`:
+
+- light: `assets/backgrounds/tavrida-light.webp` + `chalk` overlay;
+- dark: `assets/backgrounds/tavrida-dark.webp` + `ink` overlay;
+- `cover center no-repeat`; на desktop — fixed, на mobile / reduced motion — scroll;
+- layout shell прозрачный, а header/cards остаются семантическими `surface`.
+
+Исходные PNG не грузятся в приложение: WebP-варианты оптимизированы до ~149 KB / ~92 KB.
+
 **Статусы** (всегда + иконка или текст, не только цвет — brandbook §5):
 
 | Роль | Токен | Пример |

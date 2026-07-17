@@ -69,16 +69,15 @@ stateDiagram-v2
 | GET | `/wallets/balance` | Баланс текущего пользователя (JWT) |
 | GET | `/wallets/transactions` | История (cursor pagination) |
 | POST | `/wallets/deposit` | Инициировать пополнение |
-| POST | `/wallets/charge` | Списание (только trusted callers через BFF proxy) |
 
 ### Internal (`/internal/v1/`)
 
 | Method | Path | Caller | Описание |
 |--------|------|--------|----------|
 | GET | `/wallets/balance?userId=` | plan-config, BFF | Баланс по userId |
+| GET | `/wallets/transactions?userId=` | BFF | История транзакций |
 | POST | `/wallets/charge` | plan-config, auction | Списание с Idempotency-Key |
-| POST | `/wallets/refund` | admin, plan-config | Возврат по `transactionId` |
-| POST | `/wallets/credit` | referral-rewards, admin | Platform credit (реферальные выплаты, компенсации) |
+| POST | `/wallets/deposit` | admin/dev | Ручное пополнение |
 | GET | `/health` | orchestrator | Liveness |
 | GET | `/health/ready` | orchestrator | DB + RabbitMQ |
 
@@ -135,7 +134,7 @@ Content-Type: application/json
 }
 ```
 
-### `POST /internal/v1/wallets/credit`
+### Target: `POST /internal/v1/wallets/credit`
 
 Зачисление **без внешнего платёжного провайдера** — реферальные выплаты, компенсации admin.
 

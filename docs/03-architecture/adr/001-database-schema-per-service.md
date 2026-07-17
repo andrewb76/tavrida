@@ -21,19 +21,21 @@
 | billing | `billing` |
 | plan-config | `plan_config` |
 | auction | `auction` |
-| auction-subscriptions | `auction_subscriptions` |
-| rating | `rating` |
-| feedback | `feedback` |
+| subscriptions | `subscriptions` |
+| deal-feedback | `deal_feedback` |
 | user-profile | `user_profile` |
-| scalar-config | `scalar-config` |
+| scalar-config | `scalar_config` |
 | forum | `forum` |
 | marketplace | `marketplace` |
 | notifications | `notifications` |
+| periods | `periods` |
+| BFF (media intents) | `bff` |
 | **Ory Keto** (infra) | `keto` |
 
 - Connection string общий: `postgres://...@host:5432/tavrida_lot`
 - TypeORM: `schema: '{name}'` в entity / ormconfig
-- Миграции — в каталоге владельца schema
+- Миграции — в каталоге владельца schema; production startup выполняет pending
+  migrations до открытия HTTP-порта ([migrations.md](../../04-deployment/migrations.md))
 - Cross-schema JOIN **запрещены**
 - **Инфраструктура:** schema `keto` в той же БД для Ory Keto (relation tuples); владелец — Keto (`keto migrate`), не NestJS. Доступ микросервисов — только Keto HTTP API. При росте нагрузки — отдельная БД.
 

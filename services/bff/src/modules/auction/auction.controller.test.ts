@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import { ForbiddenException } from '@nestjs/common';
 
 import type { AuthUser } from '../auth/current-user.decorator';
+import type { BillingClient } from '../billing/billing.client';
 import type { MediaLimitsService } from '../media/media-limits.service';
 import type { MediaStorageService } from '../media/media-storage.service';
 import { AuctionController } from './auction.controller';
@@ -52,6 +53,7 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     listBids: [] as string[],
     listExpertAppraisals: [] as string[],
     getSellerMeta: [] as string[],
+    charges: [] as Record<string, unknown>[],
   };
 
   const auction = {
@@ -113,6 +115,28 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
             };
       return base;
     },
+    resolveSellerPlanOptionsForDisplay: async (_userId: string, used: number) => {
+      const base =
+        planId === 'free'
+          ? freeSellerOptions(used)
+          : {
+              ...buildSellerPlanOptions({
+                planId,
+                allowedTypes: ['ENGLISH', 'DUTCH'],
+                maxDurationHours: planId === 'pro' ? null : 336,
+                promotionEnabled: planId === 'pro',
+                reserveEnabled: planId === 'pro',
+                dailyLimit: planId === 'pro' ? null : 10,
+                promotionUnitPrice: 200,
+                reserveUnitPrice: 100,
+              }),
+              dailyLimitSummary:
+                planId === 'pro'
+                  ? { limit: null, used, remaining: null }
+                  : { limit: 10, used, remaining: Math.max(0, 10 - used) },
+            };
+      return { ...base, degraded: false };
+    },
   } as unknown as AuctionPlanPolicyService;
 
   const mediaLimits = {
@@ -127,12 +151,19 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
   const mediaStorage = {
     publicBaseUrl: () => 'http://localhost:9000',
   } as unknown as MediaStorageService;
+  const billing = {
+    charge: async (body: Record<string, unknown>) => {
+      calls.charges.push(body);
+      return { transactionId: `tx-${calls.charges.length}`, status: 'ok', balanceAfter: 0 };
+    },
+  } as unknown as BillingClient;
 
   const controller = new AuctionController(
     auction,
     auctionPlanPolicy,
     mediaLimits,
     mediaStorage,
+    billing,
   );
 
   return { controller, calls };
@@ -224,18 +255,45 @@ describe('AuctionController (integration)', () => {
   it('POST create applies seller policy and forwards sellerId', async () => {
     const { controller, calls } = createHarness('free', 0);
 
-    const result = await controller.create(USER, {
-      ...validCreateBody,
-      promote: true,
-      reservePrice: 500,
-    });
+    const result = await controller.create(USER, validCreateBody);
 
     assert.equal(calls.createAuction.length, 1);
     const payload = calls.createAuction[0];
     assert.equal(payload.sellerId, 'seller-1');
-    assert.equal(payload.promote, false);
-    assert.equal(payload.reservePrice, undefined);
     assert.equal(result.id, 'new-lot');
+  });
+
+  it('POST create rejects paid options unavailable on the current plan', async () => {
+    const { controller } = createHarness('free', 0);
+
+    await assert.rejects(
+      () =>
+        controller.create(USER, {
+          ...validCreateBody,
+          promote: true,
+        }),
+      (error: unknown) => error instanceof ForbiddenException,
+    );
+  });
+
+  it('POST create charges enabled paid options before creating', async () => {
+    const { controller, calls } = createHarness('pro', 0);
+
+    await controller.create(
+      USER,
+      {
+        ...validCreateBody,
+        promote: true,
+        reservePrice: 500,
+      },
+      'request-1',
+    );
+
+    assert.deepEqual(
+      calls.charges.map((charge) => charge.target),
+      ['auction.promotion', 'auction.reservePrice'],
+    );
+    assert.equal(calls.createAuction.length, 1);
   });
 
   it('POST create returns 403 when daily limit is reached', async () => {

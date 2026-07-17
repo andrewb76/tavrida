@@ -1,6 +1,7 @@
 import { HttpException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 export type ChargeResult = {
   transactionId: string;
@@ -27,10 +28,10 @@ export class BillingClient {
     const idempotencyKey = input.idempotencyKey ?? randomUUID();
     const res = await fetch(`${this.baseUrl()}/internal/v1/wallets/charge`, {
       method: 'POST',
-      headers: {
+      headers: internalServiceHeaders(this.config.get<string>('INTERNAL_SERVICE_TOKEN'), {
         'Content-Type': 'application/json',
         'Idempotency-Key': idempotencyKey,
-      },
+      }),
       body: JSON.stringify({
         userId: input.userId,
         amount: input.amount,

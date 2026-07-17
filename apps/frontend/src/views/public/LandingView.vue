@@ -12,7 +12,7 @@ const { inviteOnly } = useClubAccess();
   <section class="space-y-8">
     <div class="space-y-4 text-center sm:text-left">
       <h1 class="text-3xl font-semibold sm:text-4xl">
-        Клуб находок Крыма
+        Крымский Клуб Коллекционеров
       </h1>
       <p class="max-w-xl text-lg text-text-muted">
         <template v-if="inviteOnly">

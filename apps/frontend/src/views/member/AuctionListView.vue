@@ -8,7 +8,7 @@ import {
 } from '@/services/auctions';
 import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 import { UiButton } from '@tavrida/ui';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const {
@@ -33,45 +33,52 @@ const error = ref<string | null>(null);
 
 const proFiltersEnabled = computed(() => searchScope.value.includes('FILTERS'));
 
-async function loadCatalog(append = false) {
-  if (append) loadingMore.value = true;
-  else loading.value = true;
+let catalogGeneration = 0;
+
+async function loadCatalog() {
+  const generation = ++catalogGeneration;
+  loading.value = true;
+  loadingMore.value = false;
   error.value = null;
+  items.value = [];
+  nextCursor.value = null;
 
   const query: AuctionCatalogFilters = { ...filters.value };
-  if (!append) delete query.cursor;
+  delete query.cursor;
 
   try {
     const res = await listAuctions(query);
+    if (generation !== catalogGeneration) return;
     searchScope.value = res.meta.searchScope;
     nextCursor.value = res.nextCursor;
-    items.value = append ? [...items.value, ...res.items] : res.items;
+    items.value = res.items;
   } catch (e) {
+    if (generation !== catalogGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
-    if (!append) items.value = [];
   } finally {
-    loading.value = false;
-    loadingMore.value = false;
+    if (generation === catalogGeneration) loading.value = false;
   }
 }
 
-onMounted(() => loadCatalog());
-watch(filters, () => loadCatalog(), { deep: true });
+watch(filters, () => void loadCatalog(), { deep: true, immediate: true });
 
 function loadMore() {
   if (!nextCursor.value || loadingMore.value) return;
+  const generation = catalogGeneration;
   const query = { ...filters.value, cursor: nextCursor.value };
   loadingMore.value = true;
   listAuctions(query)
     .then((res) => {
+      if (generation !== catalogGeneration) return;
       nextCursor.value = res.nextCursor;
       items.value = [...items.value, ...res.items];
     })
     .catch((e) => {
+      if (generation !== catalogGeneration) return;
       error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
     })
     .finally(() => {
-      loadingMore.value = false;
+      if (generation === catalogGeneration) loadingMore.value = false;
     });
 }
 </script>

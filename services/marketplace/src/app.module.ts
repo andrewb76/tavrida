@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OutboxMessageEntity } from '@tavrida/outbox';
 import { resolve } from 'node:path';
 import { PortfolioItemEntity } from './entities/portfolio-item.entity';
 import { ServiceListingEntity } from './entities/service-listing.entity';
@@ -31,7 +32,15 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
             database: process.env.DB_NAME ?? 'tavrida_lot',
           }),
       schema: 'marketplace',
-      entities: [ServiceListingEntity, PortfolioItemEntity, ServiceOrderEntity],
+      entities: [
+        ServiceListingEntity,
+        PortfolioItemEntity,
+        ServiceOrderEntity,
+        OutboxMessageEntity,
+      ],
+      migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
+      migrationsTableName: 'marketplace_migrations',
+      migrationsRun: process.env.NODE_ENV === 'production',
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     MarketplaceDomainModule,

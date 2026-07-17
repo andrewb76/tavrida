@@ -73,16 +73,22 @@ async function loadCategories() {
   }
 }
 
+let periodsLoadGeneration = 0;
+
 async function loadPeriods() {
-  if (!selectedCategoryId.value) {
+  const generation = ++periodsLoadGeneration;
+  const categoryId = selectedCategoryId.value;
+  if (!categoryId) {
     periods.value = [];
     return;
   }
-  periods.value = await adminListPeriods({
-    categoryId: selectedCategoryId.value,
+  const rows = await adminListPeriods({
+    categoryId,
     rootsOnly: true,
     view: 'tree',
   });
+  if (generation !== periodsLoadGeneration || categoryId !== selectedCategoryId.value) return;
+  periods.value = rows;
 }
 
 async function load() {

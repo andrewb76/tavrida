@@ -15,18 +15,24 @@ const items = ref<MarketplaceListing[]>([]);
 const category = ref<string>('');
 
 const categories = Object.entries(LISTING_CATEGORY_LABELS) as [ListingCategory, string][];
+let loadGeneration = 0;
 
 async function load() {
+  const generation = ++loadGeneration;
+  const selectedCategory = category.value;
   loading.value = true;
   error.value = '';
   try {
-    items.value = await listMarketplaceListings({
-      category: category.value || undefined,
+    const rows = await listMarketplaceListings({
+      category: selectedCategory || undefined,
     });
+    if (generation !== loadGeneration || selectedCategory !== category.value) return;
+    items.value = rows;
   } catch (e) {
+    if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 

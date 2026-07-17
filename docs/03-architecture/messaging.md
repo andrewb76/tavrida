@@ -1,6 +1,6 @@
 # 📨 Асинхронное взаимодействие (RabbitMQ)
 
-> **Статус:** accepted · **Версия:** 0.1  
+> **Статус:** implemented (core producers) · **Версия:** 0.2
 > Каталог событий: [event-catalog.md](./event-catalog.md)
 
 ## 🎯 Зачем
@@ -58,7 +58,7 @@ flowchart TB
 | ✅ Правильно | ❌ Неправильно |
 |-------------|----------------|
 | `webhooks.events` — одна очередь сервиса `webhooks`, bind на N routing keys | Одна общая очередь `all.events` — competing consumers разных сервисов |
-| `rating.events` слушает только `auction.completed`, `feedback.submitted`, … | Несколько сервисов читают из одной очереди |
+| `rating.events` слушает только `auction.completed`, `deal_feedback.submitted`, … | Несколько сервисов читают из одной очереди |
 
 **Fan-out:** RabbitMQ **копирует** сообщение в каждую очередь, чей binding совпал с routing key. Сервисы не блокируют друг друга.
 
@@ -74,9 +74,13 @@ flowchart TB
 
 ## 📤 Producer (доменный сервис)
 
-1. Зафиксировать бизнес-состояние в **своей** БД (commit).
-2. Опубликовать envelope в `tavrida-lot.events` с `routing_key = eventType`.
-3. Не ждать consumers — fire-and-forget.
+1. В одной транзакции изменить бизнес-состояние и добавить envelope в
+   schema-local `outbox_message`.
+2. После commit relay публикует pending-записи в `tavrida-lot.events` с
+   `routing_key = eventType`.
+3. Relay использует persistent messages и RabbitMQ publisher confirms; при
+   ошибке сохраняет тот же `eventId` и повторяет доставку с bounded
+   exponential backoff.
 4. При регистрации webhook-типов — **генератор** вызывает `POST /internal/v1/webhooks/event-types/register` (см. [webhooks](../05-microservices/webhooks/README.md)).
 
 ```mermaid
@@ -85,20 +89,31 @@ sequenceDiagram
     participant DB as auction DB
     participant EX as tavrida-lot.events
 
-    A->>DB: UPDATE auction SET status=COMPLETED
+    A->>DB: UPDATE auction + INSERT outbox_message
     DB-->>A: commit OK
-    A->>EX: publish auction.completed
+    A->>EX: relay publish + broker confirm
     Note over A,EX: Producer не знает список подписчиков
 ```
 
-**Идемпотентность publish:** при retry HTTP-запроса producer использует тот же `eventId` (или не публикует повторно, если уже published).
+**Гарантия:** доставка at-least-once. `eventId` создаётся при записи outbox и не
+меняется на retry, поэтому consumer обязан быть идемпотентным.
+
+Сейчас transactional outbox включён у `auction`, `marketplace`,
+`user-profile` и `forum`. Общая реализация — `@tavrida/outbox`; таблица и
+история migrations остаются в schema владельца.
 
 ## 📥 Consumer (любой подписчик)
 
 1. **Отдельная** очередь `{service}.events`.
 2. Binding только на нужные `eventType`.
-3. Обработка **идемпотентна** по `eventId` (таблица `processed_events` или unique constraint).
-4. `ack` после успешной обработки; при ошибке — retry → **DLQ** после N попыток ([event-catalog](./event-catalog.md): 3 для RMQ internal; `webhooks` — свой backoff для HTTP).
+3. Обработка должна быть **идемпотентна** по `eventId` (таблица
+   `processed_events` или unique constraint).
+4. `ack` после успешной обработки; при ошибке — republish с broker confirm и
+   exponential delay → **DLQ** после 5 попыток. Это реализовано в
+   `subscriptions` и `deal-feedback`. У `deal-feedback` есть persisted
+   `processed_event`; subscriptions пока полагается только на downstream
+   notification idempotency key, поэтому полная consumer-idempotency остаётся
+   обязательным follow-up.
 
 ```mermaid
 sequenceDiagram
@@ -159,7 +174,7 @@ flowchart LR
 | Queue | Service | Примеры bindings |
 |-------|---------|------------------|
 | `deal-feedback.events` | deal-feedback | `auction.completed`, `marketplace.order_completed` |
-| `rating.events` | rating | `auction.completed`, `feedback.submitted`, … |
+| `rating.events` | rating | `auction.completed`, `deal_feedback.submitted`, … |
 | `notifications.events` | notifications | `auction.*`, `billing.*`, `webhooks.delivery_failed`, … |
 | `webhooks.events` | webhooks | whitelist из `EventTypeRegistration` |
 | `plan-config.events` | plan-config | `billing.deposit_completed`, `subscription.activated` |
@@ -171,7 +186,7 @@ flowchart LR
 
 | Уровень | Поведение |
 |---------|-----------|
-| **RMQ consumer** (внутри сервиса) | Nack → requeue → после 3 попыток → `{queue}.dlq` |
+| **RMQ consumer** (внутри сервиса) | Republish с `x-retry-count`, backoff 1–30 s → после 5 попыток `{queue}.dlq` |
 | **webhooks HTTP** | Свой retry/backoff к **внешнему URL**; RMQ message ack после постановки в internal delivery queue |
 | **Observability** | Метрики: queue depth, consumer lag, DLQ size ([grafana-setup](../07-observability/grafana-setup.md)) |
 

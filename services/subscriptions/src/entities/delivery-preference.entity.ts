@@ -3,7 +3,8 @@ import type { DigestFrequency, QuietHours } from '../common/subscription.types';
 
 @Entity({ name: 'delivery_preference', schema: 'subscriptions' })
 export class DeliveryPreferenceEntity {
-  @PrimaryColumn({ type: 'uuid' })
+  /** Logto `sub` is an opaque identity ID and is not guaranteed to be a UUID. */
+  @PrimaryColumn({ type: 'varchar', length: 128 })
   userId!: string;
 
   @Column({ type: 'boolean', default: false })

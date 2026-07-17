@@ -138,7 +138,8 @@ MemberHomePage:
 
 **Roles:** Visitor (до redeem) или Member (redeem доп. кода — edge, TBD).
 
-**API:** `POST /api/v1/invites/redeem` после Logto; до redeem — только сохранение кода в sessionStorage.
+**API:** `GET /api/v1/invites/resolve` до Logto, затем authenticated
+`POST /api/v1/invites/claim`; код временно хранится в sessionStorage.
 
 ### ASCII
 
@@ -227,7 +228,7 @@ AboutPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Summary | Выдано / лимит plan-config | `GET /invites/quota` |
+| Summary | Выдано / лимит plan-config | metadata из реализованных invites endpoints; отдельного `/invites/quota` нет |
 | List | Код, статус, дата, redeem by | Copy to clipboard |
 | Actions | «Создать инвайт» | Disabled at limit |
 | Share | Copy link, native share (mobile) | `tavrida-lot.ru/invite?code=` |

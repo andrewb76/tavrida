@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OutboxMessageEntity } from '@tavrida/outbox';
 import { resolve } from 'node:path';
 import { CategoryEntity } from './entities/category.entity';
 import { CommentClosureEntity } from './entities/comment-closure.entity';
@@ -20,6 +21,7 @@ import { TopicsModule } from './modules/topics/topics.module';
 import { VotesModule } from './modules/votes/votes.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
 @Module({
   imports: [
@@ -29,11 +31,15 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 5432),
-      username: process.env.DB_USER ?? 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
-      database: process.env.DB_NAME ?? 'tavrida_lot',
+      ...(databaseUrl
+        ? { url: databaseUrl }
+        : {
+            host: process.env.DB_HOST ?? 'localhost',
+            port: Number(process.env.DB_PORT ?? 5432),
+            username: process.env.DB_USER ?? 'postgres',
+            password: process.env.DB_PASSWORD ?? 'postgres',
+            database: process.env.DB_NAME ?? 'tavrida_lot',
+          }),
       schema: 'forum',
       entities: [
         CategoryEntity,
@@ -44,7 +50,11 @@ const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
         ContentVoteEntity,
         TagEntity,
         ContentTagEntity,
+        OutboxMessageEntity,
       ],
+      migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
+      migrationsTableName: 'forum_migrations',
+      migrationsRun: process.env.NODE_ENV === 'production',
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     CategoriesModule,

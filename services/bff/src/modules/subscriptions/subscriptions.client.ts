@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { internalServiceHeaders } from '@tavrida/internal-auth';
 
 export type SubscriptionDto = {
   id: string;
@@ -40,11 +41,10 @@ export class SubscriptionsClient {
   }
 
   private headers(hasBody: boolean): Record<string, string> {
-    const headers: Record<string, string> = {};
-    if (hasBody) headers['Content-Type'] = 'application/json';
-    const token = this.config.get<string>('INTERNAL_SERVICE_TOKEN')?.trim();
-    if (token) headers.Authorization = `Bearer ${token}`;
-    return headers;
+    return internalServiceHeaders(
+      this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+      hasBody ? { 'Content-Type': 'application/json' } : {},
+    );
   }
 
   list(userId: string, sourceDomain?: string) {

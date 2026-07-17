@@ -6,7 +6,9 @@
 
 - **Logto** — OIDC, JWT в `Authorization: Bearer`
 - BFF validates JWKS ([LOGTO_JWKS_URL](../02-infrastructure/PLATFORM-SECRETS.md))
-- Internal service-to-service — service JWT or mTLS (**TODO ADR**)
+- BFF запускается fail-closed без полного набора issuer/JWKS/audience; local dev-token требует явного `BFF_ALLOW_DEV_TOKENS=true` и запрещён в production
+- Internal service-to-service — shared production Bearer
+  `INTERNAL_SERVICE_TOKEN` на всех `/internal/v1/*`; service JWT/mTLS остаётся target hardening
 
 ## 🛡️ Авторизация
 

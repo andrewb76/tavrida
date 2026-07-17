@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>W03 Visual Lab — 3 направления</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0B1F24;
+      --ink-soft: #16333A;
+      --chalk: #F2F4F3;
+      --mist: #E4EAE8;
+      --foam: #FAFBFA;
+      --patina: #1F7A6E;
+      --patina-deep: #155E55;
+      --copper: #C47A3A;
+      --copper-deep: #A35F28;
+      --sand: #C9B89A;
+      --muted: #5C6B70;
+      --line: #CDD6D4;
+      --live: #D94A2A;
+      --font-ui: "Onest", system-ui, sans-serif;
+      --font-display: "Unbounded", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-ui);
+      background: #2a3336;
+      color: #fff;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+    .lab-head {
+      max-width: 1100px;
+      margin: 0 auto 20px;
+      text-align: center;
+    }
+    .lab-head h1 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .lab-head p {
+      margin-top: 8px;
+      font-size: 0.875rem;
+      color: #b8c4c2;
+      max-width: 40rem;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.45;
+    }
+    .dir-tabs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px auto;
+      max-width: 1100px;
+    }
+    .dir-tabs button {
+      font-family: var(--font-ui);
+      border: 1px solid #4a585c;
+      background: #1a2428;
+      color: #dfe8e6;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+    .dir-tabs button[aria-selected="true"] {
+      background: var(--patina);
+      border-color: var(--patina);
+      color: #fff;
+    }
+    .stage {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .panel { display: none; }
+    .panel.is-active { display: block; }
+    .caption {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #9aabA8;
+      margin-bottom: 10px;
+      max-width: 390px;
+    }
+    .phone {
+      width: 390px;
+      height: 780px;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 16px 48px rgb(0 0 0 / 0.45);
+      display: flex;
+      flex-direction: column;
+    }
+    .phone header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .gallery {
+      position: relative;
+      flex-shrink: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, #6b7c78 0%, transparent 50%),
+        linear-gradient(160deg, #3d4a48, #1c2826);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgb(255 255 255 / 0.55);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .gallery::after {
+      content: "● ○ ○";
+      position: absolute;
+      bottom: 12px;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      opacity: 0.7;
+    }
+    .coin {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, #d8c9a8, #8a7a55 55%, #4a4030);
+      box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.15), 0 8px 24px rgb(0 0 0 / 0.35);
+    }
+    .body { flex: 1; overflow: auto; padding-bottom: 120px; }
+    .meta { padding: 16px; }
+    .meta h1 {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .seller {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--sand);
+    }
+    .status {
+      margin: 0 16px 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+    .status .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .live {
+      color: var(--live);
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .timer { font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+    .price {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .bids-n { font-size: 0.75rem; margin-top: 2px; opacity: 0.75; }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px;
+      border-bottom: 1px solid transparent;
+    }
+    .tabs span {
+      padding: 10px 8px;
+      font-size: 0.8125rem;
+      opacity: 0.55;
+    }
+    .tabs span.on {
+      opacity: 1;
+      font-weight: 600;
+      border-bottom: 2px solid currentColor;
+    }
+    .tab-panel {
+      padding: 14px 16px;
+      font-size: 0.875rem;
+      line-height: 1.55;
+      opacity: 0.92;
+    }
+    .sticky {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 56px;
+      padding: 12px 16px;
+    }
+    .sticky button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: var(--font-ui);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 56px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      font-size: 0.65rem;
+      text-align: center;
+      align-items: center;
+    }
+    .nav div { opacity: 0.55; }
+    .nav div.on { opacity: 1; font-weight: 600; }
+
+    /* —— A: limestone + patina —— */
+    .dir-a .phone { background: var(--chalk); color: var(--ink); }
+    .dir-a header { background: var(--foam); border-bottom: 1px solid var(--line); }
+    .dir-a .gallery { height: 210px; }
+    .dir-a .status {
+      background: var(--foam);
+      border: 1px solid var(--line);
+    }
+    .dir-a .price { color: var(--ink); }
+    .dir-a .tabs { border-bottom-color: var(--line); color: var(--ink); }
+    .dir-a .tabs span.on { color: var(--patina); }
+    .dir-a .sticky {
+      background: linear-gradient(transparent, var(--chalk) 35%);
+    }
+    .dir-a .sticky button {
+      background: var(--copper);
+      color: #fff;
+    }
+    .dir-a .nav {
+      background: var(--foam);
+      border-top: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    /* —— B: dark water —— */
+    .dir-b .phone { background: var(--ink); color: var(--chalk); }
+    .dir-b header { background: transparent; position: absolute; z-index: 2; left: 0; right: 0; color: #fff; text-shadow: 0 1px 4px rgb(0 0 0 / 0.5); }
+    .dir-b .gallery { height: 280px; border-radius: 0; }
+    .dir-b .body { margin-top: -24px; position: relative; z-index: 1; }
+    .dir-b .meta {
+      background: var(--ink-soft);
+      border-radius: 20px 20px 0 0;
+      padding-top: 20px;
+    }
+    .dir-b .seller { color: #9eb0ad; }
+    .dir-b .status {
+      background: rgb(0 0 0 / 0.35);
+      border: 1px solid rgb(255 255 255 / 0.08);
+      margin-top: -4px;
+    }
+    .dir-b .price { color: #fff; }
+    .dir-b .tabs { color: var(--chalk); border-bottom-color: rgb(255 255 255 / 0.1); }
+    .dir-b .tabs span.on { color: var(--copper); }
+    .dir-b .tab-panel { color: #c5d0ce; }
+    .dir-b .sticky {
+      background: linear-gradient(transparent, var(--ink) 40%);
+    }
+    .dir-b .sticky button {
+      background: var(--patina);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 8px 24px rgb(31 122 110 / 0.35);
+    }
+    .dir-b .nav {
+      background: var(--ink-soft);
+      border-top: 1px solid rgb(255 255 255 / 0.08);
+      color: var(--chalk);
+    }
+
+    /* —— C: editorial —— */
+    .dir-c .phone { background: var(--foam); color: var(--ink); }
+    .dir-c header {
+      background: transparent;
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+    .dir-c .gallery {
+      height: 180px;
+      margin: 0 16px;
+      border-radius: 4px;
+      background: var(--mist);
+    }
+    .dir-c .gallery::after { color: var(--muted); }
+    .dir-c .meta h1 {
+      font-size: 1.35rem;
+      max-width: 16ch;
+    }
+    .dir-c .status {
+      background: transparent;
+      border: none;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      margin: 0;
+      padding: 16px;
+    }
+    .dir-c .price { color: var(--ink); font-size: 1.75rem; }
+    .dir-c .live { color: var(--patina-deep); }
+    .dir-c .tabs { border-bottom-color: var(--line); color: var(--ink); }
+    .dir-c .tabs span.on { color: var(--ink); border-bottom-width: 1px; }
+    .dir-c .sticky {
+      background: var(--foam);
+      border-top: 1px solid var(--line);
+    }
+    .dir-c .sticky button {
+      background: var(--ink);
+      color: var(--chalk);
+      border-radius: 2px;
+      font-weight: 600;
+    }
+    .dir-c .nav {
+      background: var(--foam);
+      border-top: 1px solid var(--line);
+      color: var(--ink);
+    }
+    .dir-c .coin {
+      width: 88px;
+      height: 88px;
+      box-shadow: none;
+      border: 1px solid var(--line);
+    }
+
+    .notes {
+      max-width: 1100px;
+      margin: 28px auto 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .notes article {
+      background: #1a2428;
+      border: 1px solid #3a484c;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.8125rem;
+      color: #c5d0ce;
+      line-height: 1.45;
+    }
+    .notes h3 {
+      font-family: var(--font-display);
+      font-size: 0.8125rem;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="lab-head">
+    <h1>Visual Lab · W03 страница лота</h1>
+    <p>
+      Три графических подхода на одном wireframe. Палитра и шрифты из брендбука —
+      меняются композиция, свет и характер CTA. Выбери направление, затем мигрируем tokens.
+    </p>
+  </div>
+
+  <div class="dir-tabs" role="tablist" aria-label="Направления">
+    <button type="button" role="tab" id="tab-a" aria-selected="true" aria-controls="panel-a" data-dir="a">A · Известняк + патина</button>
+    <button type="button" role="tab" id="tab-b" aria-selected="false" aria-controls="panel-b" data-dir="b">B · Тёмная вода</button>
+    <button type="button" role="tab" id="tab-c" aria-selected="false" aria-controls="panel-c" data-dir="c">C · Редакционный</button>
+  </div>
+
+  <div class="stage">
+    <div id="panel-a" class="panel is-active dir-a" role="tabpanel" aria-labelledby="tab-a">
+      <p class="caption">A — light-first брендбук: вещь в раме, copper CTA, спокойный chalk</p>
+      <div class="phone" data-phone>
+        <header><span>← Лоты</span><span>🔔</span></header>
+        <div class="gallery" style="height:210px"><div class="coin" aria-hidden="true"></div></div>
+        <div class="body">
+          <div class="meta">
+            <h1>Серебряный denarius · III в.</h1>
+            <div class="seller"><span class="avatar"></span> seller42 · ★ 4.8 · Античность</div>
+          </div>
+          <div class="status">
+            <div class="row"><span class="live">● Live</span><span class="timer">02:14:33</span></div>
+            <div class="price">1 500 ₽</div>
+            <div class="bids-n">12 ставок</div>
+          </div>
+          <div class="tabs"><span class="on">Описание</span><span>Ставки</span><span>Эксперт</span></div>
+          <div class="tab-panel">Найден у юго-западного склона. Патина ровная, легенда читается. Происхождение — частная коллекция.</div>
+        </div>
+        <div class="sticky"><button type="button">Сделать ставку · 1 550 ₽</button></div>
+        <nav class="nav"><div>Home</div><div class="on">Лоты</div><div>Форум</div><div>Профиль</div></nav>
+      </div>
+    </div>
+
+    <div id="panel-b" class="panel dir-b" role="tabpanel" aria-labelledby="tab-b" hidden>
+      <p class="caption">B — тёмный shell, full-bleed фото, ставка как «пульс»</p>
+      <div class="phone" data-phone>
+        <header><span>←</span><span>🔔</span></header>
+        <div class="gallery"><div class="coin" aria-hidden="true"></div></div>
+        <div class="body">
+          <div class="meta">
+            <h1>Серебряный denarius · III в.</h1>
+            <div class="seller"><span class="avatar"></span> seller42 · ★ 4.8 · Античность</div>
+          </div>
+          <div class="status">
+            <div class="row"><span class="live">● Live</span><span class="timer">02:14:33</span></div>
+            <div class="price">1 500 ₽</div>
+            <div class="bids-n">12 ставок</div>
+          </div>
+          <div class="tabs"><span class="on">Описание</span><span>Ставки</span><span>Эксперт</span></div>
+          <div class="tab-panel">Найден у юго-западного склона. Патина ровная, легенда читается. Происхождение — частная коллекция.</div>
+        </div>
+        <div class="sticky"><button type="button">Сделать ставку · 1 550 ₽</button></div>
+        <nav class="nav"><div>Home</div><div class="on">Лоты</div><div>Форум</div><div>Профиль</div></nav>
+      </div>
+    </div>
+
+    <div id="panel-c" class="panel dir-c" role="tabpanel" aria-labelledby="tab-c" hidden>
+      <p class="caption">C — типографика и воздух; меньше «торгового» жара, больше каталога</p>
+      <div class="phone" data-phone>
+        <header><span>← Лоты</span><span>Поделиться</span></header>
+        <div class="gallery"><div class="coin" aria-hidden="true"></div></div>
+        <div class="body">
+          <div class="meta">
+            <h1>Серебряный denarius · III в.</h1>
+            <div class="seller"><span class="avatar"></span> seller42 · ★ 4.8 · Античность</div>
+          </div>
+          <div class="status">
+            <div class="row"><span class="live">Идут торги</span><span class="timer">осталось 2 ч 14 мин</span></div>
+            <div class="price">1 500 ₽</div>
+            <div class="bids-n">12 ставок</div>
+          </div>
+          <div class="tabs"><span class="on">Описание</span><span>Ставки</span><span>Эксперт</span></div>
+          <div class="tab-panel">Найден у юго-западного склона. Патина ровная, легенда читается. Происхождение — частная коллекция.</div>
+        </div>
+        <div class="sticky"><button type="button">Сделать ставку · 1 550 ₽</button></div>
+        <nav class="nav"><div>Home</div><div class="on">Лоты</div><div>Форум</div><div>Профиль</div></nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <article>
+      <h3>A · Известняк + патина</h3>
+      Ближе всего к brandbook §3. Пилот миграции tokens проще всего. Copper на CTA = «горячая ставка».
+    </article>
+    <article>
+      <h3>B · Тёмная вода</h3>
+      Сильнее «присутствие» торгов. Потребует dark surfaces + light admin twin. Фото — главный герой.
+    </article>
+    <article>
+      <h3>C · Редакционный</h3>
+      Спокойнее, больше текста. Следить, чтобы не скатиться в «музейный каталог» (анти-референс брендбука).
+    </article>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.dir-tabs button');
+    const panels = {
+      a: document.getElementById('panel-a'),
+      b: document.getElementById('panel-b'),
+      c: document.getElementById('panel-c'),
+    };
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const dir = tab.dataset.dir;
+        tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+        Object.entries(panels).forEach(([key, el]) => {
+          const on = key === dir;
+          el.classList.toggle('is-active', on);
+          el.hidden = !on;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -39,6 +39,7 @@ export class MeController {
   @Post('identity')
   @UseGuards(JwtAuthGuard)
   syncIdentity(@CurrentUser() user: AuthUser, @Body() body: SyncIdentityDto) {
-    return this.me.syncIdentity(user.sub, body);
+    // Logto claims in this payload always describe the JWT actor, not an X-Act-As target.
+    return this.me.syncIdentity(user.actorSub ?? user.sub, body);
   }
 }

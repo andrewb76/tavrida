@@ -34,11 +34,12 @@
 
 ## 📋 TODO (design)
 
+- [ ] **Visual Lab W03** — выбрать направление A/B/C ([visual-lab](./wireframes/visual-lab/README.md))
 - [ ] Миграция `tokens.css` на палитру брендбука ([design-system §15](./design-system.md#15-миграция-кода))
 - [ ] Figma file + logo
-- [ ] High-fi mockups from wireframes
+- [ ] Пилот hi-fi на 1–2 экранах после выбора направления
 - [ ] Admin-ui «Инструменты» page ([dev-tools](../02-infrastructure/dev-tools.md))
-- [ ] Dark theme pass
+- [ ] Dark theme pass (если победит не только B)
 
 ## 📘 Brandbook & design system
 

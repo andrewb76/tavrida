@@ -13,7 +13,7 @@ function useMockApi(): boolean {
   return import.meta.env.VITE_USE_MOCK !== 'false';
 }
 
-let refreshPromise: Promise<PlatformRole[]> | null = null;
+const refreshPromises = new Map<string, Promise<PlatformRole[]>>();
 
 export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
   const session = useSessionStore();
@@ -45,22 +45,35 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
     return [];
   }
 
-  if (!refreshPromise) {
-    session.setRolesLoading(true);
-    refreshPromise = fetchPlatformRoles()
+  const identity = session.actAsUserId ?? session.userId;
+  if (!identity) return [];
+  const existing = refreshPromises.get(identity);
+  if (existing) return existing;
+
+  session.setPlatformRoles([]);
+  session.setRolesLoading(true);
+  const request = fetchPlatformRoles()
       .then((roles) => {
-        session.setPlatformRoles(roles);
+        const current = useSessionStore();
+        if ((current.actAsUserId ?? current.userId) === identity) {
+          current.setPlatformRoles(roles);
+        }
         return roles;
       })
       .catch(() => {
-        session.setPlatformRoles(['member']);
+        const current = useSessionStore();
+        if ((current.actAsUserId ?? current.userId) === identity) {
+          current.setPlatformRoles(['member']);
+        }
         return ['member'] as PlatformRole[];
       })
       .finally(() => {
-        session.setRolesLoading(false);
-        refreshPromise = null;
+        const current = useSessionStore();
+        if ((current.actAsUserId ?? current.userId) === identity) {
+          current.setRolesLoading(false);
+        }
+        if (refreshPromises.get(identity) === request) refreshPromises.delete(identity);
       });
-  }
-
-  return refreshPromise;
+  refreshPromises.set(identity, request);
+  return request;
 }

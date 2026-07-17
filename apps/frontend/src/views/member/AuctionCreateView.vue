@@ -21,6 +21,7 @@ const loading = ref(true);
 const submitting = ref(false);
 const error = ref<string | null>(null);
 const formError = ref<string | null>(null);
+const submitIdempotencyKey = crypto.randomUUID();
 
 const title = ref('');
 const description = ref('');
@@ -115,7 +116,7 @@ async function submit() {
   }
 
   try {
-    const created = await createAuction(payload);
+    const created = await createAuction(payload, submitIdempotencyKey);
     await router.push(`/auctions/${created.id}`);
   } catch (e) {
     formError.value = e instanceof Error ? e.message : 'Не удалось создать лот';

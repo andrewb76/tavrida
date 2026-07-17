@@ -18,6 +18,7 @@ const currency = ref('RUB');
 const subscriptionPlanId = ref('free');
 const subscriptionExpires = ref<string | null>(null);
 const autoRenew = ref(false);
+const autoRenewError = ref<string | null>(null);
 const transactions = ref<WalletTransaction[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -70,11 +71,13 @@ async function confirmDeposit() {
 }
 
 async function toggleAutoRenewOff() {
+  autoRenewError.value = null;
   try {
     await cancelAutoRenew();
     autoRenew.value = false;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Не удалось отключить автопродление';
+    autoRenewError.value =
+      e instanceof Error ? e.message : 'Не удалось отключить автопродление';
   }
 }
 
@@ -160,6 +163,12 @@ function formatDate(iso: string): string {
             Отключить автопродление
           </UiButton>
         </div>
+        <p
+          v-if="autoRenewError"
+          class="mt-2 text-sm text-error"
+        >
+          {{ autoRenewError }}
+        </p>
       </div>
 
       <div>

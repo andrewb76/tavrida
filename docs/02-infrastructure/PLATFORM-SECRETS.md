@@ -54,6 +54,8 @@
 | `LOGTO_ENDPOINT` | нет | bff, frontend | `https://logto.example.com` | OIDC issuer / Logto tenant URL |
 | `LOGTO_JWKS_URL` | нет | bff | `{LOGTO_ENDPOINT}/oidc/jwks` | JWKS для валидации JWT |
 | `LOGTO_AUDIENCE` | нет | bff | `https://api.tavrida-lot.localhost` | Expected `aud` в JWT |
+| `BFF_ALLOW_DEV_TOKENS` | нет | bff | `false` | Явный local-only fallback `Bearer dev-{userId}`; в production всегда запрещён |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | bff + все domain services | — | Shared Bearer для всех `/internal/v1/*`; в production отсутствие останавливает сервис |
 | `LOGTO_M2M_APP_ID` | **да** | bff | — | M2M app для Management API (invites) |
 | `LOGTO_M2M_APP_SECRET` | **да** | bff | — | M2M client secret |
 | `LOGTO_M2M_RESOURCE` | нет | bff | `https://default.logto.app/api` | Management API resource |
@@ -77,6 +79,7 @@
 | `PORT` | нет | `3000` | HTTP + WS entrypoint |
 | `LOGTO_JWKS_URL` | нет | см. платформа | JWT validation |
 | `LOGTO_AUDIENCE` | нет | см. платформа | JWT audience |
+| `BFF_ALLOW_DEV_TOKENS` | нет | `false` | Только local/dev: разрешить `Bearer dev-{userId}` при отсутствии Logto; production fail-closed |
 | `LOGTO_M2M_APP_ID` | **да** | — | Logto Management API (invites) |
 | `LOGTO_M2M_APP_SECRET` | **да** | — | M2M secret |
 | `LOGTO_M2M_RESOURCE` | нет | `https://default.logto.app/api` | Management API resource |
@@ -88,12 +91,12 @@
 | `AUCTION_URL` | нет | `http://localhost:3003` | Upstream auction |
 | `SUBSCRIPTIONS_URL` | нет | `http://localhost:3004` | Upstream subscriptions (legacy: `AUCTION_SUBSCRIPTIONS_URL`) |
 | `RATING_URL` | нет | `http://localhost:3005` | Upstream rating |
-| `FEEDBACK_URL` | нет | `http://localhost:3006` | Upstream feedback |
+| `DEAL_FEEDBACK_URL` | нет | `http://localhost:3006` | Upstream deal-feedback |
 | `USER_PROFILE_URL` | нет | `http://localhost:3007` | Upstream user-profile |
-| `SCALAR_CONFIG_URL` | нет | `http://localhost:3008` | Upstream settings |
+| `SCALAR_CONFIG_URL` | нет | `http://localhost:3008` | Upstream scalar-config |
 | `FORUM_URL` | нет | `http://localhost:3009` | Upstream forum |
 | `NOTIFICATIONS_URL` | нет | `http://localhost:3010` | Upstream notifications |
-| `INTERNAL_SERVICE_TOKEN` | нет* | — | Bearer к `notifications` / `subscriptions` `/internal/v1/*` (пусто = open) |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer ко всем domain-service `/internal/v1/*`; local без токена разрешён |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
 | `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
@@ -101,7 +104,6 @@
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
 | `KETO_ADMIN_RELATION` | нет | `admin` | Admin relation name |
 | `CLUB_INVITE_VALIDITY_DAYS` | нет | `14` | **Deprecated** — fallback если settings недоступен; primary: `club.invite.validityDays` (admin `/admin/settings`) |
-| `CLUB_INVITES_PER_MONTH` | нет | `10` | **Deprecated** — fallback если plan-config недоступен; primary: `club.member.invite.monthlyMax` |
 | `CLUB_INVITES_UNLIMITED_ISSUER_IDS` | нет | — | CSV Logto `sub` без лимита (fallback без Keto) |
 
 > В README BFF указано `{SERVICE}_URL` — полный список зафиксирован здесь.
@@ -170,7 +172,7 @@
 |------------|--------|--------|----------|
 | `PORT` | нет | — | `3005` |
 | `DATABASE_URL` | **да** | `rating` | PostgreSQL |
-| `RABBITMQ_URL` | **да** | — | `rating.updated`, `feedback.submitted` |
+| `RABBITMQ_URL` | **да** | — | `rating.updated`, `deal_feedback.submitted` |
 | `SCALAR_CONFIG_URL` | нет | — | Параметры формулы рейтинга |
 
 ---
@@ -183,7 +185,7 @@
 | `DATABASE_URL` | **да** | `deal_feedback` | PostgreSQL |
 | `RABBITMQ_URL` | **да*** | — | consume `marketplace.order_completed` |
 | `USER_PROFILE_URL` | нет | — | Δrating на submit (`DEAL_FEEDBACK`) |
-| `FEEDBACK_URL` / `DEAL_FEEDBACK_URL` | нет (BFF) | — | Upstream URL |
+| `DEAL_FEEDBACK_URL` | нет (BFF) | — | Canonical upstream URL |
 
 \*без URL consumer тихо отключается.
 
@@ -242,7 +244,7 @@
 | `NOVU_API_KEY` | нет* | — | Novu secret; без ключа — **mock** trigger |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | — | Public id (Dashboard) |
 | `NOVU_API_URL` | нет | `http://localhost:3020` | Self-host (`pnpm novu:up`); без ключа mock не ходит в API |
-| `INTERNAL_SERVICE_TOKEN` | нет* | — | Shared Bearer for `/internal/v1/*`; empty = open (dev) |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Shared Bearer for `/internal/v1/*`; empty допускается только вне production |
 | `RABBITMQ_URL` | нет* | — | Consume domain events *(next)* |
 
 ---

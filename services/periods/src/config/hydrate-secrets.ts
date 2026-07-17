@@ -7,6 +7,7 @@ export function hydrateSecretEnv(keys: string[] = []): void {
   const defaults = [
     'DB_PASSWORD',
     'DATABASE_URL',
+    'INTERNAL_SERVICE_TOKEN',
     ...keys,
   ];
   for (const key of defaults) {

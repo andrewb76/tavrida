@@ -58,7 +58,7 @@
 |---|---|
 | **W** | CRON evaluate |
 | **T** | `rating.user_banned`; block bid/post |
-| **Компоненты** | `rating`, `feedback`, `auction`, `forum` |
+| **Компоненты** | `rating`, `deal-feedback`, `auction`, `forum` |
 | **Тест** | **UNIT** + INT check-ban |
 
 ### S-035 · Autorenew fail

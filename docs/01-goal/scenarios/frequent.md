@@ -92,7 +92,7 @@
 | | |
 |---|---|
 | **G** | Guest; `club.registration.inviteOnly` |
-| **W** | Logto OIDC → `POST /invites/redeem` |
+| **W** | `GET /invites/resolve` → Logto OIDC → `POST /invites/claim` |
 | **T** | JWT; profile ensure; `inviterId`; referral recompute; Novu upsert |
 | **Компоненты** | Logto, BFF, `user-profile`, `rating`, `notifications` |
 | **Тест** | E2E auth + invite |
@@ -143,7 +143,7 @@
 | **G** | `endsAt` passed |
 | **W** | Worker close + user submit feedback |
 | **T** | RMQ chain → `rating` update |
-| **Компоненты** | `auction`, `feedback`, `notifications`, `rating` |
+| **Компоненты** | `auction`, `deal-feedback`, `notifications`, `rating` |
 | **Тест** | **INT chain**; E2E modal |
 
 ### S-016 · Кошелёк (просмотр)

@@ -8,6 +8,7 @@ import { LimitsService } from './limits.service';
 function createLimitsHarness(tier: {
   limitValue?: number | null;
   isFeatureEnabled?: boolean;
+  isEnabled?: boolean;
 } | null) {
   const subscriptions = {
     resolvePlanId: async () => 'pro',
@@ -23,7 +24,7 @@ function createLimitsHarness(tier: {
             isFeatureEnabled: tier.isFeatureEnabled ?? false,
             enumValues: null,
             priceAmount: null,
-            isEnabled: true,
+            isEnabled: tier.isEnabled ?? true,
           } as Awaited<ReturnType<PlanVariablesService['getTier']>>)
         : null,
   } as Pick<PlanVariablesService, 'getTier'>;
@@ -74,6 +75,20 @@ describe('LimitsService', () => {
 
     assert.equal(result.allowed, false);
     assert.equal(result.reason, 'unknown_variable');
+  });
+
+  it('checkLimit denies null and disabled tier limits', async () => {
+    const missingValue = createLimitsHarness({ limitValue: null });
+    const disabled = createLimitsHarness({ limitValue: 10, isEnabled: false });
+    const input = {
+      userId: 'user-1',
+      variableKey: 'auction.seller.lot.dailyCreateMax',
+      requestedValue: 1,
+      currentUsage: 0,
+    };
+
+    assert.equal((await missingValue.checkLimit(input)).reason, 'invalid_limit');
+    assert.equal((await disabled.checkLimit(input)).reason, 'tier_disabled');
   });
 
   it('canUseFeature reflects tier feature flag', async () => {

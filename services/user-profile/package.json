@@ -15,6 +15,8 @@
     "@nestjs/core": "^11.1.28",
     "@nestjs/platform-express": "^11.1.28",
     "@nestjs/typeorm": "^11.0.3",
+    "@tavrida/internal-auth": "workspace:*",
+    "@tavrida/outbox": "workspace:*",
     "amqplib": "^0.10.9",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

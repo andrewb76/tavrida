@@ -22,7 +22,7 @@
 | Workflow ID | Сценарий | Каналы | Trigger |
 |-------------|----------|--------|---------|
 | `feedback-request` | Завершение аукциона → оценить | email, push, in-app | `auction.completed` |
-| `feedback-reminder` | Напоминание об отзыве | email, push | CRON → `feedback.reminder_due` |
+| `feedback-reminder` | Напоминание об отзыве | email, push | CRON → `deal_feedback.reminder_due` |
 | `auction-bid` | Новая ставка (подписан) | push, in-app, WS | `auction.bid_placed` |
 | `auction-subscription-digest` | Новые лоты в категории | email digest, push | scheduled |
 | `forum-reply` | Ответ в теме | email, push | HTTP trigger |

@@ -24,7 +24,7 @@ export class PeriodCategoryEntity {
   @Column({ type: 'int', default: 0 })
   sortOrder!: number;
 
-  @Column({ type: 'jsonb', default: () => `'{"fields":[]}'` })
+  @Column({ type: 'jsonb', default: { fields: [] } })
   metadataSchema!: MetadataSchema;
 
   @Column({ type: 'boolean', default: true })

@@ -219,8 +219,10 @@ export function useVangaForecast() {
     };
   }
 
+  let simulationGeneration = 0;
   const runSimulate = useDebounceFn(async () => {
     if (loading.value) return;
+    const generation = ++simulationGeneration;
     simulating.value = true;
     error.value = '';
     try {
@@ -231,19 +233,24 @@ export function useVangaForecast() {
           const req = applyPresetMultiplier(preset, buildRequest(state));
           return { scenarioId: preset, ...req };
         });
-        compareResults.value = await compareVanga(scenarios);
+        const compared = await compareVanga(scenarios);
+        if (generation !== simulationGeneration) return;
+        compareResults.value = compared;
         result.value =
           compareResults.value.find((r) => r.scenarioId === form.value.preset)?.result ?? null;
       } else {
         const req = applyPresetMultiplier(form.value.preset, buildRequest());
-        result.value = await simulateVanga(req);
+        const simulated = await simulateVanga(req);
+        if (generation !== simulationGeneration) return;
+        result.value = simulated;
         compareResults.value = [];
       }
     } catch (e) {
+      if (generation !== simulationGeneration) return;
       error.value = e instanceof Error ? e.message : 'Ошибка расчёта';
       result.value = null;
     } finally {
-      simulating.value = false;
+      if (generation === simulationGeneration) simulating.value = false;
     }
   }, 400);
 
