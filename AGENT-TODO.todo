@@ -64,6 +64,15 @@ Reputation log:
   ✔ Click rating/karma → popup log (user-profile reputation_change_log) @frontend @user-profile @done(26-07-14)
   ✔ При deal-feedback submit: Δrating + log (source=DEAL_FEEDBACK) @feedback @user-profile @done(26-07-14)
 
+Testing rollout:
+  ☐ T0: test discovery, zero-test guard, scripts, coverage baseline, parallel CI @testing @ci
+  ☐ T1: Testcontainers PostgreSQL — migrations, transactions, concurrency @testing @backend
+  ☐ T2: Nest HTTP/auth + OpenAPI/event contract gates @testing @security @bff
+  ☐ T3: RabbitMQ/outbox retry, DLQ, recovery, idempotency integration @testing @rabbitmq
+  ☐ T4: Vitest Vue component/store/router + MSW + axe @testing @frontend
+  ☐ T5: Playwright critical journeys + visual/accessibility smoke @testing @frontend
+  ☐ T6: deploy gates, k6, ZAP, image scan, release rehearsals @testing @ops
+
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)

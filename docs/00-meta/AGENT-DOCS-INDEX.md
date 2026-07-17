@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-17 (review remediation complete · naming/API/status audit)
+**Последнее обновление индекса:** 2026-07-17 (testing baseline + full-stack rollout plan)
 
 ---
 
@@ -43,6 +43,7 @@
 | **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |
 | **События / messaging** | RabbitMQ, event names | [event-catalog.md](../03-architecture/event-catalog.md) → [messaging.md](../03-architecture/messaging.md) | [03-architecture/README.md](../03-architecture/README.md) | transactional outbox: auction, marketplace, forum, user-profile · confirms + retry/DLQ |
 | **API conventions** | errors, pagination, idempotency | [06-api/README.md](../06-api/README.md) | [invites-api.md](../06-api/invites-api.md) · [vanga-admin-api.md](../06-api/vanga-admin-api.md) · [bff/README.md](../05-microservices/bff/README.md) | canonical routes audited 2026-07-17 · full openapi.yaml TODO |
+| **Тестирование** | Unit/integration/contract/E2E, CI gates | [08-testing/README.md](../08-testing/README.md) → [IMPLEMENTATION-PLAN.md](../08-testing/IMPLEMENTATION-PLAN.md) | [platform-scenarios.md](../01-goal/platform-scenarios.md) · [github-actions.md](../04-deployment/github-actions.md) · [messaging.md](../03-architecture/messaging.md) | 201 unit/mock assertions ✅ · T0–T6 rollout planned |
 | **Данные / schema** | entities, ownership | [10-data/README.md](../10-data/README.md) → [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) → [migrations.md](../04-deployment/migrations.md) | [naming.md](../13-maintenance/naming.md) · [registry-keys.md](../13-maintenance/registry-keys.md) | 12 schemas · `DATABASE_URL` · versioned migrations · 4 schema-local outboxes |
 | **Локальная разработка** | docker, env, ports | [local-dev.md](../04-deployment/local-dev.md) → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | [bootstrap-admin.md](../09-security/bootstrap-admin.md) · [dev-tools.md](../02-infrastructure/dev-tools.md) · `docker/compose/` | infra + Keto · `pnpm novu:up` · Logto optional |
 | **Деплой / CI** | Swarm, migrations, GH Actions | [04-deployment/README.md](../04-deployment/README.md) → [migrations.md](../04-deployment/migrations.md) → [github-actions.md](../04-deployment/github-actions.md) | [swarm-stacks.md](../04-deployment/swarm-stacks.md) · [ops-hygiene.md](../13-maintenance/ops-hygiene.md) · `docker/swarm/README.dev.md` | production migration before HTTP listen · Swarm dev deploy |
