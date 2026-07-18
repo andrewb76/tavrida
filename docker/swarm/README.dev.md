@@ -136,7 +136,20 @@ Redirect URIs в консоли Logto:
 
 API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_API_RESOURCE`.
 
-## Keto
+## Swarm configs (immutable)
+
+Docker Swarm **не обновляет** содержимое `configs:` — только Labels. При правке
+`docker/config/traefik/traefik.dev.yml` или `keto.yml` нужно **поднять суффикс**
+ключа в `stack-infra.dev.yml` (`traefik_static_v2` → `v3`, …), иначе:
+
+`failed to update config … only updates to Labels are allowed`
+
+После успешного deploy старые объекты можно убрать:
+
+```bash
+docker config ls
+docker config rm tavrida-dev_traefik_static   # если больше не в use
+```
 
 `docker/config/keto/keto.yml` DSN: `postgres://postgres:postgres@postgres:5432/…search_path=keto`.
 В `dev.secrets.env` / GitHub Secret **`POSTGRES_PASSWORD` должен быть `postgres`**, иначе migrate/serve не подключатся.
