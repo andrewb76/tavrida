@@ -33,8 +33,8 @@ permissions:
   contents: read
   packages: write
 
-env:
-  DOCKER_CONTEXT: dev-swarm
+# Do NOT set DOCKER_CONTEXT globally — build/login on the runner must use the
+# default context. Remote Swarm context is created later and only used for deploy.
 
 jobs:
   deploy:
@@ -137,10 +137,13 @@ jobs:
         env:
           DEV_SWARM_SSH_HOST: ${{ vars.DEV_SWARM_SSH_HOST }}
           DEV_SWARM_SSH_USER: ${{ vars.DEV_SWARM_SSH_USER }}
+          DOCKER_CONTEXT: dev-swarm
         run: ./docker/swarm/ci-docker-context.sh
 
       - name: Registry auth on context (for --with-registry-auth)
         if: steps.envcheck.outputs.ready == 'true'
+        env:
+          DOCKER_CONTEXT: dev-swarm
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker --context "$DOCKER_CONTEXT" login ghcr.io \
             -u "${{ github.actor }}" --password-stdin
