@@ -42,7 +42,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
+      # On push: exact SHA. On manual run: always tip of `dev` (UI often defaults to master,
+      # whose stack files still have compose `name:` rejected by `docker stack deploy`).
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'push' && github.sha || 'dev' }}
 
       - name: Resolve image tag
         id: tag

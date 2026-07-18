@@ -223,7 +223,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 1. DNS `*.evatorg.su` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
 2. Заполнить Environment `dev` (vars + secrets), в т.ч. `VITE_LOGTO_*`.
 3. **Actions → Sync secrets (dev)** — `force=true`, `redeploy=true` (или `redeploy=false` если образов ещё нет).
-4. **Actions → Deploy dev** — build + push + stack deploy (триггер: push в **`dev`** или manual).
+4. **Actions → Deploy / Sync** — всегда с кодом ветки **`dev`** (workflows сами делают `checkout ref: dev` на manual run). Не выбирайте `master` как источник устаревших stack-файлов.
 5. Дальше: push/merge в `dev` обновляет образы; sync — только при ротации паролей.
 
 ### GHCR: retention (старые образы)
