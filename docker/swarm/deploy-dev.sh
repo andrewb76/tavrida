@@ -19,12 +19,17 @@ if [[ -n "$DOCKER_CONTEXT" ]]; then
   docker_cmd=(docker --context "$DOCKER_CONTEXT")
 fi
 
-if ! "${docker_cmd[@]}" info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null | grep -q active; then
+if ! state="$("${docker_cmd[@]}" info --format '{{.Swarm.LocalNodeState}}' 2>/tmp/deploy-swarm-info.err)"; then
+  state=""
+fi
+if [[ "$state" != "active" ]]; then
   if [[ -z "$DOCKER_CONTEXT" ]]; then
     echo "Initializing Docker Swarm (single-node dev)..." >&2
     docker swarm init || true
   else
-    echo "Context '${DOCKER_CONTEXT}' is not an active Swarm manager." >&2
+    echo "Context '${DOCKER_CONTEXT}' is not an active Swarm manager (state='${state:-<empty>})." >&2
+    cat /tmp/deploy-swarm-info.err >&2 || true
+    "${docker_cmd[@]}" info >&2 || true
     exit 1
   fi
 fi

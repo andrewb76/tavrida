@@ -137,7 +137,7 @@ jobs:
         env:
           DEV_SWARM_SSH_HOST: ${{ vars.DEV_SWARM_SSH_HOST }}
           DEV_SWARM_SSH_USER: ${{ vars.DEV_SWARM_SSH_USER }}
-          DOCKER_CONTEXT: dev-swarm
+          DEV_SWARM_CONTEXT: dev-swarm
         run: ./docker/swarm/ci-docker-context.sh
 
       - name: Registry auth on context (for --with-registry-auth)
