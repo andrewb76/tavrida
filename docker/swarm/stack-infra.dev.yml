@@ -196,6 +196,28 @@ services:
         - traefik.http.routers.imgproxy.tls.certresolver=le
         - traefik.http.services.imgproxy.loadbalancer.server.port=8080
 
+  # Ensure Postgres schema exists (init scripts only run on empty volume).
+  keto-schema-init:
+    image: postgres:17-alpine
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        until pg_isready -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do sleep 2; done
+        psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+        echo "keto schema ok"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 20
+
   keto-migrate:
     image: oryd/keto:v0.14.0
     configs:
@@ -207,9 +229,11 @@ services:
     networks:
       - tavrida_net
     deploy:
-      restart_policy:
-        condition: none
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 20
 
   keto:
     image: oryd/keto:v0.14.0
@@ -223,3 +247,6 @@ services:
       - tavrida_net
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s

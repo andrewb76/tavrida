@@ -138,13 +138,30 @@ API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_
 
 ## Keto
 
-`docker/config/keto/keto.yml` использует DSN с паролем postgres — для dev в `dev.secrets.env` задайте **`POSTGRES_PASSWORD=postgres`** (тот же, что sync в Swarm). После первого входа:
+`docker/config/keto/keto.yml` DSN: `postgres://postgres:postgres@postgres:5432/…search_path=keto`.
+В `dev.secrets.env` / GitHub Secret **`POSTGRES_PASSWORD` должен быть `postgres`**, иначе migrate/serve не подключатся.
+
+Schema `keto` создаётся init-скриптом Postgres (только на пустом volume) и сервисом **`keto-schema-init`** в stack. Затем **`keto-migrate`**, затем **`keto` serve** (restart on-failure, пока migrate не пройдёт).
+
+Ручной ремонт на VPS:
+
+```bash
+PG=$(docker ps -q -f name=tavrida-dev_postgres)
+docker exec -e PGPASSWORD=postgres "$PG" \
+  psql -U postgres -d tavrida_lot -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+
+docker run --rm --network tavrida-dev_tavrida_net \
+  -v /opt/tavrida/docker/config/keto:/home/ory:ro \
+  -w /home/ory oryd/keto:v0.14.0 migrate up -y -c keto.yml
+
+docker service update --force tavrida-dev_keto
+```
+
+После первого входа:
 
 ```bash
 pnpm grant:admin <logto_sub>
 ```
-
-(с машины, где доступен Keto write API, или через Portainer exec.)
 
 ## Обновление релиза
 

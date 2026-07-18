@@ -6,7 +6,8 @@ log:
 namespaces:
   location: file://./namespaces.ts
 
-# Postgres schema `keto` in `tavrida_lot` (host `postgres` = service on tavrida-local network).
+# Postgres schema `keto` in `tavrida_lot` (host `postgres` = service on Swarm network).
+# Password must match Swarm secret `tavrida_dev_postgres_password` (dev default: postgres).
 # Override with `dsn: memory` only for ephemeral tests without infra.
 dsn: postgres://postgres:postgres@postgres:5432/tavrida_lot?sslmode=disable&search_path=keto
 
