@@ -390,6 +390,5 @@ services:
         - traefik.http.routers.frontend.tls.certresolver=le
         - traefik.http.services.frontend.loadbalancer.server.port=80
 
-networks:
-  tavrida_net:
-    external: true
+# Network `tavrida_net` is created by stack-infra.dev.yml (same stack deploy -c … -c …).
+# Do not mark it external here — merge would override infra and require a pre-existing network.
