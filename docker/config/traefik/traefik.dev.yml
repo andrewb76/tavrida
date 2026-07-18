@@ -23,7 +23,9 @@ entryPoints:
 certificatesResolvers:
   le:
     acme:
-      email: '${ACME_EMAIL}'
+      # Email is set via CLI --certificatesresolvers.le.acme.email=…
+      # (Traefik leaves ${ACME_EMAIL} literal inside Swarm configs).
+      email: unused@invalid.local
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web

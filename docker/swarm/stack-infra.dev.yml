@@ -23,7 +23,7 @@ volumes:
 # When changing file contents, bump the key suffix (v2 → v3) so deploy creates
 # a new config object; old ones can be removed with: docker config ls / rm
 configs:
-  traefik_static_v2:
+  traefik_static_v3:
     file: ../config/traefik/traefik.dev.yml
   keto_config_v2:
     file: ../config/keto/keto.yml
@@ -44,13 +44,14 @@ services:
     image: traefik:v3.7
     command:
       - --configFile=/etc/traefik/traefik.yml
-      # Compose interpolates this; static yaml ${VAR} is often left literal in Traefik.
+      # Compose interpolates these; static yaml ${VAR} is often left literal in Traefik.
       - --providers.swarm.network=${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
     environment:
       ACME_EMAIL: ${ACME_EMAIL}
       TRAEFIK_SWARM_NETWORK: ${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
     configs:
-      - source: traefik_static_v2
+      - source: traefik_static_v3
         target: /etc/traefik/traefik.yml
     ports:
       - target: 80
