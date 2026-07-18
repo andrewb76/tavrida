@@ -67,6 +67,10 @@ services:
       - ${TAVRIDA_REPO_ROOT}/docker/config/traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - tavrida_net
+    # Host IPv6 is unreachable; Go/Traefik ACME can hang on v6 before falling back to v4.
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
     deploy:
       placement:
         constraints:
