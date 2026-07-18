@@ -133,7 +133,21 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 
 | Secret                   | Кто использует                                |
 | ------------------------ | --------------------------------------------- |
-| `DEV_SWARM_SSH_KEY`      | **оба** workflow — private key без passphrase |
+| `DEV_SWARM_SSH_KEY`      | **оба** workflow — private key (**предпочтительно base64**, одна строка) |
+
+**Как положить SSH-ключ (рекомендуется base64):**
+
+```bash
+# Linux
+base64 -w0 ./tavrida-dev-swarm | xclip -selection clipboard   # или скопируйте вывод
+# macOS
+base64 < ./tavrida-dev-swarm | tr -d '\n' | pbcopy
+```
+
+В Environment secret `DEV_SWARM_SSH_KEY` вставьте **одну строку** base64 (без кавычек).  
+CI декодирует её в `docker/swarm/ci-ssh-agent.sh`. Сырой PEM тоже принимается, но UI GitHub часто ломает переносы (`error in libcrypto`).
+
+Проверка локально: `ssh -i ./tavrida-dev-swarm deploy@$HOST 'docker info …'` — ключ должен работать до base64.
 | `POSTGRES_PASSWORD`      | sync-secrets → Swarm                          |
 | `RABBITMQ_PASSWORD`      | sync-secrets → Swarm                          |
 | `MINIO_ROOT_PASSWORD`    | sync-secrets → Swarm                          |
@@ -188,10 +202,9 @@ ssh-keygen -t ed25519 -C 'github-actions-tavrida-dev' -f ./tavrida-dev-swarm -N 
 ssh root@193.142.148.175 'cat >> /home/deploy/.ssh/authorized_keys' < ./tavrida-dev-swarm.pub
 # или: scp + sudo tee / append от root
 
-# private → GitHub Environment secret DEV_SWARM_SSH_KEY
-# (весь файл tavrida-dev-swarm, включая -----BEGIN/END-----)
-pbcopy < ./tavrida-dev-swarm   # macOS; на Linux: xclip / wl-copy / вручную
-rm -f ./tavrida-dev-swarm ./tavrida-dev-swarm.pub   # после копирования в GH
+# private → GitHub Environment secret DEV_SWARM_SSH_KEY (base64, одна строка):
+base64 -w0 ./tavrida-dev-swarm   # Linux; macOS: base64 < ./tavrida-dev-swarm | tr -d '\n'
+# вставьте вывод в secret (не сырой PEM — UI часто ломает multiline → libcrypto)
 ```
 
 **3. Проверка с ноутбука:**
