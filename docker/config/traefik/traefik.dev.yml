@@ -32,7 +32,9 @@ providers:
   swarm:
     endpoint: 'unix:///var/run/docker.sock'
     exposedByDefault: false
-    network: '${TRAEFIK_SWARM_NETWORK}'
+    # Overridden at runtime by --providers.swarm.network=… (compose interpolates).
+    # Do not use ${TRAEFIK_SWARM_NETWORK} here — Traefik often leaves it literal.
+    network: tavrida-dev_tavrida_net
     watch: true
   file:
     directory: /etc/traefik/dynamic

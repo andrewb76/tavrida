@@ -41,6 +41,8 @@ services:
     image: traefik:v3.7
     command:
       - --configFile=/etc/traefik/traefik.yml
+      # Compose interpolates this; static yaml ${VAR} is often left literal in Traefik.
+      - --providers.swarm.network=${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
     environment:
       ACME_EMAIL: ${ACME_EMAIL}
       TRAEFIK_SWARM_NETWORK: ${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
@@ -71,6 +73,8 @@ services:
         - traefik.http.routers.traefik.entrypoints=websecure
         - traefik.http.routers.traefik.tls.certresolver=le
         - traefik.http.routers.traefik.service=api@internal
+        # Dummy port required when service=api@internal (Swarm provider)
+        - traefik.http.services.traefik-noop.loadbalancer.server.port=8080
         # Apex / www → app.<DEV_DOMAIN> (evatorg.su → app.evatorg.su)
         - traefik.http.middlewares.apex-to-app.redirectregex.regex=^https://[^/]+(.*)
         - traefik.http.middlewares.apex-to-app.redirectregex.replacement=https://app.${DEV_DOMAIN}$$1
@@ -171,10 +175,12 @@ services:
         - traefik.http.routers.minio-api.rule=Host(`s3.${DEV_DOMAIN}`)
         - traefik.http.routers.minio-api.entrypoints=websecure
         - traefik.http.routers.minio-api.tls.certresolver=le
+        - traefik.http.routers.minio-api.service=minio-api
         - traefik.http.services.minio-api.loadbalancer.server.port=9000
         - traefik.http.routers.minio-console.rule=Host(`minio.${DEV_DOMAIN}`)
         - traefik.http.routers.minio-console.entrypoints=websecure
         - traefik.http.routers.minio-console.tls.certresolver=le
+        - traefik.http.routers.minio-console.service=minio-console
         - traefik.http.services.minio-console.loadbalancer.server.port=9001
 
   imgproxy:
