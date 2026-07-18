@@ -2,8 +2,7 @@
 #
 # Secrets: sync via sync-secrets-dev.sh → *_FILE env in containers
 # Deploy: DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
-
-name: tavrida-dev
+# Stack name: CLI only (`tavrida-dev`) — no top-level `name:` (stack deploy rejects it).
 
 secrets:
   internal_service_token:

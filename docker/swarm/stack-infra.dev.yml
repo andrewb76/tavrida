@@ -4,8 +4,8 @@
 #   ./docker/swarm/deploy-dev.sh
 #
 # Requires: docker/swarm/dev.env (see dev.env.example)
-
-name: tavrida-dev
+# Stack name comes from CLI (`deploy-dev.sh` → tavrida-dev), not from compose `name:` —
+# `docker stack deploy` rejects top-level `name` ("Additional property name is not allowed").
 
 networks:
   tavrida_net:
