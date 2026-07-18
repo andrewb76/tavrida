@@ -230,7 +230,7 @@ services:
   keto-migrate:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config
+      - source: keto_config_v2
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
@@ -247,7 +247,7 @@ services:
   keto:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config
+      - source: keto_config_v2
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
