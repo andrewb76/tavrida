@@ -73,6 +73,14 @@ Testing rollout:
   ☐ T5: Playwright critical journeys + visual/accessibility smoke @testing @frontend
   ☐ T6: deploy gates, k6, ZAP, image scan, release rehearsals @testing @ops
 
+Dev Swarm (evatorg.su):
+  ✔ Репо: CD только с dev + apex redirect + docs @ops @docs @done(26-07-18)
+  ☐ DNS A-записи *.evatorg.su → 193.142.148.175 @ops
+  ☐ Logto Cloud tenant «dev/server» + API resource api.evatorg.su @ops
+  ☐ GitHub Environment dev: DEV_DOMAIN=evatorg.su + VITE_LOGTO_* @ops
+  ☐ VPS /opt/tavrida на ветке dev + Sync secrets + первый Deploy @ops
+  ☐ Приёмка TLS / login / audience; защита ветки dev @ops
+
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)

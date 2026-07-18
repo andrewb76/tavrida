@@ -264,24 +264,27 @@ export class UserProfileClient {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    if (!res.ok) {
-      let payload: Record<string, unknown> = {};
-      try {
-        payload = (await res.json()) as Record<string, unknown>;
-      } catch {
-        /* ignore */
-      }
+    const raw = await res.text();
+    const payload = parseJsonBody(raw);
 
+    if (!res.ok) {
       const detail =
-        (typeof payload.detail === 'string' ? payload.detail : undefined) ??
-        (typeof payload.message === 'string'
-          ? payload.message
-          : Array.isArray(payload.message)
-            ? payload.message.join(', ')
+        (payload && typeof payload === 'object' && typeof (payload as { detail?: unknown }).detail === 'string'
+          ? (payload as { detail: string }).detail
+          : undefined) ??
+        (payload && typeof payload === 'object' && typeof (payload as { message?: unknown }).message === 'string'
+          ? (payload as { message: string }).message
+          : payload &&
+              typeof payload === 'object' &&
+              Array.isArray((payload as { message?: unknown }).message)
+            ? ((payload as { message: string[] }).message).join(', ')
             : res.statusText);
 
       const body = {
-        type: typeof payload.type === 'string' ? payload.type : 'upstream-error',
+        type:
+          payload && typeof payload === 'object' && typeof (payload as { type?: unknown }).type === 'string'
+            ? (payload as { type: string }).type
+            : 'upstream-error',
         detail: `user-profile ${method} ${path}: ${detail}`,
       };
 
@@ -292,6 +295,17 @@ export class UserProfileClient {
       throw new HttpException(body, res.status);
     }
 
-    return (await res.json()) as T;
+    // Nest may serialize `return null` as an empty body; treat both as null.
+    return (payload ?? null) as T;
+  }
+}
+
+function parseJsonBody(raw: string): unknown {
+  const text = raw.trim();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
   }
 }

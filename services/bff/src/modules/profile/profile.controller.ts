@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -45,6 +46,12 @@ export class ProfileController {
 
   @Get('notes')
   getNote(@CurrentUser() user: AuthUser, @Query('ownerId') ownerId: string) {
+    if (!ownerId?.trim()) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'ownerId is required',
+      });
+    }
     return this.profiles.getProfileNote(ownerId, user.sub);
   }
 

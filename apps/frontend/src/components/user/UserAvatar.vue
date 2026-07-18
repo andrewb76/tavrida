@@ -42,7 +42,8 @@ const initial = computed(() => {
 
 const profileTo = computed(() => {
   if (!props.userId) return undefined;
-  if (session.userId === props.userId) {
+  const effectiveId = session.actAsUserId ?? session.userId;
+  if (effectiveId && effectiveId === props.userId) {
     return { name: 'profile-me' as const };
   }
   return { name: 'profile-user' as const, params: { userId: props.userId } };

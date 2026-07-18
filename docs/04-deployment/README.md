@@ -9,7 +9,7 @@
 |-----|--------|------------|
 | `local` | `*.tavrida-lot.localhost` | Разработка (pnpm + infra compose) |
 | `stage` | `*.stage.*` (TBD) | Интеграционный стенд — CD из ветки `stage` ([backlog](./stage-deployment-todo.md)) |
-| `dev` | `*.193.142.148.175.nip.io` | Swarm на VPS — [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md) |
+| `dev` | `*.evatorg.su` | Swarm на VPS — CD ветка `dev` · [dev-evatorg.md](./dev-evatorg.md) · [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md) |
 | `prod` | `*.tavrida-lot.ru` | Production |
 
 Публичный трафик: **Traefik → BFF → internal services**. Admin/tools — `*.tools.<env>` + [tinyauth](../02-infrastructure/dev-tools.md).
@@ -49,14 +49,15 @@ flowchart LR
     PR[PR push] --> Lint[lint + test]
     Lint --> Build[docker build matrix]
     Build --> Push[registry push :sha]
-    Merge[merge master] --> DeployDev[deploy dev stack]
+    Merge[merge to dev] --> DeployDev[deploy Swarm evatorg.su]
     Tag[tag v*] --> DeployProd[deploy prod stack]
 ```
 
 | Stage | Действие |
 |-------|----------|
 | PR | `pnpm lint`, `pnpm docs:build`, turbo build affected |
-| main | Docs → **GitHub Pages**; позже — push images `:git-sha`, deploy `dev` |
+| `master` | Docs → **GitHub Pages**; CI |
+| `dev` | Build/push GHCR `:git-sha` + `:dev`, Swarm deploy `evatorg.su` |
 | Release tag | Deploy `prod`, run migrations job |
 | Rollback | Redeploy previous `:sha` — см. [runbook-rollback](./runbook-rollback.md) |
 
@@ -112,6 +113,7 @@ registry.example.com/tavrida/billing:{semver}  # release tags only
 
 | Документ | Содержание |
 |----------|------------|
+| [dev-evatorg.md](./dev-evatorg.md) | Dev на `evatorg.su`: решения, DNS, Logto, чеклист |
 | [stage-deployment-todo.md](./stage-deployment-todo.md) | Решения по stage + backlog (GHCR, Logto Cloud, …) |
 | [swarm-stacks.md](./swarm-stacks.md) | Стеки, сети, labels |
 | [migrations.md](./migrations.md) | TypeORM migrations job |

@@ -24,7 +24,7 @@ if [[ "${1:-}" == "--push" ]]; then
   PUSH=true
 fi
 
-DEV_DOMAIN="${DEV_DOMAIN:-193.142.148.175.nip.io}"
+DEV_DOMAIN="${DEV_DOMAIN:-evatorg.su}"
 
 declare -A SERVICES=(
   [bff]="@tavrida/bff|services/bff"
@@ -71,6 +71,9 @@ docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_IMAGE_PROXY_FETCH_BASE_URL=http://minio:9000" \
   --build-arg "VITE_MEDIA_PUBLIC_BASE_URL=https://s3.${DEV_DOMAIN}" \
   --build-arg "VITE_USE_MOCK=false" \
+  --build-arg "VITE_LOGTO_ENDPOINT=${VITE_LOGTO_ENDPOINT:-}" \
+  --build-arg "VITE_LOGTO_APP_ID=${VITE_LOGTO_APP_ID:-}" \
+  --build-arg "VITE_LOGTO_API_RESOURCE=${VITE_LOGTO_API_RESOURCE:-https://api.${DEV_DOMAIN}}" \
   -t "${frontend_image}" \
   "${ROOT}"
 if $PUSH; then

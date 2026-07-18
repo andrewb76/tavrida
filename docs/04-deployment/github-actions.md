@@ -10,7 +10,7 @@
 | ---------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------- |
 | **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master`             | lint, test, turbo build                |
 | **Docs Pages**         | `[.github/workflows/docs-pages.yml](../../.github/workflows/docs-pages.yml)`             | push `master`, manual          | Публикация на **GitHub Pages**         |
-| **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push `master` (paths) + manual | Build → GHCR → Swarm stack deploy      |
+| **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → Swarm `evatorg.su`     |
 | **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` |
 | **Prune GHCR**         | `[.github/workflows/prune-ghcr-dev.yml](../../.github/workflows/prune-ghcr-dev.yml)`     | weekly + manual                | Удаление старых `tavrida-*` в GHCR     |
 
@@ -19,9 +19,9 @@
 flowchart LR
   PR[PR / push] --> CI[ci.yml]
   PushMaster[push master] --> Pages[docs-pages.yml]
-  PushMaster --> Deploy[deploy-dev.yml]
+  PushDev[push dev] --> Deploy[deploy-dev.yml]
   Deploy --> GHCR[(GHCR)]
-  Deploy --> Swarm[Swarm stack]
+  Deploy --> Swarm[Swarm evatorg.su]
   Sync[sync-secrets-dev.yml] -.->|редко| Secrets[Swarm secrets]
   Secrets --> Swarm
   Prune[prune-ghcr-dev.yml] -.->|weekly| GHCR
@@ -105,20 +105,25 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 ### Variables (публичный конфиг)
 
 
-| Variable             | Пример                                       |
-| -------------------- | -------------------------------------------- |
-| `DEV_SWARM_SSH_HOST` | `193.142.148.175`                            |
-| `DEV_SWARM_SSH_USER` | `deploy`                                     |
-| `DEV_DOMAIN`         | `193.142.148.175.nip.io`                     |
-| `ACME_EMAIL`         | `andrewb@bk.ru`                              |
-| `TAVRIDA_REPO_ROOT`  | `/opt/tavrida`                               |
-| `GHCR_OWNER`         | `andrewb76` (опц., иначе `repository_owner`) |
-| `LOGTO_ENDPOINT`     | `https://….logto.app`                        |
-| `LOGTO_JWKS_URL`     | `{endpoint}/oidc/jwks`                       |
-| `LOGTO_AUDIENCE`     | API resource                                 |
-| `LOGTO_M2M_APP_ID`   | M2M app id                                   |
-| `LOGTO_M2M_RESOURCE` | Management API resource                      |
-| `FRONTEND_ORIGIN`    | `https://app.193.142.148.175.nip.io`         |
+| Variable                   | Пример / значение                                      |
+| -------------------------- | ------------------------------------------------------ |
+| `DEV_SWARM_SSH_HOST`       | `193.142.148.175`                                      |
+| `DEV_SWARM_SSH_USER`       | `deploy`                                               |
+| `DEV_DOMAIN`               | `evatorg.su`                                           |
+| `ACME_EMAIL`               | `andrewb@bk.ru`                                        |
+| `TAVRIDA_REPO_ROOT`        | `/opt/tavrida`                                         |
+| `GHCR_OWNER`               | `andrewb76` (опц., иначе `repository_owner`)           |
+| `LOGTO_ENDPOINT`           | tenant «dev/server» `https://….logto.app`              |
+| `LOGTO_JWKS_URL`           | `{endpoint}/oidc/jwks`                                 |
+| `LOGTO_AUDIENCE`           | `https://api.evatorg.su`                               |
+| `LOGTO_M2M_APP_ID`         | M2M app id                                             |
+| `LOGTO_M2M_RESOURCE`       | `https://<tenant>.logto.app/api`                       |
+| `FRONTEND_ORIGIN`          | `https://app.evatorg.su`                               |
+| `VITE_LOGTO_ENDPOINT`      | тот же endpoint (build frontend)                       |
+| `VITE_LOGTO_APP_ID`        | SPA app id                                             |
+| `VITE_LOGTO_API_RESOURCE`  | `https://api.evatorg.su` (= `LOGTO_AUDIENCE`)          |
+
+Чеклист DNS / Logto / первого деплоя: [dev-evatorg.md](./dev-evatorg.md).
 
 
 
@@ -126,13 +131,16 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 ### Secrets
 
 
-| Secret                 | Кто использует                                |
-| ---------------------- | --------------------------------------------- |
-| `DEV_SWARM_SSH_KEY`    | **оба** workflow — private key без passphrase |
-| `POSTGRES_PASSWORD`    | sync-secrets                                  |
-| `RABBITMQ_PASSWORD`    | sync-secrets                                  |
-| `MINIO_ROOT_PASSWORD`  | sync-secrets                                  |
-| `LOGTO_M2M_APP_SECRET` | sync-secrets                                  |
+| Secret                   | Кто использует                                |
+| ------------------------ | --------------------------------------------- |
+| `DEV_SWARM_SSH_KEY`      | **оба** workflow — private key без passphrase |
+| `POSTGRES_PASSWORD`      | sync-secrets → Swarm                          |
+| `RABBITMQ_PASSWORD`      | sync-secrets → Swarm                          |
+| `MINIO_ROOT_PASSWORD`    | sync-secrets → Swarm                          |
+| `LOGTO_M2M_APP_SECRET`   | sync-secrets → Swarm (tenant «dev/server»)    |
+| `INTERNAL_SERVICE_TOKEN` | sync-secrets → Swarm (`openssl rand -hex 32`) |
+
+> **Локальная разработка не затрагивается.** Environment `dev` читают только Actions (`deploy-dev`, `sync-secrets-dev`). Ноутбук использует gitignored `.env.local` / `docker/swarm/dev.secrets.env` — это разные файлы и разные Logto tenants.
 
 
 `GITHUB_TOKEN` для push в GHCR выдаётся автоматически (`permissions: packages: write`).
@@ -140,22 +148,70 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 ### VPS one-shot
 
 ```bash
-# На manager-ноде
+# На manager-ноде (от root / sudo)
 sudo mkdir -p /opt/tavrida
-sudo chown "$USER" /opt/tavrida
+# Пользователь deploy + ключ для GitHub — см. ниже
 git clone git@github.com:andrewb76/tavrida.git /opt/tavrida
+cd /opt/tavrida && git checkout dev
 docker swarm init   # если ещё не
-# SSH: deploy user + authorized_keys для Actions
 ```
+
+#### Пользователь `deploy` + SSH-ключ для Actions
+
+CI ходит так: `ssh://deploy@VPS` → `docker context` → `stack deploy` / `secret`. Нужны: членство в группе `docker`, ключ **без passphrase**.
+
+**1. На VPS (под root / sudo):**
+
+```bash
+# Пользователь без login-пароля (только ключ)
+sudo adduser --disabled-password --gecos 'Tavrida Swarm deploy' deploy
+sudo usermod -aG docker deploy
+
+# Домашний SSH
+sudo mkdir -p /home/deploy/.ssh
+sudo chmod 700 /home/deploy/.ssh
+sudo touch /home/deploy/.ssh/authorized_keys
+sudo chmod 600 /home/deploy/.ssh/authorized_keys
+sudo chown -R deploy:deploy /home/deploy/.ssh
+
+# Checkout под deploy (bind-mounts stack-infra)
+sudo mkdir -p /opt/tavrida
+sudo chown deploy:deploy /opt/tavrida
+# дальше clone/pull от имени deploy
+```
+
+**2. Ключ на ноутбуке (не коммитить):**
+
+```bash
+ssh-keygen -t ed25519 -C 'github-actions-tavrida-dev' -f ./tavrida-dev-swarm -N ''
+# public → VPS:
+ssh root@193.142.148.175 'cat >> /home/deploy/.ssh/authorized_keys' < ./tavrida-dev-swarm.pub
+# или: scp + sudo tee / append от root
+
+# private → GitHub Environment secret DEV_SWARM_SSH_KEY
+# (весь файл tavrida-dev-swarm, включая -----BEGIN/END-----)
+pbcopy < ./tavrida-dev-swarm   # macOS; на Linux: xclip / wl-copy / вручную
+rm -f ./tavrida-dev-swarm ./tavrida-dev-swarm.pub   # после копирования в GH
+```
+
+**3. Проверка с ноутбука:**
+
+```bash
+ssh -i ./tavrida-dev-swarm deploy@193.142.148.175 'docker info --format "{{.Swarm.LocalNodeState}}"'
+# ожидается: active
+```
+
+GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = private key.
 
 Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/config/…` — путь должен существовать **на VPS**. Swarm configs (`traefik.dev.yml`, `keto.yml`) читаются с runner при `stack deploy`.
 
 ### Порядок первого деплоя
 
-1. Заполнить Environment `dev` (vars + secrets).
-2. **Actions → Sync secrets (dev)** — `force=true`, `redeploy=true` (или `redeploy=false` если образов ещё нет).
-3. **Actions → Deploy dev** — build + push + stack deploy.
-4. Дальше: push в `master` (или manual Deploy) обновляет образы; sync — только при ротации паролей.
+1. DNS `*.evatorg.su` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
+2. Заполнить Environment `dev` (vars + secrets), в т.ч. `VITE_LOGTO_*`.
+3. **Actions → Sync secrets (dev)** — `force=true`, `redeploy=true` (или `redeploy=false` если образов ещё нет).
+4. **Actions → Deploy dev** — build + push + stack deploy (триггер: push в **`dev`** или manual).
+5. Дальше: push/merge в `dev` обновляет образы; sync — только при ротации паролей.
 
 ### GHCR: retention (старые образы)
 

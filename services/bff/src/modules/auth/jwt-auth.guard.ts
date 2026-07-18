@@ -63,10 +63,10 @@ export class JwtAuthGuard implements CanActivate {
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
 
+      const reason = joseFailureReason(error);
       throw new UnauthorizedException({
         type: 'unauthorized',
-        detail:
-          'Invalid or expired access token. Ensure VITE_LOGTO_API_RESOURCE matches LOGTO_AUDIENCE.',
+        detail: reason,
       });
     }
   }
@@ -91,4 +91,29 @@ export class JwtAuthGuard implements CanActivate {
         'Invalid dev token. Use Bearer dev-{userId}, or configure Logto JWT validation.',
     });
   }
+}
+
+function joseFailureReason(error: unknown): string {
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? String((error as { code: unknown }).code)
+      : '';
+  const message = error instanceof Error ? error.message : '';
+
+  if (code === 'ERR_JWT_EXPIRED' || /"exp"|"exp" claim timestamp check failed|jwt expired/i.test(message)) {
+    return 'Access token expired — sign in again.';
+  }
+  if (
+    code === 'ERR_JWT_CLAIM_VALIDATION_FAILED' ||
+    /unexpected "aud"|audience|\"aud\"/i.test(message)
+  ) {
+    return (
+      'Access token audience mismatch. VITE_LOGTO_API_RESOURCE must equal LOGTO_AUDIENCE, ' +
+      'and the SPA must request that API resource (re-login after changing Logto config).'
+    );
+  }
+  return (
+    'Invalid access token. Ensure VITE_LOGTO_API_RESOURCE matches LOGTO_AUDIENCE ' +
+    'and the token is an API-resource access token (not an ID token).'
+  );
 }

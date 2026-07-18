@@ -13,7 +13,7 @@ import { useAuth } from '@/composables/useAuth';
 import { isLogtoConfigured } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
-import { fetchPublicProfile, publicProfileLabel, type PublicProfile } from '@/services/profile';
+import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile } from '@/services/profile';
 import { useSessionStore } from '@/stores/session';
 
 const route = useRoute();
@@ -22,6 +22,7 @@ const session = useSessionStore();
 const auth = useAuth();
 const logto = isLogtoConfigured() ? useLogto() : null;
 const noteModalOpen = ref(false);
+const hasPrivateNote = ref(false);
 const avatarPreviewOpen = ref(false);
 const avatarPreviewUrl = ref<string | null>(null);
 const avatarPreviewLabel = ref('');
@@ -84,15 +85,19 @@ async function refreshHistory() {
 }
 
 let profileGeneration = 0;
+let loadedProfileId: string | null = null;
 
 async function loadDisplayedProfile() {
   const generation = ++profileGeneration;
   const ownProfile = isMe.value;
   const id = ownProfile ? effectiveProfileId.value : userId.value;
-  publicProfile.value = null;
   publicError.value = null;
   publicLoading.value = !ownProfile && Boolean(id);
-  if (!id) return;
+  if (!id) {
+    publicProfile.value = null;
+    loadedProfileId = null;
+    return;
+  }
 
   if (!ownProfile && effectiveProfileId.value === id) {
     publicLoading.value = false;
@@ -100,12 +105,22 @@ async function loadDisplayedProfile() {
     return;
   }
 
+  // Keep previous card visible while reloading the same id — avoids flashing
+  // away the private-note CTA on session/identity refreshes.
+  if (loadedProfileId !== id) {
+    publicProfile.value = null;
+    hasPrivateNote.value = false;
+  }
+
   try {
     const profile = await fetchPublicProfile(id);
     if (generation !== profileGeneration) return;
     publicProfile.value = profile;
+    loadedProfileId = id;
   } catch (e) {
     if (generation !== profileGeneration || ownProfile) return;
+    publicProfile.value = null;
+    loadedProfileId = null;
     publicError.value =
       e instanceof Error ? e.message : 'Не удалось загрузить профиль';
   } finally {
@@ -123,6 +138,10 @@ watch(
   () => void loadDisplayedProfile(),
   { immediate: true },
 );
+
+function onPrivateNoteChanged(note: ProfileNote | null) {
+  hasPrivateNote.value = Boolean(note?.text?.trim());
+}
 
 function onRatingUpdated(rating: PublicProfile['rating']) {
   if (publicProfile.value) {
@@ -360,14 +379,19 @@ async function copyInviteLink() {
             <p class="profile-public-card__meta">
               Участник с {{ new Date(publicProfile.memberSince).toLocaleDateString('ru-RU') }}
             </p>
-            <UiButton
-              intent="secondary"
-              size="sm"
-              class="profile-public-card__note-btn"
-              @click="noteModalOpen = true"
-            >
-              📝 Заметка
-            </UiButton>
+            <div class="profile-public-card__note">
+              <p class="profile-public-card__note-hint">
+                Личная заметка видна только вам
+              </p>
+              <UiButton
+                intent="secondary"
+                size="sm"
+                class="profile-public-card__note-btn"
+                @click="noteModalOpen = true"
+              >
+                {{ hasPrivateNote ? 'Открыть заметку' : 'Добавить заметку' }}
+              </UiButton>
+            </div>
           </div>
         </section>
 
@@ -379,6 +403,7 @@ async function copyInviteLink() {
         <ProfilePrivateNoteModal
           v-model:open="noteModalOpen"
           :profile="publicProfile"
+          @note-changed="onPrivateNoteChanged"
         />
       </template>
     </template>
@@ -470,7 +495,21 @@ async function copyInviteLink() {
   color: var(--color-text-muted, #666);
 }
 
+.profile-public-card__note {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.profile-public-card__note-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #666);
+}
+
 .profile-public-card__note-btn {
-  margin-top: 0.5rem;
+  margin-top: 0;
 }
 </style>

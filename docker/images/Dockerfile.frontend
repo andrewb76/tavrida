@@ -2,9 +2,12 @@
 #
 # Build (pass Vite env at build time):
 #   docker build -f docker/images/Dockerfile.frontend \
-#     --build-arg VITE_API_BASE_URL=https://api.193.142.148.175.nip.io/api/v1 \
-#     --build-arg VITE_IMAGE_PROXY_URL=https://img.193.142.148.175.nip.io \
-#     --build-arg VITE_MEDIA_PUBLIC_BASE_URL=https://s3.193.142.148.175.nip.io \
+#     --build-arg VITE_API_BASE_URL=https://api.evatorg.su/api/v1 \
+#     --build-arg VITE_IMAGE_PROXY_URL=https://img.evatorg.su \
+#     --build-arg VITE_MEDIA_PUBLIC_BASE_URL=https://s3.evatorg.su \
+#     --build-arg VITE_LOGTO_ENDPOINT=https://….logto.app \
+#     --build-arg VITE_LOGTO_APP_ID=… \
+#     --build-arg VITE_LOGTO_API_RESOURCE=https://api.evatorg.su \
 #     -t ghcr.io/<owner>/tavrida-frontend:<tag> .
 
 FROM node:20-alpine AS build

@@ -35,14 +35,17 @@
    Resource indicator для token request:
    - **Cloud:** `https://<tenant>.logto.app/api` (тот же tenant, что в `LOGTO_ENDPOINT`)
    - **OSS:** `https://default.logto.app/api`
-6. **API Resource** (опционально, для JWT с `aud` API) — **не нужен** для первого входа; локально BFF принимает ID token.
+6. **API Resource** (нужен для BFF JWT с `aud`) — создайте resource и назначьте SPA:
 
 | Поле | Local dev |
 |------|-----------|
 | API identifier | `https://api.tavrida-lot.localhost` |
 | Permissions | назначить SPA-приложению |
 
-> Не добавляйте `resources` в `createLogtoConfig()` до создания resource в Console — иначе callback вернёт `Error found in the callback URI`.
+> `VITE_LOGTO_API_RESOURCE` должен **точно** совпадать с `LOGTO_AUDIENCE` на BFF.
+> Когда resource задан, фронт добавляет его в `LogtoConfig.resources` и больше
+> не подставляет ID token (у ID token `aud` = client id → BFF всегда ответит 401).
+> После смены resource / первого включения — **выйдите и войдите снова**.
 
 ```env
 VITE_LOGTO_ENDPOINT=https://<tenant>.logto.app
@@ -55,6 +58,8 @@ pnpm check:logto
 pnpm --filter @tavrida/frontend dev
 ```
 
+Если API Resource ещё не создан в Console — **не** задавайте `VITE_LOGTO_API_RESOURCE`
+и либо временно `BFF_ALLOW_DEV_TOKENS=true`, либо отложите JWKS audience check.
 ---
 
 ## 2. Поток invite (новая модель)

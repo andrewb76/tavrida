@@ -71,6 +71,16 @@ services:
         - traefik.http.routers.traefik.entrypoints=websecure
         - traefik.http.routers.traefik.tls.certresolver=le
         - traefik.http.routers.traefik.service=api@internal
+        # Apex / www → app.<DEV_DOMAIN> (evatorg.su → app.evatorg.su)
+        - traefik.http.middlewares.apex-to-app.redirectregex.regex=^https://[^/]+(.*)
+        - traefik.http.middlewares.apex-to-app.redirectregex.replacement=https://app.${DEV_DOMAIN}$$1
+        - traefik.http.middlewares.apex-to-app.redirectregex.permanent=true
+        - traefik.http.routers.apex.rule=Host(`${DEV_DOMAIN}`) || Host(`www.${DEV_DOMAIN}`)
+        - traefik.http.routers.apex.entrypoints=websecure
+        - traefik.http.routers.apex.tls.certresolver=le
+        - traefik.http.routers.apex.middlewares=apex-to-app
+        - traefik.http.routers.apex.service=api@internal
+        - traefik.http.routers.apex.priority=1
 
   postgres:
     image: postgres:17-alpine

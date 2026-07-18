@@ -1,5 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { IsString, MaxLength, MinLength } from 'class-validator';
+import type { Response } from 'express';
 import { NotesService } from './notes.service';
 
 class UpsertNoteBody {
@@ -22,8 +33,24 @@ export class InternalNotesController {
   constructor(private readonly notes: NotesService) {}
 
   @Get()
-  getForPair(@Query('ownerId') ownerId: string, @Query('authorId') authorId: string) {
-    return this.notes.getForPair(ownerId, authorId);
+  async getForPair(
+    @Query('ownerId') ownerId: string,
+    @Query('authorId') authorId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (!ownerId?.trim() || !authorId?.trim()) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'ownerId and authorId are required',
+      });
+    }
+    const note = await this.notes.getForPair(ownerId, authorId);
+    // Explicit JSON null — Nest otherwise may emit an empty 200 body.
+    if (!note) {
+      res.status(200).json(null);
+      return;
+    }
+    return note;
   }
 
   @Post()

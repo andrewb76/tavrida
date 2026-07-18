@@ -77,8 +77,19 @@ export async function fetchPublicProfile(userId: string): Promise<PublicProfile>
   try {
     return (await profileFetch(`/profile/${encodeURIComponent(userId)}`)) as PublicProfile;
   } catch (e) {
-    if (e instanceof Error && e.message.includes('not found')) {
+    if (e instanceof Error && /not found/i.test(e.message)) {
       throw new Error('Пользователь не найден');
+    }
+    if (
+      e instanceof Error &&
+      (/access token|unauthorized|войдите|сессия/i.test(e.message) ||
+        /audience|api-токен|api resource/i.test(e.message))
+    ) {
+      throw new Error(
+        e.message.includes('Audience') || e.message.includes('audience')
+          ? e.message
+          : `${e.message} Выйдите и войдите снова.`,
+      );
     }
     throw e;
   }

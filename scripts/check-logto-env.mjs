@@ -61,9 +61,21 @@ if (logtoConfigured) {
   console.log(`✓  Logto endpoint: ${endpoint}`);
   console.log(`✓  Logto app id:   ${appId.slice(0, 8)}…`);
   if (env.VITE_LOGTO_API_RESOURCE?.trim()) {
-    console.log(`✓  API resource:   ${env.VITE_LOGTO_API_RESOURCE.trim()}`);
+    const resource = env.VITE_LOGTO_API_RESOURCE.trim();
+    console.log(`✓  API resource:   ${resource}`);
+    const audience = env.LOGTO_AUDIENCE?.trim();
+    if (audience && audience !== resource) {
+      console.log(`✗  LOGTO_AUDIENCE (${audience}) ≠ VITE_LOGTO_API_RESOURCE`);
+      console.log('   BFF will reject access tokens with audience mismatch.');
+      process.exitCode = 1;
+    } else if (audience) {
+      console.log('✓  LOGTO_AUDIENCE matches VITE_LOGTO_API_RESOURCE');
+    } else {
+      console.log('⚠  LOGTO_AUDIENCE not set — BFF cannot validate API tokens');
+    }
   } else {
-    console.log('ℹ  VITE_LOGTO_API_RESOURCE not set (OK until BFF validates audience)');
+    console.log('ℹ  VITE_LOGTO_API_RESOURCE not set');
+    console.log('   Without it the SPA sends an ID token; BFF JWKS mode expects API aud.');
   }
   console.log('\nRedirect URIs to register in Logto Console:');
   console.log('  Sign-in:  http://localhost:5173/callback');
