@@ -121,9 +121,9 @@ services:
       - |
         echo "plan-config-renew: starting (interval 3600s)"
         while true; do
-          echo "plan-config-renew: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
+          echo "plan-config-renew: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
           curl -sf -X POST \
-            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            -H "Authorization: Bearer $$(cat /run/secrets/internal_service_token)" \
             http://plan-config:3002/internal/v1/subscription/renew/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
@@ -146,9 +146,9 @@ services:
       - |
         echo "auction-close: starting (interval 3600s)"
         while true; do
-          echo "auction-close: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
+          echo "auction-close: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
           curl -sf -X POST \
-            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            -H "Authorization: Bearer $$(cat /run/secrets/internal_service_token)" \
             http://auction:3003/internal/v1/auctions/close/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
