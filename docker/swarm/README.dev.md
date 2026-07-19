@@ -29,7 +29,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 | `dev.secrets.env.example` | Секреты → `dev.secrets.env` (**только на ноутбуке**, gitignore) |
 | `secrets-manifest.dev` | Список ключей → Swarm secret `tavrida_dev_*` |
 | `sync-secrets-dev.sh` | Push секретов в Swarm через `DOCKER_CONTEXT` |
-| `deploy-dev.sh` | `docker stack deploy` (оба stack-файла) |
+| `deploy-dev.sh` | `docker stack deploy` (оба stack-файла); retry при `update out of sequence` |
 | `build-images.sh` | Сборка образов `ghcr.io/<owner>/tavrida-*` (+ `VITE_LOGTO_*`) |
 | `prune-ghcr-dev.sh` | Удаление старых версий в GHCR (keep N + `:dev`) |
 | `ci-write-dev-env.sh` | Сборка `dev.env` из env (CI) |

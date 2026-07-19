@@ -37,12 +37,33 @@ fi
 echo "Deploying stack ${STACK_NAME} (infra + platform)..." >&2
 echo "Ensure secrets are synced: DOCKER_CONTEXT=${DOCKER_CONTEXT:-default} ./docker/swarm/sync-secrets-dev.sh" >&2
 
-"${docker_cmd[@]}" stack deploy \
-  --with-registry-auth \
-  --resolve-image always \
-  -c "${ROOT}/docker/swarm/stack-infra.dev.yml" \
-  -c "${ROOT}/docker/swarm/stack-platform.dev.yml" \
-  "$STACK_NAME"
+# Swarm optimistic concurrency: concurrent/internal version bumps can yield
+# "update out of sequence" mid stack deploy — retry is the usual workaround.
+MAX_ATTEMPTS="${STACK_DEPLOY_RETRIES:-5}"
+attempt=1
+while true; do
+  set +e
+  out="$("${docker_cmd[@]}" stack deploy \
+    --with-registry-auth \
+    --resolve-image always \
+    -c "${ROOT}/docker/swarm/stack-infra.dev.yml" \
+    -c "${ROOT}/docker/swarm/stack-platform.dev.yml" \
+    "$STACK_NAME" 2>&1)"
+  rc=$?
+  set -e
+  printf '%s\n' "$out"
+
+  if [[ "$rc" -eq 0 ]]; then
+    break
+  fi
+  if [[ "$out" == *"update out of sequence"* ]] && [[ "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
+    echo "stack deploy: update out of sequence (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${attempt}s..." >&2
+    sleep "$attempt"
+    attempt=$((attempt + 1))
+    continue
+  fi
+  exit "$rc"
+done
 
 echo "Done. URLs (after LE certs propagate):" >&2
 echo "  App:      https://app.${DEV_DOMAIN}" >&2
