@@ -38,6 +38,27 @@ VITE_LOGTO_API_RESOURCE=https://api.evatorg.su
 
 Admin: `https://logto.evatorg.su`. После смены endpoint — **rebuild** frontend (`VITE_*` bake-in).
 
+### Branding (Sign-in experience)
+
+Console: **Sign-in & account → Branding** (или скрипт ниже).
+
+| Поле | Значение |
+|------|----------|
+| Brand color (light) | `#1F7A6E` (patina) |
+| Brand color (dark) | `#3D9B8E` |
+| Logo / favicon | `https://app.evatorg.su/branding/tavrida-wordmark.svg` |
+| Custom CSS | файл [`docker/config/logto/tavrida-sign-in.css`](../../docker/config/logto/tavrida-sign-in.css) |
+
+```bash
+# M2M + LOGTO_ENDPOINT в .env.local (или env); FRONTEND_ORIGIN=https://app.evatorg.su
+pnpm setup:logto-branding
+# DRY_RUN=1 pnpm setup:logto-branding   # только посмотреть payload
+```
+
+Скрипт: `PATCH /api/sign-in-exp` (цвет + logoUrl + customCss). После деплоя frontend wordmark должен быть доступен по URL выше.
+
+Вручную: вставь CSS из файла в **Custom CSS**, сохрани, **Live preview**.
+
 ---
 
 ## 2. Logto Cloud (опционально)

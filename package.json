@@ -13,6 +13,7 @@
     "setup:env": "sh scripts/setup-env.sh",
     "check:logto": "node scripts/check-logto-env.mjs",
     "setup:logto-webhook": "node scripts/setup-logto-webhook.mjs",
+    "setup:logto-branding": "node scripts/setup-logto-branding.mjs",
     "sync:logto-users": "node scripts/sync-logto-users.mjs",
     "grant:admin": "sh scripts/grant-admin.sh",
     "infra:up": "docker compose -f docker/compose/infra.local.yml --env-file .env.local up -d",

@@ -58,6 +58,7 @@
    - `VITE_LOGTO_API_RESOURCE=https://api.evatorg.su`
    - Secret `LOGTO_M2M_APP_SECRET`
 6. **Deploy** с rebuild frontend (`skip_build=false`), чтобы вшить новый `VITE_LOGTO_*`.
+7. Branding: Console → Branding **или** `pnpm setup:logto-branding` ([logto-setup.md](../14-frontend/logto-setup.md)).
 
 Подробнее: [logto-setup.md](../14-frontend/logto-setup.md) · [README.dev.md](../../docker/swarm/README.dev.md).
 

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none" role="img" aria-label="Tavrida Lot">
+  <title>Tavrida Lot</title>
+  <!-- Wordmark for Logto branding (light-on-dark). Hosted at /branding/tavrida-wordmark.svg -->
+  <text
+    x="0"
+    y="46"
+    fill="#F2F4F3"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="42"
+    font-weight="700"
+    letter-spacing="-1.2"
+  >Tavrida Lot</text>
+  <circle cx="292" cy="32" r="18" stroke="#1F7A6E" stroke-width="3" fill="none"/>
+  <path d="M284 36c4-8 12-12 20-10" stroke="#C9B89A" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>

@@ -1,0 +1,137 @@
+/**
+ * Tavrida Lot — Logto sign-in experience Custom CSS
+ * Brand: «морские чернила и патина» (docs/11-ux-ui/brandbook.md)
+ *
+ * Apply:
+ *   1) Console → Sign-in & account → Branding → Custom CSS (paste), or
+ *   2) pnpm setup:logto-branding  (Management API)
+ *
+ * Selectors use $= / *= because Logto experience uses CSS Modules hashes.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap');
+
+#app * {
+  font-family: 'Onest', system-ui, sans-serif;
+}
+
+#app {
+  --color-type-primary: #f2f4f3;
+  --color-type-secondary: #c9b89a;
+  --tav-ink: #0b1f24;
+  --tav-ink-soft: #16333a;
+  --tav-patina: #1f7a6e;
+  --tav-patina-deep: #155e55;
+  --tav-chalk: #f2f4f3;
+  --tav-sand: #c9b89a;
+  --tav-line: rgb(242 244 243 / 0.18);
+}
+
+/* Full-bleed coastal ink wash */
+#app > div[class$='viewBox'] {
+  background:
+    radial-gradient(ellipse 70% 45% at 75% 15%, rgb(31 122 110 / 0.28), transparent 55%),
+    linear-gradient(165deg, #0b1f24 0%, #16333a 48%, #0b1f24 100%);
+  background-color: var(--tav-ink);
+  min-height: 100dvh;
+}
+
+#app main[class*='main'] {
+  background: color-mix(in srgb, var(--tav-ink-soft) 88%, transparent);
+  border: 1px solid var(--tav-line);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(10px);
+  padding: 28px 24px 36px;
+  max-width: 420px;
+}
+
+#app main[class*='main'] img[class*='logo'] {
+  height: 44px;
+  width: auto;
+  max-width: 220px;
+  margin: 0 0 12px;
+  object-fit: contain;
+}
+
+#app main[class*='main'] div[class*='title'],
+#app main[class*='main'] h1,
+#app main[class*='main'] [class*='headline'] {
+  font-family: 'Unbounded', system-ui, sans-serif !important;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--tav-chalk) !important;
+}
+
+#app form div[class*='inputField'] > div {
+  outline: none;
+  border: 1px solid var(--tav-line);
+  border-radius: 10px;
+  background: rgb(11 31 36 / 0.55);
+}
+
+#app form div[class*='inputField'] input,
+#app form div[class*='inputField'] div[class$='countryCodeSelector'] {
+  background: transparent;
+  color: var(--tav-chalk);
+  font-size: 16px;
+}
+
+#app form div[class*='inputField'] > div > input::placeholder {
+  color: rgb(242 244 243 / 0.45);
+}
+
+#app form div[class*='inputField'] > div:focus-within {
+  border-color: var(--tav-patina);
+  box-shadow: 0 0 0 3px rgb(31 122 110 / 0.28);
+}
+
+#app button {
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  min-height: 44px;
+  padding-inline: 1.25rem;
+}
+
+#app button[type='submit'],
+#app button[class*='primary'] {
+  background: var(--tav-patina) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+#app button[type='submit']:hover,
+#app button[class*='primary']:hover {
+  background: var(--tav-patina-deep) !important;
+}
+
+#app button[class*='secondary'],
+#app a[class*='link'] {
+  color: var(--tav-sand) !important;
+}
+
+#app main[class*='main'] > div[class*='wrapper'] > div[class*='divider'] > i[class*='line'],
+#app main[class*='main'] > div[class*='wrapper'] > div[class*='terms'] i[class*='divider']::after {
+  background: var(--tav-line);
+}
+
+#app main[class*='main'] > div[class*='wrapper'] > div[class*='createAccount'],
+#app main[class*='main'] > div[class*='wrapper'] > form div[class*='content'],
+#app main[class*='main'] > div[class*='wrapper'] > form div[class*='content'] > span,
+#app main[class*='main'] > div[class*='wrapper'] > div[class*='divider'] {
+  color: rgb(242 244 243 / 0.7);
+}
+
+#app div[class*='socialLinkList'] > button {
+  border: 1px solid var(--tav-line);
+  background: rgb(11 31 36 / 0.4);
+  color: var(--tav-chalk);
+}
+
+@media (max-width: 640px) {
+  #app main[class*='main'] {
+    border-radius: 12px;
+    margin-inline: 12px;
+  }
+}
