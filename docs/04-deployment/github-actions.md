@@ -216,6 +216,11 @@ ssh -i ./tavrida-dev-swarm deploy@193.142.148.175 'docker info --format "{{.Swar
 
 GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = private key.
 
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| `Host key verification failed` / `docker.example.com` dial-stdio | `known_hosts` пуст или устарел (`ssh-keyscan` раньше глотался) | Перезапустить Deploy с актуальным `dev`; скрипт `ci-docker-context.sh` теперь fail-fast + probe `ssh` до Docker |
+| `error in libcrypto` / `ssh-add` | Multiline PEM в secret | Перезаписать `DEV_SWARM_SSH_KEY` как **base64 одной строкой** |
+
 Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/config/…` — путь должен существовать **на VPS**. Swarm configs (`traefik.dev.yml`, `keto.yml`) читаются с runner при `stack deploy`.
 
 ### Порядок первого деплоя

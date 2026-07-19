@@ -19,7 +19,55 @@ unset DOCKER_CONTEXT || true
 
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
-ssh-keyscan -H "$HOST" >>~/.ssh/known_hosts 2>/dev/null || true
+
+# Prefer file-based known_hosts so Docker's `ssh … docker system dial-stdio` sees the same trust as we do.
+KNOWN_HOSTS="${HOME}/.ssh/known_hosts"
+SSH_CONFIG="${HOME}/.ssh/config"
+touch "$KNOWN_HOSTS"
+chmod 600 "$KNOWN_HOSTS"
+
+# Drop any stale / conflicting entries for this host (hashed or plain).
+ssh-keygen -R "$HOST" -f "$KNOWN_HOSTS" >/dev/null 2>&1 || true
+
+scan_ok=0
+for attempt in 1 2 3 4 5; do
+  # stdout = host keys; do not hash (-H) so failures are easier to debug in CI logs
+  if keys="$(ssh-keyscan -T 15 -t rsa,ecdsa,ed25519 "$HOST" 2>/tmp/ssh-keyscan.err)"; then
+    if [[ -n "${keys}" ]]; then
+      printf '%s\n' "$keys" >>"$KNOWN_HOSTS"
+      scan_ok=1
+      echo "ssh-keyscan: ok for ${HOST} (attempt ${attempt})" >&2
+      break
+    fi
+  fi
+  echo "ssh-keyscan: empty/failed for ${HOST} (attempt ${attempt}/5)" >&2
+  cat /tmp/ssh-keyscan.err >&2 || true
+  sleep 2
+done
+
+if [[ "$scan_ok" -ne 1 ]]; then
+  echo "FATAL: could not fetch SSH host keys for ${HOST} — refusing to create Docker context." >&2
+  echo "Check DEV_SWARM_SSH_HOST, VPS sshd, and GitHub Actions → VPS network path." >&2
+  exit 1
+fi
+
+# Accept only this host; IdentitiesOnly avoids offering unrelated agent keys.
+{
+  echo "Host ${HOST}"
+  echo "  User ${USER}"
+  echo "  StrictHostKeyChecking yes"
+  echo "  UserKnownHostsFile ${KNOWN_HOSTS}"
+  echo "  IdentitiesOnly yes"
+  echo "  ConnectTimeout 30"
+} >>"$SSH_CONFIG"
+chmod 600 "$SSH_CONFIG"
+
+# Prove SSH works before Docker wraps it (clearer errors than dial-stdio).
+if ! ssh -o BatchMode=yes -T "${USER}@${HOST}" 'docker version --format "{{.Server.Version}}"'; then
+  echo "FATAL: ssh ${USER}@${HOST} failed after known_hosts update." >&2
+  echo "Check DEV_SWARM_SSH_KEY (deploy authorized_keys) and remote docker group." >&2
+  exit 1
+fi
 
 if docker context inspect "$CONTEXT_NAME" >/dev/null 2>&1; then
   docker context rm -f "$CONTEXT_NAME" >/dev/null
