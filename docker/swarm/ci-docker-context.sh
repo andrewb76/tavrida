@@ -51,21 +51,37 @@ if [[ "$scan_ok" -ne 1 ]]; then
   exit 1
 fi
 
-# Accept only this host; IdentitiesOnly avoids offering unrelated agent keys.
+# Trust store only — auth comes from ssh-agent (ci-ssh-agent.sh / SSH_AUTH_SOCK).
+# Do NOT set IdentitiesOnly=yes without IdentityFile: that ignores the agent.
 {
   echo "Host ${HOST}"
   echo "  User ${USER}"
   echo "  StrictHostKeyChecking yes"
   echo "  UserKnownHostsFile ${KNOWN_HOSTS}"
-  echo "  IdentitiesOnly yes"
+  echo "  PreferredAuthentications publickey"
+  echo "  PubkeyAuthentication yes"
   echo "  ConnectTimeout 30"
+  if [[ -n "${SSH_AUTH_SOCK:-}" ]]; then
+    echo "  IdentityAgent ${SSH_AUTH_SOCK}"
+  fi
 } >>"$SSH_CONFIG"
 chmod 600 "$SSH_CONFIG"
+
+if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+  echo "FATAL: SSH_AUTH_SOCK is empty — run ci-ssh-agent.sh first." >&2
+  exit 1
+fi
+if ! ssh-add -l >/dev/null 2>&1; then
+  echo "FATAL: ssh-agent has no identities (ssh-add -l failed)." >&2
+  exit 1
+fi
+echo "ssh-agent identities:" >&2
+ssh-add -l >&2
 
 # Prove SSH works before Docker wraps it (clearer errors than dial-stdio).
 if ! ssh -o BatchMode=yes -T "${USER}@${HOST}" 'docker version --format "{{.Server.Version}}"'; then
   echo "FATAL: ssh ${USER}@${HOST} failed after known_hosts update." >&2
-  echo "Check DEV_SWARM_SSH_KEY (deploy authorized_keys) and remote docker group." >&2
+  echo "Check DEV_SWARM_SSH_KEY matches deploy authorized_keys on the VPS." >&2
   exit 1
 fi
 

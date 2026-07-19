@@ -218,7 +218,8 @@ GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = priv
 
 | Симптом | Причина | Решение |
 |---------|---------|---------|
-| `Host key verification failed` / `docker.example.com` dial-stdio | `known_hosts` пуст или устарел (`ssh-keyscan` раньше глотался) | Перезапустить Deploy с актуальным `dev`; скрипт `ci-docker-context.sh` теперь fail-fast + probe `ssh` до Docker |
+| `Host key verification failed` / `docker.example.com` dial-stdio | `known_hosts` пуст или устарел | Перезапустить Deploy; `ci-docker-context.sh` fail-fast + probe `ssh` |
+| `Permission denied (publickey)` после keyscan ok | Неверный secret / ключ не в `authorized_keys`, либо (старый баг) `IdentitiesOnly` без `IdentityFile` | Проверить `ssh -i ./tavrida-dev-swarm deploy@HOST`; перезаписать `DEV_SWARM_SSH_KEY` base64 |
 | `error in libcrypto` / `ssh-add` | Multiline PEM в secret | Перезаписать `DEV_SWARM_SSH_KEY` как **base64 одной строкой** |
 
 Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/config/…` — путь должен существовать **на VPS**. Swarm configs (`traefik.dev.yml`, `keto.yml`) читаются с runner при `stack deploy`.
