@@ -86,7 +86,7 @@ apps/frontend/
 
 | Path | View | Auth | Wireframe |
 |------|------|------|-----------|
-| `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) |
+| `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) — visitor: full-bleed hero + pillars + join |
 | `/about` | AboutView | public | W01 |
 | `/join` | JoinView | invite link / код → Logto | W11 |
 | `/invite` | redirect → `/join` | legacy URL | W11 |

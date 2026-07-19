@@ -21,6 +21,7 @@
   --radius-lg: var(--token-radius-lg);
 
   --font-sans: var(--token-font-sans);
+  --font-display: var(--token-font-display);
 
   --shadow-card: var(--token-shadow-card);
 }

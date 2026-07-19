@@ -48,6 +48,17 @@ jobs:
         with:
           ref: ${{ github.event_name == 'push' && github.sha || 'dev' }}
 
+      - name: Show checkout revision
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "short=$(git rev-parse --short HEAD)"
+          git log -1 --oneline
+          # Guard: broken intermediate commit referenced keto_config without _v2
+          if grep -n 'source: keto_config$' docker/swarm/stack-infra.dev.yml; then
+            echo "::error::stack-infra still references keto_config (need keto_config_v2). Do not Re-run an old job — Run workflow from latest dev."
+            exit 1
+          fi
+
       - name: Resolve image tag
         id: tag
         env:

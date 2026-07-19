@@ -17,7 +17,7 @@ const theme = useThemeStore();
 
 const navItems = computed(() => {
   const items: Array<{ to: string; label: string; icon: string }> = [
-    { to: '/app', label: 'Home', icon: 'home' },
+    { to: '/app', label: 'Главная', icon: 'home' },
     { to: '/auctions', label: 'Аукционы', icon: 'auctions' },
     { to: '/forum', label: 'Форум', icon: 'forum' },
     { to: '/subscriptions', label: 'Подписки', icon: 'notifications' },
@@ -59,7 +59,7 @@ function isActive(path: string) {
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
         <RouterLink
           to="/app"
-          class="truncate text-lg font-semibold text-primary"
+          class="font-display truncate text-lg tracking-tight text-primary"
         >
           Tavrida Lot
         </RouterLink>

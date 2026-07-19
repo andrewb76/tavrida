@@ -150,7 +150,7 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 
 ---
 
-## 6. Webhooks → user-profile
+## 7. Webhooks → user-profile
 
 Идентичность пользователя (имя, email, аватар) синхронизируется в **user-profile** через Logto Webhooks.
 
@@ -166,7 +166,7 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Симптом | Решение |
 |---------|---------|

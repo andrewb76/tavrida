@@ -13,10 +13,10 @@
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
 | Header | Logo, «Войти» | Login → Logto |
-| Hero | Заголовок клуба, подзаголовок invite-only | Static copy |
-| CTA | «У меня есть инвайт», «О клубе» | → `/invite`, якорь about |
-| Sections | about, rules, как получить инвайт | CMS/static TBD |
-| Footer | legal links | L-01…L-07 |
+| Hero | Бренд Tavrida Lot (display), один заголовок, одна фраза, CTA | Static; full-bleed фон `tavrida-dark.webp` |
+| CTA | «У меня есть инвайт» / регистрация, «О клубе», «Войти» | → `/join`, `/about`, Logto |
+| Sections | «Три опоры» (аукционы · форум · маркет), «Как попасть» | Static copy |
+| Footer | бренд + ссылки | legal TBD |
 
 **States:** default (guest only). **Нет** bottom nav, live carousel, форума.
 
@@ -30,7 +30,7 @@
 ┌─────────────────────────────────────┐
 │ Logo                    [Войти]     │
 ├─────────────────────────────────────┤
-│ Hero: «Клуб находок Крыма»          │
+│ Hero: «Клуб увлеченных историей людей» │
 │ Закрытое сообщество — только        │
 │ по приглашению                      │
 │ [У меня есть инвайт]  [О клубе]     │
@@ -69,10 +69,11 @@ LandingPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Header | Logo, Inbox, Balance chip, Avatar | Inbox → notifications |
-| Live carousel | Карточки ACTIVE аукционов | `GET /auctions?status=ACTIVE&limit=6` |
-| Forum teaser | 3 recent topics | → `/forum/topics/:id` |
-| Bottom nav | Home, Auctions, Forum, Profile | Mobile only |
+| Header | Logo, Inbox, Balance chip, Avatar | Inbox → subscriptions |
+| Greeting | имя + быстрые чипы (аукционы / форум / маркет / кошелёк) | Static + session |
+| Live | сетка ACTIVE лотов (до 6), skeleton / empty / retry | `GET /auctions?status=ACTIVE&sort=ENDING_SOON&limit=6` |
+| Forum teaser | до 5 recent topics (list, не карточки) | `GET /forum/topics` |
+| Bottom nav | Главная, Auctions, Forum, … | Mobile |
 
 **States:** loading skeleton · empty carousel · error retry banner.
 
@@ -195,7 +196,7 @@ InviteRedeemPage:
 ┌─────────────────────────────────────┐
 │ Logo                    [Войти]     │
 ├─────────────────────────────────────┤
-│ О клубе находок Крыма               │
+│ О клубе · история · сообщество      │
 │ Миссия · правила · сообщество       │
 │ Как получить инвайт …               │
 ├─────────────────────────────────────┤

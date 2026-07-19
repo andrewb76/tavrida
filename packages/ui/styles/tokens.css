@@ -26,7 +26,9 @@ html:not([data-theme]) {
 
   --token-shadow-card: 0 1px 3px rgb(0 0 0 / 0.08);
 
-  --token-font-sans: 'Inter', system-ui, sans-serif;
+  --token-font-sans: 'Onest', system-ui, sans-serif;
+  --token-font-display: 'Unbounded', system-ui, sans-serif;
+  --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 html[data-theme='dark'] {
@@ -50,5 +52,7 @@ html[data-theme='dark'] {
 
   --token-shadow-card: 0 1px 3px rgb(0 0 0 / 0.35);
 
-  --token-font-sans: 'Inter', system-ui, sans-serif;
+  --token-font-sans: 'Onest', system-ui, sans-serif;
+  --token-font-display: 'Unbounded', system-ui, sans-serif;
+  --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
