@@ -1,6 +1,6 @@
-# Logto — настройка (Cloud → self-host)
+# Logto — настройка (Cloud / OSS / Swarm)
 
-> **Статус:** Cloud (SaaS) для dev/staging · self-host — позже с тем же env-контрактом.  
+> **Статус:** local — `logto.local.yml` · **dev Swarm — OSS** (`auth.` / `logto.` на `evatorg.su`) · Cloud — опционально.  
 > **Модель доступа:** [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) · [club-access.md](../01-goal/club-access.md)
 
 ## Кратко
@@ -13,9 +13,34 @@
 
 Без Logto env фронт работает в **dev/mock** (`signInDev`).
 
+| Среда | Endpoint | Management API resource |
+|-------|----------|-------------------------|
+| Local compose | `http://localhost:3301` | `https://default.logto.app/api` |
+| **Dev Swarm OSS** | `https://auth.evatorg.su` | `https://default.logto.app/api` |
+| Logto Cloud | `https://<tenant>.logto.app` | `https://<tenant>.logto.app/api` |
+
 ---
 
-## 1. Logto Cloud
+## 1. Dev Swarm — Logto OSS
+
+Стек: `logto` + `logto-db-init` в [stack-infra.dev.yml](../../docker/swarm/stack-infra.dev.yml).  
+Чеклист DNS / Console / GH vars: [dev-evatorg.md](../04-deployment/dev-evatorg.md).
+
+```env
+LOGTO_ENDPOINT=https://auth.evatorg.su
+LOGTO_JWKS_URL=https://auth.evatorg.su/oidc/jwks
+LOGTO_AUDIENCE=https://api.evatorg.su
+LOGTO_M2M_RESOURCE=https://default.logto.app/api
+VITE_LOGTO_ENDPOINT=https://auth.evatorg.su
+VITE_LOGTO_APP_ID=<spa-id>
+VITE_LOGTO_API_RESOURCE=https://api.evatorg.su
+```
+
+Admin: `https://logto.evatorg.su`. После смены endpoint — **rebuild** frontend (`VITE_*` bake-in).
+
+---
+
+## 2. Logto Cloud (опционально)
 
 1. [cloud.logto.io](https://cloud.logto.io) → tenant.
 2. **Sign-in experience** → **Disable user registration** — включайте для invite-only (`club.registration.inviteOnly=true`).  
@@ -23,12 +48,12 @@
 3. **Applications → Single page app → Vue** (first-party, не Third-party).
 4. Redirect URIs:
 
-| Поле | Local dev |
-|------|-----------|
-| Redirect | `http://localhost:5173/callback` |
-| Sign-out | `http://localhost:5173/` |
-| CORS | `http://localhost:5173` |
-| **Unknown session redirect URL** (Advanced) | `http://localhost:5173/auth/unknown-session` |
+| Поле | Local dev | Dev Swarm |
+|------|-----------|-----------|
+| Redirect | `http://localhost:5173/callback` | `https://app.evatorg.su/callback` |
+| Sign-out | `http://localhost:5173/` | `https://app.evatorg.su/` |
+| CORS | `http://localhost:5173` | `https://app.evatorg.su` |
+| **Unknown session redirect URL** (Advanced) | `http://localhost:5173/auth/unknown-session` | `https://app.evatorg.su/auth/unknown-session` |
 
 5. **M2M app** (для BFF): Machine-to-machine → роль с **Logto Management API** permission `all` → scopes `one-time-tokens` (если доступны).
 
@@ -37,9 +62,9 @@
    - **OSS:** `https://default.logto.app/api`
 6. **API Resource** (нужен для BFF JWT с `aud`) — создайте resource и назначьте SPA:
 
-| Поле | Local dev |
-|------|-----------|
-| API identifier | `https://api.tavrida-lot.localhost` |
+| Поле | Local / Swarm |
+|------|----------------|
+| API identifier | `https://api.tavrida-lot.localhost` или `https://api.evatorg.su` |
 | Permissions | назначить SPA-приложению |
 
 > `VITE_LOGTO_API_RESOURCE` должен **точно** совпадать с `LOGTO_AUDIENCE` на BFF.
@@ -60,9 +85,19 @@ pnpm --filter @tavrida/frontend dev
 
 Если API Resource ещё не создан в Console — **не** задавайте `VITE_LOGTO_API_RESOURCE`
 и либо временно `BFF_ALLOW_DEV_TOKENS=true`, либо отложите JWKS audience check.
+
 ---
 
-## 2. Поток invite (новая модель)
+## 3. Local compose OSS
+
+```bash
+docker compose -f docker/compose/logto.local.yml up -d
+# Admin http://localhost:3302 · OIDC http://localhost:3301
+```
+
+---
+
+## 4. Поток invite (новая модель)
 
 ```mermaid
 sequenceDiagram
@@ -89,7 +124,7 @@ sequenceDiagram
 
 ---
 
-## 3. Код во фронте
+## 5. Код во фронте
 
 | Файл | Роль |
 |------|------|
@@ -101,7 +136,7 @@ sequenceDiagram
 
 ---
 
-## 4. BFF (целевой контракт)
+## 6. BFF (целевой контракт)
 
 Полный контракт: [bff/invites-api.md](../05-microservices/bff/invites-api.md).
 

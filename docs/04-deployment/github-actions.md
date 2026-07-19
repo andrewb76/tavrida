@@ -113,13 +113,13 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 | `ACME_EMAIL`               | `andrewb@bk.ru`                                        |
 | `TAVRIDA_REPO_ROOT`        | `/opt/tavrida`                                         |
 | `GHCR_OWNER`               | `andrewb76` (опц., иначе `repository_owner`)           |
-| `LOGTO_ENDPOINT`           | tenant «dev/server» `https://….logto.app`              |
-| `LOGTO_JWKS_URL`           | `{endpoint}/oidc/jwks`                                 |
+| `LOGTO_ENDPOINT`           | `https://auth.evatorg.su` (Logto OSS)                   |
+| `LOGTO_JWKS_URL`           | `https://auth.evatorg.su/oidc/jwks`                     |
 | `LOGTO_AUDIENCE`           | `https://api.evatorg.su`                               |
-| `LOGTO_M2M_APP_ID`         | M2M app id                                             |
-| `LOGTO_M2M_RESOURCE`       | `https://<tenant>.logto.app/api`                       |
+| `LOGTO_M2M_APP_ID`         | M2M app id (из `https://logto.evatorg.su`)             |
+| `LOGTO_M2M_RESOURCE`       | `https://default.logto.app/api` (OSS, не Cloud URL)    |
 | `FRONTEND_ORIGIN`          | `https://app.evatorg.su`                               |
-| `VITE_LOGTO_ENDPOINT`      | тот же endpoint (build frontend)                       |
+| `VITE_LOGTO_ENDPOINT`      | `https://auth.evatorg.su`                              |
 | `VITE_LOGTO_APP_ID`        | SPA app id                                             |
 | `VITE_LOGTO_API_RESOURCE`  | `https://api.evatorg.su` (= `LOGTO_AUDIENCE`)          |
 

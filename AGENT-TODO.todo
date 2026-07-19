@@ -75,11 +75,11 @@ Testing rollout:
 
 Dev Swarm (evatorg.su):
   ✔ Репо: CD только с dev + apex redirect + docs @ops @docs @done(26-07-18)
-  ☐ DNS A-записи *.evatorg.su → 193.142.148.175 @ops
-  ☐ Logto Cloud tenant «dev/server» + API resource api.evatorg.su @ops
-  ☐ GitHub Environment dev: DEV_DOMAIN=evatorg.su + VITE_LOGTO_* @ops
-  ☐ VPS /opt/tavrida на ветке dev + Sync secrets + первый Deploy @ops
-  ☐ Приёмка TLS / login / audience; защита ветки dev @ops
+  ✔ Logto OSS в stack-infra (auth./logto.) вместо Cloud @ops @done(26-07-19)
+  ☐ DNS A: auth + logto (+ остальные) → 193.142.148.175 @ops
+  ☐ Logto Console: SPA + API resource + M2M; GH env VITE_LOGTO_* @ops
+  ☐ Deploy с rebuild frontend + приёмка login/audience @ops
+  ☐ Защита ветки dev @ops
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)

@@ -23,7 +23,7 @@ volumes:
 # When changing file contents, bump the key suffix (v2 → v3) so deploy creates
 # a new config object; old ones can be removed with: docker config ls / rm
 configs:
-  traefik_static_v4:
+  traefik_static_v5:
     file: ../config/traefik/traefik.dev.yml
   keto_config_v2:
     file: ../config/keto/keto.yml
@@ -51,7 +51,7 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
       TRAEFIK_SWARM_NETWORK: ${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
     configs:
-      - source: traefik_static_v4
+      - source: traefik_static_v5
         target: /etc/traefik/traefik.yml
     ports:
       - target: 80
@@ -231,6 +231,73 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 20
+
+  # Logto OSS needs its own database (same Postgres instance).
+  logto-db-init:
+    image: postgres:17-alpine
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        until pg_isready -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do sleep 2; done
+        exists="$$(psql -h postgres -U ${POSTGRES_USER} -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname='logto'")"
+        if [ "$$exists" != "1" ]; then
+          psql -h postgres -U ${POSTGRES_USER} -d postgres -c 'CREATE DATABASE logto;'
+        fi
+        echo "logto database ok"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 20
+
+  # Self-hosted Logto (OIDC + Admin Console) — replaces Cloud tenant for Swarm dev.
+  logto:
+    image: svhd/logto:1.41.0
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export DB_URL="postgres://${POSTGRES_USER}:$$(cat /run/secrets/postgres_password)@postgres:5432/logto"
+        npm run cli db seed -- --swe
+        exec npm start
+    environment:
+      TRUST_PROXY_HEADER: 'true'
+      ENDPOINT: https://auth.${DEV_DOMAIN}
+      ADMIN_ENDPOINT: https://logto.${DEV_DOMAIN}
+      PORT: '3001'
+      ADMIN_PORT: '3002'
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 30
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.logto.rule=Host(`auth.${DEV_DOMAIN}`)
+        - traefik.http.routers.logto.entrypoints=websecure
+        - traefik.http.routers.logto.tls.certresolver=le
+        - traefik.http.routers.logto.service=logto
+        - traefik.http.services.logto.loadbalancer.server.port=3001
+        - traefik.http.routers.logto-admin.rule=Host(`logto.${DEV_DOMAIN}`)
+        - traefik.http.routers.logto-admin.entrypoints=websecure
+        - traefik.http.routers.logto-admin.tls.certresolver=le
+        - traefik.http.routers.logto-admin.service=logto-admin
+        - traefik.http.services.logto-admin.loadbalancer.server.port=3002
 
   keto-migrate:
     image: oryd/keto:v0.14.0

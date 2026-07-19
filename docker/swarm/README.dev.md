@@ -11,6 +11,8 @@ Docker Swarm на VPS `193.142.148.175`: **инфраструктура** из p
 | `evatorg.su` / `www.evatorg.su` | 301 → `app.evatorg.su` |
 | `app.evatorg.su` | Vue frontend |
 | `api.evatorg.su` | BFF (`/api/v1`) |
+| `auth.evatorg.su` | Logto OSS (OIDC) |
+| `logto.evatorg.su` | Logto Admin Console |
 | `s3.evatorg.su` | MinIO S3 API |
 | `minio.evatorg.su` | MinIO Console |
 | `img.evatorg.su` | imgproxy |
@@ -122,20 +124,31 @@ KEEP_LAST=10 ./docker/swarm/prune-ghcr-dev.sh
 
 Или Actions → **Prune GHCR (dev images)**.
 
-## Logto Cloud (tenant «dev/server»)
+## Logto OSS (в Swarm)
 
-Отдельный tenant от local. В `dev.env` / GitHub Environment:
+Сервисы `logto-db-init` + `logto` в `stack-infra.dev.yml` (`svhd/logto:1.41.0`).
 
-- BFF: `LOGTO_ENDPOINT`, `LOGTO_JWKS_URL`, `LOGTO_AUDIENCE=https://api.evatorg.su`
-- Frontend build: `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_API_RESOURCE=https://api.evatorg.su`
+| URL | Назначение |
+|-----|------------|
+| `https://auth.${DEV_DOMAIN}` | OIDC / sign-in (`ENDPOINT`) |
+| `https://logto.${DEV_DOMAIN}` | Admin Console (`ADMIN_ENDPOINT`) |
 
-Redirect URIs в консоли Logto:
+Env в `dev.env` / GitHub Environment:
+
+- BFF: `LOGTO_ENDPOINT=https://auth.…`, `LOGTO_JWKS_URL=…/oidc/jwks`, `LOGTO_AUDIENCE=https://api.…`
+- M2M resource (**OSS**): `LOGTO_M2M_RESOURCE=https://default.logto.app/api` — не cloud tenant URL
+- Frontend build: `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_API_RESOURCE=https://api.…`
+
+После первого deploy откройте Admin Console и создайте SPA + API resource + M2M (см. [dev-evatorg.md](../../docs/04-deployment/dev-evatorg.md)). Затем **Deploy с build** frontend.
+
+Redirect URIs в консоли:
 
 - `https://app.evatorg.su/callback`
 - `https://app.evatorg.su`
 
 API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_API_RESOURCE`.
 
+Local laptop по-прежнему может использовать `docker/compose/logto.local.yml` отдельно от Swarm.
 ## Swarm configs (immutable)
 
 Docker Swarm **не обновляет** содержимое `configs:` — только Labels. При правке

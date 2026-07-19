@@ -11,6 +11,9 @@ api:
 entryPoints:
   web:
     address: ':80'
+    # Logto (and similar) need X-Forwarded-Proto behind TLS termination.
+    forwardedHeaders:
+      insecure: true
     http:
       redirections:
         entryPoint:
@@ -19,6 +22,8 @@ entryPoints:
           permanent: true
   websecure:
     address: ':443'
+    forwardedHeaders:
+      insecure: true
 
 certificatesResolvers:
   le:
