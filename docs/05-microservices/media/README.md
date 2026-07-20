@@ -14,7 +14,12 @@
 | `forum` | `forum-attachments` | public |
 | `marketplace` | `marketplace-portfolio` | public |
 
-Публичный URL: `{MEDIA_PUBLIC_BASE_URL}/{bucket}/users/{userId}/{uploadId}/{filename}`
+| `MEDIA_PUBLIC_BASE_URL` | Публичный origin MinIO (`https://s3.evatorg.su`) — и для `publicUrl`, и для **presigned PUT** (браузер) |
+| `MINIO_ENDPOINT` / `MINIO_PORT` | Внутренний доступ BFF → MinIO (`minio:9000` в Swarm) |
+| `MINIO_PRESIGN_ENDPOINT` | Опционально: явный origin для подписи PUT, если отличается от `MEDIA_PUBLIC_BASE_URL` |
+
+На HTTPS-сайте presigned URL **нельзя** отдавать как `http://minio:9000/…` (Mixed Content). BFF подписывает PUT через `MEDIA_PUBLIC_BASE_URL`, а HeadObject/bucket-init — через внутренний endpoint.
+
 
 ## Лимиты (plan-config)
 
