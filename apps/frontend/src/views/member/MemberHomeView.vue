@@ -431,7 +431,7 @@ html[data-theme='dark'] .member-home__eyebrow {
 }
 
 .member-home__lot-media--empty::after {
-  content: 'Tavrida';
+  content: 'Таврида';
   position: absolute;
   inset: 0;
   display: grid;

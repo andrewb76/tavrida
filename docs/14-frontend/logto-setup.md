@@ -46,7 +46,7 @@ Console: **Sign-in & account → Branding** (или скрипт ниже).
 |------|----------|
 | Brand color (light) | `#1F7A6E` (patina) |
 | Brand color (dark) | `#3D9B8E` |
-| Logo / favicon | `https://app.evatorg.su/branding/tavrida-wordmark.svg` |
+| Logo / favicon | `https://app.evatorg.su/branding/logo-full-color-dark.svg` + `…/tavrida-mark.svg` |
 | Custom CSS | файл [`docker/config/logto/tavrida-sign-in.css`](../../docker/config/logto/tavrida-sign-in.css) |
 
 ```bash
@@ -58,6 +58,39 @@ pnpm setup:logto-branding
 Скрипт: `PATCH /api/sign-in-exp` (цвет + logoUrl + customCss). После деплоя frontend wordmark должен быть доступен по URL выше.
 
 Вручную: вставь CSS из файла в **Custom CSS**, сохрани, **Live preview**.
+
+### Avatar upload (MinIO storage)
+
+Logto хранит аватары аккаунта в S3-compatible storage. Без `storageProvider` в БД поле **Avatar** в профиле недоступно.
+
+| | |
+|---|---|
+| Bucket | `logto-avatars` (отдельно от BFF bucket `avatars`) |
+| Swarm init | сервис `minio-logto-init` в [stack-infra.dev.yml](../../docker/swarm/stack-infra.dev.yml) |
+| Logto → MinIO | `http://minio:9000` (внутри `tavrida_net`) |
+| Public URL | `https://s3.<DEV_DOMAIN>/logto-avatars/…` |
+
+```bash
+# dev.secrets.env: MINIO_ROOT_PASSWORD, POSTGRES_PASSWORD
+# dev.env: DEV_DOMAIN, LOGTO_STORAGE_* (см. dev.env.example)
+DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage
+
+# только посмотреть payload / SQL:
+DRY_RUN=1 pnpm setup:logto-storage
+
+# bucket уже есть (после minio-logto-init):
+SKIP_MINIO=1 pnpm setup:logto-storage
+```
+
+Скрипт: `scripts/setup-logto-storage.mjs` — bucket (public read) + `INSERT INTO systems … storageProvider`.
+
+После настройки:
+
+1. Перезапуск Logto (скрипт делает `docker service update --force tavrida-dev_logto`, если `LOGTO_SWARM_SERVICE` задан).
+2. **Sign-in experience → Sign-up and sign-in** (или Account center) → включить поле **Avatar**.
+3. Проверить upload на регистрации / в настройках аккаунта.
+
+Документация Logto: [File storage provider](https://docs.logto.io/logto-oss/file-storage-provider).
 
 ---
 

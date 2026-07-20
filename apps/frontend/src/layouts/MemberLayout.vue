@@ -3,6 +3,7 @@ import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner.vue';
+import BrandLogo from '@/components/brand/BrandLogo.vue';
 import { useAuth } from '@/composables/useAuth';
 import { refreshSessionBalance } from '@/composables/useWalletBalance';
 import { refreshPlatformRoles } from '@/services/roles';
@@ -59,9 +60,12 @@ function isActive(path: string) {
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
         <RouterLink
           to="/app"
-          class="font-display truncate text-lg tracking-tight text-primary"
+          class="inline-flex min-w-0 shrink"
         >
-          Tavrida Lot
+          <BrandLogo
+            variant="header"
+            :theme="theme.mode === 'dark' ? 'dark' : 'light'"
+          />
         </RouterLink>
         <div class="flex items-center gap-1 sm:gap-2">
           <RouterLink

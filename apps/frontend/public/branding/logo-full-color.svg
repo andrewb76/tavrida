@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 72" fill="none" role="img" aria-label="&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;">
-  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090; — wordmark alias dark</title>
+  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090; — full color light</title>
   <g transform="translate(4 8)">
-    <circle cx="28" cy="28" r="24" stroke="#1F7A6E" stroke-width="2.5" fill="#16333A"/>
+    <circle cx="28" cy="28" r="24" stroke="#1F7A6E" stroke-width="2.5" fill="#F2F4F3"/>
     <path d="M6 34 C14 27, 22 25, 28 27 C34 29, 42 31, 50 34" stroke="#C9B89A" stroke-width="2" stroke-linecap="round"/>
     <path d="M8 38 C16 32, 22 31, 28 32.5 C34 34, 40 36, 48 38" stroke="#C47A3A" stroke-width="1.25" stroke-linecap="round" opacity="0.9"/>
-    <circle cx="28" cy="20" r="3.5" fill="#3D9B8E"/>
+    <circle cx="28" cy="20" r="3.5" fill="#1F7A6E"/>
   </g>
   <text
     x="72"
@@ -15,11 +15,11 @@
     font-weight="600"
     letter-spacing="-0.4"
     paint-order="stroke fill"
-    stroke="#0B1F24"
+    stroke="#F2F4F3"
     stroke-width="2.5"
     stroke-linejoin="round"
   >
-    <tspan fill="#F2F4F3">&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; </tspan>
-    <tspan fill="#C9B89A">&#1051;&#1086;&#1090;</tspan>
+    <tspan fill="#0B1F24">&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; </tspan>
+    <tspan fill="#1F7A6E">&#1051;&#1086;&#1090;</tspan>
   </text>
 </svg>

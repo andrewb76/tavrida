@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
 import { RouterLink } from 'vue-router';
+import BrandLogo from '@/components/brand/BrandLogo.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClubAccess } from '@/composables/useClubAccess';
+import { useThemeStore } from '@/stores/theme';
 import heroImage from '@/assets/backgrounds/tavrida-dark.webp';
 
 const auth = useAuth();
 const { inviteOnly } = useClubAccess();
+const theme = useThemeStore();
 
 const pillars = [
   {
@@ -48,12 +51,15 @@ const pillars = [
       </div>
 
       <div class="landing-hero__copy">
-        <p
+        <div
           id="landing-brand"
           class="landing-hero__brand"
         >
-          Tavrida Lot
-        </p>
+          <BrandLogo
+            variant="hero"
+            theme="dark"
+          />
+        </div>
         <h1 class="landing-hero__title">
           Вещь обретает цену, историю и своих людей
         </h1>
@@ -228,9 +234,10 @@ const pillars = [
 
     <footer class="landing-footer">
       <div class="landing-footer__inner">
-        <p class="font-display text-base text-text">
-          Tavrida Lot
-        </p>
+        <BrandLogo
+          variant="compact"
+          :theme="theme.mode === 'dark' ? 'dark' : 'light'"
+        />
         <p class="text-sm text-text-muted">
           Клуб увлеченных историей людей · Крым и шире
         </p>
@@ -313,11 +320,6 @@ const pillars = [
 
 .landing-hero__brand {
   margin: 0 0 0.75rem;
-  font-family: var(--token-font-display, 'Unbounded', system-ui, sans-serif);
-  font-size: clamp(2.35rem, 7vw, 3.75rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
 }
 
 .landing-hero__title {

@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
 import { RouterLink } from 'vue-router';
+import BrandLogo from '@/components/brand/BrandLogo.vue';
 import { useClubAccess } from '@/composables/useClubAccess';
+import { useThemeStore } from '@/stores/theme';
 
 const { inviteOnly } = useClubAccess();
+const theme = useThemeStore();
 </script>
 
 <template>
   <article class="about mx-auto max-w-2xl space-y-10">
     <header class="space-y-3">
-      <p class="font-display text-sm tracking-wide text-primary">
-        Tavrida Lot
-      </p>
+      <BrandLogo
+        variant="compact"
+        :theme="theme.mode === 'dark' ? 'dark' : 'light'"
+      />
       <h1 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         О клубе
       </h1>

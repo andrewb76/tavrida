@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 72" fill="none" role="img" aria-label="&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;">
+  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090; — mono ink</title>
+  <g transform="translate(4 8)">
+    <!-- outer chalk outline for readability on ink -->
+    <circle cx="28" cy="28" r="24" fill="none" stroke="#F2F4F3" stroke-width="3.5"/>
+    <path
+      d="M6 34 C14 27, 22 25, 28 27 C34 29, 42 31, 50 34"
+      stroke="#F2F4F3"
+      stroke-width="3.2"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <circle cx="28" cy="20" r="3.5" fill="none" stroke="#F2F4F3" stroke-width="3.2"/>
+
+    <!-- inner ink -->
+    <circle cx="28" cy="28" r="24" fill="none" stroke="#0B1F24" stroke-width="2.5"/>
+    <path
+      d="M6 34 C14 27, 22 25, 28 27 C34 29, 42 31, 50 34"
+      stroke="#0B1F24"
+      stroke-width="2"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <circle cx="28" cy="20" r="3.5" fill="#0B1F24"/>
+  </g>
+  <text
+    x="72"
+    y="44"
+    fill="#0B1F24"
+    font-family="'Unbounded', system-ui, sans-serif"
+    font-size="26"
+    font-weight="600"
+    letter-spacing="-0.4"
+    paint-order="stroke fill"
+    stroke="#F2F4F3"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  >&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;</text>
+</svg>

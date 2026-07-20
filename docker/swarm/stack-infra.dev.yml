@@ -191,6 +191,34 @@ services:
         - traefik.http.routers.minio-console.service=minio-console
         - traefik.http.services.minio-console.loadbalancer.server.port=9001
 
+  # Public-read bucket for Logto account avatar uploads (separate from BFF `avatars`).
+  minio-logto-init:
+    image: minio/mc:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    secrets:
+      - minio_root_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export MINIO_ROOT_PASSWORD=$$(cat /run/secrets/minio_root_password)
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" 2>/dev/null; do
+          echo "waiting for minio..."
+          sleep 3
+        done
+        mc mb local/logto-avatars --ignore-existing
+        mc anonymous set download local/logto-avatars
+        echo "minio logto-avatars bucket ok"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 15
+
   imgproxy:
     image: darthsim/imgproxy:latest
     environment:

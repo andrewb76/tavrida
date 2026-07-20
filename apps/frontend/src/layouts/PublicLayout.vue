@@ -2,6 +2,7 @@
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
+import BrandLogo from '@/components/brand/BrandLogo.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClubAccess } from '@/composables/useClubAccess';
 import { useThemeStore } from '@/stores/theme';
@@ -12,6 +13,10 @@ const theme = useThemeStore();
 const route = useRoute();
 
 const isLanding = computed(() => route.name === 'landing');
+const logoTheme = computed(() => {
+  if (isLanding.value) return 'dark';
+  return theme.mode === 'dark' ? 'dark' : 'light';
+});
 </script>
 
 <template>
@@ -29,10 +34,12 @@ const isLanding = computed(() => route.name === 'landing');
       >
         <RouterLink
           to="/"
-          class="font-display text-lg tracking-tight"
-          :class="isLanding ? 'text-white' : 'text-primary'"
+          class="inline-flex shrink-0"
         >
-          Tavrida Lot
+          <BrandLogo
+            variant="header"
+            :theme="logoTheme"
+          />
         </RouterLink>
         <nav class="flex items-center gap-1 sm:gap-2">
           <RouterLink

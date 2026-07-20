@@ -148,6 +148,16 @@ Redirect URIs в консоли:
 
 API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_API_RESOURCE`.
 
+### Logto avatar storage (MinIO)
+
+Сервис **`minio-logto-init`** создаёт bucket `logto-avatars` (public read). Затем с ноутбука:
+
+```bash
+DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage
+```
+
+См. [logto-setup.md](../../docs/14-frontend/logto-setup.md#avatar-upload-minio-storage).
+
 Local laptop по-прежнему может использовать `docker/compose/logto.local.yml` отдельно от Swarm.
 ## Swarm configs (immutable)
 

@@ -64,7 +64,8 @@ if (!endpoint || !clientId || !clientSecret) {
 }
 
 const customCss = readFileSync(CSS_PATH, 'utf8');
-const logoUrl = `${frontendOrigin}/branding/tavrida-wordmark.svg`;
+const logoUrl = `${frontendOrigin}/branding/logo-full-color-dark.svg`;
+const faviconUrl = `${frontendOrigin}/branding/tavrida-mark.svg`;
 
 /** @type {Record<string, unknown>} */
 const brandingBody = {
@@ -76,8 +77,8 @@ const brandingBody = {
   branding: {
     logoUrl,
     darkLogoUrl: logoUrl,
-    favicon: logoUrl,
-    darkFavicon: logoUrl,
+    favicon: faviconUrl,
+    darkFavicon: faviconUrl,
   },
   customCss,
 };
@@ -131,6 +132,7 @@ if (dryRun) {
         customCssBytes: customCss.length,
         color: brandingBody.color,
         branding: brandingBody.branding,
+        faviconUrl,
       },
       null,
       2,
@@ -144,5 +146,6 @@ await patchSignInExp(token);
 console.log('Logto sign-in branding updated.');
 console.log(`  endpoint: ${endpoint}`);
 console.log(`  logo:     ${logoUrl}`);
+console.log(`  favicon:  ${faviconUrl}`);
 console.log(`  css:      ${CSS_PATH} (${customCss.length} bytes)`);
 console.log('Preview: open Live preview in Console → Branding, or sign in at the auth host.');

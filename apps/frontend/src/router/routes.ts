@@ -180,7 +180,7 @@ export const routes: RouteRecordRaw[] = [
         path: '',
         name: 'landing',
         component: () => import('@/views/public/LandingView.vue'),
-        meta: { title: 'Tavrida Lot', public: true },
+        meta: { title: 'Таврида Лот', public: true },
       },
       {
         path: 'about',
