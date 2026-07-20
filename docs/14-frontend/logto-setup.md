@@ -67,43 +67,32 @@ VERIFY=1 pnpm setup:logto-branding
 
 ### Avatar upload (MinIO storage)
 
-Logto хранит аватары аккаунта в S3-compatible storage. Без `storageProvider` в БД поле **Avatar** в профиле недоступно.
+Logto хранит аватары в S3-compatible storage. Конфиг — строка `storageProvider` в БД `logto.systems`.
 
 | | |
 |---|---|
-| Bucket | `logto-avatars` (отдельно от BFF bucket `avatars`) |
-| Swarm init | сервис `minio-logto-init` в [stack-infra.dev.yml](../../docker/swarm/stack-infra.dev.yml) |
-| Logto → MinIO | `http://minio:9000` (внутри `tavrida_net`) |
+| Bucket | `logto-avatars` (отдельно от BFF `avatars`) |
+| Swarm bucket | `minio-logto-init` |
+| Swarm credentials | **`logto-storage-init`** читает `/run/secrets/minio_root_password` (тот же secret, что у MinIO) + пишет в DB |
+| Logto → MinIO | `http://minio:9000` |
 | Public URL | `https://s3.<DEV_DOMAIN>/logto-avatars/…` |
-| Script с ноутбука | `LOGTO_STORAGE_CLIENT_ENDPOINT=https://s3.<DEV_DOMAIN>` (не `localhost` из `.env.local`) |
+
+На Swarm **не нужно** знать пароль вручную: после `sync-secrets` + deploy infra init подставляет секрет сам.
 
 ```bash
-# dev.secrets.env: MINIO_ROOT_PASSWORD, POSTGRES_PASSWORD
-# dev.env: DEV_DOMAIN, LOGTO_STORAGE_* (см. dev.env.example)
+# обычный деплой infra уже поднимает logto-storage-init
+DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
 
-# с ноутбука (named context → VPS):
-DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage
+# после ротации MINIO_ROOT_PASSWORD:
+DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
+DOCKER_CONTEXT=dev-swarm docker service update --force tavrida-dev_logto-storage-init
+DOCKER_CONTEXT=dev-swarm docker service update --force tavrida-dev_logto
 
-# на самом VPS (/opt/tavrida) — без DOCKER_CONTEXT (локальный docker):
-SKIP_MINIO=1 pnpm setup:logto-storage
-
-# только посмотреть payload / SQL:
-DRY_RUN=1 pnpm setup:logto-storage
-
-# bucket уже есть (после minio-logto-init):
-SKIP_MINIO=1 pnpm setup:logto-storage
+# ручной fallback (ноутбук / отладка) — только если init недоступен:
+# SKIP_MINIO=1 pnpm setup:logto-storage   # берёт пароль из dev.secrets.env
 ```
 
-Если postgres task не найден, скрипт подключается через ephemeral `psql` в overlay-сети `tavrida-dev_tavrida_net` (как в [README.dev.md](../../docker/swarm/README.dev.md)).
-
-Скрипт: `scripts/setup-logto-storage.mjs` — bucket (public read) + `INSERT INTO systems … storageProvider`.
-
-После настройки:
-
-1. Перезапуск Logto (скрипт делает `docker service update --force tavrida-dev_logto`, если `LOGTO_SWARM_SERVICE` задан).
-2. **Console → Sign-in & account → Account center** — включить Account API; Avatar / Name → `Edit`.
-3. В SPA на `/profile/me` ссылка «Изменить аватар и имя» ведёт на `https://auth.<DEV_DOMAIN>/account/profile?redirect=…`.
-4. Проверить upload и возврат в приложение.
+После настройки в Console: Account center → Avatar **Edit**; storage должен быть без `SignatureDoesNotMatch`.
 
 Документация Logto: [File storage provider](https://docs.logto.io/logto-oss/file-storage-provider).
 

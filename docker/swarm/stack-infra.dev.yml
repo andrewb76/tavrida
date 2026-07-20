@@ -25,7 +25,7 @@ volumes:
 configs:
   traefik_static_v5:
     file: ../config/traefik/traefik.dev.yml
-  keto_config_v2:
+  keto_config_v3:
     file: ../config/keto/keto.yml
 
 secrets:
@@ -327,10 +327,57 @@ services:
         - traefik.http.routers.logto-admin.service=logto-admin
         - traefik.http.services.logto-admin.loadbalancer.server.port=3002
 
+  # Upsert Logto systems.storageProvider using the same Swarm secret as MinIO
+  # (tavrida_dev_minio_root_password). No manual password paste into setup scripts.
+  # After rotating MinIO password: sync-secrets → force this service + logto.
+  logto-storage-init:
+    image: postgres:17-alpine
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      LOGTO_STORAGE_BUCKET: ${LOGTO_STORAGE_BUCKET:-logto-avatars}
+      LOGTO_STORAGE_INTERNAL_ENDPOINT: ${LOGTO_STORAGE_INTERNAL_ENDPOINT:-http://minio:9000}
+      LOGTO_STORAGE_PUBLIC_URL: ${LOGTO_STORAGE_PUBLIC_URL:-https://s3.${DEV_DOMAIN}/logto-avatars}
+      POSTGRES_USER: ${POSTGRES_USER}
+    secrets:
+      - postgres_password
+      - minio_root_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        MINIO_PASS="$$(cat /run/secrets/minio_root_password)"
+        json_escape() {
+          printf '%s' "$$1" | awk 'BEGIN{ORS=""}{gsub(/\\/,"\\\\");gsub(/"/,"\\\"");gsub(/\t/,"\\t");gsub(/\r/,"\\r");gsub(/\n/,"\\n");print}'
+        }
+        until pg_isready -h postgres -U "$$POSTGRES_USER" -d logto; do
+          echo "waiting for logto db..."
+          sleep 3
+        done
+        until psql -h postgres -U "$$POSTGRES_USER" -d logto -Atc "SELECT to_regclass('public.systems')" | grep -q systems; do
+          echo "waiting for logto systems table..."
+          sleep 5
+        done
+        USER_ESC="$$(json_escape "$$MINIO_ROOT_USER")"
+        PASS_ESC="$$(json_escape "$$MINIO_PASS")"
+        JSON="{\"provider\":\"S3Storage\",\"endpoint\":\"$$LOGTO_STORAGE_INTERNAL_ENDPOINT\",\"region\":\"us-east-1\",\"bucket\":\"$$LOGTO_STORAGE_BUCKET\",\"accessKeyId\":\"$$USER_ESC\",\"accessSecretKey\":\"$$PASS_ESC\",\"forcePathStyle\":true,\"publicUrl\":\"$$LOGTO_STORAGE_PUBLIC_URL\"}"
+        psql -h postgres -U "$$POSTGRES_USER" -d logto -v ON_ERROR_STOP=1 \
+          -v json="$$JSON" \
+          -c "INSERT INTO systems (key, value) VALUES ('storageProvider', :'json'::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
+        echo "logto storageProvider ok (MinIO secret → systems table)"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 30
+
   keto-migrate:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config_v2
+      - source: keto_config_v3
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
@@ -347,7 +394,7 @@ services:
   keto:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config_v2
+      - source: keto_config_v3
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro

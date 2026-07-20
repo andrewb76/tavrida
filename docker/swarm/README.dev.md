@@ -193,11 +193,24 @@ docker run --rm --network tavrida-dev_tavrida_net \
 docker service update --force tavrida-dev_keto
 ```
 
-После первого входа:
+Ручной hotfix namespaces (если `Unknown namespace "TavridaLot"` — старый Swarm config без списка namespaces):
 
 ```bash
-pnpm grant:admin <logto_sub>
+# на VPS: новый immutable config (после git pull с keto.yml list-формата)
+CFG=keto_config_v3_$(date +%s)
+docker config create "$CFG" /opt/tavrida/docker/config/keto/keto.yml
+
+# узнать текущий config name
+docker service inspect tavrida-dev_keto --format '{{json .Spec.TaskTemplate.ContainerSpec.Configs}}'
+
+# проще — полный infra redeploy после push, либо:
+docker service update \
+  --config-rm tavrida-dev_keto_config_v2 \
+  --config-add source="$CFG",target=/home/ory/keto.yml \
+  tavrida-dev_keto
 ```
+
+(Имена `tavrida-dev_keto_config_v2` смотри в `docker config ls | grep keto`.)
 
 ## Обновление релиза
 

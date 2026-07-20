@@ -59,7 +59,7 @@
    - Secret `LOGTO_M2M_APP_SECRET`
 6. **Deploy** с rebuild frontend (`skip_build=false`), чтобы вшить новый `VITE_LOGTO_*`.
 7. Branding: **`pnpm setup:logto-branding`** (M2M в `dev.secrets.env`) — sign-in + Account Center; проверка: `VERIFY=1 pnpm setup:logto-branding`. См. [logto-setup.md](../14-frontend/logto-setup.md#branding-sign-in-experience).
-8. Avatar storage: после deploy infra (`minio-logto-init`) — `DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage`, затем включить **Avatar** в Sign-in experience ([logto-setup.md](../14-frontend/logto-setup.md#avatar-upload-minio-storage)).
+8. Avatar storage: сервисы `minio-logto-init` + **`logto-storage-init`** (пароль MinIO из Swarm secret → `systems.storageProvider`). После ротации пароля: `docker service update --force tavrida-dev_logto-storage-init` и logto. Account center: Avatar **Edit**.
 
 Подробнее: [logto-setup.md](../14-frontend/logto-setup.md) · [README.dev.md](../../docker/swarm/README.dev.md).
 

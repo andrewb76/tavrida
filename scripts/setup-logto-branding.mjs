@@ -160,7 +160,7 @@ async function patchSignInExp(token) {
   return res.json();
 }
 
-async function patchAccountCenterCss(token) {
+async function patchAccountCenter(token) {
   const getRes = await fetch(`${endpoint}/api/account-center`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -175,6 +175,14 @@ async function patchAccountCenterCss(token) {
   }
 
   const current = await getRes.json();
+  const fields = {
+    ...(current.fields ?? {}),
+    name: 'Edit',
+    avatar: 'Edit',
+    username: current.fields?.username === 'Off' ? 'ReadOnly' : (current.fields?.username ?? 'ReadOnly'),
+    password: current.fields?.password === 'Off' ? 'Edit' : (current.fields?.password ?? 'Edit'),
+  };
+
   const patchRes = await fetch(`${endpoint}/api/account-center`, {
     method: 'PATCH',
     headers: {
@@ -183,7 +191,13 @@ async function patchAccountCenterCss(token) {
     },
     body: JSON.stringify({
       ...current,
+      enabled: true,
+      fields,
       customCss: accountCenterCss,
+      // Show name + avatar on prebuilt profile page when catalog has them
+      profileFields: current.profileFields?.length
+        ? current.profileFields
+        : [{ name: 'avatar' }],
     }),
   });
 
@@ -237,10 +251,10 @@ await patchSignInExp(token);
 console.log('\nSign-in experience updated.');
 
 try {
-  await patchAccountCenterCss(token);
-  console.log('Account Center custom CSS updated.');
+  await patchAccountCenter(token);
+  console.log('Account Center enabled (name/avatar Edit) + custom CSS updated.');
 } catch (err) {
-  console.warn(`Account Center CSS skipped: ${err instanceof Error ? err.message : err}`);
+  console.warn(`Account Center skipped: ${err instanceof Error ? err.message : err}`);
 }
 
 console.log('\nAfter apply:');
