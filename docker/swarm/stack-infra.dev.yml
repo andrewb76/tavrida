@@ -361,9 +361,10 @@ services:
         USER_ESC="$$(json_escape "$$MINIO_ROOT_USER")"
         PASS_ESC="$$(json_escape "$$MINIO_PASS")"
         JSON="{\"provider\":\"S3Storage\",\"endpoint\":\"$$LOGTO_STORAGE_INTERNAL_ENDPOINT\",\"region\":\"us-east-1\",\"bucket\":\"$$LOGTO_STORAGE_BUCKET\",\"accessKeyId\":\"$$USER_ESC\",\"accessSecretKey\":\"$$PASS_ESC\",\"forcePathStyle\":true,\"publicUrl\":\"$$LOGTO_STORAGE_PUBLIC_URL\"}"
-        psql -h postgres -U "$$POSTGRES_USER" -d logto -v ON_ERROR_STOP=1 \
-          -v json="$$JSON" \
-          -c "INSERT INTO systems (key, value) VALUES ('storageProvider', :'json'::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
+        # psql -c does not expand :'var' — pass JSON via base64 instead
+        B64="$$(printf '%s' "$$JSON" | base64 | tr -d '\n')"
+        psql -h postgres -U "$$POSTGRES_USER" -d logto -v ON_ERROR_STOP=1 -c \
+          "INSERT INTO systems (key, value) VALUES ('storageProvider', convert_from(decode('$${B64}', 'base64'), 'UTF8')::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
         echo "logto storageProvider ok (MinIO secret → systems table)"
     networks:
       - tavrida_net
