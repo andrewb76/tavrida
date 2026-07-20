@@ -1,0 +1,99 @@
+/**
+ * Tavrida Lot — Logto Account Center Custom CSS
+ * Stable selectors: logto_ac-* (see Logto docs)
+ *
+ * Apply via pnpm setup:logto-branding (PATCH /api/account-center)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap');
+
+:root {
+  --tav-ink: #0b1f24;
+  --tav-ink-soft: #16333a;
+  --tav-patina: #1f7a6e;
+  --tav-patina-deep: #155e55;
+  --tav-patina-light: #3d9b8e;
+  --tav-chalk: #f2f4f3;
+  --tav-sand: #c9b89a;
+  --tav-line: rgb(242 244 243 / 0.18);
+}
+
+body {
+  font-family: 'Onest', system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 70% 45% at 75% 15%, rgb(31 122 110 / 0.22), transparent 55%),
+    linear-gradient(165deg, #0b1f24 0%, #16333a 48%, #0b1f24 100%);
+  background-color: var(--tav-ink);
+  color: var(--tav-chalk);
+}
+
+.logto_ac-logto-signature {
+  display: none;
+}
+
+.logto_ac-layout,
+.logto_ac-page {
+  color: var(--tav-chalk);
+}
+
+.logto_ac-page-header,
+.logto_ac-section-title,
+.logto_ac-card-title,
+h1,
+h2 {
+  font-family: 'Unbounded', system-ui, sans-serif !important;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--tav-chalk) !important;
+}
+
+.logto_ac-card,
+.logto_ac-security-card,
+.logto_ac-profile-card {
+  background: color-mix(in srgb, var(--tav-ink-soft) 88%, transparent);
+  border: 1px solid var(--tav-line);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.28);
+}
+
+button,
+a[role='button'] {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+button[type='submit'],
+button[class*='primary'],
+a[class*='primary'] {
+  background: var(--tav-patina) !important;
+  border-color: var(--tav-patina) !important;
+  color: #fff !important;
+}
+
+button[type='submit']:hover,
+button[class*='primary']:hover,
+a[class*='primary']:hover {
+  background: var(--tav-patina-deep) !important;
+  border-color: var(--tav-patina-deep) !important;
+}
+
+input,
+textarea,
+select {
+  border-radius: 10px;
+  border: 1px solid var(--tav-line);
+  background: rgb(11 31 36 / 0.55);
+  color: var(--tav-chalk);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--tav-patina);
+  box-shadow: 0 0 0 3px rgb(31 122 110 / 0.28);
+  outline: none;
+}
+
+a {
+  color: var(--tav-sand);
+}

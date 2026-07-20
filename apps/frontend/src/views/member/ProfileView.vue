@@ -10,7 +10,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
-import { isLogtoConfigured } from '@/config/logto';
+import { isLogtoConfigured, logtoAccountProfileUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile } from '@/services/profile';
@@ -28,6 +28,11 @@ const avatarPreviewUrl = ref<string | null>(null);
 const avatarPreviewLabel = ref('');
 const isMe = computed(() => route.name === 'profile-me');
 const userId = computed(() => route.params.userId as string | undefined);
+const logtoProfileUrl = computed(() =>
+  isMe.value && isLogtoConfigured() && !session.isImpersonating
+    ? logtoAccountProfileUrl(`${window.location.origin}/profile/me`)
+    : null,
+);
 
 const loading = ref(false);
 const lastCreated = ref<CreatedInvite | null>(null);
@@ -131,6 +136,17 @@ async function loadDisplayedProfile() {
 onMounted(() => {
   void refreshProfile();
   void refreshHistory();
+
+  const showSuccess = typeof route.query.show_success === 'string' ? route.query.show_success : null;
+  if (showSuccess && isMe.value) {
+    toast.success(
+      showSuccess === 'true' || showSuccess === 'profile'
+        ? 'Профиль обновлён'
+        : 'Настройки аккаунта обновлены',
+    );
+    void router.replace({ name: 'profile-me', query: {} });
+    void refreshProfile();
+  }
 });
 
 watch(
@@ -239,6 +255,17 @@ async function copyInviteLink() {
           </p>
           <p class="mt-2 text-xs text-text-muted">
             Участник клуба
+          </p>
+          <p
+            v-if="logtoProfileUrl"
+            class="mt-3"
+          >
+            <a
+              :href="logtoProfileUrl"
+              class="inline-flex items-center text-sm font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Изменить аватар и имя
+            </a>
           </p>
         </div>
       </section>

@@ -16,6 +16,9 @@
 }
 
 #app {
+  --color-brand-primary: #1f7a6e;
+  --color-brand-hover: #3d9b8e;
+  --color-brand-active: #155e55;
   --color-type-primary: #f2f4f3;
   --color-type-secondary: #c9b89a;
   --tav-ink: #0b1f24;

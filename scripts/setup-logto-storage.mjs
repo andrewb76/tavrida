@@ -8,11 +8,13 @@
  * Swarm: bucket is also created by `minio-logto-init` in stack-infra.dev.yml.
  *
  * Usage (repo root, credentials in .env.local / docker/swarm/dev.secrets.env):
- *   DEV_DOMAIN=evatorg.su \
- *   MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=… \
- *   POSTGRES_PASSWORD=… \
- *   DOCKER_CONTEXT=dev-swarm \
- *     pnpm setup:logto-storage
+ *   # Laptop → remote Swarm:
+ *   DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage
+ *
+ *   # On VPS (/opt/tavrida) — unset DOCKER_CONTEXT (local daemon):
+ *   SKIP_MINIO=1 pnpm setup:logto-storage
+ *
+ *   DEV_DOMAIN=evatorg.su MINIO_ROOT_PASSWORD=… POSTGRES_PASSWORD=… …
  *
  * Dry-run:
  *   DRY_RUN=1 pnpm setup:logto-storage
@@ -36,7 +38,7 @@ import {
 
 const ROOT = resolve(import.meta.dirname, '..');
 
-function loadEnvFile(name) {
+function loadEnvFile(name, { override = false } = {}) {
   try {
     const text = readFileSync(resolve(ROOT, name), 'utf8');
     for (const line of text.split('\n')) {
@@ -46,7 +48,7 @@ function loadEnvFile(name) {
       if (idx < 0) continue;
       const key = trimmed.slice(0, idx).trim();
       const value = trimmed.slice(idx + 1).trim();
-      if (!(key in process.env)) process.env[key] = value;
+      if (override || !(key in process.env)) process.env[key] = value;
     }
   } catch {
     /* optional */
@@ -56,17 +58,45 @@ function loadEnvFile(name) {
 loadEnvFile('.env.local');
 loadEnvFile('.env');
 loadEnvFile('docker/swarm/dev.env');
-loadEnvFile('docker/swarm/dev.secrets.env');
+// Swarm secrets override local MinIO placeholders (minioadmin from .env.local).
+loadEnvFile('docker/swarm/dev.secrets.env', { override: true });
 
 const dryRun = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true';
 const skipMinio = process.env.SKIP_MINIO === '1' || process.env.SKIP_MINIO === 'true';
 
 const devDomain = process.env.DEV_DOMAIN?.trim() || 'evatorg.su';
 const bucket = process.env.LOGTO_STORAGE_BUCKET?.trim() || 'logto-avatars';
-const accessKeyId =
-  process.env.MINIO_ACCESS_KEY?.trim() || process.env.MINIO_ROOT_USER?.trim() || 'minioadmin';
-const secretAccessKey =
-  process.env.MINIO_SECRET_KEY?.trim() || process.env.MINIO_ROOT_PASSWORD?.trim();
+
+const remoteDockerContext =
+  Boolean(process.env.DOCKER_CONTEXT?.trim()) &&
+  process.env.DOCKER_CONTEXT.trim() !== 'default';
+
+function resolveMinioCredentials() {
+  const rootUser = process.env.MINIO_ROOT_USER?.trim();
+  const rootPassword = process.env.MINIO_ROOT_PASSWORD?.trim();
+  const accessKey = process.env.MINIO_ACCESS_KEY?.trim();
+  const secretKey = process.env.MINIO_SECRET_KEY?.trim();
+
+  if (remoteDockerContext) {
+    return {
+      accessKeyId: rootUser || accessKey || 'minioadmin',
+      secretAccessKey: rootPassword || secretKey,
+    };
+  }
+
+  return {
+    accessKeyId: accessKey || rootUser || 'minioadmin',
+    secretAccessKey: secretKey || rootPassword,
+  };
+}
+
+const { accessKeyId, secretAccessKey } = resolveMinioCredentials();
+
+const stackName = process.env.STACK_NAME?.trim() || 'tavrida-dev';
+const swarmNetwork =
+  process.env.DOCKER_SWARM_NETWORK?.trim() ||
+  process.env.TRAEFIK_SWARM_NETWORK?.trim() ||
+  `${stackName}_tavrida_net`;
 
 const internalEndpoint =
   process.env.LOGTO_STORAGE_INTERNAL_ENDPOINT?.trim() || 'http://minio:9000';
@@ -75,20 +105,49 @@ const publicUrl = (
   `https://s3.${devDomain}/${bucket}`
 ).replace(/\/$/, '');
 
-/** Endpoint for this script to reach MinIO (laptop / CI — public S3 host). */
+/** True when MINIO_* from .env.local points at local dev stack, not reachable remotely. */
+function isLocalMinioTarget(value) {
+  if (!value) return false;
+  const v = value.toLowerCase();
+  return (
+    v.includes('localhost') ||
+    v.includes('127.0.0.1') ||
+    v.includes('://minio:') ||
+    v.includes('://minio/') ||
+    v === 'minio'
+  );
+}
+
+/** Endpoint for this script to reach MinIO (laptop → public S3; on VPS → localhost). */
 function minioClientEndpoint() {
-  if (process.env.MINIO_URL?.trim()) {
-    return process.env.MINIO_URL.trim().replace(/\/$/, '');
+  if (process.env.LOGTO_STORAGE_CLIENT_ENDPOINT?.trim()) {
+    return process.env.LOGTO_STORAGE_CLIENT_ENDPOINT.trim().replace(/\/$/, '');
   }
-  const host = process.env.MINIO_ENDPOINT?.trim();
-  if (host?.startsWith('http')) return host.replace(/\/$/, '');
-  if (host && host !== 'minio' && host !== 'localhost') {
-    const ssl = process.env.MINIO_USE_SSL === 'true';
-    const port = process.env.MINIO_PORT?.trim();
+
+  const minioUrl = process.env.MINIO_URL?.trim();
+  const minioHost = process.env.MINIO_ENDPOINT?.trim();
+
+  if (!remoteDockerContext) {
+    if (minioUrl) return minioUrl.replace(/\/$/, '');
+    if (minioHost?.startsWith('http')) return minioHost.replace(/\/$/, '');
+    if (minioHost && !isLocalMinioTarget(minioHost)) {
+      const ssl = process.env.MINIO_USE_SSL === 'true';
+      const port = process.env.MINIO_PORT?.trim();
+      const scheme = ssl ? 'https' : 'http';
+      if (port && port !== '443' && port !== '80') return `${scheme}://${minioHost}:${port}`;
+      return `${scheme}://${minioHost}`;
+    }
+  } else if (minioUrl && !isLocalMinioTarget(minioUrl)) {
+    return minioUrl.replace(/\/$/, '');
+  } else if (minioHost && !isLocalMinioTarget(minioHost)) {
+    if (minioHost.startsWith('http')) return minioHost.replace(/\/$/, '');
+    const ssl = process.env.MINIO_USE_SSL === 'true' || minioHost.includes('.');
     const scheme = ssl ? 'https' : 'http';
-    if (port && port !== '443' && port !== '80') return `${scheme}://${host}:${port}`;
-    return `${scheme}://${host}`;
+    const port = process.env.MINIO_PORT?.trim();
+    if (port && port !== '443' && port !== '80') return `${scheme}://${minioHost}:${port}`;
+    return `${scheme}://${minioHost}`;
   }
+
   return `https://s3.${devDomain}`;
 }
 
@@ -165,14 +224,39 @@ function buildStorageProviderConfig() {
   };
 }
 
-function findDockerContainer(nameFragment) {
-  const res = spawnSync(
-    'docker',
-    ['ps', '-q', '-f', `name=${nameFragment}`],
-    { encoding: 'utf8' },
-  );
-  if (res.status !== 0) return '';
-  return res.stdout.trim().split('\n')[0] ?? '';
+function dockerArgs(extra = []) {
+  const ctx = process.env.DOCKER_CONTEXT?.trim();
+  if (ctx && ctx !== 'default') return ['--context', ctx, ...extra];
+  return extra;
+}
+
+function runDocker(args, options = {}) {
+  return spawnSync('docker', dockerArgs(args), options);
+}
+
+function assertDockerReachable() {
+  const res = runDocker(['info', '--format', '{{.Name}}'], { encoding: 'utf8', stdio: 'pipe' });
+  if (res.status !== 0) {
+    const hint = remoteDockerContext
+      ? 'Check DOCKER_CONTEXT=dev-swarm on your laptop. On the VPS itself, unset DOCKER_CONTEXT.'
+      : 'Ensure Docker daemon is running and you have permission to use it.';
+    throw new Error(`docker not reachable: ${(res.stderr || res.stdout || '').trim()}\n${hint}`);
+  }
+}
+
+function findPostgresContainer() {
+  const explicit = process.env.DOCKER_POSTGRES_CONTAINER?.trim();
+  if (explicit) return explicit;
+
+  for (const fragment of [`${stackName}_postgres`, '_postgres']) {
+    const res = runDocker(['ps', '-q', '-f', `name=${fragment}`, '-f', 'status=running'], {
+      encoding: 'utf8',
+    });
+    if (res.status !== 0) continue;
+    const id = res.stdout.trim().split('\n').find(Boolean);
+    if (id) return id;
+  }
+  return '';
 }
 
 function applyStorageViaDockerPsql(config) {
@@ -181,18 +265,12 @@ function applyStorageViaDockerPsql(config) {
   const sql = `INSERT INTO systems (key, value) VALUES ('storageProvider', $${tag}$${json}$${tag}$::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;`;
 
   if (dryRun) {
-    console.log('[dry-run] would run SQL on logto DB (via docker postgres container)');
+    console.log('[dry-run] would run SQL on logto DB (postgres exec or ephemeral psql on swarm network)');
     console.log(sql);
     return;
   }
 
-  const postgresContainer =
-    process.env.DOCKER_POSTGRES_CONTAINER?.trim() || findDockerContainer('_postgres');
-  if (!postgresContainer) {
-    throw new Error(
-      'Postgres container not found. Set DOCKER_POSTGRES_CONTAINER or run with DOCKER_CONTEXT=dev-swarm',
-    );
-  }
+  assertDockerReachable();
 
   const pgUser = process.env.POSTGRES_USER?.trim() || 'postgres';
   const pgPassword = process.env.POSTGRES_PASSWORD?.trim();
@@ -200,25 +278,36 @@ function applyStorageViaDockerPsql(config) {
     throw new Error('Missing POSTGRES_PASSWORD for Logto DB update');
   }
 
-  const res = spawnSync(
-    'docker',
-    [
-      'exec',
-      '-e',
-      `PGPASSWORD=${pgPassword}`,
-      postgresContainer,
-      'psql',
-      '-U',
-      pgUser,
-      '-d',
-      'logto',
-      '-v',
-      'ON_ERROR_STOP=1',
-      '-c',
-      sql,
-    ],
-    { encoding: 'utf8', stdio: 'pipe' },
-  );
+  const postgresContainer = findPostgresContainer();
+  const psqlBase = ['psql', '-U', pgUser, '-d', 'logto', '-v', 'ON_ERROR_STOP=1', '-c', sql];
+
+  let res;
+  if (postgresContainer) {
+    console.log(`Logto DB update via postgres task ${postgresContainer.slice(0, 12)}…`);
+    res = runDocker(
+      ['exec', '-e', `PGPASSWORD=${pgPassword}`, postgresContainer, ...psqlBase],
+      { encoding: 'utf8', stdio: 'pipe' },
+    );
+  } else {
+    const pgHost = process.env.POSTGRES_HOST?.trim() || 'postgres';
+    console.log(`Logto DB update via ephemeral psql on ${swarmNetwork} → ${pgHost}`);
+    res = runDocker(
+      [
+        'run',
+        '--rm',
+        '--network',
+        swarmNetwork,
+        '-e',
+        `PGPASSWORD=${pgPassword}`,
+        'postgres:17-alpine',
+        ...psqlBase.slice(0, 1),
+        '-h',
+        pgHost,
+        ...psqlBase.slice(1),
+      ],
+      { encoding: 'utf8', stdio: 'pipe' },
+    );
+  }
 
   if (res.status !== 0) {
     throw new Error(`psql failed: ${res.stderr || res.stdout}`);
@@ -230,16 +319,9 @@ function applyStorageViaDockerPsql(config) {
 function maybeRestartLogto() {
   if (dryRun || process.env.RESTART_LOGTO === '0') return;
 
-  const logtoService =
-    process.env.DOCKER_LOGTO_SERVICE?.trim() || findDockerContainer('_logto');
-  if (!logtoService) {
-    console.log('Logto container not found — restart Logto manually if avatar upload fails.');
-    return;
-  }
-
   const stackService = process.env.LOGTO_SWARM_SERVICE?.trim();
   if (stackService) {
-    const res = spawnSync('docker', ['service', 'update', '--force', stackService], {
+    const res = runDocker(['service', 'update', '--force', stackService], {
       encoding: 'utf8',
       stdio: 'inherit',
     });
@@ -249,13 +331,37 @@ function maybeRestartLogto() {
     return;
   }
 
-  spawnSync('docker', ['restart', logtoService], { stdio: 'inherit' });
-  console.log(`Restarted container: ${logtoService}`);
+  const logtoRes = runDocker(['ps', '-q', '-f', 'name=_logto', '-f', 'status=running'], {
+    encoding: 'utf8',
+  });
+  const logtoContainer = logtoRes.stdout?.trim().split('\n').find(Boolean);
+  if (!logtoContainer) {
+    console.log('Logto container not found — restart Logto manually if avatar upload fails.');
+    return;
+  }
+
+  runDocker(['restart', logtoContainer], { stdio: 'inherit' });
+  console.log(`Restarted container: ${logtoContainer}`);
 }
 
 async function main() {
   if (!secretAccessKey && !dryRun) {
     console.error('Missing MINIO_SECRET_KEY or MINIO_ROOT_PASSWORD');
+    process.exit(1);
+  }
+
+  if (
+    remoteDockerContext &&
+    !dryRun &&
+    !skipMinio &&
+    secretAccessKey === 'minioadmin' &&
+    !process.env.MINIO_ROOT_PASSWORD?.trim()
+  ) {
+    console.error(
+      'Remote Swarm (DOCKER_CONTEXT=dev-swarm) but MinIO password looks like local placeholder.\n' +
+        'Create docker/swarm/dev.secrets.env from dev.secrets.env.example with real MINIO_ROOT_PASSWORD,\n' +
+        'or pass MINIO_ROOT_PASSWORD=… inline. If bucket exists from minio-logto-init: SKIP_MINIO=1',
+    );
     process.exit(1);
   }
 

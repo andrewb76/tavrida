@@ -45,3 +45,19 @@ export function signInRedirectUri(): string {
 export function signOutRedirectUri(): string {
   return `${window.location.origin}/`;
 }
+
+/**
+ * Logto prebuilt Account Center — profile (name, avatar).
+ * @see https://docs.logto.io/end-user-flows/account-settings/by-account-center-ui
+ */
+export function logtoAccountProfileUrl(redirectUrl?: string): string | null {
+  const endpoint = import.meta.env.VITE_LOGTO_ENDPOINT?.trim().replace(/\/$/, '');
+  if (!endpoint) return null;
+
+  const redirect = redirectUrl ?? `${window.location.origin}/profile/me`;
+  const url = new URL(`${endpoint}/account/profile`);
+  url.searchParams.set('redirect', redirect);
+  url.searchParams.set('show_success', 'true');
+  url.searchParams.set('ui_locales', 'ru');
+  return url.toString();
+}

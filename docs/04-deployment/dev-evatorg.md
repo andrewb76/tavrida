@@ -58,7 +58,7 @@
    - `VITE_LOGTO_API_RESOURCE=https://api.evatorg.su`
    - Secret `LOGTO_M2M_APP_SECRET`
 6. **Deploy** с rebuild frontend (`skip_build=false`), чтобы вшить новый `VITE_LOGTO_*`.
-7. Branding: Console → Branding **или** `pnpm setup:logto-branding` ([logto-setup.md](../14-frontend/logto-setup.md)).
+7. Branding: **`pnpm setup:logto-branding`** (M2M в `dev.secrets.env`) — sign-in + Account Center; проверка: `VERIFY=1 pnpm setup:logto-branding`. См. [logto-setup.md](../14-frontend/logto-setup.md#branding-sign-in-experience).
 8. Avatar storage: после deploy infra (`minio-logto-init`) — `DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage`, затем включить **Avatar** в Sign-in experience ([logto-setup.md](../14-frontend/logto-setup.md#avatar-upload-minio-storage)).
 
 Подробнее: [logto-setup.md](../14-frontend/logto-setup.md) · [README.dev.md](../../docker/swarm/README.dev.md).
