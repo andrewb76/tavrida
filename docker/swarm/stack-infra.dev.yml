@@ -333,10 +333,12 @@ services:
   logto-storage-init:
     image: postgres:17-alpine
     environment:
+      DEV_DOMAIN: ${DEV_DOMAIN}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       LOGTO_STORAGE_BUCKET: ${LOGTO_STORAGE_BUCKET:-logto-avatars}
       LOGTO_STORAGE_INTERNAL_ENDPOINT: ${LOGTO_STORAGE_INTERNAL_ENDPOINT:-http://minio:9000}
-      LOGTO_STORAGE_PUBLIC_URL: ${LOGTO_STORAGE_PUBLIC_URL:-https://s3.${DEV_DOMAIN}/logto-avatars}
+      # Do NOT nest ${DEV_DOMAIN} inside ${VAR:-…} — Compose closes on the inner `}` and leaves a stray `}`.
+      LOGTO_STORAGE_PUBLIC_URL: ${LOGTO_STORAGE_PUBLIC_URL:-}
       POSTGRES_USER: ${POSTGRES_USER}
     secrets:
       - postgres_password
@@ -347,6 +349,12 @@ services:
         set -e
         export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
         MINIO_PASS="$$(cat /run/secrets/minio_root_password)"
+        PUBLIC_URL="$$LOGTO_STORAGE_PUBLIC_URL"
+        if [ -z "$$PUBLIC_URL" ]; then
+          PUBLIC_URL="https://s3.$${DEV_DOMAIN}/logto-avatars"
+        fi
+        # Strip accidental trailing } from broken Compose nested defaults
+        PUBLIC_URL="$$(printf '%s' "$$PUBLIC_URL" | sed 's/}$$//')"
         json_escape() {
           printf '%s' "$$1" | awk 'BEGIN{ORS=""}{gsub(/\\/,"\\\\");gsub(/"/,"\\\"");gsub(/\t/,"\\t");gsub(/\r/,"\\r");gsub(/\n/,"\\n");print}'
         }
@@ -360,12 +368,15 @@ services:
         done
         USER_ESC="$$(json_escape "$$MINIO_ROOT_USER")"
         PASS_ESC="$$(json_escape "$$MINIO_PASS")"
-        JSON="{\"provider\":\"S3Storage\",\"endpoint\":\"$$LOGTO_STORAGE_INTERNAL_ENDPOINT\",\"region\":\"us-east-1\",\"bucket\":\"$$LOGTO_STORAGE_BUCKET\",\"accessKeyId\":\"$$USER_ESC\",\"accessSecretKey\":\"$$PASS_ESC\",\"forcePathStyle\":true,\"publicUrl\":\"$$LOGTO_STORAGE_PUBLIC_URL\"}"
+        PUBLIC_ESC="$$(json_escape "$$PUBLIC_URL")"
+        ENDPOINT_ESC="$$(json_escape "$$LOGTO_STORAGE_INTERNAL_ENDPOINT")"
+        BUCKET_ESC="$$(json_escape "$$LOGTO_STORAGE_BUCKET")"
+        JSON="{\"provider\":\"S3Storage\",\"endpoint\":\"$$ENDPOINT_ESC\",\"region\":\"us-east-1\",\"bucket\":\"$$BUCKET_ESC\",\"accessKeyId\":\"$$USER_ESC\",\"accessSecretKey\":\"$$PASS_ESC\",\"forcePathStyle\":true,\"publicUrl\":\"$$PUBLIC_ESC\"}"
         # psql -c does not expand :'var' — pass JSON via base64 instead
         B64="$$(printf '%s' "$$JSON" | base64 | tr -d '\n')"
         psql -h postgres -U "$$POSTGRES_USER" -d logto -v ON_ERROR_STOP=1 -c \
           "INSERT INTO systems (key, value) VALUES ('storageProvider', convert_from(decode('$${B64}', 'base64'), 'UTF8')::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
-        echo "logto storageProvider ok (MinIO secret → systems table)"
+        echo "logto storageProvider ok publicUrl=$$PUBLIC_URL"
     networks:
       - tavrida_net
     deploy:
