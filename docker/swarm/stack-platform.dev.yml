@@ -358,6 +358,8 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY_FILE: /run/secrets/minio_secret_key
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
+      # Browser presigned PUT must use public HTTPS (not http://minio:9000)
+      MINIO_PRESIGN_ENDPOINT: https://s3.${DEV_DOMAIN}
       VANGA_DEFAULTS_PATH: /app/config/vanga.defaults.yaml
     networks:
       - tavrida_net

@@ -127,18 +127,39 @@ export class MediaStorageService implements OnModuleInit {
 
   /**
    * Endpoint embedded in browser presigned URLs.
-   * Prefer MINIO_PRESIGN_ENDPOINT, else MEDIA_PUBLIC_BASE_URL when it is public HTTPS.
+   * Always prefer an explicit public origin so HTTPS apps never get http://minio:9000.
    */
   private presignEndpoint(): string {
     const explicit = this.config.get<string>('MINIO_PRESIGN_ENDPOINT')?.trim();
     if (explicit) return explicit.replace(/\/$/, '');
 
-    const publicBase = this.publicBaseUrl().replace(/\/$/, '');
-    if (this.isBrowserReachableOrigin(publicBase)) {
+    const publicBase = (
+      this.config.get<string>('MEDIA_PUBLIC_BASE_URL')?.trim() ||
+      this.config.get<string>('MINIO_URL')?.trim() ||
+      ''
+    ).replace(/\/$/, '');
+
+    if (publicBase && this.isBrowserReachableOrigin(publicBase)) {
       return publicBase;
     }
 
-    return this.internalEndpoint();
+    // If MEDIA_PUBLIC_BASE_URL is set to a non-internal URL (incl. http://localhost for local),
+    // still prefer it over Swarm-internal minio DNS when they differ.
+    const internal = this.internalEndpoint();
+    if (publicBase && publicBase !== internal && !this.isInternalOnlyHost(publicBase)) {
+      return publicBase;
+    }
+
+    return internal;
+  }
+
+  private isInternalOnlyHost(url: string): boolean {
+    try {
+      const host = new URL(url).hostname.toLowerCase();
+      return host === 'minio' || host.endsWith('.tavrida_net');
+    } catch {
+      return false;
+    }
   }
 
   private isBrowserReachableOrigin(url: string): boolean {
@@ -147,7 +168,6 @@ export class MediaStorageService implements OnModuleInit {
       if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
       const host = u.hostname.toLowerCase();
       if (host === 'localhost' || host === '127.0.0.1' || host === 'minio') return false;
-      // Swarm / compose internal DNS names are single-label
       if (!host.includes('.')) return false;
       return true;
     } catch {
