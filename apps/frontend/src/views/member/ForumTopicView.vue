@@ -55,8 +55,15 @@ const commentUpload = useMediaUpload('forum');
 const canEditTopic = computed(() => {
   if (!topic.value || !session.userId || !forumMeta.value) return false;
   if (topic.value.authorId !== session.userId) return false;
-  return canEditForumContent(topic.value.createdAt, forumMeta.value.editWindowMinutes);
+  if (topic.value.status === 'DRAFT') return true;
+  return canEditForumContent(
+    topic.value.publishedAt ?? topic.value.createdAt,
+    forumMeta.value.editWindowMinutes,
+  );
 });
+
+const isDraft = computed(() => topic.value?.status === 'DRAFT');
+const publishing = ref(false);
 
 let loadGeneration = 0;
 
@@ -115,6 +122,19 @@ async function saveTopicEdit() {
     topicEditError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
   } finally {
     savingTopic.value = false;
+  }
+}
+
+async function publishDraft() {
+  if (!topic.value || !isDraft.value || publishing.value) return;
+  publishing.value = true;
+  topicEditError.value = null;
+  try {
+    topic.value = await updateTopic(topicId.value, { status: 'PUBLISHED' });
+  } catch (e) {
+    topicEditError.value = e instanceof Error ? e.message : 'Не удалось опубликовать';
+  } finally {
+    publishing.value = false;
   }
 }
 
@@ -220,13 +240,13 @@ async function submitTopicComment() {
             aria-label="Действия с темой"
           >
             <EventSubscribeButton
-              v-if="session.isMember"
+              v-if="session.isMember && !isDraft"
               source-domain="forum"
               target-type="FORUM_TOPIC"
               :target-id="topic.id"
             />
             <UiButton
-              v-if="session.isMember"
+              v-if="session.isMember && !isDraft"
               intent="ghost"
               size="icon"
               type="button"
@@ -253,8 +273,31 @@ async function submitTopicComment() {
                 :size="18"
               />
             </UiButton>
+            <UiButton
+              v-if="isDraft && canEditTopic && !editingTopic"
+              intent="primary"
+              size="sm"
+              type="button"
+              :disabled="publishing"
+              @click="publishDraft"
+            >
+              {{ publishing ? 'Публикация…' : 'Опубликовать' }}
+            </UiButton>
           </div>
         </header>
+
+        <p
+          v-if="isDraft"
+          class="forum-topic__draft-banner"
+        >
+          Черновик — виден только вам. Комментарии и голоса недоступны, пока не опубликуете.
+        </p>
+        <p
+          v-if="topicEditError && !editingTopic"
+          class="forum-topic__error"
+        >
+          {{ topicEditError }}
+        </p>
 
         <template v-if="editingTopic">
           <label class="forum-topic__edit-field">
@@ -303,7 +346,13 @@ async function submitTopicComment() {
           </div>
         </template>
         <template v-else>
-          <h1>{{ topic.title }}</h1>
+          <h1>
+            <span
+              v-if="isDraft"
+              class="forum-topic__draft-badge"
+            >Черновик</span>
+            {{ topic.title }}
+          </h1>
           <MarkdownBody :body="topic.body" />
         </template>
         <AttachmentList
@@ -318,7 +367,10 @@ async function submitTopicComment() {
           :can-edit="Boolean(session.userId && topic.authorId === session.userId)"
           @updated="onTopicTagsUpdated"
         />
-        <div class="forum-topic__toolbar">
+        <div
+          v-if="!isDraft"
+          class="forum-topic__toolbar"
+        >
           <ForumVoteBar
             content-type="topic"
             :content-id="topic.id"
@@ -338,7 +390,10 @@ async function submitTopicComment() {
         </div>
       </article>
 
-      <section class="forum-topic__comments">
+      <section
+        v-if="!isDraft"
+        class="forum-topic__comments"
+      >
         <h2>Комментарии ({{ comments.length }})</h2>
 
         <ul
@@ -491,6 +546,27 @@ async function submitTopicComment() {
 .forum-topic__head h1,
 .forum-topic__comments h2 {
   color: var(--color-text, #111);
+}
+
+.forum-topic__draft-badge {
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-warning, #b8860b);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #b8860b) 40%, transparent);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+.forum-topic__draft-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-warning, #b8860b) 12%, transparent);
+  color: var(--color-text, #111);
+  font-size: 0.875rem;
 }
 
 .forum-topic__author-name {

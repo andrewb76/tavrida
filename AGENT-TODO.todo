@@ -37,6 +37,9 @@ Subscriptions (event intent):
   ☐ Novu: настроить local (ключ + tag-content) после чеклиста @notifications
   ☐ После проверки local Novu — merge в infra.local.yml (как Keto) @notifications @ops
 
+Forum:
+  ✔ Topic drafts DRAFT/PUBLISHED (author-only, no unpublish) @forum @frontend @docs @done(26-07-21)
+
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)
   ✔ English bid + close/run + RMQ + FE placeBid @auction @bff @frontend @done(26-07-16)

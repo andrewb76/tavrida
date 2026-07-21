@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -10,6 +14,8 @@ import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { TagsService } from '../tags/tags.service';
 import { VotesService } from '../votes/votes.service';
+
+export type TopicStatus = 'DRAFT' | 'PUBLISHED';
 
 @Injectable()
 export class TopicsService {
@@ -23,10 +29,39 @@ export class TopicsService {
     private readonly tags: TagsService,
   ) {}
 
-  async list(input: { categoryId?: string; limit?: number }) {
+  async list(input: {
+    categoryId?: string;
+    limit?: number;
+    status?: TopicStatus;
+    authorId?: string;
+  }) {
     const take = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
+
+    if (status === 'DRAFT') {
+      if (!input.authorId) {
+        throw new BadRequestException({
+          type: 'validation-error',
+          detail: 'Для списка черновиков нужен authorId',
+        });
+      }
+      const rows = await this.topics.find({
+        where: {
+          status: 'DRAFT',
+          authorId: input.authorId,
+          ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+        },
+        order: { updatedAt: 'DESC' },
+        take,
+      });
+      return { data: rows.map((row) => this.toSummary(row)) };
+    }
+
     const rows = await this.topics.find({
-      where: input.categoryId ? { categoryId: input.categoryId } : {},
+      where: {
+        status: 'PUBLISHED',
+        ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+      },
       order: { isPinned: 'DESC', createdAt: 'DESC' },
       take,
     });
@@ -40,11 +75,34 @@ export class TopicsService {
     topicId: string,
     viewer?: { userId?: string; changeWindowMinutes?: number },
   ) {
+    const row = await this.requireVisibleTopic(topicId, viewer?.userId);
+    return this.toDetail(row, viewer);
+  }
+
+  /** Load topic if viewer may see it; drafts → author only (404 otherwise). */
+  async requireVisibleTopic(topicId: string, viewerId?: string): Promise<TopicEntity> {
     const row = await this.topics.findOne({ where: { id: topicId } });
     if (!row) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
-    return this.toDetail(row, viewer);
+    if (row.status === 'DRAFT' && row.authorId !== viewerId) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
+    }
+    return row;
+  }
+
+  async assertPublishedTopic(topicId: string): Promise<TopicEntity> {
+    const row = await this.topics.findOne({ where: { id: topicId } });
+    if (!row) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
+    }
+    if (row.status !== 'PUBLISHED') {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Черновик нельзя комментировать или голосовать — сначала опубликуйте тему',
+      });
+    }
+    return row;
   }
 
   async create(input: {
@@ -52,6 +110,7 @@ export class TopicsService {
     authorId: string;
     title: string;
     body: string;
+    status?: TopicStatus;
     attachments?: MediaAttachment[];
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
@@ -64,6 +123,7 @@ export class TopicsService {
       });
     }
 
+    const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
     const attachments = input.attachments ?? [];
     validateForumContent({
       body: input.body,
@@ -76,6 +136,7 @@ export class TopicsService {
       },
     });
 
+    const now = new Date();
     const row = this.topics.create({
       id: randomUUID(),
       categoryId: input.categoryId,
@@ -85,6 +146,8 @@ export class TopicsService {
       attachments,
       isPinned: false,
       tags: [],
+      status,
+      publishedAt: status === 'PUBLISHED' ? now : null,
     });
     await this.topics.save(row);
     return this.toDetail(row);
@@ -96,6 +159,7 @@ export class TopicsService {
     title?: string;
     body?: string;
     attachments?: MediaAttachment[];
+    status?: TopicStatus;
     editWindowMinutes: number;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
@@ -105,19 +169,40 @@ export class TopicsService {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
 
-    assertForumEditAllowed({
-      authorId: row.authorId,
-      editorId: input.authorId,
-      createdAt: row.createdAt,
-      editWindowMinutes: input.editWindowMinutes,
-    });
+    if (row.authorId !== input.authorId) {
+      throw new BadRequestException({
+        type: 'forbidden',
+        detail: 'Можно редактировать только свой контент',
+      });
+    }
+
+    if (input.status === 'DRAFT' && row.status === 'PUBLISHED') {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Опубликованную тему нельзя вернуть в черновик',
+      });
+    }
+
+    const publishing = input.status === 'PUBLISHED' && row.status === 'DRAFT';
+
+    if (row.status === 'PUBLISHED' && !publishing) {
+      assertForumEditAllowed({
+        authorId: row.authorId,
+        editorId: input.authorId,
+        createdAt: row.publishedAt ?? row.createdAt,
+        editWindowMinutes: input.editWindowMinutes,
+      });
+    }
 
     const nextTitle = input.title?.trim();
     const nextBody = input.body?.trim();
-    if (!nextTitle && !nextBody && input.attachments === undefined) {
+    const hasContentPatch =
+      Boolean(nextTitle) || Boolean(nextBody) || input.attachments !== undefined;
+
+    if (!hasContentPatch && !publishing) {
       throw new BadRequestException({
         type: 'validation-error',
-        detail: 'Укажите title, body или attachments для обновления',
+        detail: 'Укажите title, body, attachments или status: PUBLISHED',
       });
     }
 
@@ -125,18 +210,33 @@ export class TopicsService {
     if (nextBody) row.body = nextBody;
     if (input.attachments !== undefined) row.attachments = input.attachments;
 
-    validateForumContent({
-      body: row.body,
-      attachments: row.attachments ?? [],
-      media: {
-        authorId: input.authorId,
-        publicBaseUrl: this.mediaPublicBaseUrl(),
-        maxAttachmentCount: input.maxAttachmentCount ?? 1,
-        maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
-      },
-    });
+    if (hasContentPatch) {
+      validateForumContent({
+        body: row.body,
+        attachments: row.attachments ?? [],
+        media: {
+          authorId: input.authorId,
+          publicBaseUrl: this.mediaPublicBaseUrl(),
+          maxAttachmentCount: input.maxAttachmentCount ?? 1,
+          maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
+        },
+      });
+    }
+
+    if (publishing) {
+      row.status = 'PUBLISHED';
+      row.publishedAt = new Date();
+    }
 
     await this.topics.save(row);
+
+    if (publishing) {
+      await this.tags.emitExistingTopicTags({
+        topicId: row.id,
+        actorId: input.authorId,
+      });
+    }
+
     return this.toDetail(row);
   }
 
@@ -155,6 +255,7 @@ export class TopicsService {
       topicId: row.id,
       addedBy: input.authorId,
       labels: input.tags,
+      emitEvents: row.status === 'PUBLISHED',
     });
     row.tags = slugs;
     const detail = await this.toDetail(row);
@@ -162,8 +263,8 @@ export class TopicsService {
       ...detail,
       tags: slugs,
       tagItems,
-      /** For BFF / RMQ: newly attached tags → `tag.content_tagged`. */
-      addedTagIds,
+      /** For BFF / RMQ: newly attached tags → `tag.content_tagged` (published only). */
+      addedTagIds: row.status === 'PUBLISHED' ? addedTagIds : [],
     };
   }
 
@@ -183,6 +284,8 @@ export class TopicsService {
       title: row.title,
       excerpt: row.body.slice(0, 200),
       isPinned: row.isPinned,
+      status: row.status,
+      publishedAt: row.publishedAt?.toISOString() ?? null,
       votePlusCount: row.votePlusCount ?? 0,
       voteMinusCount: row.voteMinusCount ?? 0,
       score: (row.votePlusCount ?? 0) - (row.voteMinusCount ?? 0),

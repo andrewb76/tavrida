@@ -30,7 +30,7 @@ export class CommentsService {
     viewer?: { userId?: string; changeWindowMinutes?: number },
   ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
-    if (!topic) {
+    if (!topic || (topic.status === 'DRAFT' && topic.authorId !== viewer?.userId)) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
 
@@ -88,6 +88,12 @@ export class CommentsService {
     const topic = await this.topics.findOne({ where: { id: input.topicId } });
     if (!topic) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+    if (topic.status !== 'PUBLISHED') {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Черновик нельзя комментировать — сначала опубликуйте тему',
+      });
     }
 
     if (input.parentId) {
@@ -295,6 +301,8 @@ export class CommentsService {
         attachments: comment.attachments ?? [],
         isPinned: false,
         tags: [],
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
       });
       await manager.save(newTopic);
 

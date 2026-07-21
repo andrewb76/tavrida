@@ -78,6 +78,10 @@ class CreateTopicDto {
   body!: string;
 
   @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
@@ -147,6 +151,10 @@ class UpdateTopicDto {
   @MinLength(1)
   @MaxLength(10000)
   body?: string;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
 
   @IsOptional()
   @IsArray()
@@ -253,10 +261,25 @@ export class ForumController {
   }
 
   @Get('topics')
-  async listTopics(@Query('categoryId') categoryId?: string, @Query('limit') limit?: string) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async listTopics(
+    @Req() req: Request & { user?: AuthUser },
+    @Query('categoryId') categoryId?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
+    const wantDrafts = status === 'DRAFT';
+    if (wantDrafts && !req.user?.sub) {
+      throw new BadRequestException({
+        type: 'unauthorized',
+        detail: 'Для списка черновиков нужна авторизация',
+      });
+    }
     const res = await this.forum.listTopics({
       categoryId,
       limit: limit ? Number(limit) : undefined,
+      status: wantDrafts ? 'DRAFT' : 'PUBLISHED',
+      authorId: wantDrafts ? req.user!.sub : undefined,
     });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data };

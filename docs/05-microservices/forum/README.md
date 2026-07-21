@@ -8,6 +8,7 @@
 **Форум** — категории, топики, комментарии, реакции, **Markdown**, теги, справочник клуба.
 
 - Сущности: `topic`, `comment` ([ADR-005](../../03-architecture/adr/005-forum-terminology.md))
+- **Черновики тем:** [drafts.md](./drafts.md) — `DRAFT` / `PUBLISHED`, автор-only, без unpublish
 - **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
 - **Теги:** [tags.md](./tags.md)
 - Интеграция: rating (karma), billing (Pro-реакции), plan-config (лимиты)
@@ -29,7 +30,7 @@
 | Таблица | Описание |
 |---------|----------|
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
-| `topic` | Тема; `votePlusCount`, `voteMinusCount` |
+| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; vote counters |
 | `comment` | Комментарий; `promotedTopicId`; vote counters |
 | `comment_closure` | Closure table для дерева |
 | `reaction` | emoji-реакции (`emojiKey`) |
@@ -60,8 +61,8 @@
 | Method | Path | Описание |
 |--------|------|----------|
 | GET | `/forum/categories` | Дерево |
-| GET/POST | `/forum/topics` | Список / создание |
-| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote` при auth) / edit window |
+| GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
+| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit; draft → publish via `status` |
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
 | PUT | `/forum/topics/{id}/tags` | Заменить теги (labels → Tag/ContentTag; ответ `tagItems`) |

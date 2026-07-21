@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/c
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -49,6 +50,10 @@ class CreateTopicDto {
   body!: string;
 
   @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
@@ -62,6 +67,15 @@ class ListTopicsQuery {
 
   @IsOptional()
   limit?: number;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  authorId?: string;
 }
 
 class CreateTopicRequestDto extends CreateTopicDto {
@@ -94,6 +108,10 @@ class UpdateTopicDto {
   @MinLength(1)
   @MaxLength(10000)
   body?: string;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
 
   @IsOptional()
   @IsArray()

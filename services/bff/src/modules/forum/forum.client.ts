@@ -51,10 +51,17 @@ export class ForumClient {
     return this.request<{ ok: boolean }>('DELETE', `/internal/v1/categories/${categoryId}`);
   }
 
-  listTopics(query: { categoryId?: string; limit?: number }) {
+  listTopics(query: {
+    categoryId?: string;
+    limit?: number;
+    status?: 'DRAFT' | 'PUBLISHED';
+    authorId?: string;
+  }) {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);
     if (query.limit != null) params.set('limit', String(query.limit));
+    if (query.status) params.set('status', query.status);
+    if (query.authorId) params.set('authorId', query.authorId);
     const suffix = params.size ? `?${params.toString()}` : '';
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
   }
@@ -74,6 +81,7 @@ export class ForumClient {
     authorId: string;
     title: string;
     body: string;
+    status?: 'DRAFT' | 'PUBLISHED';
     attachments?: Array<{
       url: string;
       filename: string;
@@ -92,6 +100,7 @@ export class ForumClient {
       authorId: string;
       title?: string;
       body?: string;
+      status?: 'DRAFT' | 'PUBLISHED';
       attachments?: Array<{
         url: string;
         filename: string;

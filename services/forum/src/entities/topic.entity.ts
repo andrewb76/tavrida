@@ -41,6 +41,13 @@ export class TopicEntity {
   @Column('jsonb', { default: () => "'[]'" })
   tags!: string[];
 
+  /** DRAFT — author-only; PUBLISHED — public. See docs/05-microservices/forum/drafts.md */
+  @Column('varchar', { length: 16, default: 'PUBLISHED' })
+  status!: 'DRAFT' | 'PUBLISHED';
+
+  @Column('timestamptz', { name: 'published_at', nullable: true })
+  publishedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

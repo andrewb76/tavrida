@@ -45,6 +45,8 @@ export type TopicSummary = {
   title: string;
   excerpt: string;
   isPinned: boolean;
+  status?: 'DRAFT' | 'PUBLISHED';
+  publishedAt?: string | null;
   /** Tag slugs (denormalized). */
   tags?: string[];
   tagItems?: ForumTagItem[];
@@ -83,9 +85,17 @@ export async function listCategories(): Promise<CategoryNode[]> {
   return json.data;
 }
 
-export async function listTopics(categoryId?: string): Promise<TopicSummary[]> {
-  const params = categoryId ? `?categoryId=${encodeURIComponent(categoryId)}` : '';
-  const res = await fetch(`${apiBase()}/forum/topics${params}`);
+export async function listTopics(options?: {
+  categoryId?: string;
+  status?: 'DRAFT' | 'PUBLISHED';
+}): Promise<TopicSummary[]> {
+  const params = new URLSearchParams();
+  if (options?.categoryId) params.set('categoryId', options.categoryId);
+  if (options?.status) params.set('status', options.status);
+  const suffix = params.size ? `?${params}` : '';
+  const res = await fetch(`${apiBase()}/forum/topics${suffix}`, {
+    headers: options?.status === 'DRAFT' ? await forumAuthHeaders() : await forumAuthHeaders(true),
+  });
   if (!res.ok) throw new Error('Не удалось загрузить темы');
   const json = (await res.json()) as { data: TopicSummary[] };
   return json.data;
@@ -109,6 +119,7 @@ export async function createTopic(input: {
   categoryId: string;
   title: string;
   body: string;
+  status?: 'DRAFT' | 'PUBLISHED';
   attachments?: MediaAttachment[];
 }): Promise<TopicDetail> {
   const res = await fetch(`${apiBase()}/forum/topics`, {
@@ -125,7 +136,12 @@ export async function createTopic(input: {
 
 export async function updateTopic(
   topicId: string,
-  input: { title?: string; body?: string; attachments?: MediaAttachment[] },
+  input: {
+    title?: string;
+    body?: string;
+    status?: 'DRAFT' | 'PUBLISHED';
+    attachments?: MediaAttachment[];
+  },
 ): Promise<TopicDetail> {
   const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}`, {
     method: 'PATCH',
