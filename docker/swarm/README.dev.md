@@ -49,7 +49,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 
 | Вариант | Плюсы | Минусы |
 |---------|-------|--------|
-| **Swarm secrets + sync с ноутбука** | Просто, без Infisical; секреты не на диске VPS | Ротация = `--force` + redeploy; `DATABASE_URL` пока ещё в spec сервиса при deploy |
+| **Swarm secrets + sync с ноутбука** | Просто, без Infisical; секреты не на диске VPS | Ротация = `--force` (rebind через `*__next`) + желателен redeploy |
 | **Infisical в отдельном stack** | Центральный UI, аудит, ротация | Ещё один сервис; нужен доступ/backup |
 | **Infisical в том же stack** | Один `stack deploy` | Больше blast radius; обновление платформы трогает хранилище секретов |
 
@@ -95,6 +95,8 @@ export GHCR_OWNER=andrewb76 GIT_SHA=$(git rev-parse --short HEAD) DEV_DOMAIN=eva
 ./docker/swarm/build-images.sh --push
 
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
+# ротация уже существующих (stack запущен): --force — через временный *__next + rebind
+# DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh --force
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
 ```
 
