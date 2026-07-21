@@ -59,7 +59,10 @@ function select(index: number) {
 }
 
 .media-gallery__main {
-  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  max-height: 280px;
+  min-height: 120px;
   border-radius: 8px;
   overflow: hidden;
   background: var(--color-surface-muted, #f3f3f3);
@@ -67,14 +70,15 @@ function select(index: number) {
 
 .media-gallery__img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-height: 280px;
+  height: auto;
+  object-fit: contain;
 }
 
 .media-gallery__placeholder {
   display: grid;
   place-items: center;
-  height: 100%;
+  min-height: 120px;
   color: var(--color-text-muted, #666);
 }
 

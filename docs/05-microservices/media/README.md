@@ -19,8 +19,17 @@
 Если Docker Hub недоступен на VPS и init не подтянул `minio/mc`:
 
 ```bash
-# с VPS (образ BFF уже локальный):
+# с VPS (образ BFF уже локальный; скрипт копируется в /app контейнера):
+cd /opt/tavrida && git pull
 BFF=$(docker ps -q -f name=tavrida-dev_bff) ./scripts/ensure-minio-buckets-via-bff.sh
+```
+
+Вручную:
+
+```bash
+docker cp scripts/ensure-minio-buckets.cjs "$BFF:/app/ensure-minio-buckets.cjs"
+docker exec -w /app "$BFF" node ensure-minio-buckets.cjs
+docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 ```
 
 | `MEDIA_PUBLIC_BASE_URL` | Публичный origin MinIO (`https://s3.evatorg.su`) — и для `publicUrl`, и для **presigned PUT** (браузер) |

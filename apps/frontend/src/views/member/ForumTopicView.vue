@@ -488,6 +488,11 @@ async function submitTopicComment() {
   margin-bottom: 0.75rem;
 }
 
+.forum-topic__head h1,
+.forum-topic__comments h2 {
+  color: var(--color-text, #111);
+}
+
 .forum-topic__author-name {
   font-weight: 600;
   color: var(--color-text, #111);

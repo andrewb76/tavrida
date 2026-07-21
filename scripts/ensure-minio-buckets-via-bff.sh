@@ -6,76 +6,17 @@
 #   DOCKER_CONTEXT=dev-swarm ./scripts/ensure-minio-buckets-via-bff.sh
 set -e
 
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 STACK_NAME="${STACK_NAME:-tavrida-dev}"
 BFF_CID="${BFF:-$(docker ps -q -f "name=${STACK_NAME}_bff" -f status=running | head -n1)}"
+REMOTE_SCRIPT=/app/ensure-minio-buckets.cjs
 
 if [ -z "$BFF_CID" ]; then
   echo "BFF container not found (name=${STACK_NAME}_bff)" >&2
   exit 1
 fi
 
-docker exec "$BFF_CID" node <<'NODE'
-const fs = require('node:fs');
-const {
-  S3Client,
-  CreateBucketCommand,
-  HeadBucketCommand,
-  PutBucketPolicyCommand,
-} = require('@aws-sdk/client-s3');
-
-const buckets = [
-  'forum-attachments',
-  'auction-images',
-  'marketplace-portfolio',
-  'avatars',
-  'logto-avatars',
-];
-
-const accessKeyId = process.env.MINIO_ACCESS_KEY?.trim() || 'minioadmin';
-const secretFile = process.env.MINIO_SECRET_KEY_FILE?.trim();
-const secretAccessKey =
-  process.env.MINIO_SECRET_KEY?.trim() ||
-  (secretFile ? fs.readFileSync(secretFile, 'utf8').trim() : 'minioadmin');
-
-const client = new S3Client({
-  region: 'us-east-1',
-  endpoint: 'http://minio:9000',
-  forcePathStyle: true,
-  credentials: { accessKeyId, secretAccessKey },
-});
-
-const policy = (bucket) =>
-  JSON.stringify({
-    Version: '2012-10-17',
-    Statement: [
-      {
-        Effect: 'Allow',
-        Principal: '*',
-        Action: ['s3:GetObject'],
-        Resource: [`arn:aws:s3:::${bucket}/*`],
-      },
-    ],
-  });
-
-(async () => {
-  for (const bucket of buckets) {
-    try {
-      await client.send(new HeadBucketCommand({ Bucket: bucket }));
-      console.log(`ok (exists): ${bucket}`);
-    } catch {
-      await client.send(new CreateBucketCommand({ Bucket: bucket }));
-      console.log(`ok (created): ${bucket}`);
-    }
-    try {
-      await client.send(
-        new PutBucketPolicyCommand({ Bucket: bucket, Policy: policy(bucket) }),
-      );
-    } catch (err) {
-      console.warn(`policy skip ${bucket}: ${err.message || err}`);
-    }
-  }
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
-NODE
+echo "Using BFF container $BFF_CID"
+docker cp "$SCRIPT_DIR/ensure-minio-buckets.cjs" "$BFF_CID:$REMOTE_SCRIPT"
+docker exec -w /app "$BFF_CID" node ensure-minio-buckets.cjs
+docker exec "$BFF_CID" rm -f "$REMOTE_SCRIPT"
