@@ -191,8 +191,9 @@ services:
         - traefik.http.routers.minio-console.service=minio-console
         - traefik.http.services.minio-console.loadbalancer.server.port=9001
 
-  # Public-read bucket for Logto account avatar uploads (separate from BFF `avatars`).
-  minio-logto-init:
+  # Public-read MinIO buckets (media uploads + Logto avatars).
+  # BFF skips ensurePublicBucket when NODE_ENV=production — this job is required on Swarm.
+  minio-buckets-init:
     image: minio/mc:latest
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
@@ -207,9 +208,11 @@ services:
           echo "waiting for minio..."
           sleep 3
         done
-        mc mb local/logto-avatars --ignore-existing
-        mc anonymous set download local/logto-avatars
-        echo "minio logto-avatars bucket ok"
+        for b in forum-attachments auction-images marketplace-portfolio avatars logto-avatars; do
+          mc mb "local/$$b" --ignore-existing
+          mc anonymous set download "local/$$b"
+          echo "minio bucket ok: $$b"
+        done
     networks:
       - tavrida_net
     deploy:

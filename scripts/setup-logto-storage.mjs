@@ -5,7 +5,7 @@
  * 1. Ensures bucket `logto-avatars` exists (public read for uploaded URLs).
  * 2. Writes `storageProvider` into Logto DB (`systems` table).
  *
- * Swarm: bucket is also created by `minio-logto-init` in stack-infra.dev.yml.
+ * Swarm: buckets are created by `minio-buckets-init` in stack-infra.dev.yml.
  *
  * Usage (repo root, credentials in .env.local / docker/swarm/dev.secrets.env):
  *   # Laptop → remote Swarm:
@@ -360,7 +360,7 @@ async function main() {
     console.error(
       'Remote Swarm (DOCKER_CONTEXT=dev-swarm) but MinIO password looks like local placeholder.\n' +
         'Create docker/swarm/dev.secrets.env from dev.secrets.env.example with real MINIO_ROOT_PASSWORD,\n' +
-        'or pass MINIO_ROOT_PASSWORD=… inline. If bucket exists from minio-logto-init: SKIP_MINIO=1',
+        'or pass MINIO_ROOT_PASSWORD=… inline. If bucket exists from minio-buckets-init: SKIP_MINIO=1',
     );
     process.exit(1);
   }
