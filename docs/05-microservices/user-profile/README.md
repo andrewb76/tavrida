@@ -32,7 +32,7 @@
 | `invitationAcceptedAt` | timestamptz nullable | Когда зафиксирован реферал (не gate UI) |
 | `displayName` | varchar nullable | Имя из Logto (`name` / `username`) |
 | `email` | varchar nullable | `primaryEmail` (sync webhook) |
-| `username` | varchar nullable | Logto username |
+| `username` | varchar nullable | Club handle — см. [requirements/username.md](./requirements/username.md) |
 | `avatarUrl` | varchar nullable | Logto `avatar` (URL) |
 | `primaryPhone` | varchar nullable | Logto phone |
 | `isSuspended` | boolean | Logto suspension |
@@ -171,6 +171,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 📎 Связанные разделы
 
+- [requirements/username.md](./requirements/username.md) — unique handle для @mention (chat)
 - [club-access.md](../../01-goal/club-access.md)
 - [bff/invites-api.md](../bff/invites-api.md)
 - [karma-and-rating.md](../../01-goal/karma-and-rating.md)

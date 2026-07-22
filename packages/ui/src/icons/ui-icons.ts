@@ -3,6 +3,7 @@ export const uiIcons = {
   home: 'lucide:home',
   auctions: 'lucide:gavel',
   forum: 'lucide:messages-square',
+  chat: 'lucide:message-circle',
   profile: 'lucide:user',
   admin: 'lucide:shield',
   notifications: 'lucide:bell',

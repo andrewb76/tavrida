@@ -7,6 +7,7 @@ import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumTopicTags from '@/components/forum/ForumTopicTags.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
+import TopicChatSheet from '@/components/chat/TopicChatSheet.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
@@ -48,6 +49,7 @@ const commentTree = computed(() => buildCommentTree(comments.value));
 
 const commentBody = ref('');
 const posting = ref(false);
+const topicChatOpen = ref(false);
 const postError = ref<string | null>(null);
 const commentAttachmentsExpanded = ref(false);
 const commentUpload = useMediaUpload('forum');
@@ -245,6 +247,20 @@ async function submitTopicComment() {
               target-type="FORUM_TOPIC"
               :target-id="topic.id"
             />
+            <UiButton
+              v-if="session.isMember && !isDraft"
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Чат темы"
+              title="Чат темы"
+              @click="topicChatOpen = true"
+            >
+              <UiIcon
+                name="chat"
+                :size="18"
+              />
+            </UiButton>
             <UiButton
               v-if="session.isMember && !isDraft"
               intent="ghost"
@@ -474,6 +490,13 @@ async function submitTopicComment() {
         </form>
       </section>
     </template>
+
+    <TopicChatSheet
+      v-if="topic"
+      v-model:open="topicChatOpen"
+      :forum-topic-id="topic.id"
+      :topic-title="topic.title"
+    />
   </section>
 </template>
 

@@ -7,14 +7,17 @@
 
 ---
 
-## Два реестра
+## Реестры (MVP: два; цель: три)
 
 | Реестр | Сервис | Schema PG | Значений на ключ | Назначение |
 |--------|--------|-----------|------------------|------------|
-| **Scalar config** | `scalar-config` | `scalar_config` | **1** (global или per-user) | Формулы, дефолты, списки — **не зависят от тарифа** |
+| **Scalar config** | `scalar-config` | `scalar_config` | **1** (global; per-user = admin override, не member UX) | Формулы, дефолты, списки — **не зависят от тарифа** |
 | **Plan config** | `plan-config` | `plan_config` | **N** (по одному на каждый plan: free, basic, pro) | Лимиты, фичи, enum и **цены разовых списаний** per plan |
+| **User prefs** *(post-MVP)* | `user-prefs` (TBD) | TBD | **1** per `(userId, key)` | Персональные опции member; часто под **plan-gate** — [ADR-020](../03-architecture/adr/020-three-config-registries.md) |
 
-Ключ **не может** существовать в обоих реестрах одновременно.
+Ключ **не может** существовать в двух реестрах одновременно.
+
+> **MVP:** реализуются только scalar + plan. Кандидаты в user-prefs помечать при дизайне; временные domain-таблицы (напр. `DeliveryPreference`) допустимы до рефакторинга.
 
 ---
 

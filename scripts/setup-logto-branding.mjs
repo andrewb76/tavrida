@@ -179,7 +179,9 @@ async function patchAccountCenter(token) {
     ...(current.fields ?? {}),
     name: 'Edit',
     avatar: 'Edit',
-    username: current.fields?.username === 'Off' ? 'ReadOnly' : (current.fields?.username ?? 'ReadOnly'),
+    // Club handle (@mention / chat): editable in Account Center; SoT = Logto
+    // (see docs/05-microservices/user-profile/requirements/username.md)
+    username: 'Edit',
     password: current.fields?.password === 'Off' ? 'Edit' : (current.fields?.password ?? 'Edit'),
   };
 

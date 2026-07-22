@@ -48,6 +48,7 @@ BFF транслирует события в WebSocket с **другими им�
 | `notification.sent` | `notification.new` | `user:{id}` | |
 | — (forum internal) | `message.new` | `forum:{topicId}` | из forum HTTP/RMQ, не 1:1 RMQ |
 | — (forum internal) | `reaction.added` | `forum:{topicId}` | |
+| `chat.message_created` | `message.new` | `chat:{chatId}` | BFF relay |
 | `forum.comment_promoted_to_topic` | `topic.promoted` | `forum:{sourceTopicId}` | draft |
 
 > WS-only события без RMQ аналога — допустимы для UI; producer = BFF после агрегации.
@@ -329,6 +330,41 @@ BFF транслирует события в WebSocket с **другими им�
 
 ## 🗣️ forum
 
+### `forum.topic_published`
+
+| | |
+|---|---|
+| **Producer** | forum (outbox при `DRAFT` → `PUBLISHED`) |
+| **Consumers** | chat (ensure TOPIC room + author member), subscriptions (opt), OpenSearch (planned) |
+| **Payload** | |
+
+```json
+{
+  "topicId": "uuid",
+  "authorId": "logto-sub",
+  "categoryId": "uuid",
+  "publishedAt": "ISO8601"
+}
+```
+
+### `forum.comment_created`
+
+| | |
+|---|---|
+| **Producer** | forum |
+| **Consumers** | subscriptions (`FORUM_TOPIC`), chat (TOPIC member join), notifications (planned) |
+| **Payload** | |
+
+```json
+{
+  "commentId": "uuid",
+  "topicId": "uuid",
+  "authorId": "logto-sub",
+  "parentId": "uuid|null",
+  "createdAt": "ISO8601"
+}
+```
+
 ### `forum.content_reported`
 
 | | |
@@ -454,6 +490,57 @@ BFF транслирует события в WebSocket с **другими им�
 
 ---
 
+## 💬 chat
+
+> Spec: [chat/README.md](../05-microservices/chat/README.md). **Planned** — producer/consumer при scaffold `services/chat`.
+
+### `chat.message_created`
+
+| | |
+|---|---|
+| **Producer** | chat |
+| **Consumers** | BFF/WS (`chat:{chatId}`), notifications (later, if plan + user-prefs) |
+| **Payload** | |
+
+```json
+{
+  "messageId": "uuid",
+  "chatId": "uuid",
+  "kind": "DIRECT|GROUP|TOPIC",
+  "authorId": "logto-sub",
+  "createdAt": "ISO8601",
+  "mentionUserIds": ["logto-sub"]
+}
+```
+
+> `@mention` **не** триггерит отдельное notification event в v1.
+
+### `chat.member_joined`
+
+| | |
+|---|---|
+| **Producer** | chat |
+| **Consumers** | BFF/WS |
+| **Payload** | `{ chatId, userId, kind, contextType?, contextId? }` |
+
+### `chat.member_left`
+
+| | |
+|---|---|
+| **Producer** | chat |
+| **Consumers** | BFF/WS |
+| **Payload** | `{ chatId, userId, reason: 'leave'|'kick'|'hide' }` |
+
+### `chat.group_spawned`
+
+| | |
+|---|---|
+| **Producer** | chat |
+| **Consumers** | observability (optional) |
+| **Payload** | `{ groupChatId, directChatId, ownerId, copiedMessageCount }` |
+
+---
+
 ## 🔗 webhooks
 
 ### `webhooks.delivery_failed`
@@ -483,26 +570,32 @@ BFF транслирует события в WebSocket с **другими им�
 > `auction.completed` → deal-feedback; `tag.content_tagged` → subscriptions.
 > Остальные consumers — planned.
 
-| Event | auction | billing | plan-config | deal-feedback | rating | notifications | webhooks | BFF/WS | marketplace | forum | subscriptions |
-|-------|---------|---------|------------------|----------|--------|---------------|----------|--------|-------------|-------|---------------|
-| auction.completed | — | | | ✅ **live** | ✅ | ✅ | ✅ | | | | opt |
-| auction.expert_appraisal_added | — | | | | | ✅ | opt | ✅ | | | |
-| auction.bid_placed | — | | | | | ✅ | ✅ | ✅ | | | opt |
-| marketplace.order_completed | | | | ✅ **live** | ✅ | ✅ | opt | | — | | |
-| marketplace.order_cancelled | | | | | | ✅ | opt | | — | | |
-| billing.deposit_completed | | — | ✅ | | | | opt | | | | |
-| billing.charge_completed | | — | ✅ | | | ✅ | opt | ✅ | | | |
-| deal_feedback.submitted | | | | — | ✅ | | opt | | | | |
-| deal_feedback.reminder_due | | | | — | | ✅ | | | | | |
-| subscription.activated | | | — | | | ✅ | opt | | | | |
-| rating.updated | | | | | — | opt | opt | | | | |
-| rating.penalty_applied | | | | | — | ✅ | opt | | | | |
-| rating.user_banned | ✅ | | | | — | ✅ | ✅ | | | ✅ | |
-| forum.content_reported | | | | | | ✅ | opt | | | — | |
-| forum.comment_promoted_to_topic | | | | | | opt | opt | ✅ | | — | |
-| tag.content_tagged | | | | | | ✅ RMQ | | | | — **pub** | ✅ consume |
-| webhooks.delivery_failed | | | | | | opt | — | | | | |
-| webhooks.endpoint_disabled | | | | | | opt | — | | | | |
+| Event | auction | billing | plan-config | deal-feedback | rating | notifications | webhooks | BFF/WS | marketplace | forum | subscriptions | chat |
+|-------|---------|---------|------------------|----------|--------|---------------|----------|--------|-------------|-------|---------------|------|
+| auction.completed | — | | | ✅ **live** | ✅ | ✅ | ✅ | | | | opt | |
+| auction.expert_appraisal_added | — | | | | | ✅ | opt | ✅ | | | | |
+| auction.bid_placed | — | | | | | ✅ | ✅ | ✅ | | | opt | |
+| marketplace.order_completed | | | | ✅ **live** | ✅ | ✅ | opt | | — | | | |
+| marketplace.order_cancelled | | | | | | ✅ | opt | | — | | | |
+| billing.deposit_completed | | — | ✅ | | | | opt | | | | | |
+| billing.charge_completed | | — | ✅ | | | ✅ | opt | ✅ | | | | |
+| deal_feedback.submitted | | | | — | ✅ | | opt | | | | | |
+| deal_feedback.reminder_due | | | | — | | ✅ | | | | | | |
+| subscription.activated | | | — | | | ✅ | opt | | | | | |
+| rating.updated | | | | | — | opt | opt | | | | | |
+| rating.penalty_applied | | | | | — | ✅ | opt | | | | | |
+| rating.user_banned | ✅ | | | | — | ✅ | ✅ | | | ✅ | | |
+| forum.content_reported | | | | | | ✅ | opt | | | — | | |
+| forum.comment_promoted_to_topic | | | | | | opt | opt | ✅ | | — | | |
+| forum.topic_published | | | | | | opt | opt | | | — | opt | ✅ consume |
+| forum.comment_created | | | | | | opt | opt | | | — | ✅ | ✅ consume |
+| tag.content_tagged | | | | | | ✅ RMQ | | | | — **pub** | ✅ consume | |
+| chat.message_created | | | | | | later | opt | ✅ | | | | — **pub** |
+| chat.member_joined | | | | | | | | ✅ | | | | **pub** |
+| chat.member_left | | | | | | | | ✅ | | | | **pub** |
+| chat.group_spawned | | | | | | | opt | | | | | **pub** |
+| webhooks.delivery_failed | | | | | | opt | — | | | | | |
+| webhooks.endpoint_disabled | | | | | | opt | — | | | | | |
 
 ---
 

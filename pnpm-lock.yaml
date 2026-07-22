@@ -24,13 +24,13 @@ importers:
         version: 9.39.4
       '@vue/eslint-config-typescript':
         specifier: ^14.5.0
-        version: 14.9.0(eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0))(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
+        version: 14.9.0(eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
       eslint:
         specifier: ^9.18.0
-        version: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+        version: 9.39.4(jiti@2.7.0)
       eslint-plugin-vue:
         specifier: ^9.32.0
-        version: 9.33.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)
+        version: 9.33.0(eslint@9.39.4(jiti@2.7.0))
       globals:
         specifier: ^15.14.0
         version: 15.15.0
@@ -190,7 +190,7 @@ importers:
         version: 0.2.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
     devDependencies:
       '@tavrida/tsconfig':
         specifier: workspace:*
@@ -260,22 +260,22 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.28
-        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express':
         specifier: ^11.1.28
-        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(supports-color@5.5.0)
+        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)
       '@nestjs/terminus':
         specifier: ^11.1.1
-        version: 11.1.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
+        version: 11.1.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
       '@nestjs/typeorm':
         specifier: ^11.0.3
-        version: 11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
+        version: 11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.1
@@ -317,7 +317,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -357,7 +357,7 @@ importers:
         version: 3.1085.0
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -402,7 +402,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -439,7 +439,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -487,7 +487,74 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+      uuid:
+        specifier: '>=11.1.1'
+        version: 11.1.1
+    devDependencies:
+      '@tavrida/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.25
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
+      '@types/pg':
+        specifier: ^8.11.11
+        version: 8.20.0
+      nodemon:
+        specifier: ^3.1.0
+        version: 3.1.14
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.19.43)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
+  services/chat:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.1.28
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/config':
+        specifier: ^4.0.4
+        version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.1.28
+        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-express':
+        specifier: ^11.1.28
+        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)
+      '@nestjs/typeorm':
+        specifier: ^11.0.3
+        version: 11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
+      '@tavrida/internal-auth':
+        specifier: workspace:*
+        version: link:../../packages/internal-auth
+      '@tavrida/outbox':
+        specifier: workspace:*
+        version: link:../../packages/outbox
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.1
+        version: 0.14.4
+      pg:
+        specifier: ^8.12.0
+        version: 8.22.0
+      reflect-metadata:
+        specifier: ^0.2.0
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+      typeorm:
+        specifier: ^0.3.20
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -518,7 +585,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -554,7 +621,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -588,7 +655,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -627,7 +694,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -658,7 +725,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -697,7 +764,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -731,7 +798,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -764,7 +831,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -795,7 +862,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -828,7 +895,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -859,7 +926,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -907,7 +974,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -938,7 +1005,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -971,7 +1038,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
     devDependencies:
       '@tavrida/tsconfig':
         specifier: workspace:*
@@ -999,7 +1066,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -1035,7 +1102,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -1069,7 +1136,7 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.28
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/config':
         specifier: ^4.0.4
         version: 4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -1108,7 +1175,7 @@ importers:
         version: 7.8.2
       typeorm:
         specifier: ^0.3.20
-        version: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+        version: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
       uuid:
         specifier: '>=11.1.1'
         version: 11.1.1
@@ -4703,14 +4770,14 @@ snapshots:
   '@esbuild/win32-x64@0.25.12':
     optional: true
 
-  '@eslint-community/eslint-utils@4.9.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))':
+  '@eslint-community/eslint-utils@4.9.1(eslint@9.39.4(jiti@2.7.0))':
     dependencies:
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint/config-array@0.21.2(supports-color@5.5.0)':
+  '@eslint/config-array@0.21.2':
     dependencies:
       '@eslint/object-schema': 2.1.7
       debug: 4.4.3(supports-color@5.5.0)
@@ -4726,7 +4793,7 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
 
-  '@eslint/eslintrc@3.3.5(supports-color@5.5.0)':
+  '@eslint/eslintrc@3.3.5':
     dependencies:
       ajv: 6.15.0
       debug: 4.4.3(supports-color@5.5.0)
@@ -4879,9 +4946,9 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)':
+  '@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
-      file-type: 22.0.1(supports-color@5.5.0)
+      file-type: 22.0.1
       iterare: 1.2.1
       load-esm: 1.0.3
       reflect-metadata: 0.2.2
@@ -4896,28 +4963,15 @@ snapshots:
 
   '@nestjs/config@4.0.4(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       dotenv: 17.4.1
       dotenv-expand: 12.0.3
       lodash: 4.18.1
       rxjs: 7.8.2
 
-  '@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
-    dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
-      fast-safe-stringify: 2.1.1
-      iterare: 1.2.1
-      path-to-regexp: 8.4.2
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      tslib: 2.8.1
-      uid: 2.0.2
-    optionalDependencies:
-      '@nestjs/platform-express': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(supports-color@5.5.0)
-
   '@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fast-safe-stringify: 2.1.1
       iterare: 1.2.1
       path-to-regexp: 8.4.2
@@ -4928,45 +4982,21 @@ snapshots:
     optionalDependencies:
       '@nestjs/platform-express': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)
 
-  '@nestjs/platform-express@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(supports-color@5.5.0)':
-    dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
-      '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      cors: 2.8.6
-      express: 5.2.1(supports-color@5.5.0)
-      multer: 2.2.0
-      path-to-regexp: 8.4.2
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@nestjs/platform-express@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)':
     dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       cors: 2.8.6
-      express: 5.2.1(supports-color@5.5.0)
+      express: 5.2.1
       multer: 2.2.0
       path-to-regexp: 8.4.2
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
-
-  '@nestjs/terminus@11.1.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))':
-    dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
-      '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      boxen: 5.1.2
-      check-disk-space: 3.4.0
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-    optionalDependencies:
-      '@nestjs/typeorm': 11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
-      typeorm: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
 
   '@nestjs/terminus@11.1.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))':
     dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       boxen: 5.1.2
       check-disk-space: 3.4.0
@@ -4974,23 +5004,15 @@ snapshots:
       rxjs: 7.8.2
     optionalDependencies:
       '@nestjs/typeorm': 11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))
-      typeorm: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
-
-  '@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))':
-    dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
-      '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      typeorm: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+      typeorm: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
 
   '@nestjs/typeorm@11.0.3(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)))':
     dependencies:
-      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
+      '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
-      typeorm: 0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
+      typeorm: 0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3))
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -5341,7 +5363,7 @@ snapshots:
       '@tanstack/virtual-core': 3.17.3
       vue: 3.5.39(typescript@5.9.3)
 
-  '@tokenizer/inflate@0.4.1(supports-color@5.5.0)':
+  '@tokenizer/inflate@0.4.1':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       token-types: 6.1.2
@@ -5468,15 +5490,15 @@ snapshots:
 
   '@types/web-bluetooth@0.0.21': {}
 
-  '@typescript-eslint/eslint-plugin@8.63.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.63.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/scope-manager': 8.63.0
-      '@typescript-eslint/type-utils': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
+      '@typescript-eslint/type-utils': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.63.0
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       ignore: 7.0.5
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@5.9.3)
@@ -5484,19 +5506,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.63.0
       '@typescript-eslint/types': 8.63.0
-      '@typescript-eslint/typescript-estree': 8.63.0(supports-color@5.5.0)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.63.0(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.63.0
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.63.0(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/project-service@8.63.0(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.63.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.63.0
@@ -5514,13 +5536,13 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  '@typescript-eslint/type-utils@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/type-utils@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/types': 8.63.0
-      '@typescript-eslint/typescript-estree': 8.63.0(supports-color@5.5.0)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.63.0(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       ts-api-utils: 2.5.0(typescript@5.9.3)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -5528,9 +5550,9 @@ snapshots:
 
   '@typescript-eslint/types@8.63.0': {}
 
-  '@typescript-eslint/typescript-estree@8.63.0(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/typescript-estree@8.63.0(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.63.0(supports-color@5.5.0)(typescript@5.9.3)
+      '@typescript-eslint/project-service': 8.63.0(typescript@5.9.3)
       '@typescript-eslint/tsconfig-utils': 8.63.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.63.0
       '@typescript-eslint/visitor-keys': 8.63.0
@@ -5543,13 +5565,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)':
+  '@typescript-eslint/utils@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0))
       '@typescript-eslint/scope-manager': 8.63.0
       '@typescript-eslint/types': 8.63.0
-      '@typescript-eslint/typescript-estree': 8.63.0(supports-color@5.5.0)(typescript@5.9.3)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      '@typescript-eslint/typescript-estree': 8.63.0(typescript@5.9.3)
+      eslint: 9.39.4(jiti@2.7.0)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -5633,14 +5655,14 @@ snapshots:
     dependencies:
       rfdc: 1.4.1
 
-  '@vue/eslint-config-typescript@14.9.0(eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0))(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)':
+  '@vue/eslint-config-typescript@14.9.0(eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
-      eslint-plugin-vue: 9.33.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)
+      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      eslint: 9.39.4(jiti@2.7.0)
+      eslint-plugin-vue: 9.33.0(eslint@9.39.4(jiti@2.7.0))
       fast-glob: 3.3.3
-      typescript-eslint: 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      vue-eslint-parser: 10.4.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)
+      typescript-eslint: 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      vue-eslint-parser: 10.4.1(eslint@9.39.4(jiti@2.7.0))
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -5821,7 +5843,7 @@ snapshots:
 
   birpc@2.9.0: {}
 
-  body-parser@2.3.0(supports-color@5.5.0):
+  body-parser@2.3.0:
     dependencies:
       bytes: 3.1.2
       content-type: 2.0.0
@@ -6123,16 +6145,16 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0):
+  eslint-plugin-vue@9.33.0(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0))
+      eslint: 9.39.4(jiti@2.7.0)
       globals: 13.24.0
       natural-compare: 1.4.0
       nth-check: 2.1.1
       postcss-selector-parser: 6.1.4
       semver: 7.8.5
-      vue-eslint-parser: 9.4.3(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)
+      vue-eslint-parser: 9.4.3(eslint@9.39.4(jiti@2.7.0))
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -6160,14 +6182,14 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0):
+  eslint@9.39.4(jiti@2.7.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.7.0))
       '@eslint-community/regexpp': 4.12.2
-      '@eslint/config-array': 0.21.2(supports-color@5.5.0)
+      '@eslint/config-array': 0.21.2
       '@eslint/config-helpers': 0.4.2
       '@eslint/core': 0.17.0
-      '@eslint/eslintrc': 3.3.5(supports-color@5.5.0)
+      '@eslint/eslintrc': 3.3.5
       '@eslint/js': 9.39.4
       '@eslint/plugin-kit': 0.4.1
       '@humanfs/node': 0.16.8
@@ -6235,10 +6257,10 @@ snapshots:
 
   etag@1.8.1: {}
 
-  express@5.2.1(supports-color@5.5.0):
+  express@5.2.1:
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.3.0(supports-color@5.5.0)
+      body-parser: 2.3.0
       content-disposition: 1.1.0
       content-type: 1.0.5
       cookie: 0.7.2
@@ -6248,7 +6270,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.1(supports-color@5.5.0)
+      finalhandler: 2.1.1
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
@@ -6259,8 +6281,8 @@ snapshots:
       proxy-addr: 2.0.7
       qs: 6.15.3
       range-parser: 1.2.1
-      router: 2.2.0(supports-color@5.5.0)
-      send: 1.2.1(supports-color@5.5.0)
+      router: 2.2.0
+      send: 1.2.1
       serve-static: 2.2.1
       statuses: 2.0.2
       type-is: 2.1.0
@@ -6296,9 +6318,9 @@ snapshots:
     dependencies:
       flat-cache: 4.0.1
 
-  file-type@22.0.1(supports-color@5.5.0):
+  file-type@22.0.1:
     dependencies:
-      '@tokenizer/inflate': 0.4.1(supports-color@5.5.0)
+      '@tokenizer/inflate': 0.4.1
       strtok3: 10.3.5
       token-types: 6.1.2
       uint8array-extras: 1.5.0
@@ -6309,7 +6331,7 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@2.1.1(supports-color@5.5.0):
+  finalhandler@2.1.1:
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -6996,7 +7018,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.62.2
       fsevents: 2.3.3
 
-  router@2.2.0(supports-color@5.5.0):
+  router@2.2.0:
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       depd: 2.0.0
@@ -7022,7 +7044,7 @@ snapshots:
 
   semver@7.8.5: {}
 
-  send@1.2.1(supports-color@5.5.0):
+  send@1.2.1:
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -7043,7 +7065,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 1.2.1(supports-color@5.5.0)
+      send: 1.2.1
     transitivePeerDependencies:
       - supports-color
 
@@ -7271,7 +7293,7 @@ snapshots:
 
   typedarray@0.0.6: {}
 
-  typeorm@0.3.30(pg@8.22.0)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)):
+  typeorm@0.3.30(pg@8.22.0)(ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3)):
     dependencies:
       '@sqltools/formatter': 1.2.5
       ansis: 4.3.1
@@ -7295,13 +7317,13 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  typescript-eslint@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3):
+  typescript-eslint@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.63.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.63.0(supports-color@5.5.0)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0)(typescript@5.9.3)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      '@typescript-eslint/eslint-plugin': 8.63.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.63.0(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      eslint: 9.39.4(jiti@2.7.0)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -7448,10 +7470,10 @@ snapshots:
     dependencies:
       vue: 3.5.39(typescript@5.9.3)
 
-  vue-eslint-parser@10.4.1(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0):
+  vue-eslint-parser@10.4.1(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       eslint-scope: 9.1.2
       eslint-visitor-keys: 5.0.1
       espree: 11.2.0
@@ -7460,10 +7482,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vue-eslint-parser@9.4.3(eslint@9.39.4(jiti@2.7.0)(supports-color@5.5.0))(supports-color@5.5.0):
+  vue-eslint-parser@9.4.3(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 9.39.4(jiti@2.7.0)(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.7.0)
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1

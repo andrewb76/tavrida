@@ -21,6 +21,8 @@ plan-config:
   ✔ Swarm: plan-config-renew hourly → renew/run @plan-config @ops @done(26-07-16)
   ☐ Team review: tariff Seller/Buyer/Pro proposal @plan-config @docs
   ☐ После консенсуса — каскад docs + seed (basic → seller/buyer) @plan-config @docs
+  ☐ Post-MVP: три реестра (scalar · plan · user-prefs) — сервис + audit PLATFORM-REGISTRY + миграция DeliveryPreference/webhook prefs @plan-config @scalar @docs
+    см. ADR-020; MVP не трогаем
 
 Subscriptions (event intent):
   ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)
@@ -39,6 +41,19 @@ Subscriptions (event intent):
 
 Forum:
   ✔ Topic drafts DRAFT/PUBLISHED (author-only, no unpublish) @forum @frontend @docs @done(26-07-21)
+
+Chat:
+  ✔ requirements/analysis.md + registry keys + ADR-020 prefs backlog @chat @docs @done(26-07-22)
+  ✔ README MICROSERVICE-SPEC + chat-api + event-catalog + username spec @chat @docs @done(26-07-22)
+  ✔ Scaffold services/chat :3016 (entities, migration, internal ensure/list/messages) @chat @done(26-07-22)
+  ✔ pnpm install — @tavrida/chat in workspace, build+test ok @chat @ops @done(26-07-22)
+  ✔ BFF chats module (list/unread/self/direct/topic/messages + plan gates) @chat @bff @done(26-07-22)
+  ☐ GROUP spawn/invite + plan/scalar sync + RMQ TOPIC consumers @chat
+  ☐ Keto chat:{id}#member (optional hardening) @chat @bff
+  ✔ Frontend «Мои чаты» + TOPIC bottom sheet @chat @frontend @done(26-07-22)
+  ✔ Logto Console: username policy + Email/Username sign-up + Account Center Edit @ops @logto @done(26-07-22)
+  ☐ Verify: set/change username → webhook → user_profile.username; autocomplete search @user-profile @logto
+  ☐ user-profile: optional UNIQUE(lower(username)) + expose search for @mention @user-profile @chat
 
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)

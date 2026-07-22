@@ -95,6 +95,18 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Подписки', requiresMember: true },
   },
   {
+    path: 'chats',
+    name: 'chats',
+    component: () => import('@/views/member/ChatListView.vue'),
+    meta: { title: 'Чаты', requiresMember: true },
+  },
+  {
+    path: 'chats/:chatId',
+    name: 'chat-room',
+    component: () => import('@/views/member/ChatRoomView.vue'),
+    meta: { title: 'Чат', requiresMember: true },
+  },
+  {
     path: 'plans',
     name: 'plans',
     component: () => import('@/views/member/PlansView.vue'),

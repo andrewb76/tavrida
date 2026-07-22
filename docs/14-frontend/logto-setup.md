@@ -210,7 +210,7 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 
 ## 7. Webhooks → user-profile
 
-Идентичность пользователя (имя, email, аватар) синхронизируется в **user-profile** через Logto Webhooks.
+Идентичность пользователя (имя, email, аватар, **username**) синхронизируется в **user-profile** через Logto Webhooks.
 
 | | |
 |---|---|
@@ -221,6 +221,18 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 | Настройка hook | `pnpm setup:logto-webhook` |
 
 Полная инструкция: [logto-webhooks.md](./logto-webhooks.md).
+
+### Username (club @handle)
+
+**SoT = Logto** — не дублируем CRUD в клубе. См. [username.md](../05-microservices/user-profile/requirements/username.md).
+
+| Настройка | Рекомендация |
+|-----------|--------------|
+| Username policy | case-insensitive, length 3–32, letters+digits+`_` |
+| Sign-up | Email **+ Username** (Type 4) для invite-регистрации |
+| Account Center | `fields.username = Edit` (branding script) |
+| Смена ника | `/account/username` → webhook sync |
+| Autocomplete | `user_profile` cache (`GET …/users/search`) |
 
 ---
 
@@ -242,3 +254,4 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 - [club-access.md](../01-goal/club-access.md)
 - [logto-webhooks.md](./logto-webhooks.md)
 - [frontend README](./README.md)
+- [username.md](../05-microservices/user-profile/requirements/username.md) — @handle через Logto

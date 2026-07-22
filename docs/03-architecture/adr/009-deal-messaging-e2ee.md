@@ -50,7 +50,8 @@ E2EE **не** в MVP — высокая сложность (key backup, multi-de
 
 - Отдельная спека `deal-messaging` при старте Phase 2.
 - Keto: `deal_room:{id}#member@user:{seller|buyer}`.
-- Не смешивать с `forum.topicChatEnabled` (Pro публичный чат в теме).
+- Не смешивать с `forum.topicChatEnabled` / `forum.author.13topic.chatEnabled` (Pro side chat темы — сервис [`chat`](../../05-microservices/chat/requirements/analysis.md) kind=`TOPIC`).
+- Не смешивать с club DIRECT/GROUP (`chat` service) — это переговоры по **сделке**, отдельный bounded context.
 
 ---
 

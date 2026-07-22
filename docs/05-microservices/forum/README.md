@@ -12,7 +12,7 @@
 - **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
 - **Теги:** [tags.md](./tags.md)
 - Интеграция: rating (karma), billing (Pro-реакции), plan-config (лимиты)
-- Realtime: Redis → BFF WS `forum:{topicId}`
+- Realtime: Redis → BFF WS `forum:{topicId}`; **TOPIC side chat** — сервис [`chat`](../chat/README.md) (`kind=TOPIC`), UI W06 — [wireframes](../../11-ux-ui/wireframes/forum.md)
 
 ## 📖 Термины
 

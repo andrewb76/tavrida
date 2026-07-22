@@ -44,7 +44,7 @@
 | Кастомные поля темы | ❌ | ❌ | ✅ | `forum.customTopicFields` |
 | Анонимные посты | ❌ | ❌ | ✅ | `forum.anonymousPosts` |
 | Email digest | ❌ | ❌ | ✅ | `forum.emailDigest` |
-| Чат в теме | ❌ | ❌ | ✅ | `forum.topicChatEnabled` |
+| Чат в теме | ❌ | ❌ | ✅ | `forum.author.13topic.chatEnabled` → реализация в сервисе [`chat`](../../chat/requirements/analysis.md) (`kind=TOPIC`) |
 | Обсуждение лота #N | ❌ | ❌ | ✅ | `forum.auctionTopicLink` |
 | Вложения, медиа, длина | см. реестр | см. реестр | см. реестр | `forum.attachments*`, `forum.embeddedMedia`, `forum.postLengthMax` |
 

@@ -1,8 +1,9 @@
 # ADR-003: Scalar-config vs Plan-config — два реестра переменных
 
-> **Статус:** accepted · **Дата:** 2026-07-06 · **Обновлено:** 2026-07-11  
+> **Статус:** accepted · **Дата:** 2026-07-06 · **Обновлено:** 2026-07-22  
 > **Canonical names:** `scalar-config` / `plan-config` ([ADR-017](./017-plan-config-scalar-config-rename.md))  
-> **Legacy filename:** «Settings vs Financial-policy» — сохранён для поиска и ссылок.
+> **Legacy filename:** «Settings vs Financial-policy» — сохранён для поиска и ссылок.  
+> **Дополнение:** целевая модель **трёх** реестров (+ `user-prefs`) — [ADR-020](./020-three-config-registries.md) (реализация post-MVP).
 
 ## 🎯 Контекст
 
@@ -87,6 +88,7 @@ flowchart LR
 - ✅ scalar-config **не** хранит лимиты по тарифам
 - ✅ Регистрация plan variables — только от domain-сервисов ([ADR-016](./016-financial-policy-parameter-registration.md))
 - ✅ Переименование сервисов: [ADR-017](./017-plan-config-scalar-config-rename.md)
+- ⏳ Post-MVP: третий реестр **user-prefs** (персональные опции под plan-gate) — [ADR-020](./020-three-config-registries.md); не смешивать с scalar per-user overrides
 
 ## 🔗 Связанные документы
 
@@ -95,3 +97,4 @@ flowchart LR
 - [registry-keys.md](../../13-maintenance/registry-keys.md)
 - [ADR-016](./016-financial-policy-parameter-registration.md)
 - [ADR-017](./017-plan-config-scalar-config-rename.md)
+- [ADR-020](./020-three-config-registries.md) — три реестра (scalar · plan · user-prefs)

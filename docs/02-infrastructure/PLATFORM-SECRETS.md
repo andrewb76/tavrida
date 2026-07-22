@@ -101,6 +101,7 @@
 | `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer ко всем domain-service `/internal/v1/*`; local без токена разрешён |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
 | `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
+| `CHAT_URL` | нет | `http://localhost:3016` | Upstream chat (DIRECT/GROUP/TOPIC) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
 | `KETO_NAMESPACE` | нет | `TavridaLot` | Keto namespace |
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
@@ -233,6 +234,19 @@
 |------------|--------|--------|---------|
 | `PORT` / `PERIODS_PORT` | нет | — | `3014` |
 | `DATABASE_URL` | **да** | `periods` | PostgreSQL |
+
+---
+
+## 💬 chat — порт 3016
+
+| Переменная | Секрет | Schema | Описание |
+|------------|--------|--------|----------|
+| `PORT` / `CHAT_PORT` | нет | — | `3016` |
+| `DATABASE_URL` | **да** | `chat` | PostgreSQL |
+| `RABBITMQ_URL` | нет* | — | produce/consume events (later) |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer `/internal/v1/*` |
+
+> Spec: [chat/README.md](../05-microservices/chat/README.md)
 
 ---
 

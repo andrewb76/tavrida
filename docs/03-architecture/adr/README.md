@@ -34,6 +34,7 @@
 | [017](./017-plan-config-scalar-config-rename.md) | Rename plan-config / scalar-config, key format | accepted | 2026-07-11 |
 | [018](./018-admin-impersonation.md) | Admin impersonation via `X-Act-As` | accepted | 2026-07-16 |
 | [019](./019-novu-self-host.md) | Novu self-host (local compose → Swarm) | accepted | 2026-07-16 |
+| [020](./020-three-config-registries.md) | Три реестра: scalar · plan · user-prefs (реализация post-MVP) | accepted | 2026-07-22 |
 
 ## 📝 Шаблон ADR
 
