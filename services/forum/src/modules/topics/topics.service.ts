@@ -6,12 +6,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { ForumEventsPublisher } from '../events/forum-events.publisher';
 import { TagsService } from '../tags/tags.service';
 import { VotesService } from '../votes/votes.service';
 
@@ -24,9 +25,11 @@ export class TopicsService {
     private readonly topics: Repository<TopicEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categories: Repository<CategoryEntity>,
+    private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
     private readonly tags: TagsService,
+    private readonly events: ForumEventsPublisher,
   ) {}
 
   async list(input: {
@@ -149,7 +152,22 @@ export class TopicsService {
       status,
       publishedAt: status === 'PUBLISHED' ? now : null,
     });
-    await this.topics.save(row);
+
+    if (status === 'PUBLISHED') {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.save(row);
+        await this.events.enqueueTopicPublished(manager, {
+          topicId: row.id,
+          authorId: row.authorId,
+          categoryId: row.categoryId,
+          publishedAt: row.publishedAt ?? now,
+        });
+      });
+      this.events.flush();
+    } else {
+      await this.topics.save(row);
+    }
+
     return this.toDetail(row);
   }
 
@@ -228,13 +246,23 @@ export class TopicsService {
       row.publishedAt = new Date();
     }
 
-    await this.topics.save(row);
-
     if (publishing) {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.save(row);
+        await this.events.enqueueTopicPublished(manager, {
+          topicId: row.id,
+          authorId: row.authorId,
+          categoryId: row.categoryId,
+          publishedAt: row.publishedAt ?? new Date(),
+        });
+      });
+      this.events.flush();
       await this.tags.emitExistingTopicTags({
         topicId: row.id,
         actorId: input.authorId,
       });
+    } else {
+      await this.topics.save(row);
     }
 
     return this.toDetail(row);

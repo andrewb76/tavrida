@@ -4,6 +4,7 @@ import { ChatMemberEntity } from '../../entities/chat-member.entity';
 import { ChatEntity } from '../../entities/chat.entity';
 import { MessageAttachmentEntity } from '../../entities/message-attachment.entity';
 import { MessageEntity } from '../../entities/message.entity';
+import { ForumChatEventsConsumer } from '../events/forum-chat-events.consumer';
 import { ChatsService } from './chats.service';
 import { InternalChatsController } from './internal-chats.controller';
 
@@ -17,7 +18,7 @@ import { InternalChatsController } from './internal-chats.controller';
     ]),
   ],
   controllers: [InternalChatsController],
-  providers: [ChatsService],
+  providers: [ChatsService, ForumChatEventsConsumer],
   exports: [ChatsService],
 })
 export class ChatsModule {}

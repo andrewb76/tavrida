@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { ForumEventsModule } from '../events/forum-events.module';
 import { VotesModule } from '../votes/votes.module';
 import { CommentsService } from './comments.service';
 import { InternalCommentsController } from './internal-comments.controller';
@@ -11,6 +12,7 @@ import { InternalCommentsController } from './internal-comments.controller';
   imports: [
     TypeOrmModule.forFeature([CommentEntity, CommentClosureEntity, TopicEntity]),
     VotesModule,
+    ForumEventsModule,
   ],
   controllers: [InternalCommentsController],
   providers: [CommentsService],

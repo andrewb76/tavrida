@@ -17,6 +17,7 @@
     "@nestjs/typeorm": "^11.0.3",
     "@tavrida/internal-auth": "workspace:*",
     "@tavrida/outbox": "workspace:*",
+    "amqplib": "^0.10.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "pg": "^8.12.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@tavrida/tsconfig": "workspace:*",
+    "@types/amqplib": "^0.10.7",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.0",
     "@types/pg": "^8.11.11",

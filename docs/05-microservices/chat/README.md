@@ -25,8 +25,8 @@
 | Plan/scalar manifests (constants) | ✅ |
 | Plan seed `chat.member.*` + `forum.author.13topic.chatEnabled` | ✅ |
 | Scalar sync `chat.*` (BFF bootstrap) + admin form | ✅ |
+| RMQ TOPIC consumers (`forum.topic_published` / `comment_created`) | ✅ |
 | GROUP spawn / invite | ⏳ |
-| RMQ TOPIC consumers | ⏳ |
 | Frontend «Мои чаты» + TOPIC bottom sheet | ✅ |
 
 ## 📖 Термины
@@ -91,7 +91,7 @@ Produce/consume — planned ([event-catalog](../../03-architecture/event-catalog
 |--------|----------|-------|
 | **bff** | REST + WSS | Публичный API (next) |
 | **plan-config** / **scalar-config** | HTTP sync | limits / features (next) |
-| **forum** | RMQ | TOPIC membership (next) |
+| **forum** | RMQ | `forum.topic_published` → ensure TOPIC+author; `forum.comment_created` → join member |
 | **user-profile** | HTTP | username search |
 | **media** | presign | вложения |
 

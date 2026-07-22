@@ -9,6 +9,7 @@ import { validateForumContent } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { ForumEventsPublisher } from '../events/forum-events.publisher';
 import { VotesService } from '../votes/votes.service';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class CommentsService {
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
+    private readonly events: ForumEventsPublisher,
   ) {}
 
   async listByTopic(
@@ -155,6 +157,14 @@ export class CommentsService {
         }
       }
 
+      await this.events.enqueueCommentCreated(manager, {
+        commentId: comment.id,
+        topicId: comment.topicId,
+        authorId: comment.authorId,
+        parentId: comment.parentId,
+        createdAt: comment.createdAt,
+      });
+
       return {
         id: comment.id,
         topicId: comment.topicId,
@@ -171,6 +181,9 @@ export class CommentsService {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
       };
+    }).then((created) => {
+      this.events.flush();
+      return created;
     });
   }
 
@@ -370,6 +383,13 @@ export class CommentsService {
       comment.promotedTopicId = newTopic.id;
       await manager.save(comment);
 
+      await this.events.enqueueTopicPublished(manager, {
+        topicId: newTopic.id,
+        authorId: newTopic.authorId,
+        categoryId: newTopic.categoryId,
+        publishedAt: newTopic.publishedAt ?? new Date(),
+      });
+
       return {
         commentId: comment.id,
         sourceTopicId: sourceTopic.id,
@@ -377,6 +397,9 @@ export class CommentsService {
         title: newTopic.title,
         movedCommentCount: moveIds.length,
       };
+    }).then((result) => {
+      this.events.flush();
+      return result;
     });
   }
 
