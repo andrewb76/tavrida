@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -12,24 +13,33 @@ import {
 } from '@nestjs/common';
 import {
   IsArray,
+  IsBoolean,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
   MinLength,
 } from 'class-validator';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ForumClient } from '../forum/forum.client';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
+import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
 import { ChatClient, type ChatKind } from './chat.client';
 
 const DM_FEATURE = 'chat.member.dm.enabled';
 const SELF_FEATURE = 'chat.member.self.enabled';
 const GROUP_FEATURE = 'chat.member.group.enabled';
+const GROUP_INVITE_FEATURE = 'chat.member.group.inviteEnabled';
 const ATTACHMENT_FEATURE = 'chat.member.attachment.enabled';
 const MENTION_FEATURE = 'chat.member.mention.enabled';
 const TOPIC_FEATURE = 'forum.author.13topic.chatEnabled';
+const GROUP_MEMBERSHIP_MAX = 'chat.member.group.membershipMax';
+const GROUP_MEMBER_MAX = 'chat.member.group.memberMax';
+const GROUP_CREATE_DAILY_MAX = 'chat.member.group.createDailyMax';
+const SPAWN_COPY_MAX = 'chat.member.spawn.copyHistoryMax';
 
 const CHAT_KINDS = ['DIRECT', 'GROUP', 'TOPIC'] as const;
 
@@ -37,6 +47,42 @@ class OpenDirectDto {
   @IsString()
   @MinLength(1)
   userId!: string;
+}
+
+class CreateGroupDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  memberIds!: string[];
+}
+
+class SpawnGroupDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  memberIds?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  copyHistory?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  copyCount?: number;
+}
+
+class InviteMembersDto {
+  @IsArray()
+  @IsString({ each: true })
+  memberIds!: string[];
 }
 
 class SendMessageDto {
@@ -64,6 +110,7 @@ export class ChatsController {
     private readonly planConfig: PlanConfigClient,
     private readonly forum: ForumClient,
     private readonly users: UserProfileClient,
+    private readonly scalarConfig: ScalarConfigClient,
   ) {}
 
   @Get()
@@ -121,6 +168,17 @@ export class ChatsController {
     return this.chat.ensureDirect(user.sub, body.userId);
   }
 
+  @Post('groups')
+  async createGroup(@CurrentUser() user: AuthUser, @Body() body: CreateGroupDto) {
+    await this.assertFeature(user.sub, GROUP_FEATURE, 'Group chat is not available on your plan');
+    await this.assertCanCreateGroup(user.sub, body.memberIds.length + 1);
+    return this.chat.createGroup({
+      ownerId: user.sub,
+      title: body.title,
+      memberIds: body.memberIds,
+    });
+  }
+
   @Get('topics/:forumTopicId')
   async topicChat(
     @CurrentUser() user: AuthUser,
@@ -166,6 +224,63 @@ export class ChatsController {
     @Param('chatId', ParseUUIDPipe) chatId: string,
   ) {
     return this.chat.get(chatId, user.sub);
+  }
+
+  @Post(':chatId/spawn-group')
+  async spawnGroup(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: SpawnGroupDto,
+  ) {
+    await this.assertFeature(user.sub, GROUP_FEATURE, 'Group chat is not available on your plan');
+    const extra = body.memberIds?.length ?? 0;
+    await this.assertCanCreateGroup(user.sub, 2 + extra);
+
+    const copyCount = await this.resolveSpawnCopyCount(
+      user.sub,
+      body.copyHistory === false ? 0 : (body.copyCount ?? 0),
+    );
+
+    return this.chat.spawnGroup(chatId, {
+      ownerId: user.sub,
+      title: body.title,
+      memberIds: body.memberIds,
+      copyCount,
+    });
+  }
+
+  @Post(':chatId/members')
+  async inviteMembers(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: InviteMembersDto,
+  ) {
+    await this.assertFeature(user.sub, GROUP_FEATURE, 'Group chat is not available on your plan');
+    await this.assertFeature(
+      user.sub,
+      GROUP_INVITE_FEATURE,
+      'Inviting to groups is not available on your plan',
+    );
+
+    const current = await this.chat.countGroupMembers(chatId);
+    const memberMax = await this.planConfig.resolveLimitValue(user.sub, GROUP_MEMBER_MAX);
+    if (memberMax != null && memberMax >= 0 && current.count + body.memberIds.length > memberMax) {
+      throw new ForbiddenException({
+        message: 'Group member limit exceeded',
+        variableKey: GROUP_MEMBER_MAX,
+        limit: memberMax,
+      });
+    }
+
+    return this.chat.inviteMembers(chatId, user.sub, body.memberIds);
+  }
+
+  @Post(':chatId/leave')
+  leave(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+  ) {
+    return this.chat.leaveGroup(chatId, user.sub);
   }
 
   @Get(':chatId/messages')
@@ -249,6 +364,66 @@ export class ChatsController {
         planId: feature.planId,
       });
     }
+  }
+
+  private async assertCanCreateGroup(userId: string, resultingMemberCount: number) {
+    const createdToday = await this.chat.countGroupsCreatedToday(userId);
+    const createCheck = await this.planConfig.checkLimit({
+      userId,
+      variableKey: GROUP_CREATE_DAILY_MAX,
+      requestedValue: 1,
+      currentUsage: createdToday.count,
+    });
+    if (!createCheck.allowed) {
+      throw new HttpException(
+        {
+          message: 'Daily group create limit exceeded',
+          variableKey: GROUP_CREATE_DAILY_MAX,
+          limit: createCheck.limit,
+        },
+        429,
+      );
+    }
+
+    const memberships = await this.chat.countGroupMemberships(userId);
+    const membershipCheck = await this.planConfig.checkLimit({
+      userId,
+      variableKey: GROUP_MEMBERSHIP_MAX,
+      requestedValue: 1,
+      currentUsage: memberships.count,
+    });
+    if (!membershipCheck.allowed) {
+      throw new ForbiddenException({
+        message: 'Group membership limit exceeded',
+        variableKey: GROUP_MEMBERSHIP_MAX,
+        limit: membershipCheck.limit,
+      });
+    }
+
+    const memberMax = await this.planConfig.resolveLimitValue(userId, GROUP_MEMBER_MAX);
+    if (memberMax != null && memberMax >= 0 && resultingMemberCount > memberMax) {
+      throw new ForbiddenException({
+        message: 'Group member limit exceeded',
+        variableKey: GROUP_MEMBER_MAX,
+        limit: memberMax,
+      });
+    }
+  }
+
+  private async resolveSpawnCopyCount(userId: string, requested: number): Promise<number> {
+    if (requested <= 0) return 0;
+    const planMax = (await this.planConfig.resolveLimitValue(userId, SPAWN_COPY_MAX)) ?? 0;
+    const chatSettings = await this.scalarConfig.getChatSettings();
+    const scalarMax =
+      typeof chatSettings['spawn.copyHistoryMax'] === 'number'
+        ? chatSettings['spawn.copyHistoryMax']
+        : 100;
+    const cap = Math.min(
+      planMax < 0 ? Number.POSITIVE_INFINITY : planMax,
+      scalarMax < 0 ? Number.POSITIVE_INFINITY : scalarMax,
+    );
+    if (!Number.isFinite(cap)) return requested;
+    return Math.max(0, Math.min(requested, Math.floor(cap)));
   }
 
   private async resolveMentions(authorId: string, body: string) {

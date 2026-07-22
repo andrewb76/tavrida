@@ -48,7 +48,7 @@ Chat:
   ✔ Scaffold services/chat :3016 (entities, migration, internal ensure/list/messages) @chat @done(26-07-22)
   ✔ pnpm install — @tavrida/chat in workspace, build+test ok @chat @ops @done(26-07-22)
   ✔ BFF chats module (list/unread/self/direct/topic/messages + plan gates) @chat @bff @done(26-07-22)
-  ☐ GROUP spawn/invite @chat
+  ✔ GROUP spawn/invite/leave + plan gates + spawn UI @chat @bff @frontend @done(26-07-22)
   ✔ RMQ TOPIC consumers (forum.topic_published / comment_created) @chat @forum @done(26-07-22)
   ✔ plan/scalar seed+sync chat keys + admin UI sections @chat @plan-config @done(26-07-22)
   ☐ Keto chat:{id}#member (optional hardening) @chat @bff

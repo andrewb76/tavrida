@@ -4,6 +4,7 @@ import {
   listChatMessages,
   markChatRead,
   sendChatMessage,
+  spawnGroupFromDirect,
   type ChatDto,
   type ChatMessage,
 } from '@/services/chats';
@@ -11,10 +12,11 @@ import { useChatsStore } from '@/stores/chats';
 import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, nextTick, ref, watch } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 const route = useRoute();
+const router = useRouter();
 const session = useSessionStore();
 const chatsStore = useChatsStore();
 
@@ -25,6 +27,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const body = ref('');
 const sending = ref(false);
+const spawning = ref(false);
 const listEl = ref<HTMLElement | null>(null);
 
 const title = computed(() => {
@@ -33,6 +36,10 @@ const title = computed(() => {
   if (chat.value.self) return 'Заметки';
   return 'Чат';
 });
+
+const canSpawnGroup = computed(
+  () => chat.value?.kind === 'DIRECT' && !chat.value.self,
+);
 
 watch(chatId, (id) => void load(id), { immediate: true });
 
@@ -63,6 +70,29 @@ async function load(id: string) {
 function scrollToBottom() {
   const el = listEl.value;
   if (el) el.scrollTop = el.scrollHeight;
+}
+
+async function spawnGroup() {
+  if (!canSpawnGroup.value || spawning.value) return;
+  const groupTitle = window.prompt('Название группы', 'Группа')?.trim();
+  if (groupTitle === undefined) return;
+  const copyRaw = window.prompt('Сколько последних сообщений скопировать? (0 = без истории)', '25');
+  if (copyRaw === null) return;
+  const copyCount = Math.max(0, Number.parseInt(copyRaw, 10) || 0);
+  spawning.value = true;
+  try {
+    const group = await spawnGroupFromDirect(chatId.value, {
+      title: groupTitle || undefined,
+      copyHistory: copyCount > 0,
+      copyCount,
+    });
+    toast.success('Группа создана');
+    await router.push({ name: 'chat-room', params: { chatId: group.id } });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось создать группу');
+  } finally {
+    spawning.value = false;
+  }
 }
 
 async function send() {
@@ -128,6 +158,16 @@ function formatTime(iso: string) {
           </RouterLink>
         </p>
       </div>
+      <UiButton
+        v-if="canSpawnGroup"
+        intent="secondary"
+        size="sm"
+        type="button"
+        :disabled="spawning"
+        @click="spawnGroup"
+      >
+        {{ spawning ? '…' : 'Группа' }}
+      </UiButton>
     </header>
 
     <p

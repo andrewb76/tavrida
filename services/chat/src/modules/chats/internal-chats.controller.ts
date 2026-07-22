@@ -55,6 +55,55 @@ class AddTopicMemberDto {
   userId!: string;
 }
 
+class CreateGroupDto {
+  @IsString()
+  @MinLength(1)
+  ownerId!: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  memberIds!: string[];
+}
+
+class SpawnGroupDto {
+  @IsString()
+  @MinLength(1)
+  ownerId!: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  memberIds?: string[];
+
+  @IsInt()
+  @Min(0)
+  copyCount!: number;
+}
+
+class InviteMembersDto {
+  @IsString()
+  @MinLength(1)
+  actorId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  memberIds!: string[];
+}
+
+class LeaveGroupDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
+}
+
 class MentionDto {
   @IsString()
   userId!: string;
@@ -137,6 +186,64 @@ export class InternalChatsController {
   @Post('topic/members/add')
   addTopicMember(@Body() body: AddTopicMemberDto) {
     return this.chats.addTopicMember(body.topicId, body.userId);
+  }
+
+  @Post('groups')
+  createGroup(@Body() body: CreateGroupDto) {
+    return this.chats.createGroup({
+      ownerId: body.ownerId,
+      title: body.title,
+      memberIds: body.memberIds,
+    });
+  }
+
+  @Post(':chatId/spawn-group')
+  spawnGroup(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: SpawnGroupDto,
+  ) {
+    return this.chats.spawnGroupFromDirect({
+      directChatId: chatId,
+      ownerId: body.ownerId,
+      title: body.title,
+      memberIds: body.memberIds,
+      copyCount: body.copyCount,
+    });
+  }
+
+  @Post(':chatId/members')
+  invite(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: InviteMembersDto,
+  ) {
+    return this.chats.inviteMembers({
+      chatId,
+      actorId: body.actorId,
+      memberIds: body.memberIds,
+    });
+  }
+
+  @Post(':chatId/leave')
+  leave(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: LeaveGroupDto,
+  ) {
+    return this.chats.leaveGroup(chatId, body.userId);
+  }
+
+  @Get('stats/group-memberships')
+  groupMemberships(@Query('userId') userId: string) {
+    return this.chats.countActiveGroupMemberships(userId).then((count) => ({ count }));
+  }
+
+  @Get('stats/groups-created-today')
+  groupsCreatedToday(@Query('userId') userId: string) {
+    return this.chats.countGroupsCreatedToday(userId).then((count) => ({ count }));
+  }
+
+  @Get(':chatId/member-count')
+  memberCount(@Param('chatId', ParseUUIDPipe) chatId: string) {
+    return this.chats.countGroupMembers(chatId).then((count) => ({ count }));
   }
 
   @Get(':chatId')

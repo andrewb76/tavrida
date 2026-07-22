@@ -107,6 +107,60 @@ export class ChatClient {
     });
   }
 
+  createGroup(input: { ownerId: string; title?: string; memberIds: string[] }) {
+    return this.request<ChatDto>('POST', '/internal/v1/chats/groups', input);
+  }
+
+  spawnGroup(
+    directChatId: string,
+    input: {
+      ownerId: string;
+      title?: string;
+      memberIds?: string[];
+      copyCount: number;
+    },
+  ) {
+    return this.request<ChatDto>(
+      'POST',
+      `/internal/v1/chats/${directChatId}/spawn-group`,
+      input,
+    );
+  }
+
+  inviteMembers(chatId: string, actorId: string, memberIds: string[]) {
+    return this.request<ChatDto>('POST', `/internal/v1/chats/${chatId}/members`, {
+      actorId,
+      memberIds,
+    });
+  }
+
+  leaveGroup(chatId: string, userId: string) {
+    return this.request<void>('POST', `/internal/v1/chats/${chatId}/leave`, { userId });
+  }
+
+  countGroupMemberships(userId: string) {
+    const params = new URLSearchParams({ userId });
+    return this.request<{ count: number }>(
+      'GET',
+      `/internal/v1/chats/stats/group-memberships?${params}`,
+    );
+  }
+
+  countGroupsCreatedToday(userId: string) {
+    const params = new URLSearchParams({ userId });
+    return this.request<{ count: number }>(
+      'GET',
+      `/internal/v1/chats/stats/groups-created-today?${params}`,
+    );
+  }
+
+  countGroupMembers(chatId: string) {
+    return this.request<{ count: number }>(
+      'GET',
+      `/internal/v1/chats/${chatId}/member-count`,
+    );
+  }
+
   get(chatId: string, userId: string) {
     const params = new URLSearchParams({ userId });
     return this.request<ChatDto>('GET', `/internal/v1/chats/${chatId}?${params}`);
@@ -173,6 +227,9 @@ export class ChatClient {
         res.statusText;
       if (res.status === 404) throw new NotFoundException(message);
       if (res.status === 403) throw new ForbiddenException(message);
+      if (res.status === 409) {
+        throw new HttpException(message, 409);
+      }
       throw new HttpException(message, res.status);
     }
 

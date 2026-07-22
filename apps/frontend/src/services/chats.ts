@@ -113,6 +113,59 @@ export async function openDirectChat(userId: string): Promise<ChatDto> {
   return (await res.json()) as ChatDto;
 }
 
+export async function createGroupChat(input: {
+  title?: string;
+  memberIds: string[];
+}): Promise<ChatDto> {
+  const res = await fetch(`${apiBase()}/chats/groups`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось создать группу'));
+  return (await res.json()) as ChatDto;
+}
+
+export async function spawnGroupFromDirect(
+  directChatId: string,
+  input: {
+    title?: string;
+    memberIds?: string[];
+    copyHistory?: boolean;
+    copyCount?: number;
+  },
+): Promise<ChatDto> {
+  const res = await fetch(`${apiBase()}/chats/${directChatId}/spawn-group`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось создать группу из чата'));
+  return (await res.json()) as ChatDto;
+}
+
+export async function inviteToGroup(
+  chatId: string,
+  memberIds: string[],
+): Promise<ChatDto> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/members`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify({ memberIds }),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось пригласить'));
+  return (await res.json()) as ChatDto;
+}
+
+export async function leaveGroup(chatId: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/leave`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось выйти из группы'));
+}
+
 export async function getTopicChat(forumTopicId: string): Promise<ChatDto> {
   const res = await fetch(`${apiBase()}/chats/topics/${forumTopicId}`, {
     headers: await bffAuthHeaders(undefined, { json: false }),
