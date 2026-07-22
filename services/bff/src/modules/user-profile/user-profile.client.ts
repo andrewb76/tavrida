@@ -133,6 +133,32 @@ export class UserProfileClient {
     });
   }
 
+  async searchUsers(params: { q: string; limit?: number }) {
+    const qs = new URLSearchParams({ q: params.q });
+    if (params.limit != null) qs.set('limit', String(params.limit));
+    return this.request<{
+      data: Array<{
+        userId: string;
+        displayName: string | null;
+        username: string | null;
+        avatarUrl: string | null;
+        isSuspended: boolean;
+        memberSince: string;
+      }>;
+    }>('GET', `/internal/v1/users/search?${qs}`);
+  }
+
+  async getByUsername(username: string) {
+    return this.request<{
+      userId: string;
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+      isSuspended: boolean;
+      memberSince: string;
+    }>('GET', `/internal/v1/users/by-username/${encodeURIComponent(username)}`);
+  }
+
   async lookupByIds(userIds: string[]) {
     if (!userIds.length) {
       return [];

@@ -142,7 +142,7 @@ export class ChatsController {
     if (query.length < 1) {
       return { data: [] };
     }
-    const result = await this.users.listUsers({ q: query, limit: 10, offset: 0 });
+    const result = await this.users.searchUsers({ q: query, limit: 10 });
     return {
       data: (result.data ?? [])
         .filter((row) => row.username)
@@ -452,7 +452,7 @@ export class ChatsController {
     >();
 
     for (const name of usernames) {
-      const more = await this.users.listUsers({ q: name, limit: 10 });
+      const more = await this.users.searchUsers({ q: name, limit: 10 });
       for (const u of more.data ?? []) {
         if (u.username) {
           byUsername.set(u.username.toLowerCase(), {

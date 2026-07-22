@@ -5,7 +5,7 @@
 
 Публичный BFF surface для «Мои чаты», DIRECT/self/TOPIC, сообщений и unread badge.
 
-**Реализовано в BFF:** list, unread, self, direct, groups, spawn, topic, messages, read, users/search, DM `displayTitle`/`peer`, message `status`.  
+**Реализовано в BFF:** list, unread, self, direct, groups, spawn, topic, messages, read, users/search (username prefix), DM `displayTitle`/`peer`, message `status`.  
 **Ещё нет:** hide, transfer ownership, edit/delete message, kick, WS live.
 
 ## Endpoints

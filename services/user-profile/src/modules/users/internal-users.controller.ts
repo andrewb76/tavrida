@@ -94,6 +94,22 @@ export class InternalUsersController {
     return this.users.lookupByIds(body.ids);
   }
 
+  @Get('search')
+  search(
+    @Query('q') q?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.users.searchByUsername({
+      q: q ?? '',
+      limit: limit ? Number(limit) : 10,
+    });
+  }
+
+  @Get('by-username/:username')
+  getByUsername(@Param('username') username: string) {
+    return this.users.getByUsername(username);
+  }
+
   @Get(':userId/public')
   getPublic(@Param('userId') userId: string) {
     return this.users.getPublicProfile(userId);

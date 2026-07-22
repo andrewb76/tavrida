@@ -3,6 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 
+/** Soft-hide from @mention autocomplete (Logto may still own the handle). */
+const RESERVED_USERNAMES = new Set([
+  'admin',
+  'mod',
+  'moderator',
+  'support',
+  'system',
+  'root',
+  'tavrida',
+  'null',
+  'undefined',
+]);
+
 export type LogtoUserSyncInput = {
   userId: string;
   name?: string | null;
@@ -77,6 +90,58 @@ export class UsersService {
       data: rows.map((row) => this.toDto(row)),
       pagination: { offset, limit, total },
     };
+  }
+
+  /**
+   * @mention autocomplete: only users with a username, prefix match, soft-hide reserved.
+   */
+  async searchByUsername(input: { q: string; limit?: number }) {
+    const raw = input.q.trim().replace(/^@/, '');
+    const limit = Math.min(Math.max(input.limit ?? 10, 1), 20);
+    if (raw.length < 1) {
+      return { data: [] as Array<ReturnType<UsersService['toPublicDto']>> };
+    }
+
+    const qb = this.profiles
+      .createQueryBuilder('profile')
+      .where('profile.deletedAt IS NULL')
+      .andWhere('profile.username IS NOT NULL')
+      .andWhere('profile.isSuspended = false')
+      .andWhere('lower(profile.username) LIKE lower(:prefix)', {
+        prefix: `${raw}%`,
+      })
+      .orderBy('profile.username', 'ASC')
+      .take(limit * 2);
+
+    const rows = await qb.getMany();
+    const data = rows
+      .filter((row) => {
+        const u = row.username?.toLowerCase();
+        return u != null && !RESERVED_USERNAMES.has(u);
+      })
+      .slice(0, limit)
+      .map((row) => this.toPublicDto(row));
+
+    return { data };
+  }
+
+  async getByUsername(username: string) {
+    const needle = username.trim().replace(/^@/, '');
+    if (!needle) {
+      throw new NotFoundException({ type: 'not-found', detail: 'Username required' });
+    }
+    const row = await this.profiles
+      .createQueryBuilder('profile')
+      .where('profile.deletedAt IS NULL')
+      .andWhere('lower(profile.username) = lower(:username)', { username: needle })
+      .getOne();
+    if (!row) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `User @${needle} not found`,
+      });
+    }
+    return this.toPublicDto(row);
   }
 
   async getById(userId: string) {

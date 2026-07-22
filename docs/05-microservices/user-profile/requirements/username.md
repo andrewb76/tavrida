@@ -1,6 +1,6 @@
 # 👤 Club handle (`username`) — через Logto
 
-> **Статус:** draft · **Версия:** 0.2 · **Дата:** 2026-07-22  
+> **Статус:** in progress · **Версия:** 0.3 · **Дата:** 2026-07-22  
 > **Решение:** **SoT = Logto** · локальная копия в `user_profile` · **не** свой CRUD username в клубе  
 > **Сервис:** [user-profile](../README.md) · **Потребитель:** [chat](../../chat/requirements/analysis.md)  
 > **Ops:** [logto-setup](../../../14-frontend/logto-setup.md) · [logto-webhooks](../../../14-frontend/logto-webhooks.md)
@@ -108,13 +108,12 @@ SPA: если JWT/userinfo без `username` — предложить Account Ce
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `username` | varchar nullable | Копия Logto `username` |
-| *(optional)* unique index | `UNIQUE (lower(username)) WHERE username IS NOT NULL` | Ускоряет search; при рассинхроне — reconcile через `sync:logto-users` |
+| unique index | `UNIQUE (lower(username)) WHERE username IS NOT NULL` | Migration `1784246600000`; search + cache integrity |
 
 **Не добавляем** `usernameSetAt` / club-owned change window в v1.
 
-Поиск autocomplete: `GET /internal/v1/users/search?q=` по `user_profile` (уже ILIKE по username) — не Logto Management list на каждый символ.
-
-Resolve `@alice` → профиль: lookup by `lower(username)` в cache; miss → optional Management API backfill.
+Поиск autocomplete: `GET /internal/v1/users/search?q=` (prefix по username, soft-hide reserved) → BFF `GET /chats/users/search`.  
+Resolve `@alice`: `GET /internal/v1/users/by-username/:username` → BFF `GET /profile/by-username/:username`.
 
 ---
 
@@ -137,9 +136,11 @@ Resolve `@alice` → профиль: lookup by `lower(username)` в cache; miss 
 1. [x] Username policy: case-insensitive, 3–32, letters+digits+`_`.
 2. [x] Sign-up: Email + Username (Type 4) **или** Collect profile с required username.
 3. [x] Account Center: `fields.username = Edit`.
-4. [ ] Webhook `User.Data.Updated` — проверить, что username приходит в payload sync.
-5. [ ] Backfill при необходимости: `pnpm sync:logto-users`.
-6. [ ] Branding script на Swarm: `username → Edit` (если Console уже Edit — ок).
+4. [x] Webhook `User.Data.Updated` — username в `syncFromLogto` (payload `data.username`).
+5. [ ] Backfill при необходимости: `pnpm sync:logto-users` (после смены ников на старых аккаунтах).
+6. [x] UNIQUE(lower(username)) + `GET …/users/search` + FE @autocomplete в комнате чата.
+7. [ ] Branding script на Swarm: `username → Edit` (если Console уже Edit — ок).
+8. [ ] Verify на evatorg: сменить username в Account Center → webhook/me/identity → cache → @mention.
 
 ---
 

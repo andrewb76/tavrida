@@ -44,6 +44,7 @@ export const useSessionStore = defineStore('session', () => {
   const displayName = ref('Участник');
   const email = ref<string | undefined>();
   const avatarUrl = ref<string | undefined>();
+  const username = ref<string | undefined>();
   const balance = ref(0);
   const balanceCurrency = ref('RUB');
   const platformRoles = ref<PlatformRole[]>([]);
@@ -93,11 +94,13 @@ export const useSessionStore = defineStore('session', () => {
     name?: string;
     email?: string;
     avatarUrl?: string;
+    username?: string;
   }) {
     userId.value = profile.sub;
     if (profile.name) displayName.value = profile.name;
     email.value = profile.email;
     avatarUrl.value = profile.avatarUrl;
+    username.value = profile.username;
   }
 
   function clearProfile() {
@@ -105,6 +108,7 @@ export const useSessionStore = defineStore('session', () => {
     displayName.value = 'Участник';
     email.value = undefined;
     avatarUrl.value = undefined;
+    username.value = undefined;
   }
 
   function setBalance(amount: number, currency = 'RUB') {
@@ -167,6 +171,7 @@ export const useSessionStore = defineStore('session', () => {
     displayName,
     email,
     avatarUrl,
+    username,
     balance,
     balanceCurrency,
     platformRoles,
