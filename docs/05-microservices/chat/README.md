@@ -26,7 +26,7 @@
 | Plan seed `chat.member.*` + `forum.author.13topic.chatEnabled` | ✅ |
 | Scalar sync `chat.*` (BFF bootstrap) + admin form | ✅ |
 | RMQ TOPIC consumers (`forum.topic_published` / `comment_created`) | ✅ |
-| GROUP spawn / invite / leave (API + spawn UI) | ✅ |
+| Swarm `chat` service + `CHAT_URL` on BFF | ✅ |
 | Frontend «Мои чаты» + TOPIC bottom sheet | ✅ |
 
 ## 📖 Термины

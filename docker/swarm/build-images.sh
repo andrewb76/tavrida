@@ -39,6 +39,7 @@ declare -A SERVICES=(
   [marketplace]="@tavrida/marketplace|services/marketplace"
   [deal-feedback]="@tavrida/deal-feedback|services/deal-feedback"
   [notifications]="@tavrida/notifications|services/notifications"
+  [chat]="@tavrida/chat|services/chat"
 )
 
 build_service() {

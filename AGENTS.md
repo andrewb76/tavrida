@@ -37,7 +37,7 @@ max-alice/
 │   ├── notifications/         port 3010
 │   ├── marketplace/           port 3011
 │   ├── periods/               port 3014
-│   └── chat/                  port 3016 (docs only; schema: chat)
+│   └── chat/                  port 3016
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/
@@ -45,7 +45,7 @@ max-alice/
 
 **Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
-**Docs-only services** (`rating`, `chat`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace. Chat spec: [docs/05-microservices/chat/](docs/05-microservices/chat/README.md).
+**Docs-only services** (`rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace. Chat: [docs/05-microservices/chat/](docs/05-microservices/chat/README.md).
 
 ## Commands
 

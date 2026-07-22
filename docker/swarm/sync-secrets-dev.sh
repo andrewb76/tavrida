@@ -36,6 +36,7 @@ COMPUTED_KEYS=(
   MARKETPLACE_DATABASE_URL
   NOTIFICATIONS_DATABASE_URL
   BFF_DATABASE_URL
+  CHAT_DATABASE_URL
 )
 
 usage() {
@@ -115,6 +116,7 @@ build_computed_secrets() {
   MARKETPLACE_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=marketplace"
   NOTIFICATIONS_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=notifications"
   BFF_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=bff"
+  CHAT_DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=chat"
 }
 
 build_computed_secrets

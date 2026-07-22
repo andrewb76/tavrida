@@ -44,6 +44,9 @@ secrets:
   bff_database_url:
     external: true
     name: tavrida_dev_bff_database_url
+  chat_database_url:
+    external: true
+    name: tavrida_dev_chat_database_url
   logto_m2m_app_secret:
     external: true
     name: tavrida_dev_logto_m2m_app_secret
@@ -321,6 +324,26 @@ services:
     deploy:
       <<: *nest-deploy
 
+  chat:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-chat:${GIT_SHA}
+    secrets:
+      - internal_service_token
+      - rabbitmq_url
+      - chat_database_url
+    environment:
+      <<: *nest-env
+      CHAT_PORT: '3016'
+      DATABASE_URL_FILE: /run/secrets/chat_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
@@ -343,6 +366,7 @@ services:
       NOTIFICATIONS_URL: http://notifications:3010
       PERIODS_URL: http://periods:3014
       MARKETPLACE_URL: http://marketplace:3011
+      CHAT_URL: http://chat:3016
       KETO_READ_URL: ${KETO_READ_URL}
       KETO_WRITE_URL: ${KETO_WRITE_URL}
       LOGTO_ENDPOINT: ${LOGTO_ENDPOINT}
