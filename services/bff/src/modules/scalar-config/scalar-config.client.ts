@@ -17,6 +17,19 @@ export type ForumSettings = {
   'vote.karmaMinusWeight'?: number;
 };
 
+export type ChatSettings = {
+  'spawn.copyHistoryMax'?: number;
+  'message.editWindowMinutes'?: number;
+  'message.deleteOwnWindowMinutes'?: number;
+  'message.lengthHardMax'?: number;
+  'topic.authorJoinOnPublish'?: boolean;
+  'topic.joinOnComment'?: boolean;
+  'dm.selfAutoCreate'?: boolean;
+  'unread.markReadOnOpen'?: boolean;
+  'list.defaultFilter'?: string;
+  'group.leaveKeepsHistory'?: boolean;
+};
+
 @Injectable()
 export class ScalarConfigClient {
   constructor(private readonly config: ConfigService) {}
@@ -72,6 +85,17 @@ export class ScalarConfigClient {
 
   async patchForumSettings(patch: ForumSettings, updatedBy: string): Promise<ForumSettings> {
     return this.request<ForumSettings>('POST', '/internal/v1/scalar-variables/forum', {
+      ...patch,
+      updatedBy,
+    });
+  }
+
+  async getChatSettings(): Promise<ChatSettings> {
+    return this.request<ChatSettings>('GET', '/internal/v1/scalar-variables/chat');
+  }
+
+  async patchChatSettings(patch: ChatSettings, updatedBy: string): Promise<ChatSettings> {
+    return this.request<ChatSettings>('POST', '/internal/v1/scalar-variables/chat', {
       ...patch,
       updatedBy,
     });

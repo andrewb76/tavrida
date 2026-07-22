@@ -1,5 +1,5 @@
 /**
- * Scalar keys owned by chat — sync to scalar-config at startup (later).
+ * Scalar keys owned by chat — synced to scalar-config via BFF ChatScalarBootstrapService.
  * Catalog: docs/05-microservices/PLATFORM-REGISTRY.md
  */
 export const CHAT_SCALAR_MANIFEST = [

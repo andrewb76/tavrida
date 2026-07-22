@@ -1,5 +1,5 @@
 /**
- * Plan variables owned by chat — sync to plan-config at startup (later).
+ * Plan variables owned by chat — seeded in plan-config default-seed (catalog sync on restart).
  * TOPIC gate remains forum.author.13topic.chatEnabled.
  * Catalog: docs/05-microservices/PLATFORM-REGISTRY.md
  */

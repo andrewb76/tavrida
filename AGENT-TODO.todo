@@ -48,7 +48,8 @@ Chat:
   ✔ Scaffold services/chat :3016 (entities, migration, internal ensure/list/messages) @chat @done(26-07-22)
   ✔ pnpm install — @tavrida/chat in workspace, build+test ok @chat @ops @done(26-07-22)
   ✔ BFF chats module (list/unread/self/direct/topic/messages + plan gates) @chat @bff @done(26-07-22)
-  ☐ GROUP spawn/invite + plan/scalar sync + RMQ TOPIC consumers @chat
+  ☐ GROUP spawn/invite + RMQ TOPIC consumers @chat
+  ✔ plan/scalar seed+sync chat keys + admin UI sections @chat @plan-config @done(26-07-22)
   ☐ Keto chat:{id}#member (optional hardening) @chat @bff
   ✔ Frontend «Мои чаты» + TOPIC bottom sheet @chat @frontend @done(26-07-22)
   ✔ Logto Console: username policy + Email/Username sign-up + Account Center Edit @ops @logto @done(26-07-22)

@@ -56,6 +56,19 @@ export type ForumSettings = {
   'vote.changeWindowMinutes'?: number;
 };
 
+export type ChatSettings = {
+  'spawn.copyHistoryMax'?: number;
+  'message.editWindowMinutes'?: number;
+  'message.deleteOwnWindowMinutes'?: number;
+  'message.lengthHardMax'?: number;
+  'topic.authorJoinOnPublish'?: boolean;
+  'topic.joinOnComment'?: boolean;
+  'dm.selfAutoCreate'?: boolean;
+  'unread.markReadOnOpen'?: boolean;
+  'list.defaultFilter'?: 'ALL' | 'DIRECT' | 'GROUP' | 'TOPIC';
+  'group.leaveKeepsHistory'?: boolean;
+};
+
 export async function fetchForumSettings(): Promise<ForumSettings> {
   const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
     headers: await bffAuthHeaders(undefined, { json: false }),
@@ -84,6 +97,36 @@ export async function saveForumSettings(patch: ForumSettings): Promise<ForumSett
     throw new Error(detail);
   }
   return (await res.json()) as ForumSettings;
+}
+
+export async function fetchChatSettings(): Promise<ChatSettings> {
+  const res = await fetch(`${apiBase()}/admin/scalar-config/chat`, {
+    headers: await bffAuthHeaders(undefined, { json: false }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load chat settings (${res.status})`);
+  }
+  return (await res.json()) as ChatSettings;
+}
+
+export async function saveChatSettings(patch: ChatSettings): Promise<ChatSettings> {
+  const res = await fetch(`${apiBase()}/admin/scalar-config/chat`, {
+    method: 'PATCH',
+    headers: await bffAuthHeaders(undefined, { skipActAs: true }),
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    let detail = `Failed to save chat settings (${res.status})`;
+    try {
+      const body = (await res.json()) as { detail?: string; message?: string | string[] };
+      if (typeof body.detail === 'string') detail = body.detail;
+      else if (typeof body.message === 'string') detail = body.message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return (await res.json()) as ChatSettings;
 }
 
 export async function fetchScalarRegistry(): Promise<ScalarRegistryEntry[]> {

@@ -22,7 +22,9 @@
 | Scaffold NestJS + migration + internal API | ✅ |
 | BFF `/api/v1/chats/*` (list/unread/self/direct/topic/messages) | ✅ |
 | Plan gates on BFF (dm/self/topic/attachment/mention) | ✅ |
-| Plan/scalar manifests (constants) | ✅ (sync later) |
+| Plan/scalar manifests (constants) | ✅ |
+| Plan seed `chat.member.*` + `forum.author.13topic.chatEnabled` | ✅ |
+| Scalar sync `chat.*` (BFF bootstrap) + admin form | ✅ |
 | GROUP spawn / invite | ⏳ |
 | RMQ TOPIC consumers | ⏳ |
 | Frontend «Мои чаты» + TOPIC bottom sheet | ✅ |
