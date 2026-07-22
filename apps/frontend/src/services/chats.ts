@@ -2,6 +2,13 @@ import { bffAuthHeaders } from './apiAuth';
 
 export type ChatKind = 'DIRECT' | 'GROUP' | 'TOPIC';
 
+export type ChatPeer = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+};
+
 export type ChatListItem = {
   id: string;
   kind: ChatKind;
@@ -9,6 +16,9 @@ export type ChatListItem = {
   title: string | null;
   contextType: string | null;
   contextId: string | null;
+  peerUserId?: string | null;
+  peer?: ChatPeer | null;
+  displayTitle?: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
 };
@@ -20,7 +30,13 @@ export type ChatDto = {
   title: string | null;
   contextType: string | null;
   contextId: string | null;
+  peerUserId?: string | null;
+  peer?: ChatPeer | null;
+  displayTitle?: string | null;
 };
+
+/** API statuses; `SENDING` is client-only optimistic. */
+export type MessageDeliveryStatus = 'SENDING' | 'DELIVERED' | 'READ';
 
 export type ChatMessage = {
   id: string;
@@ -36,6 +52,7 @@ export type ChatMessage = {
   createdAt: string;
   editedAt: string | null;
   deletedAt: string | null;
+  status?: MessageDeliveryStatus | null;
 };
 
 export type ChatUnread = {
@@ -72,10 +89,23 @@ export function chatKindLabel(kind: ChatKind, self?: boolean): string {
   return 'Тема форума';
 }
 
-export function chatListTitle(row: ChatListItem): string {
-  if (row.title?.trim()) return row.title.trim();
+export function chatListTitle(row: ChatListItem | ChatDto): string {
+  if (row.displayTitle?.trim()) return row.displayTitle.trim();
   if (row.self) return 'Заметки';
+  if (row.kind === 'DIRECT' && row.peer) {
+    const name = row.peer.displayName?.trim();
+    if (name) return name;
+    if (row.peer.username?.trim()) return `@${row.peer.username.trim()}`;
+  }
+  if (row.title?.trim()) return row.title.trim();
   return chatKindLabel(row.kind, row.self);
+}
+
+export function messageStatusLabel(status: MessageDeliveryStatus | null | undefined): string {
+  if (status === 'SENDING') return 'отправляется';
+  if (status === 'DELIVERED') return 'доставлено';
+  if (status === 'READ') return 'прочитано';
+  return '';
 }
 
 export async function listChats(kind?: ChatKind): Promise<ChatListItem[]> {

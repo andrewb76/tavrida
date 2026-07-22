@@ -27,7 +27,7 @@ import { ForumClient } from '../forum/forum.client';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
-import { ChatClient, type ChatKind } from './chat.client';
+import { ChatClient, type ChatDto, type ChatKind, type ChatListItemDto } from './chat.client';
 
 const DM_FEATURE = 'chat.member.dm.enabled';
 const SELF_FEATURE = 'chat.member.self.enabled';
@@ -114,14 +114,15 @@ export class ChatsController {
   ) {}
 
   @Get()
-  list(
+  async list(
     @CurrentUser() user: AuthUser,
     @Query('kind') kind?: string,
   ) {
     if (kind && !CHAT_KINDS.includes(kind as (typeof CHAT_KINDS)[number])) {
       throw new BadRequestException('Invalid kind');
     }
-    return this.chat.list(user.sub, kind as ChatKind | undefined);
+    const rows = await this.chat.list(user.sub, kind as ChatKind | undefined);
+    return this.enrichChatList(rows);
   }
 
   @Get('unread')
@@ -132,7 +133,7 @@ export class ChatsController {
   @Get('self')
   async self(@CurrentUser() user: AuthUser) {
     await this.assertFeature(user.sub, SELF_FEATURE, 'Self-DM is not available on your plan');
-    return this.chat.ensureSelf(user.sub);
+    return this.enrichChat(await this.chat.ensureSelf(user.sub));
   }
 
   @Get('users/search')
@@ -165,18 +166,20 @@ export class ChatsController {
       DM_FEATURE,
       'Peer cannot receive direct messages on their plan',
     );
-    return this.chat.ensureDirect(user.sub, body.userId);
+    return this.enrichChat(await this.chat.ensureDirect(user.sub, body.userId));
   }
 
   @Post('groups')
   async createGroup(@CurrentUser() user: AuthUser, @Body() body: CreateGroupDto) {
     await this.assertFeature(user.sub, GROUP_FEATURE, 'Group chat is not available on your plan');
     await this.assertCanCreateGroup(user.sub, body.memberIds.length + 1);
-    return this.chat.createGroup({
-      ownerId: user.sub,
-      title: body.title,
-      memberIds: body.memberIds,
-    });
+    return this.enrichChat(
+      await this.chat.createGroup({
+        ownerId: user.sub,
+        title: body.title,
+        memberIds: body.memberIds,
+      }),
+    );
   }
 
   @Get('topics/:forumTopicId')
@@ -203,11 +206,11 @@ export class ChatsController {
 
     const room = await this.chat.ensureTopic(forumTopicId, authorId);
     if (user.sub === authorId) {
-      return room;
+      return this.enrichChat(room);
     }
 
     try {
-      return await this.chat.get(room.id, user.sub);
+      return this.enrichChat(await this.chat.get(room.id, user.sub));
     } catch (err) {
       if (err instanceof ForbiddenException) {
         throw new ForbiddenException(
@@ -219,11 +222,11 @@ export class ChatsController {
   }
 
   @Get(':chatId')
-  get(
+  async get(
     @CurrentUser() user: AuthUser,
     @Param('chatId', ParseUUIDPipe) chatId: string,
   ) {
-    return this.chat.get(chatId, user.sub);
+    return this.enrichChat(await this.chat.get(chatId, user.sub));
   }
 
   @Post(':chatId/spawn-group')
@@ -241,12 +244,14 @@ export class ChatsController {
       body.copyHistory === false ? 0 : (body.copyCount ?? 0),
     );
 
-    return this.chat.spawnGroup(chatId, {
-      ownerId: user.sub,
-      title: body.title,
-      memberIds: body.memberIds,
-      copyCount,
-    });
+    return this.enrichChat(
+      await this.chat.spawnGroup(chatId, {
+        ownerId: user.sub,
+        title: body.title,
+        memberIds: body.memberIds,
+        copyCount,
+      }),
+    );
   }
 
   @Post(':chatId/members')
@@ -272,7 +277,9 @@ export class ChatsController {
       });
     }
 
-    return this.chat.inviteMembers(chatId, user.sub, body.memberIds);
+    return this.enrichChat(
+      await this.chat.inviteMembers(chatId, user.sub, body.memberIds),
+    );
   }
 
   @Post(':chatId/leave')
@@ -477,5 +484,79 @@ export class ChatsController {
       });
     }
     return mentions;
+  }
+
+  private async enrichChatList(rows: ChatListItemDto[]) {
+    const peerIds = [
+      ...new Set(
+        rows
+          .map((r) => r.peerUserId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const profiles = await this.users.lookupByIds(peerIds);
+    const byId = new Map(profiles.map((p) => [p.userId, p]));
+
+    return rows.map((row) => {
+      const peer = row.peerUserId ? byId.get(row.peerUserId) ?? null : null;
+      return {
+        ...row,
+        peer: peer
+          ? {
+              userId: peer.userId,
+              displayName: peer.displayName,
+              username: peer.username,
+              avatarUrl: peer.avatarUrl,
+            }
+          : null,
+        displayTitle: this.displayTitleFor(row, peer),
+      };
+    });
+  }
+
+  private async enrichChat(chat: ChatDto) {
+    const peerId = chat.peerUserId ?? null;
+    const peerRow =
+      peerId != null
+        ? (await this.users.lookupByIds([peerId]))[0] ?? null
+        : null;
+    const peer = peerRow
+      ? {
+          userId: peerRow.userId,
+          displayName: peerRow.displayName,
+          username: peerRow.username,
+          avatarUrl: peerRow.avatarUrl,
+        }
+      : null;
+    return {
+      ...chat,
+      peer,
+      displayTitle: this.displayTitleFor(chat, peer),
+    };
+  }
+
+  private displayTitleFor(
+    chat: {
+      kind: ChatKind;
+      self: boolean;
+      title: string | null;
+    },
+    peer: {
+      displayName: string | null;
+      username: string | null;
+    } | null,
+  ): string {
+    if (chat.self) return 'Заметки';
+    if (chat.kind === 'DIRECT') {
+      const name = peer?.displayName?.trim();
+      if (name) return name;
+      const username = peer?.username?.trim();
+      if (username) return `@${username}`;
+      return 'Участник';
+    }
+    const title = chat.title?.trim();
+    if (title) return title;
+    if (chat.kind === 'GROUP') return 'Группа';
+    return 'Тема форума';
   }
 }

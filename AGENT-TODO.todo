@@ -53,6 +53,7 @@ Chat:
   ✔ plan/scalar seed+sync chat keys + admin UI sections @chat @plan-config @done(26-07-22)
   ☐ Keto chat:{id}#member (optional hardening) @chat @bff
   ✔ Frontend «Мои чаты» + TOPIC bottom sheet @chat @frontend @done(26-07-22)
+  ✔ DM displayTitle (peer name) + message DELIVERED/READ (+ FE SENDING) @chat @bff @frontend @docs @done(26-07-22)
   ✔ Logto Console: username policy + Email/Username sign-up + Account Center Edit @ops @logto @done(26-07-22)
   ☐ Verify: set/change username → webhook → user_profile.username; autocomplete search @user-profile @logto
   ☐ user-profile: optional UNIQUE(lower(username)) + expose search for @mention @user-profile @chat

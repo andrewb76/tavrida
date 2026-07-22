@@ -1,12 +1,12 @@
 # Chat API (OpenAPI fragment)
 
-> **Статус:** scaffold · **Auth:** JWT member · **Upstream:** `chat` :3016 via BFF  
+> **Статус:** in progress · **Auth:** JWT member · **Upstream:** `chat` :3016 via BFF  
 > **Сервис:** [chat/README.md](../05-microservices/chat/README.md) · **Решения:** [analysis.md](../05-microservices/chat/requirements/analysis.md)
 
 Публичный BFF surface для «Мои чаты», DIRECT/self/TOPIC, сообщений и unread badge.
 
-**Реализовано в BFF:** list, unread, self, direct, topics/:id, messages, read, users/search.  
-**Ещё нет:** hide, transfer ownership, edit/delete message, kick.
+**Реализовано в BFF:** list, unread, self, direct, groups, spawn, topic, messages, read, users/search, DM `displayTitle`/`peer`, message `status`.  
+**Ещё нет:** hide, transfer ownership, edit/delete message, kick, WS live.
 
 ## Endpoints
 
@@ -69,6 +69,53 @@ GET /api/v1/chats/unread
   "totalUnreadMessages": 12
 }
 ```
+
+### Chat list item (DIRECT pair)
+
+```json
+{
+  "id": "uuid",
+  "kind": "DIRECT",
+  "self": false,
+  "title": null,
+  "peerUserId": "logto-sub-peer",
+  "peer": {
+    "userId": "logto-sub-peer",
+    "displayName": "Алиса",
+    "username": "alice",
+    "avatarUrl": null
+  },
+  "displayTitle": "Алиса",
+  "unreadCount": 2,
+  "lastMessageAt": "2026-07-22T12:00:00.000Z"
+}
+```
+
+`displayTitle`: self → «Заметки»; pair → `displayName` \| `@username` \| «Участник»; GROUP/TOPIC → `title` или fallback kind label.
+
+### Message with delivery status
+
+```json
+{
+  "id": "uuid",
+  "chatId": "uuid",
+  "authorId": "logto-sub",
+  "body": "Привет",
+  "mentions": [],
+  "createdAt": "2026-07-22T12:01:00.000Z",
+  "editedAt": null,
+  "deletedAt": null,
+  "status": "DELIVERED"
+}
+```
+
+| `status` | Смысл |
+|----------|--------|
+| `null` | чужое сообщение (ticks не показываем) |
+| `DELIVERED` | своё, сохранено; peer(s) ещё не прочитали |
+| `READ` | своё; все другие активные members: `lastReadAt >= createdAt` |
+
+Клиентский `SENDING` — до ответа POST; в API не хранится.
 
 ### Open DIRECT
 
@@ -135,6 +182,7 @@ GET /api/v1/chats/topics/{forumTopicId}
 | `message.new` | `{ messageId, chatId, authorId, body, mentions, createdAt }` |
 | `message.edited` | `{ messageId, body, editedAt }` |
 | `message.deleted` | `{ messageId, deletedAt }` |
+| `message.read` | `{ chatId, userId, lastReadMessageId, lastReadAt }` — later; обновить ticks |
 | `member.joined` | `{ userId, chatId }` |
 | `member.left` | `{ userId, chatId }` |
 | `typing` | `{ userId, expiresAt }` |

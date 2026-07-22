@@ -1,6 +1,6 @@
 # 💬 Сервис: chat
 
-> **Статус:** scaffold · **Версия:** 0.3 · **Schema:** `chat` · **Port:** 3016  
+> **Статус:** scaffold · **Версия:** 0.4 · **Schema:** `chat` · **Port:** 3016  
 > **Код:** `services/chat` (`@tavrida/chat`)  
 > **Решения:** [requirements/analysis.md](./requirements/analysis.md) · **BFF API:** [chat-api.md](../../06-api/chat-api.md)  
 > **Не путать:** RabbitMQ [messaging](../../03-architecture/messaging.md) · deal-messaging [ADR-009](../../03-architecture/adr/009-deal-messaging-e2ee.md)
@@ -28,6 +28,8 @@
 | RMQ TOPIC consumers (`forum.topic_published` / `comment_created`) | ✅ |
 | Swarm `chat` service + `CHAT_URL` on BFF | ✅ |
 | Frontend «Мои чаты» + TOPIC bottom sheet | ✅ |
+| DM title = имя peer (BFF enrich) | ✅ |
+| Message status DELIVERED/READ (+ FE SENDING) | ✅ |
 
 ## 📖 Термины
 
@@ -40,6 +42,8 @@
 | **TOPIC** | Side chat форума; `contextType=FORUM_TOPIC` |
 | **Spawn** | GROUP из DIRECT; DM остаётся; копия последних N |
 | **Mention** | `@username` rich link; SoT Logto — [username.md](../user-profile/requirements/username.md) |
+| **displayTitle** | UI-заголовок: для pair-DM — имя peer; self — «Заметки» |
+| **Message status** | Для автора: `SENDING` (FE) → `DELIVERED` → `READ` (по `lastReadAt` peers) |
 
 ## 🗄️ Сущности
 

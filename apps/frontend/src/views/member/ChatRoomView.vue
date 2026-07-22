@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import {
+  chatListTitle,
   getChat,
   listChatMessages,
   markChatRead,
+  messageStatusLabel,
   sendChatMessage,
   spawnGroupFromDirect,
   type ChatDto,
   type ChatMessage,
+  type MessageDeliveryStatus,
 } from '@/services/chats';
 import { useChatsStore } from '@/stores/chats';
 import { useSessionStore } from '@/stores/session';
@@ -32,14 +35,14 @@ const listEl = ref<HTMLElement | null>(null);
 
 const title = computed(() => {
   if (!chat.value) return 'Чат';
-  if (chat.value.title?.trim()) return chat.value.title.trim();
-  if (chat.value.self) return 'Заметки';
-  return 'Чат';
+  return chatListTitle(chat.value);
 });
 
 const canSpawnGroup = computed(
   () => chat.value?.kind === 'DIRECT' && !chat.value.self,
 );
+
+const showStatus = computed(() => Boolean(chat.value && !chat.value.self));
 
 watch(chatId, (id) => void load(id), { immediate: true });
 
@@ -99,15 +102,38 @@ async function send() {
   const text = body.value.trim();
   if (!text || sending.value) return;
   sending.value = true;
+  const tempId = `tmp-${Date.now()}`;
+  const optimistic: ChatMessage = {
+    id: tempId,
+    chatId: chatId.value,
+    authorId: session.userId ?? '',
+    body: text,
+    mentions: [],
+    createdAt: new Date().toISOString(),
+    editedAt: null,
+    deletedAt: null,
+    status: 'SENDING',
+  };
+  messages.value.push(optimistic);
+  body.value = '';
+  await nextTick();
+  scrollToBottom();
+
   try {
     const msg = await sendChatMessage(chatId.value, text);
-    messages.value.push(msg);
-    body.value = '';
+    const idx = messages.value.findIndex((m) => m.id === tempId);
+    if (idx >= 0) {
+      messages.value[idx] = msg;
+    } else {
+      messages.value.push(msg);
+    }
     await markChatRead(chatId.value, msg.id);
     void chatsStore.refreshUnread();
     await nextTick();
     scrollToBottom();
   } catch (e) {
+    messages.value = messages.value.filter((m) => m.id !== tempId);
+    body.value = text;
     toast.error(e instanceof Error ? e.message : 'Не удалось отправить');
   } finally {
     sending.value = false;
@@ -116,6 +142,13 @@ async function send() {
 
 function isMine(msg: ChatMessage) {
   return msg.authorId === session.userId;
+}
+
+function statusGlyph(status: MessageDeliveryStatus | null | undefined): string {
+  if (status === 'SENDING') return '…';
+  if (status === 'DELIVERED') return '✓';
+  if (status === 'READ') return '✓✓';
+  return '';
 }
 
 function formatTime(iso: string) {
@@ -156,6 +189,12 @@ function formatTime(iso: string) {
           >
             К теме форума
           </RouterLink>
+        </p>
+        <p
+          v-else-if="chat?.kind === 'DIRECT' && !chat.self && chat.peer?.username"
+          class="truncate text-xs text-text-muted"
+        >
+          @{{ chat.peer.username }}
         </p>
       </div>
       <UiButton
@@ -211,12 +250,21 @@ function formatTime(iso: string) {
             <p class="whitespace-pre-wrap break-words">
               {{ msg.body }}
             </p>
-            <time
-              class="mt-1 block text-[10px] opacity-70"
-              :datetime="msg.createdAt"
+            <div
+              class="mt-1 flex items-center justify-end gap-1.5 text-[10px] opacity-70"
             >
-              {{ formatTime(msg.createdAt) }}
-            </time>
+              <time :datetime="msg.createdAt">
+                {{ formatTime(msg.createdAt) }}
+              </time>
+              <span
+                v-if="showStatus && isMine(msg) && msg.status"
+                class="tabular-nums"
+                :title="messageStatusLabel(msg.status)"
+                :aria-label="messageStatusLabel(msg.status)"
+              >
+                {{ statusGlyph(msg.status) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>

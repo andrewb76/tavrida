@@ -9,9 +9,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  computeMessageDeliveryStatus,
   directPairKey,
   directSelfKey,
   type ChatKind,
+  type MessageDeliveryStatus,
   type MessageMention,
 } from '../../common/chat.types';
 import { ChatMemberEntity } from '../../entities/chat-member.entity';
@@ -26,8 +28,33 @@ export type ChatListItem = {
   title: string | null;
   contextType: string | null;
   contextId: string | null;
+  peerUserId: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
+};
+
+export type ChatPublicDto = {
+  id: string;
+  kind: ChatKind;
+  self: boolean;
+  title: string | null;
+  contextType: string | null;
+  contextId: string | null;
+  peerUserId: string | null;
+  directKey?: string | null;
+  createdAt?: string;
+};
+
+export type MessagePublicDto = {
+  id: string;
+  chatId: string;
+  authorId: string;
+  body: string;
+  mentions: MessageMention[];
+  createdAt: string;
+  editedAt: string | null;
+  deletedAt: string | null;
+  status: MessageDeliveryStatus | null;
 };
 
 @Injectable()
@@ -43,7 +70,7 @@ export class ChatsService {
     private readonly attachments: Repository<MessageAttachmentEntity>,
   ) {}
 
-  async ensureDirect(userId: string, peerUserId: string): Promise<ChatEntity> {
+  async ensureDirect(userId: string, peerUserId: string): Promise<ChatPublicDto> {
     if (!userId || !peerUserId) {
       throw new BadRequestException('userId and peerUserId are required');
     }
@@ -56,7 +83,7 @@ export class ChatsService {
     if (existing) {
       await this.ensureMember(existing.id, userId, 'MEMBER');
       await this.ensureMember(existing.id, peerUserId, 'MEMBER');
-      return existing;
+      return this.toChatPublic(existing, userId);
     }
 
     const chat = this.chats.create({
@@ -72,17 +99,17 @@ export class ChatsService {
     await this.chats.save(chat);
     await this.ensureMember(chat.id, userId, 'MEMBER');
     await this.ensureMember(chat.id, peerUserId, 'MEMBER');
-    return chat;
+    return this.toChatPublic(chat, userId);
   }
 
-  async ensureSelf(userId: string): Promise<ChatEntity> {
+  async ensureSelf(userId: string): Promise<ChatPublicDto> {
     if (!userId) throw new BadRequestException('userId is required');
 
     const key = directSelfKey(userId);
     const existing = await this.chats.findOne({ where: { directKey: key } });
     if (existing) {
       await this.ensureMember(existing.id, userId, 'MEMBER');
-      return existing;
+      return this.toChatPublic(existing, userId);
     }
 
     const chat = this.chats.create({
@@ -97,10 +124,10 @@ export class ChatsService {
     });
     await this.chats.save(chat);
     await this.ensureMember(chat.id, userId, 'MEMBER');
-    return chat;
+    return this.toChatPublic(chat, userId);
   }
 
-  async ensureTopic(topicId: string, authorId: string): Promise<ChatEntity> {
+  async ensureTopic(topicId: string, authorId: string): Promise<ChatPublicDto> {
     if (!topicId || !authorId) {
       throw new BadRequestException('topicId and authorId are required');
     }
@@ -110,7 +137,7 @@ export class ChatsService {
     });
     if (existing) {
       await this.ensureMember(existing.id, authorId, 'MEMBER');
-      return existing;
+      return this.toChatPublic(existing, authorId);
     }
 
     const chat = this.chats.create({
@@ -125,10 +152,10 @@ export class ChatsService {
     });
     await this.chats.save(chat);
     await this.ensureMember(chat.id, authorId, 'MEMBER');
-    return chat;
+    return this.toChatPublic(chat, authorId);
   }
 
-  async addTopicMember(topicId: string, userId: string): Promise<ChatEntity> {
+  async addTopicMember(topicId: string, userId: string): Promise<ChatPublicDto> {
     const chat = await this.chats.findOne({
       where: { contextType: 'FORUM_TOPIC', contextId: topicId },
     });
@@ -136,36 +163,16 @@ export class ChatsService {
       throw new NotFoundException('TOPIC chat not found; ensure topic first');
     }
     await this.ensureMember(chat.id, userId, 'MEMBER');
-    return chat;
+    return this.toChatPublic(chat, userId);
   }
 
   async createGroup(input: {
     ownerId: string;
     title?: string | null;
     memberIds: string[];
-  }): Promise<ChatEntity> {
-    const ownerId = input.ownerId;
-    const memberIds = [...new Set(input.memberIds.filter((id) => id && id !== ownerId))];
-    if (!memberIds.length) {
-      throw new BadRequestException('At least one other member is required');
-    }
-
-    const chat = this.chats.create({
-      id: uuidv4(),
-      kind: 'GROUP',
-      self: false,
-      directKey: null,
-      contextType: null,
-      contextId: null,
-      title: input.title?.trim() || null,
-      spawnedFromChatId: null,
-    });
-    await this.chats.save(chat);
-    await this.ensureMember(chat.id, ownerId, 'OWNER');
-    for (const memberId of memberIds) {
-      await this.ensureMember(chat.id, memberId, 'MEMBER');
-    }
-    return chat;
+  }): Promise<ChatPublicDto> {
+    const chat = await this.createGroupEntity(input);
+    return this.toChatPublic(chat, input.ownerId);
   }
 
   async spawnGroupFromDirect(input: {
@@ -174,8 +181,8 @@ export class ChatsService {
     title?: string | null;
     memberIds?: string[];
     copyCount: number;
-  }): Promise<ChatEntity> {
-    const direct = await this.getChatForMember(input.directChatId, input.ownerId);
+  }): Promise<ChatPublicDto> {
+    const direct = await this.requireChatEntityForMember(input.directChatId, input.ownerId);
     if (direct.kind !== 'DIRECT') {
       throw new ConflictException('Spawn is only allowed from DIRECT chats');
     }
@@ -195,7 +202,7 @@ export class ChatsService {
     );
     const memberIds = [...peerIds, ...extra];
 
-    const group = await this.createGroup({
+    const group = await this.createGroupEntity({
       ownerId: input.ownerId,
       title: input.title,
       memberIds,
@@ -226,15 +233,15 @@ export class ChatsService {
       }
     }
 
-    return group;
+    return this.toChatPublic(group, input.ownerId);
   }
 
   async inviteMembers(input: {
     chatId: string;
     actorId: string;
     memberIds: string[];
-  }): Promise<ChatEntity> {
-    const chat = await this.getChatForMember(input.chatId, input.actorId);
+  }): Promise<ChatPublicDto> {
+    const chat = await this.requireChatEntityForMember(input.chatId, input.actorId);
     if (chat.kind !== 'GROUP') {
       throw new BadRequestException('Invite is only for GROUP chats');
     }
@@ -251,7 +258,7 @@ export class ChatsService {
       if (userId === input.actorId) continue;
       await this.ensureMember(chat.id, userId, 'MEMBER');
     }
-    return chat;
+    return this.toChatPublic(chat, input.actorId);
   }
 
   async leaveGroup(chatId: string, userId: string): Promise<void> {
@@ -352,6 +359,7 @@ export class ChatsService {
         where: { chatId: row.id, deletedAt: IsNull() },
         order: { createdAt: 'DESC' },
       });
+      const peerUserId = await this.resolvePeerUserId(row.id, userId, row.kind, row.self);
       items.push({
         id: row.id,
         kind: row.kind,
@@ -359,6 +367,7 @@ export class ChatsService {
         title: row.title,
         contextType: row.contextType,
         contextId: row.contextId,
+        peerUserId,
         unreadCount,
         lastMessageAt: last?.createdAt?.toISOString() ?? null,
       });
@@ -382,27 +391,26 @@ export class ChatsService {
     return { chatsWithUnread, totalUnreadMessages };
   }
 
-  async getChatForMember(chatId: string, userId: string): Promise<ChatEntity> {
-    const chat = await this.chats.findOne({ where: { id: chatId } });
-    if (!chat) throw new NotFoundException('Chat not found');
-    const member = await this.members.findOne({
-      where: { chatId, userId, leftAt: IsNull() },
-    });
-    if (!member) throw new ForbiddenException('Not a chat member');
-    return chat;
+  async getChatForMember(chatId: string, userId: string): Promise<ChatPublicDto> {
+    const chat = await this.requireChatEntityForMember(chatId, userId);
+    return this.toChatPublic(chat, userId);
   }
 
   async listMessages(
     chatId: string,
     userId: string,
     limit = 50,
-  ): Promise<MessageEntity[]> {
-    await this.getChatForMember(chatId, userId);
-    return this.messages.find({
+  ): Promise<MessagePublicDto[]> {
+    const chat = await this.requireChatEntityForMember(chatId, userId);
+    const rows = await this.messages.find({
       where: { chatId, deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
       take: Math.min(Math.max(limit, 1), 100),
     });
+    const otherReads = await this.otherMembersLastReadAt(chatId, userId);
+    return rows.map((msg) =>
+      this.toMessagePublic(msg, userId, chat.self, otherReads),
+    );
   }
 
   async sendMessage(input: {
@@ -411,11 +419,11 @@ export class ChatsService {
     body: string;
     mentions?: MessageMention[];
     attachmentIds?: string[];
-  }): Promise<MessageEntity> {
+  }): Promise<MessagePublicDto> {
     const body = input.body?.trim() ?? '';
     if (!body) throw new BadRequestException('body is required');
 
-    await this.getChatForMember(input.chatId, input.authorId);
+    const chat = await this.requireChatEntityForMember(input.chatId, input.authorId);
 
     const message = this.messages.create({
       id: uuidv4(),
@@ -444,7 +452,8 @@ export class ChatsService {
       { lastReadAt: message.createdAt, lastReadMessageId: message.id },
     );
 
-    return message;
+    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
+    return this.toMessagePublic(message, input.authorId, chat.self, otherReads);
   }
 
   async markRead(
@@ -452,7 +461,14 @@ export class ChatsService {
     userId: string,
     messageId?: string,
   ): Promise<void> {
-    await this.getChatForMember(chatId, userId);
+    const member = await this.members.findOne({
+      where: { chatId, userId, leftAt: IsNull() },
+    });
+    if (!member) {
+      await this.requireChatEntityForMember(chatId, userId);
+      throw new ForbiddenException('Not a chat member');
+    }
+
     let readAt = new Date();
     let readMessageId: string | null = messageId ?? null;
     if (messageId) {
@@ -472,10 +488,128 @@ export class ChatsService {
         readMessageId = last.id;
       }
     }
+
+    if (member.lastReadAt && member.lastReadAt.getTime() >= readAt.getTime()) {
+      return;
+    }
+
     await this.members.update(
       { chatId, userId },
       { lastReadAt: readAt, lastReadMessageId: readMessageId },
     );
+  }
+
+  private async createGroupEntity(input: {
+    ownerId: string;
+    title?: string | null;
+    memberIds: string[];
+  }): Promise<ChatEntity> {
+    const ownerId = input.ownerId;
+    const memberIds = [...new Set(input.memberIds.filter((id) => id && id !== ownerId))];
+    if (!memberIds.length) {
+      throw new BadRequestException('At least one other member is required');
+    }
+
+    const chat = this.chats.create({
+      id: uuidv4(),
+      kind: 'GROUP',
+      self: false,
+      directKey: null,
+      contextType: null,
+      contextId: null,
+      title: input.title?.trim() || null,
+      spawnedFromChatId: null,
+    });
+    await this.chats.save(chat);
+    await this.ensureMember(chat.id, ownerId, 'OWNER');
+    for (const memberId of memberIds) {
+      await this.ensureMember(chat.id, memberId, 'MEMBER');
+    }
+    return chat;
+  }
+
+  private async requireChatEntityForMember(
+    chatId: string,
+    userId: string,
+  ): Promise<ChatEntity> {
+    const chat = await this.chats.findOne({ where: { id: chatId } });
+    if (!chat) throw new NotFoundException('Chat not found');
+    const member = await this.members.findOne({
+      where: { chatId, userId, leftAt: IsNull() },
+    });
+    if (!member) throw new ForbiddenException('Not a chat member');
+    return chat;
+  }
+
+  private async resolvePeerUserId(
+    chatId: string,
+    viewerId: string,
+    kind: ChatKind,
+    self: boolean,
+  ): Promise<string | null> {
+    if (kind !== 'DIRECT' || self) return null;
+    const peers = await this.members.find({
+      where: { chatId, leftAt: IsNull() },
+    });
+    return peers.find((m) => m.userId !== viewerId)?.userId ?? null;
+  }
+
+  private async otherMembersLastReadAt(
+    chatId: string,
+    viewerId: string,
+  ): Promise<Array<Date | null>> {
+    const peers = await this.members.find({
+      where: { chatId, leftAt: IsNull() },
+    });
+    return peers.filter((m) => m.userId !== viewerId).map((m) => m.lastReadAt);
+  }
+
+  private async toChatPublic(
+    chat: ChatEntity,
+    viewerId: string,
+  ): Promise<ChatPublicDto> {
+    const peerUserId = await this.resolvePeerUserId(
+      chat.id,
+      viewerId,
+      chat.kind,
+      chat.self,
+    );
+    return {
+      id: chat.id,
+      kind: chat.kind,
+      self: chat.self,
+      title: chat.title,
+      contextType: chat.contextType,
+      contextId: chat.contextId,
+      peerUserId,
+      directKey: chat.directKey,
+      createdAt: chat.createdAt?.toISOString?.() ?? undefined,
+    };
+  }
+
+  private toMessagePublic(
+    msg: MessageEntity,
+    viewerId: string,
+    selfChat: boolean,
+    otherMembersLastReadAt: Array<Date | null>,
+  ): MessagePublicDto {
+    return {
+      id: msg.id,
+      chatId: msg.chatId,
+      authorId: msg.authorId,
+      body: msg.deletedAt ? '' : msg.body,
+      mentions: msg.mentions ?? [],
+      createdAt: msg.createdAt.toISOString(),
+      editedAt: msg.editedAt?.toISOString() ?? null,
+      deletedAt: msg.deletedAt?.toISOString() ?? null,
+      status: computeMessageDeliveryStatus({
+        authorId: msg.authorId,
+        viewerId,
+        selfChat,
+        messageCreatedAt: msg.createdAt,
+        otherMembersLastReadAt,
+      }),
+    };
   }
 
   private async ensureMember(

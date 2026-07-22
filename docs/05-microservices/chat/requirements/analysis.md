@@ -115,6 +115,39 @@ Mobile TOPIC:   topic + comments + FAB/кнопка «Чат · N» → bottom s
 
 Self-DM в списке: ярлык «Заметки» (опционально pin вверху «Личные»).
 
+### 7.1. Заголовок DIRECT (имя собеседника)
+
+| Правило | Решение |
+|---------|---------|
+| Self-DM | UI: **«Заметки»** (и `title` в БД) |
+| DIRECT pair | UI-заголовок = **имя собеседника**, не UUID |
+| Порядок имени | `displayName` → `@username` → fallback **«Участник»** |
+| SoT профиля | `user-profile` lookup (BFF enrich); chat хранит только `userId` |
+| GROUP / TOPIC | как сейчас: `title` / контекст темы; peer-enrich не нужен |
+
+API (BFF): в list/get для pair-DM — `peerUserId`, `peer: { userId, displayName, username, avatarUrl }`, `displayTitle` (готовая строка для UI).
+
+### 7.2. Статусы сообщения (для автора)
+
+Три состояния в UI (как «отправляется / доставлено / прочитано»):
+
+| UI | Код | Когда |
+|----|-----|--------|
+| Отправляется | `SENDING` | только клиент (optimistic), до ответа `POST …/messages` |
+| Доставлено | `DELIVERED` | сообщение сохранено на сервере; peer ещё не прочитал |
+| Прочитано | `READ` | все **другие** активные участники: `lastReadAt >= message.createdAt` |
+
+| Kind | Поведение |
+|------|-----------|
+| DIRECT pair | `READ`, когда peer отметил чтение (`POST …/read` / open room) |
+| GROUP / TOPIC | `READ`, когда **все** остальные активные members прочитали; иначе `DELIVERED` |
+| Self-DM | статусы **не показываем** (заметки себе) |
+
+**Не в v1:** отдельный device delivery receipt (push/FCM ack), partial «прочитано 2/5» в GROUP UI, live-обновление без poll/WS.
+
+Поле в API (для **своих** сообщений): `status: DELIVERED \| READ`. Чужие — `status: null`.  
+Live: later WS `message.read` / `chat.message_read` после mark-read; до WS — статус обновляется при следующем fetch истории.
+
 ---
 
 ## 8. Конфигурация — согласованный список ключей
@@ -217,8 +250,8 @@ Message send      → message.dailyMax + lengthMax
 | Entity | Поля (кратко) |
 |--------|----------------|
 | `Chat` | id, kind, self (DIRECT), contextType/Id (TOPIC), createdAt, spawnedFromChatId? |
-| `ChatMember` | chatId, userId, role (`OWNER`\|`MEMBER`), joinedAt, hiddenAt?, lastReadAt |
-| `Message` | id, chatId, authorId, body, mentions JSON, createdAt, editedAt, deletedAt |
+| `ChatMember` | chatId, userId, role (`OWNER`\|`MEMBER`), joinedAt, hiddenAt?, lastReadAt, lastReadMessageId |
+| `Message` | id, chatId, authorId, body, mentions JSON, createdAt, editedAt, deletedAt; **status derived** (не колонка) |
 | `MessageAttachment` | messageId, mediaObjectId, … |
 | `ChatUnread` / derived | per (userId, chatId) count — реализация TBD |
 
@@ -232,6 +265,7 @@ Unique: DIRECT pair canonical; DIRECT self per user; TOPIC per `forumTopicId`.
 |-------|-------------|-------|
 | `forum.topic_published` / comment_created | consume | TOPIC room + membership |
 | `chat.message_created` | produce | WS relay, later Novu |
+| `chat.message_read` | produce (later) | WS `message.read` → обновить ticks у автора |
 | `chat.member_joined` / `left` | produce | UI list |
 
 Имена финализировать в [event-catalog](../../../03-architecture/event-catalog.md) при README сервиса.
@@ -258,7 +292,7 @@ Realtime: BFF WSS ([ADR-002](../../../03-architecture/adr/002-bff-rest-wss.md));
 - Полнотекстовый поиск сообщений (OpenSearch — [ADR-008](../../../03-architecture/adr/008-opensearch-full-text.md))
 - Центральный `user-prefs` сервис ([ADR-020](../../../03-architecture/adr/020-three-config-registries.md))
 - Block-list UI (можно stub later)
-- Read receipts
+- Device-level delivery receipts / partial read UI в GROUP
 - Admin read чужих чатов
 
 ---
@@ -272,8 +306,9 @@ Realtime: BFF WSS ([ADR-002](../../../03-architecture/adr/002-bff-rest-wss.md));
 5. [x] Username — [user-profile/requirements/username.md](../../user-profile/requirements/username.md)
 6. [x] event-catalog + [chat-api](../../../06-api/chat-api.md)
 7. [x] Scaffold `services/chat` :3016
-8. [ ] BFF module + Keto tuples `chat:{id}#member`
-9. [ ] GROUP spawn + plan/scalar sync + RMQ
+8. [x] BFF module + FE list/room (Keto `chat:{id}#member` — optional later)
+9. [x] GROUP spawn + plan/scalar sync + RMQ TOPIC
+10. [x] DM displayTitle (peer) + message delivery status (`DELIVERED`/`READ`)
 
 ---
 

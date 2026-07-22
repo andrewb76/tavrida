@@ -17,8 +17,16 @@ export type ChatDto = {
   title: string | null;
   contextType: string | null;
   contextId: string | null;
+  peerUserId?: string | null;
   directKey?: string | null;
   createdAt?: string;
+};
+
+export type ChatPeerDto = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
 };
 
 export type ChatListItemDto = {
@@ -28,9 +36,12 @@ export type ChatListItemDto = {
   title: string | null;
   contextType: string | null;
   contextId: string | null;
+  peerUserId?: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
 };
+
+export type MessageDeliveryStatus = 'DELIVERED' | 'READ';
 
 export type MessageDto = {
   id: string;
@@ -46,6 +57,7 @@ export type MessageDto = {
   createdAt: string;
   editedAt: string | null;
   deletedAt: string | null;
+  status?: MessageDeliveryStatus | null;
 };
 
 const DEFAULT_TIMEOUT_MS = 5000;
