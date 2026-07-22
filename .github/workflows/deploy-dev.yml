@@ -151,6 +151,25 @@ jobs:
           DEV_SWARM_CONTEXT: dev-swarm
         run: ./docker/swarm/ci-docker-context.sh
 
+      - name: Ensure Swarm secrets (create missing)
+        if: steps.envcheck.outputs.ready == 'true'
+        env:
+          DOCKER_CONTEXT: dev-swarm
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          LOGTO_M2M_APP_SECRET: ${{ secrets.LOGTO_M2M_APP_SECRET }}
+          INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+            echo "RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}"
+            echo "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
+            echo "LOGTO_M2M_APP_SECRET=${LOGTO_M2M_APP_SECRET}"
+            echo "INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}"
+          } > docker/swarm/dev.secrets.env
+          DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
+
       - name: Registry auth on context (for --with-registry-auth)
         if: steps.envcheck.outputs.ready == 'true'
         env:
