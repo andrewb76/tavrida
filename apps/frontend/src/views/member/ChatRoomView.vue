@@ -1155,8 +1155,8 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 .chat-room {
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   min-height: 0;
-  flex: 1 1 auto;
   height: 100%;
   max-height: 100%;
   overflow: hidden;
@@ -1281,7 +1281,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 
 .chat-room__feed-wrap {
   position: relative;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
 }

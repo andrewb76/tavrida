@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UiButton, UiIcon } from '@tavrida/ui';
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner.vue';
 import BrandLogo from '@/components/brand/BrandLogo.vue';
@@ -24,7 +24,7 @@ const unreadBadge = computed(() => {
   return `${chatsWithUnread}/${totalUnreadMessages}`;
 });
 
-/** Immersive Telegram-like room: no app chrome on phone. */
+/** Immersive Telegram-like room: lock viewport; hide chrome on phone. */
 const isChatRoom = computed(() => route.name === 'chat-room');
 const isChatsSection = computed(() => route.path.startsWith('/chats'));
 
@@ -42,12 +42,42 @@ const navItems = computed(() => {
   return items;
 });
 
+function lockDocumentScroll(locked: boolean) {
+  const root = document.documentElement;
+  const { body } = document;
+  if (locked) {
+    root.style.overflow = 'hidden';
+    root.style.height = '100%';
+    body.style.overflow = 'hidden';
+    body.style.height = '100%';
+    body.style.minHeight = '0';
+  } else {
+    root.style.overflow = '';
+    root.style.height = '';
+    body.style.overflow = '';
+    body.style.height = '';
+    body.style.minHeight = '';
+  }
+}
+
+watch(
+  isChatRoom,
+  (room) => {
+    lockDocumentScroll(room);
+  },
+  { immediate: true },
+);
+
 onMounted(() => {
   if (session.isMember) {
     void refreshPlatformRoles();
     void refreshSessionBalance();
     void chatsStore.refreshUnread();
   }
+});
+
+onUnmounted(() => {
+  lockDocumentScroll(false);
 });
 
 watch(
@@ -68,16 +98,15 @@ function isActive(path: string) {
 
 <template>
   <div
-    class="flex flex-col"
-    :class="isChatRoom ? 'h-dvh overflow-hidden' : 'min-h-dvh'"
+    class="member-layout"
+    :class="{ 'member-layout--chat': isChatRoom }"
   >
     <ImpersonationBanner />
     <header
-      class="sticky z-40 border-b border-border bg-surface"
+      class="member-layout__header z-40 border-b border-border bg-surface"
       :class="[
-        session.isImpersonating ? 'top-7' : 'top-0',
-        isChatRoom ? 'max-sm:hidden' : '',
-        isChatRoom ? 'shrink-0' : '',
+        isChatRoom ? '' : 'sticky',
+        session.isImpersonating && !isChatRoom ? 'top-7' : 'top-0',
       ]"
     >
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
@@ -178,10 +207,10 @@ function isActive(path: string) {
     </header>
 
     <main
-      class="mx-auto w-full max-w-5xl"
+      class="member-layout__main mx-auto w-full max-w-5xl"
       :class="
         isChatRoom
-          ? 'flex min-h-0 max-w-none flex-1 flex-col overflow-hidden p-0 sm:max-w-5xl sm:px-4 sm:pb-24 sm:pt-4'
+          ? 'member-layout__main--chat'
           : isChatsSection
             ? 'flex-1 px-0 pb-24 pt-0 sm:px-4 sm:pt-4'
             : 'flex-1 px-4 py-6 pb-24'
@@ -191,8 +220,7 @@ function isActive(path: string) {
     </main>
 
     <nav
-      class="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
-      :class="isChatRoom ? 'max-sm:hidden' : ''"
+      class="member-layout__nav z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       aria-label="Основная навигация"
     >
       <ul class="mx-auto flex max-w-5xl">
@@ -229,3 +257,70 @@ function isActive(path: string) {
     </nav>
   </div>
 </template>
+
+<style scoped>
+.member-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.member-layout__nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Chat room: viewport lock; header+main+nav share one column; feed scrolls inside. */
+.member-layout--chat {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--token-bg);
+}
+
+.member-layout--chat .member-layout__header {
+  flex-shrink: 0;
+  position: relative;
+  top: auto;
+}
+
+.member-layout--chat .member-layout__main--chat {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.member-layout--chat .member-layout__nav {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .member-layout--chat .member-layout__main--chat {
+    max-width: 64rem;
+    width: 100%;
+    margin-inline: auto;
+    padding: 0.75rem 1rem 0.5rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .member-layout--chat .member-layout__header,
+  .member-layout--chat .member-layout__nav {
+    display: none;
+  }
+}
+</style>
