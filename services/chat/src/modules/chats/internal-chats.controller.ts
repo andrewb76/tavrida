@@ -125,9 +125,9 @@ class SendMessageDto {
   @MinLength(1)
   authorId!: string;
 
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  body!: string;
+  body?: string;
 
   @IsOptional()
   @IsArray()

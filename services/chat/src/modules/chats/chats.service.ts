@@ -506,7 +506,7 @@ export class ChatsService {
   async sendMessage(input: {
     chatId: string;
     authorId: string;
-    body: string;
+    body?: string;
     mentions?: MessageMention[];
     attachmentIds?: string[];
     replyToMessageId?: string | null;

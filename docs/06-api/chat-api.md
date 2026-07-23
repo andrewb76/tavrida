@@ -194,6 +194,8 @@ Content-Type: application/json
 }
 ```
 
+`body` может быть пустым, если переданы `attachmentIds`. Запрещён только полностью пустой payload без текста и без вложений.
+
 `attachmentIds` — confirmed media upload intents (`domain=chat`). Ответ и история отдают `attachments: [{ id, url, filename, contentType, sizeBytes }]`.  
 Тело может быть пустым, если есть вложения.
 
