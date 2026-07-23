@@ -67,13 +67,17 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col">
+  <div
+    class="flex flex-col"
+    :class="isChatRoom ? 'h-dvh overflow-hidden' : 'min-h-dvh'"
+  >
     <ImpersonationBanner />
     <header
       class="sticky z-40 border-b border-border bg-surface"
       :class="[
         session.isImpersonating ? 'top-7' : 'top-0',
         isChatRoom ? 'max-sm:hidden' : '',
+        isChatRoom ? 'shrink-0' : '',
       ]"
     >
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
@@ -174,13 +178,13 @@ function isActive(path: string) {
     </header>
 
     <main
-      class="mx-auto w-full max-w-5xl flex-1"
+      class="mx-auto w-full max-w-5xl"
       :class="
         isChatRoom
-          ? 'flex min-h-0 max-w-none flex-col overflow-hidden p-0 max-sm:h-dvh sm:max-w-5xl sm:h-[calc(100dvh-4rem)] sm:px-4 sm:pb-24 sm:pt-4'
+          ? 'flex min-h-0 max-w-none flex-1 flex-col overflow-hidden p-0 sm:max-w-5xl sm:px-4 sm:pb-24 sm:pt-4'
           : isChatsSection
-            ? 'px-0 pb-24 pt-0 sm:px-4 sm:pt-4'
-            : 'px-4 py-6 pb-24'
+            ? 'flex-1 px-0 pb-24 pt-0 sm:px-4 sm:pt-4'
+            : 'flex-1 px-4 py-6 pb-24'
       "
     >
       <RouterView />

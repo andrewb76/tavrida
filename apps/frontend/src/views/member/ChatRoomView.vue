@@ -1158,6 +1158,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   min-height: 0;
   flex: 1 1 auto;
   height: 100%;
+  max-height: 100%;
   overflow: hidden;
   background:
     radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--token-primary) 8%, transparent), transparent 42%),
@@ -1167,17 +1168,8 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 
 @media (min-width: 640px) {
   .chat-room {
-    min-height: min(70dvh, 720px);
-    max-height: calc(100dvh - 8rem);
     border: 1px solid var(--token-border);
     border-radius: var(--token-radius-lg);
-  }
-}
-
-@media (max-width: 639px) {
-  .chat-room {
-    height: 100dvh;
-    max-height: 100dvh;
   }
 }
 
@@ -1295,7 +1287,8 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 }
 
 .chat-room__feed {
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
