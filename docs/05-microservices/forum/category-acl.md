@@ -1,7 +1,7 @@
-# Forum category ACL (группы доступа)
+# 🔐 Forum category ACL (группы доступа)
 
-> **Статус:** implemented · **Дата:** 2026-07-23  
-> **Сервис:** [forum/README.md](../README.md)
+> **Статус:** stable (implemented) · **Дата:** 2026-07-23  
+> **Сервис:** [forum/README.md](./README.md)
 
 ## Правило
 
@@ -42,4 +42,4 @@ ACL **на узел**: каждый category со своим набором гр
 - `/admin/access-groups` — CRUD групп и состав участников.
 - `/forum/categories` — у admin «Доступ» → мультивыбор групп (не userId).
 
-**Связано:** [knowledge-base.md](../knowledge-base.md) · [keto-schema.md](../../../09-security/keto-schema.md) (это **не** Keto)
+**Связано:** [knowledge-base.md](./knowledge-base.md) · [keto-schema.md](../../09-security/keto-schema.md) (это **не** Keto)

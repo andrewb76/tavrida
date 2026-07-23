@@ -3,7 +3,8 @@
 Monorepo: auction/forum platform for finds (Crimea focus). **Docs-first phase** — implementation is scaffold only.
 
 **Start here:** [docs/00-meta/PROJECT-CONTEXT.md](docs/00-meta/PROJECT-CONTEXT.md)  
-**Per-task docs index (read first):** [docs/00-meta/AGENT-DOCS-INDEX.md](docs/00-meta/AGENT-DOCS-INDEX.md)
+**Per-task docs index (read first):** [docs/00-meta/AGENT-DOCS-INDEX.md](docs/00-meta/AGENT-DOCS-INDEX.md)  
+**Docs review process:** [docs/13-maintenance/docs-review.md](docs/13-maintenance/docs-review.md) (trigger: «ревью документации»)
 
 Full documentation: [docs/README.md](docs/README.md)  
 **Published docs:** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)

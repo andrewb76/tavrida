@@ -1,23 +1,26 @@
-# Жёсткая блокировка пользователя (hard lock)
+# 🔒 Жёсткая блокировка пользователя (hard lock)
 
-> **Статус:** implemented · **Дата:** 2026-07-23  
+> **Статус:** stable (implemented) · **Дата:** 2026-07-23  
 > **Сервис:** [user-profile/README.md](./README.md) · enforce: BFF `JwtAuthGuard`
 
 ## Зачем
 
 Отдельно от:
 
-| Механизм | Где | Эффект |
-|----------|-----|--------|
-| Рейтинговый бан (`banUntil`) | rating `check-ban` | Блокирует мутации auction/forum (автоматический / временный) |
-| Logto `isSuspended` | зеркало webhook | Состояние IdP; **не** режет BFF само по себе |
-| **Hard lock** | `user_profile.is_hard_locked` | Admin вкл/выкл → **любой** BFF API с JWT → `403 hard_locked` |
+| Механизм | Где | Статус | Эффект |
+|----------|-----|--------|--------|
+| Рейтинговый бан (`banUntil`) | целевой `services/rating` `check-ban` | **docs-only / не enforce** | План: блокировать мутации auction/forum; **сейчас в runtime нет** |
+| Logto `isSuspended` | зеркало webhook → `user_profile` | live (зеркало) | Состояние IdP; **не** режет BFF само по себе |
+| **Hard lock** | `user_profile.is_hard_locked` | **live** | Admin вкл/выкл → BFF API с JWT актора → `403 hard_locked` |
+
+Админ-карточка показывает `banUntil` / `isLimited` как stub (`null` / `false`) до появления rating-service — см. [admin-users-card.md](../bff/admin-users-card.md).
 
 ## Правило
 
-- `isHardLocked = true` → после успешной проверки JWT BFF отвечает `403` `{ type: "hard_locked" }`.
-- WebSocket `/ws/v1` с токеном заблокированного — закрытие `4403`.
-- Logto-сессия может оставаться валидной; вход в SPA возможен, но API не работает.
+- `isHardLocked = true` у **JWT actor** (`sub` токена) → после verify JWT BFF отвечает `403` `{ type: "hard_locked" }`.
+- Проверка выполняется **до** применения `X-Act-As` ([impersonation.md](../../09-security/impersonation.md) · [ADR-018](../../03-architecture/adr/018-admin-impersonation.md)): hard-lock режет **админа/пользователя с токеном**, а не effective target. Admin с валидным токеном **может** `X-Act-As` на hard-locked пользователя (расследование / разблокировка через admin API).
+- WebSocket `/ws/v1` с токеном заблокированного актора — закрытие `4403`.
+- Logto-сессия может оставаться валидной; вход в SPA возможен, но API актора не работает.
 - Нельзя заблокировать **себя** и другого **platform admin**.
 - Logto sync **не** перезаписывает hard lock.
 

@@ -335,19 +335,19 @@ karma(u) += Σ delta_reaction
 
 | Сервис | Роль |
 |--------|------|
-| **rating** | SoT: расчёт всех метрик |
+| **user-profile** | **Runtime SoT** метрик + reputation log (+ cache UI); `inviterId` |
+| **rating** | **Target SoT** после выделения сервиса: расчёт всех метрик, ban |
 | **feedback** | Триггер обновления rating |
 | **forum** | Триггер delta karma |
-| **user-profile** | `inviterId`, cache для UI |
 | **scalar-config** | Коэффициенты формул |
 | **plan-config** | Лимиты pending, invites |
-| **auction / forum** | `check-ban`, enforce limits |
+| **auction / forum** | `check-ban` enforce (**planned**) |
 
 | Event | Эффект |
 |-------|--------|
 | `deal_feedback.submitted` | Recalc `totalRating` |
 | `rating.updated` | Referral recompute upstream |
-| `rating.user_banned` | Block mutations |
+| `rating.user_banned` | Block mutations (**planned**) |
 
 ---
 

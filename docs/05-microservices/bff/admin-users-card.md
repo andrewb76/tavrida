@@ -1,11 +1,13 @@
-# Admin users card (`/admin/users`)
+# 👤 Admin users card (`/admin/users`)
 
-> **Статус:** implemented · **Дата:** 2026-07-23  
+> **Статус:** stable (implemented) · **Дата:** 2026-07-23  
 > **UI:** `AdminUsersView` · **API:** BFF `GET /api/v1/admin/users`
 
 ## Карточка (компактная)
 
-Шапка: аватар · имя (ссылка `/profile/{userId}`) · бейджи ролей `member` / `expert` / `moderator` / `admin` · статусы hard-lock / Logto suspend / deleted / rating-ban · меню **«Действия»** (⋮).
+Шапка: аватар · имя (ссылка `/profile/{userId}`) · бейджи ролей `member` / `expert` / `moderator` / `admin` · статусы hard-lock / Logto suspend / deleted · меню **«Действия»** (⋮).
+
+Бейдж **rating-ban** — **placeholder** (показывается только если когда-нибудь придут `banUntil` / `isLimited`; сейчас всегда stub).
 
 Сетка метаданных:
 
@@ -20,7 +22,7 @@
 | Пригласил | `inviterId` + lookup имени |
 | Access groups | forum memberships |
 | created / updated / logtoSyncedAt / deletedAt | user_profile |
-| banUntil / isLimited | поля в ответе (`null` / `false` пока rating-service docs-only) |
+| banUntil / isLimited | stub (`null` / `false`) до [rating](../rating/README.md) service |
 
 ## Действия (меню)
 
@@ -41,3 +43,9 @@
 |--------|------|--------|
 | POST | `/internal/v1/users/admin-card-stats` | user-profile |
 | POST | `/internal/v1/access-groups/memberships/by-users` | forum |
+
+## Связано
+
+- [hard-lock.md](../user-profile/hard-lock.md)
+- [impersonation.md](../../09-security/impersonation.md) · [ADR-018](../../03-architecture/adr/018-admin-impersonation.md)
+- [rating/README.md](../rating/README.md) (docs-only target)

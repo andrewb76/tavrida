@@ -53,10 +53,12 @@ sequenceDiagram
 - Нельзя `X-Act-As` на другого admin
 - Нельзя выдать себе права target через подделку заголовка без admin JWT
 - При logout админа — сброс act-as в SPA
+- **Hard lock** проверяется на JWT **actor** до Act-As — см. [hard-lock.md](../05-microservices/user-profile/hard-lock.md). Заблокированный admin не ходит в API; admin **может** Act-As на hard-locked target.
 
 ## 🔗 Связанные
 
 - [security README](./README.md)
 - [bootstrap-admin](./bootstrap-admin.md)
+- [hard-lock](../05-microservices/user-profile/hard-lock.md)
 - [BFF](../05-microservices/bff/README.md)
 - [WORK-PLAN-NEXT](../00-meta/WORK-PLAN-NEXT.md)

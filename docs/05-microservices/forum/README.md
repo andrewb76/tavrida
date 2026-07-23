@@ -126,7 +126,7 @@
 | produce | `tag.content_tagged` | Новый `content_tag`; запись атомарна с outbox |
 | produce | `forum.content_reported` | Report submitted |
 | produce | `forum.comment_promoted_to_topic` | Moderator promote |
-| consume | `rating.user_banned` | Block write |
+| consume | `rating.user_banned` | Block write (**planned**; rating service docs-only) |
 
 WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 
@@ -136,7 +136,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 |--------|----------|
 | plan-config | limits, features |
 | billing | платные реакции |
-| rating | karma, check-ban |
+| rating | karma / check-ban (**planned**; сейчас karma в user-profile) |
 | notifications | replies, digest |
 | user-profile | author display |
 | MinIO | `forum-attachments` |
@@ -157,7 +157,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 | `REDIS_URL` | да | WS fan-out |
 | `PLAN_CONFIG_URL` | да | Limits |
 | `BILLING_URL` | да | Pro reactions |
-| `RATING_URL` | да | check-ban, karma |
+| `RATING_URL` | нет (planned) | check-ban, karma — после выделения `services/rating` |
 | `MINIO_*` | да | forum-attachments |
 
 ## 📎 Связанные разделы
