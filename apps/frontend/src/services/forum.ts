@@ -27,7 +27,7 @@ export type CategoryNode = {
   parentId: string | null;
   sortOrder: number;
   restricted?: boolean;
-  allowedUserIds?: string[];
+  accessGroupIds?: string[];
   children: CategoryNode[];
 };
 
@@ -441,26 +441,127 @@ export async function deleteCategory(categoryId: string): Promise<void> {
   }
 }
 
-export async function getCategoryMembers(
+export async function getCategoryAccessGroups(
   categoryId: string,
-): Promise<{ categoryId: string; userIds: string[] }> {
+): Promise<{ categoryId: string; groupIds: string[] }> {
   const res = await fetch(
-    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/members`,
+    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/access-groups`,
     { headers: await forumAuthHeaders() },
   );
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(err?.detail ?? 'Не удалось загрузить доступ');
   }
-  return (await res.json()) as { categoryId: string; userIds: string[] };
+  return (await res.json()) as { categoryId: string; groupIds: string[] };
 }
 
-export async function setCategoryMembers(
+export async function setCategoryAccessGroups(
   categoryId: string,
-  userIds: string[],
-): Promise<{ categoryId: string; userIds: string[] }> {
+  groupIds: string[],
+): Promise<{ categoryId: string; groupIds: string[] }> {
   const res = await fetch(
-    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/members`,
+    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/access-groups`,
+    {
+      method: 'PUT',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify({ groupIds }),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось сохранить доступ');
+  }
+  return (await res.json()) as { categoryId: string; groupIds: string[] };
+}
+
+export type AccessGroup = {
+  id: string;
+  name: string;
+  description: string;
+  memberCount?: number;
+};
+
+export async function listAccessGroups(): Promise<AccessGroup[]> {
+  const res = await fetch(`${apiBase()}/admin/forum/access-groups`, {
+    headers: await forumAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось загрузить группы доступа');
+  }
+  const json = (await res.json()) as { data: AccessGroup[] };
+  return json.data;
+}
+
+export async function createAccessGroup(input: {
+  name: string;
+  description?: string;
+}): Promise<AccessGroup> {
+  const res = await fetch(`${apiBase()}/admin/forum/access-groups`, {
+    method: 'POST',
+    headers: await forumJsonHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось создать группу');
+  }
+  return (await res.json()) as AccessGroup;
+}
+
+export async function updateAccessGroup(
+  groupId: string,
+  input: { name?: string; description?: string },
+): Promise<AccessGroup> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}`,
+    {
+      method: 'PATCH',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось обновить группу');
+  }
+  return (await res.json()) as AccessGroup;
+}
+
+export async function deleteAccessGroup(groupId: string): Promise<void> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}`,
+    {
+      method: 'DELETE',
+      headers: await forumAuthHeaders(),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось удалить группу');
+  }
+}
+
+export async function getAccessGroupMembers(
+  groupId: string,
+): Promise<{ groupId: string; userIds: string[] }> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}/members`,
+    { headers: await forumAuthHeaders() },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось загрузить состав группы');
+  }
+  return (await res.json()) as { groupId: string; userIds: string[] };
+}
+
+export async function setAccessGroupMembers(
+  groupId: string,
+  userIds: string[],
+): Promise<{ groupId: string; userIds: string[] }> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}/members`,
     {
       method: 'PUT',
       headers: await forumJsonHeaders(),
@@ -469,7 +570,7 @@ export async function setCategoryMembers(
   );
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось сохранить доступ');
+    throw new Error(err?.detail ?? 'Не удалось сохранить состав группы');
   }
-  return (await res.json()) as { categoryId: string; userIds: string[] };
+  return (await res.json()) as { groupId: string; userIds: string[] };
 }

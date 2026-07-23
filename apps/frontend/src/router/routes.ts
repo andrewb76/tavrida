@@ -149,6 +149,12 @@ const memberChildren: RouteRecordRaw[] = [
         meta: { title: 'Пользователи', requiresMember: true, requiresAdmin: true },
       },
       {
+        path: 'access-groups',
+        name: 'admin-access-groups',
+        component: () => import('@/views/admin/AdminAccessGroupsView.vue'),
+        meta: { title: 'Группы доступа', requiresMember: true, requiresAdmin: true },
+      },
+      {
         path: 'scalar-config',
         name: 'admin-scalar-config',
         component: () => import('@/views/admin/AdminScalarConfigView.vue'),

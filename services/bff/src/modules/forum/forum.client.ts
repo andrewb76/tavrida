@@ -19,28 +19,63 @@ export class ForumClient {
   listCategories(opts?: {
     viewerId?: string;
     isAdmin?: boolean;
-    includeMembers?: boolean;
+    includeAccessGroups?: boolean;
   }) {
     const params = new URLSearchParams();
     if (opts?.viewerId) params.set('viewerId', opts.viewerId);
     if (opts?.isAdmin) params.set('isAdmin', '1');
-    if (opts?.includeMembers) params.set('includeMembers', '1');
+    if (opts?.includeAccessGroups) params.set('includeAccessGroups', '1');
     const q = params.size ? `?${params}` : '';
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/categories${q}`);
   }
 
-  getCategoryMembers(categoryId: string) {
-    return this.request<{ categoryId: string; userIds: string[] }>(
-      'GET',
-      `/internal/v1/categories/${categoryId}/members`,
+  listAccessGroups() {
+    return this.request<{ data: unknown[] }>('GET', '/internal/v1/access-groups');
+  }
+
+  createAccessGroup(input: { name: string; description?: string }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/access-groups', input);
+  }
+
+  updateAccessGroup(groupId: string, input: { name?: string; description?: string }) {
+    return this.request<Record<string, unknown>>(
+      'PATCH',
+      `/internal/v1/access-groups/${groupId}`,
+      input,
     );
   }
 
-  setCategoryMembers(categoryId: string, userIds: string[]) {
-    return this.request<{ categoryId: string; userIds: string[] }>(
+  deleteAccessGroup(groupId: string) {
+    return this.request<{ ok: boolean }>('DELETE', `/internal/v1/access-groups/${groupId}`);
+  }
+
+  getAccessGroupMembers(groupId: string) {
+    return this.request<{ groupId: string; userIds: string[] }>(
+      'GET',
+      `/internal/v1/access-groups/${groupId}/members`,
+    );
+  }
+
+  setAccessGroupMembers(groupId: string, userIds: string[]) {
+    return this.request<{ groupId: string; userIds: string[] }>(
       'PUT',
-      `/internal/v1/categories/${categoryId}/members`,
+      `/internal/v1/access-groups/${groupId}/members`,
       { userIds },
+    );
+  }
+
+  getCategoryAccessGroups(categoryId: string) {
+    return this.request<{ categoryId: string; groupIds: string[] }>(
+      'GET',
+      `/internal/v1/categories/${categoryId}/access-groups`,
+    );
+  }
+
+  setCategoryAccessGroups(categoryId: string, groupIds: string[]) {
+    return this.request<{ categoryId: string; groupIds: string[] }>(
+      'PUT',
+      `/internal/v1/categories/${categoryId}/access-groups`,
+      { groupIds },
     );
   }
 

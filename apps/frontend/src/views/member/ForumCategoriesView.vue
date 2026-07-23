@@ -3,13 +3,14 @@ import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue'
 import {
   createCategory,
   deleteCategory,
+  listAccessGroups,
   listCategories,
-  setCategoryMembers,
+  setCategoryAccessGroups,
   updateCategory,
+  type AccessGroup,
   type CategoryFormInput,
   type CategoryNode,
 } from '@/services/forum';
-import { fetchAdminUsers, type AdminUserRow } from '@/services/adminUsers';
 import { useSessionStore } from '@/stores/session';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
@@ -19,6 +20,7 @@ const session = useSessionStore();
 const isAdmin = computed(() => session.isAdmin);
 
 const tree = ref<CategoryNode[]>([]);
+const allGroups = ref<AccessGroup[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const saving = ref(false);
@@ -40,9 +42,7 @@ const showForm = computed(() => form.value != null);
 type AccessState = {
   categoryId: string;
   title: string;
-  userIdsText: string;
-  search: string;
-  searchHits: AdminUserRow[];
+  selectedIds: Set<string>;
 };
 
 const access = ref<AccessState | null>(null);
@@ -54,6 +54,9 @@ async function loadTree() {
   error.value = null;
   try {
     tree.value = await listCategories();
+    if (isAdmin.value) {
+      allGroups.value = await listAccessGroups();
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
@@ -204,16 +207,21 @@ async function removeCategory(node: CategoryNode) {
   }
 }
 
-function openAccess(node: CategoryNode) {
+async function openAccess(node: CategoryNode) {
   form.value = null;
+  accessError.value = null;
+  if (!allGroups.value.length) {
+    try {
+      allGroups.value = await listAccessGroups();
+    } catch (e) {
+      accessError.value = e instanceof Error ? e.message : 'Не удалось загрузить группы';
+    }
+  }
   access.value = {
     categoryId: node.id,
     title: node.title,
-    userIdsText: (node.allowedUserIds ?? []).join('\n'),
-    search: '',
-    searchHits: [],
+    selectedIds: new Set(node.accessGroupIds ?? []),
   };
-  accessError.value = null;
 }
 
 function closeAccess() {
@@ -221,27 +229,16 @@ function closeAccess() {
   accessError.value = null;
 }
 
-async function searchUsersForAccess() {
-  if (!access.value?.search.trim()) {
-    access.value && (access.value.searchHits = []);
-    return;
-  }
-  try {
-    const res = await fetchAdminUsers({ q: access.value.search.trim(), limit: 10 });
-    access.value.searchHits = res.data;
-  } catch {
-    access.value.searchHits = [];
-  }
+function toggleGroup(groupId: string) {
+  if (!access.value) return;
+  const next = new Set(access.value.selectedIds);
+  if (next.has(groupId)) next.delete(groupId);
+  else next.add(groupId);
+  access.value.selectedIds = next;
 }
 
-function addUserIdToAccess(userId: string) {
-  if (!access.value) return;
-  const lines = access.value.userIdsText
-    .split(/[\n,]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!lines.includes(userId)) lines.push(userId);
-  access.value.userIdsText = lines.join('\n');
+function isSelected(groupId: string) {
+  return access.value?.selectedIds.has(groupId) ?? false;
 }
 
 async function saveAccess() {
@@ -249,11 +246,7 @@ async function saveAccess() {
   accessSaving.value = true;
   accessError.value = null;
   try {
-    const userIds = access.value.userIdsText
-      .split(/[\n,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    await setCategoryMembers(access.value.categoryId, userIds);
+    await setCategoryAccessGroups(access.value.categoryId, [...access.value.selectedIds]);
     closeAccess();
     await loadTree();
   } catch (e) {
@@ -292,7 +285,11 @@ async function saveAccess() {
       v-if="isAdmin"
       class="forum-categories__admin-hint"
     >
-      Режим администратора: разделы, доступ (пустой список = всем; иначе только перечисленные + админы).
+      Режим администратора: доступ через
+      <RouterLink to="/admin/access-groups">
+        группы доступа
+      </RouterLink>
+      (нет групп = всем; иначе OR по выбранным + админы).
     </p>
 
     <div
@@ -301,43 +298,41 @@ async function saveAccess() {
     >
       <h2>Доступ: {{ access.title }}</h2>
       <p class="forum-categories__lead">
-        Список userId (Logto), по одному на строку. Пусто — раздел виден всем.
+        Выберите группы. Пустой выбор — раздел виден всем.
       </p>
-      <label>
-        Поиск участника
-        <input
-          v-model="access.search"
-          type="search"
-          placeholder="Имя или @username"
-          @input="searchUsersForAccess"
-        >
-      </label>
+      <p
+        v-if="allGroups.length === 0"
+        class="forum-categories__lead"
+      >
+        Групп пока нет —
+        <RouterLink to="/admin/access-groups">
+          создайте на странице групп доступа
+        </RouterLink>.
+      </p>
       <ul
-        v-if="access.searchHits.length"
-        class="forum-categories__search-hits"
+        v-else
+        class="forum-categories__group-list"
       >
         <li
-          v-for="u in access.searchHits"
-          :key="u.userId"
+          v-for="g in allGroups"
+          :key="g.id"
         >
-          <button
-            type="button"
-            class="forum-categories__hit"
-            @click="addUserIdToAccess(u.userId)"
-          >
-            {{ u.displayName || u.username || u.email || u.userId }}
-            <span class="forum-categories__hit-id">{{ u.userId }}</span>
-          </button>
+          <label class="forum-categories__group-item">
+            <input
+              type="checkbox"
+              :checked="isSelected(g.id)"
+              @change="toggleGroup(g.id)"
+            >
+            <span>
+              <strong>{{ g.name }}</strong>
+              <span
+                v-if="g.description"
+                class="forum-categories__group-desc"
+              > — {{ g.description }}</span>
+            </span>
+          </label>
         </li>
       </ul>
-      <label>
-        User ID
-        <textarea
-          v-model="access.userIdsText"
-          rows="6"
-          placeholder="пусто = доступно всем"
-        />
-      </label>
       <p
         v-if="accessError"
         class="forum-categories__error"
@@ -511,6 +506,10 @@ async function saveAccess() {
   font-size: 0.9rem;
 }
 
+.forum-categories__admin-hint a {
+  color: var(--color-primary, #2563eb);
+}
+
 .forum-categories__form-panel {
   padding: 1rem;
   border: 1px solid var(--color-border, #ddd);
@@ -529,36 +528,24 @@ async function saveAccess() {
   gap: 0.35rem;
 }
 
-.forum-categories__search-hits {
+.forum-categories__group-list {
   list-style: none;
-  margin: 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   display: grid;
-  gap: 0.35rem;
-}
-
-.forum-categories__hit {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  width: 100%;
-  text-align: left;
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 6px;
-  background: var(--color-surface, #fff);
-  padding: 0.4rem 0.6rem;
+}
+
+.forum-categories__group-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   cursor: pointer;
-  font: inherit;
 }
 
-.forum-categories__hit:hover {
-  border-color: var(--color-primary, #2563eb);
-}
-
-.forum-categories__hit-id {
-  font-size: 0.75rem;
+.forum-categories__group-desc {
+  font-weight: 400;
   color: var(--color-text-muted, #666);
-  word-break: break-all;
 }
 
 .forum-categories__form input,
@@ -570,6 +557,7 @@ async function saveAccess() {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .forum-categories__status,
@@ -584,9 +572,8 @@ async function saveAccess() {
 .forum-categories__tree {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1rem;
   border: 1px solid var(--color-border, #ddd);
   border-radius: 8px;
-  padding: 0 1rem;
 }
 </style>

@@ -4,9 +4,12 @@ import { describe, it } from 'node:test';
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 
-import { CategoryAllowedUserEntity } from '../../entities/category-allowed-user.entity';
+import { AccessGroupMemberEntity } from '../../entities/access-group-member.entity';
+import { AccessGroupEntity } from '../../entities/access-group.entity';
+import { CategoryAccessGroupEntity } from '../../entities/category-access-group.entity';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { AccessGroupsService } from '../access-groups/access-groups.service';
 import { CategoriesService } from './categories.service';
 
 function category(
@@ -25,11 +28,15 @@ function category(
 function createHarness(
   initialCategories: CategoryEntity[] = [],
   initialTopics: TopicEntity[] = [],
-  initialAllow: CategoryAllowedUserEntity[] = [],
+  initialGroups: AccessGroupEntity[] = [],
+  initialMembers: AccessGroupMemberEntity[] = [],
+  initialLinks: CategoryAccessGroupEntity[] = [],
 ) {
   const categories = [...initialCategories];
   const topics = [...initialTopics];
-  const allow = [...initialAllow];
+  const groups = [...initialGroups];
+  const members = [...initialMembers];
+  const links = [...initialLinks];
 
   const categoriesRepo = {
     find: async (opts?: { select?: string[]; order?: unknown }) => {
@@ -71,53 +78,140 @@ function createHarness(
       topics.filter((row) => row.categoryId === where.categoryId).length,
   } as unknown as Repository<TopicEntity>;
 
-  const allowRepo = {
+  const groupsRepo = {
+    find: async (opts?: { where?: { id?: unknown }; order?: { name?: 'ASC' } }) => {
+      let rows = [...groups];
+      const idFilter = opts?.where?.id;
+      if (idFilter && typeof idFilter === 'object') {
+        const op = idFilter as { _value?: string[]; value?: string[] };
+        const ids = op._value ?? op.value;
+        if (Array.isArray(ids)) rows = rows.filter((r) => ids.includes(r.id));
+      }
+      if (opts?.order?.name === 'ASC') {
+        rows.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      return rows;
+    },
+    findOne: async ({ where }: { where: { id?: string; name?: string } }) =>
+      groups.find(
+        (row) =>
+          (where.id == null || row.id === where.id) &&
+          (where.name == null || row.name === where.name),
+      ) ?? null,
+    create: (data: Partial<AccessGroupEntity>) => ({ ...data }) as AccessGroupEntity,
+    save: async (row: AccessGroupEntity) => {
+      const index = groups.findIndex((item) => item.id === row.id);
+      if (index >= 0) groups[index] = row;
+      else groups.push(row);
+      return row;
+    },
+    remove: async (row: AccessGroupEntity) => {
+      const index = groups.findIndex((item) => item.id === row.id);
+      if (index >= 0) groups.splice(index, 1);
+      for (let i = members.length - 1; i >= 0; i -= 1) {
+        if (members[i]?.groupId === row.id) members.splice(i, 1);
+      }
+      for (let i = links.length - 1; i >= 0; i -= 1) {
+        if (links[i]?.groupId === row.id) links.splice(i, 1);
+      }
+    },
+  } as unknown as Repository<AccessGroupEntity>;
+
+  const membersRepo = {
     find: async (opts?: {
-      where?: { categoryId?: unknown };
+      where?: { groupId?: unknown; userId?: string };
       order?: { userId?: 'ASC' };
     }) => {
-      let rows = [...allow];
+      let rows = [...members];
+      const gid = opts?.where?.groupId;
+      if (typeof gid === 'string') {
+        rows = rows.filter((r) => r.groupId === gid);
+      } else if (gid && typeof gid === 'object') {
+        const op = gid as { _value?: string[]; value?: string[] };
+        const ids = op._value ?? op.value;
+        if (Array.isArray(ids)) rows = rows.filter((r) => ids.includes(r.groupId));
+      }
+      if (opts?.where?.userId) {
+        rows = rows.filter((r) => r.userId === opts.where?.userId);
+      }
+      if (opts?.order?.userId === 'ASC') {
+        rows.sort((a, b) => a.userId.localeCompare(b.userId));
+      }
+      return rows;
+    },
+    count: async ({ where }: { where: { groupId: string } }) =>
+      members.filter((r) => r.groupId === where.groupId).length,
+    create: (data: Partial<AccessGroupMemberEntity>) =>
+      ({ ...data }) as AccessGroupMemberEntity,
+    save: async (rows: AccessGroupMemberEntity | AccessGroupMemberEntity[]) => {
+      const list = Array.isArray(rows) ? rows : [rows];
+      for (const row of list) {
+        const idx = members.findIndex(
+          (a) => a.groupId === row.groupId && a.userId === row.userId,
+        );
+        if (idx >= 0) members[idx] = row;
+        else members.push(row);
+      }
+      return list;
+    },
+    delete: async ({ groupId }: { groupId: string }) => {
+      for (let i = members.length - 1; i >= 0; i -= 1) {
+        if (members[i]?.groupId === groupId) members.splice(i, 1);
+      }
+    },
+  } as unknown as Repository<AccessGroupMemberEntity>;
+
+  const linksRepo = {
+    find: async (opts?: {
+      where?: { categoryId?: unknown };
+      order?: { groupId?: 'ASC' };
+    }) => {
+      let rows = [...links];
       const cat = opts?.where?.categoryId;
       if (typeof cat === 'string') {
         rows = rows.filter((r) => r.categoryId === cat);
       } else if (cat && typeof cat === 'object') {
         const op = cat as { _value?: string[]; value?: string[] };
         const ids = op._value ?? op.value;
-        if (Array.isArray(ids)) {
-          rows = rows.filter((r) => ids.includes(r.categoryId));
-        }
+        if (Array.isArray(ids)) rows = rows.filter((r) => ids.includes(r.categoryId));
       }
-      return rows.sort((a, b) => a.userId.localeCompare(b.userId));
+      if (opts?.order?.groupId === 'ASC') {
+        rows.sort((a, b) => a.groupId.localeCompare(b.groupId));
+      }
+      return rows;
     },
-    create: (data: Partial<CategoryAllowedUserEntity>) =>
-      ({ ...data }) as CategoryAllowedUserEntity,
-    save: async (rows: CategoryAllowedUserEntity | CategoryAllowedUserEntity[]) => {
+    create: (data: Partial<CategoryAccessGroupEntity>) =>
+      ({ ...data }) as CategoryAccessGroupEntity,
+    save: async (rows: CategoryAccessGroupEntity | CategoryAccessGroupEntity[]) => {
       const list = Array.isArray(rows) ? rows : [rows];
       for (const row of list) {
-        const idx = allow.findIndex(
-          (a) => a.categoryId === row.categoryId && a.userId === row.userId,
+        const idx = links.findIndex(
+          (a) => a.categoryId === row.categoryId && a.groupId === row.groupId,
         );
-        if (idx >= 0) allow[idx] = row;
-        else allow.push(row);
+        if (idx >= 0) links[idx] = row;
+        else links.push(row);
       }
       return list;
     },
     delete: async ({ categoryId }: { categoryId: string }) => {
-      for (let i = allow.length - 1; i >= 0; i -= 1) {
-        if (allow[i]?.categoryId === categoryId) allow.splice(i, 1);
+      for (let i = links.length - 1; i >= 0; i -= 1) {
+        if (links[i]?.categoryId === categoryId) links.splice(i, 1);
       }
     },
-  } as unknown as Repository<CategoryAllowedUserEntity>;
+  } as unknown as Repository<CategoryAccessGroupEntity>;
 
-  return {
-    service: new CategoriesService(categoriesRepo, topicsRepo, allowRepo),
-    categories,
-    topics,
-    allow,
-  };
+  const accessGroups = new AccessGroupsService(
+    groupsRepo,
+    membersRepo,
+    linksRepo,
+    categoriesRepo,
+  );
+  const service = new CategoriesService(categoriesRepo, topicsRepo, accessGroups);
+
+  return { service, accessGroups, categories, groups, members, links };
 }
 
-describe('CategoriesService', () => {
+describe('CategoriesService (access groups)', () => {
   it('listTree returns nested categories', async () => {
     const { service } = createHarness([
       category({ id: 'root', slug: 'general', title: 'Общее' }),
@@ -132,14 +226,25 @@ describe('CategoriesService', () => {
     assert.equal(result.data[0]?.restricted, false);
   });
 
-  it('listTree hides restricted category from outsiders', async () => {
+  it('listTree hides restricted category; OR across groups', async () => {
     const { service } = createHarness(
       [
         category({ id: 'public', slug: 'general', title: 'Общее' }),
         category({ id: 'secret', slug: 'staff', title: 'Staff' }),
       ],
       [],
-      [{ categoryId: 'secret', userId: 'user-a' } as CategoryAllowedUserEntity],
+      [
+        { id: 'g1', name: 'Alpha', description: '', createdAt: new Date(), updatedAt: new Date() },
+        { id: 'g2', name: 'Beta', description: '', createdAt: new Date(), updatedAt: new Date() },
+      ] as AccessGroupEntity[],
+      [
+        { groupId: 'g1', userId: 'user-a' },
+        { groupId: 'g2', userId: 'user-b' },
+      ] as AccessGroupMemberEntity[],
+      [
+        { categoryId: 'secret', groupId: 'g1' },
+        { categoryId: 'secret', groupId: 'g2' },
+      ] as CategoryAccessGroupEntity[],
     );
 
     const anon = await service.listTree({ viewerId: null });
@@ -148,37 +253,48 @@ describe('CategoriesService', () => {
       ['public'],
     );
 
-    const member = await service.listTree({ viewerId: 'user-a' });
-    assert.equal(member.data.length, 2);
+    const memberA = await service.listTree({ viewerId: 'user-a' });
+    assert.equal(memberA.data.length, 2);
 
-    const other = await service.listTree({ viewerId: 'user-b' });
+    const memberB = await service.listTree({ viewerId: 'user-b' });
+    assert.equal(memberB.data.length, 2);
+
+    const other = await service.listTree({ viewerId: 'user-c' });
     assert.deepEqual(
       other.data.map((n) => n.id),
       ['public'],
     );
 
-    const admin = await service.listTree({ viewerId: 'user-b', isAdmin: true, includeMembers: true });
+    const admin = await service.listTree({
+      viewerId: 'user-c',
+      isAdmin: true,
+      includeAccessGroups: true,
+    });
     assert.equal(admin.data.length, 2);
     const secret = admin.data.find((n) => n.id === 'secret');
     assert.equal(secret?.restricted, true);
-    assert.deepEqual(secret?.allowedUserIds, ['user-a']);
+    assert.deepEqual(secret?.accessGroupIds?.sort(), ['g1', 'g2']);
   });
 
-  it('setMembers empty list makes category public again', async () => {
-    const { service, allow } = createHarness([
-      category({ id: 'root', slug: 'general', title: 'Общее' }),
-    ]);
+  it('setAccessGroups empty list makes category public again', async () => {
+    const { service, accessGroups, links } = createHarness(
+      [category({ id: 'root', slug: 'general', title: 'Общее' })],
+      [],
+      [
+        { id: 'g1', name: 'Alpha', description: '', createdAt: new Date(), updatedAt: new Date() },
+      ] as AccessGroupEntity[],
+    );
 
-    await service.setMembers('root', ['u1', 'u2', 'u1']);
-    assert.equal(allow.length, 2);
+    await accessGroups.setCategoryGroups('root', ['g1']);
+    assert.equal(links.length, 1);
 
-    let members = await service.getMembers('root');
-    assert.deepEqual(members.userIds, ['u1', 'u2']);
+    let linked = await service.getAccessGroups('root');
+    assert.deepEqual(linked.groupIds, ['g1']);
 
-    await service.setMembers('root', []);
-    assert.equal(allow.length, 0);
-    members = await service.getMembers('root');
-    assert.deepEqual(members.userIds, []);
+    await service.setAccessGroups('root', []);
+    assert.equal(links.length, 0);
+    linked = await service.getAccessGroups('root');
+    assert.deepEqual(linked.groupIds, []);
 
     await service.assertAccessible('root', { viewerId: 'stranger' });
   });
@@ -187,7 +303,11 @@ describe('CategoriesService', () => {
     const { service } = createHarness(
       [category({ id: 'root', slug: 'general', title: 'Общее' })],
       [],
-      [{ categoryId: 'root', userId: 'u1' } as CategoryAllowedUserEntity],
+      [
+        { id: 'g1', name: 'Alpha', description: '', createdAt: new Date(), updatedAt: new Date() },
+      ] as AccessGroupEntity[],
+      [{ groupId: 'g1', userId: 'u1' }] as AccessGroupMemberEntity[],
+      [{ categoryId: 'root', groupId: 'g1' }] as CategoryAccessGroupEntity[],
     );
 
     await assert.rejects(

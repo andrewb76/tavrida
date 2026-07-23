@@ -265,7 +265,7 @@ export class ForumController {
     return this.forum.listCategories({
       viewerId: userId,
       isAdmin,
-      includeMembers: isAdmin,
+      includeAccessGroups: isAdmin,
     });
   }
 

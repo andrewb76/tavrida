@@ -65,10 +65,10 @@ class UpdateCategoryDto {
   sortOrder?: number;
 }
 
-class SetMembersDto {
+class SetAccessGroupsDto {
   @IsArray()
-  @IsString({ each: true })
-  userIds!: string[];
+  @IsUUID('4', { each: true })
+  groupIds!: string[];
 }
 
 @Controller('internal/v1/categories')
@@ -79,23 +79,23 @@ export class InternalCategoriesController {
   listTree(
     @Query('viewerId') viewerId?: string,
     @Query('isAdmin') isAdmin?: string,
-    @Query('includeMembers') includeMembers?: string,
+    @Query('includeAccessGroups') includeAccessGroups?: string,
   ) {
     return this.categories.listTree({
       viewerId: viewerId || null,
       isAdmin: isAdmin === '1' || isAdmin === 'true',
-      includeMembers: includeMembers === '1' || includeMembers === 'true',
+      includeAccessGroups: includeAccessGroups === '1' || includeAccessGroups === 'true',
     });
   }
 
-  @Get(':id/members')
-  getMembers(@Param('id') id: string) {
-    return this.categories.getMembers(id);
+  @Get(':id/access-groups')
+  getAccessGroups(@Param('id') id: string) {
+    return this.categories.getAccessGroups(id);
   }
 
-  @Put(':id/members')
-  setMembers(@Param('id') id: string, @Body() body: SetMembersDto) {
-    return this.categories.setMembers(id, body.userIds ?? []);
+  @Put(':id/access-groups')
+  setAccessGroups(@Param('id') id: string, @Body() body: SetAccessGroupsDto) {
+    return this.categories.setAccessGroups(id, body.groupIds ?? []);
   }
 
   @Post()

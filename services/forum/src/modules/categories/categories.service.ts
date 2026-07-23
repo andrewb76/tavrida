@@ -7,10 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { In, Repository } from 'typeorm';
-import { CategoryAllowedUserEntity } from '../../entities/category-allowed-user.entity';
+import { Repository } from 'typeorm';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { AccessGroupsService } from '../access-groups/access-groups.service';
 
 export type CategoryNode = {
   id: string;
@@ -20,15 +20,15 @@ export type CategoryNode = {
   parentId: string | null;
   sortOrder: number;
   restricted: boolean;
-  allowedUserIds?: string[];
+  accessGroupIds?: string[];
   children: CategoryNode[];
 };
 
 export type CategoryAccessViewer = {
   viewerId?: string | null;
   isAdmin?: boolean;
-  /** Include allowedUserIds on each node (admin UI). */
-  includeMembers?: boolean;
+  /** Include accessGroupIds on each node (admin UI). */
+  includeAccessGroups?: boolean;
 };
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -40,33 +40,37 @@ export class CategoriesService {
     private readonly categories: Repository<CategoryEntity>,
     @InjectRepository(TopicEntity)
     private readonly topics: Repository<TopicEntity>,
-    @InjectRepository(CategoryAllowedUserEntity)
-    private readonly allowlist: Repository<CategoryAllowedUserEntity>,
+    private readonly accessGroups: AccessGroupsService,
   ) {}
 
   async listTree(access: CategoryAccessViewer = {}) {
     const rows = await this.categories.find({ order: { sortOrder: 'ASC', title: 'ASC' } });
-    const allowByCategory = await this.loadAllowByCategory(rows.map((r) => r.id));
+    const groupsByCategory = await this.accessGroups.loadGroupsByCategory(rows.map((r) => r.id));
+    const viewerGroupIds = await this.accessGroups.loadViewerGroupIds(access.viewerId);
     const visible = rows.filter((row) =>
-      this.isAllowed(row.id, allowByCategory, access.viewerId, access.isAdmin),
+      this.isAllowed(row.id, groupsByCategory, viewerGroupIds, access.isAdmin),
     );
     return {
-      data: this.buildTree(visible, allowByCategory, Boolean(access.includeMembers)),
+      data: this.buildTree(visible, groupsByCategory, Boolean(access.includeAccessGroups)),
     };
   }
 
-  /** Category ids the viewer may use (empty allowlist or listed / admin). */
+  /** Category ids the viewer may use (empty groups or OR member / admin). */
   async listAccessibleCategoryIds(access: CategoryAccessViewer = {}): Promise<string[]> {
     const rows = await this.categories.find({ select: ['id'] });
     const ids = rows.map((r) => r.id);
-    const allowByCategory = await this.loadAllowByCategory(ids);
-    return ids.filter((id) => this.isAllowed(id, allowByCategory, access.viewerId, access.isAdmin));
+    const groupsByCategory = await this.accessGroups.loadGroupsByCategory(ids);
+    const viewerGroupIds = await this.accessGroups.loadViewerGroupIds(access.viewerId);
+    return ids.filter((id) =>
+      this.isAllowed(id, groupsByCategory, viewerGroupIds, access.isAdmin),
+    );
   }
 
   async assertAccessible(categoryId: string, access: CategoryAccessViewer = {}) {
     await this.requireCategory(categoryId);
-    const allowByCategory = await this.loadAllowByCategory([categoryId]);
-    if (!this.isAllowed(categoryId, allowByCategory, access.viewerId, access.isAdmin)) {
+    const groupsByCategory = await this.accessGroups.loadGroupsByCategory([categoryId]);
+    const viewerGroupIds = await this.accessGroups.loadViewerGroupIds(access.viewerId);
+    if (!this.isAllowed(categoryId, groupsByCategory, viewerGroupIds, access.isAdmin)) {
       throw new ForbiddenException({
         type: 'forbidden',
         detail: 'Нет доступа к этой категории',
@@ -74,37 +78,12 @@ export class CategoriesService {
     }
   }
 
-  async getMembers(categoryId: string) {
-    await this.requireCategory(categoryId);
-    const rows = await this.allowlist.find({
-      where: { categoryId },
-      order: { userId: 'ASC' },
-    });
-    return { categoryId, userIds: rows.map((r) => r.userId) };
+  async getAccessGroups(categoryId: string) {
+    return this.accessGroups.getCategoryGroups(categoryId);
   }
 
-  async setMembers(categoryId: string, userIds: string[]) {
-    await this.requireCategory(categoryId);
-    const unique = [
-      ...new Set(
-        userIds
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0 && id.length <= 128),
-      ),
-    ];
-
-    await this.allowlist.delete({ categoryId });
-    if (unique.length) {
-      await this.allowlist.save(
-        unique.map((userId) =>
-          this.allowlist.create({
-            categoryId,
-            userId,
-          }),
-        ),
-      );
-    }
-    return { categoryId, userIds: unique };
+  async setAccessGroups(categoryId: string, groupIds: string[]) {
+    return this.accessGroups.setCategoryGroups(categoryId, groupIds);
   }
 
   async create(input: {
@@ -190,8 +169,8 @@ export class CategoriesService {
     }
 
     await this.categories.save(row);
-    const members = await this.getMembers(categoryId);
-    return this.toRecord(row, members.userIds.length > 0, members.userIds);
+    const linked = await this.getAccessGroups(categoryId);
+    return this.toRecord(row, linked.groupIds.length > 0, linked.groupIds);
   }
 
   async remove(categoryId: string) {
@@ -219,37 +198,20 @@ export class CategoriesService {
 
   private isAllowed(
     categoryId: string,
-    allowByCategory: Map<string, string[]>,
-    viewerId?: string | null,
+    groupsByCategory: Map<string, string[]>,
+    viewerGroupIds: Set<string>,
     isAdmin?: boolean,
   ): boolean {
     if (isAdmin) return true;
-    const allowed = allowByCategory.get(categoryId) ?? [];
-    if (allowed.length === 0) return true;
-    if (!viewerId) return false;
-    return allowed.includes(viewerId);
-  }
-
-  private async loadAllowByCategory(categoryIds: string[]): Promise<Map<string, string[]>> {
-    const map = new Map<string, string[]>();
-    for (const id of categoryIds) map.set(id, []);
-    if (!categoryIds.length) return map;
-
-    const rows = await this.allowlist.find({
-      where: { categoryId: In(categoryIds) },
-    });
-    for (const row of rows) {
-      const bucket = map.get(row.categoryId) ?? [];
-      bucket.push(row.userId);
-      map.set(row.categoryId, bucket);
-    }
-    return map;
+    const linked = groupsByCategory.get(categoryId) ?? [];
+    if (linked.length === 0) return true;
+    return linked.some((groupId) => viewerGroupIds.has(groupId));
   }
 
   private buildTree(
     rows: CategoryEntity[],
-    allowByCategory: Map<string, string[]>,
-    includeMembers: boolean,
+    groupsByCategory: Map<string, string[]>,
+    includeAccessGroups: boolean,
   ): CategoryNode[] {
     const byParent = new Map<string | null, CategoryEntity[]>();
 
@@ -262,8 +224,8 @@ export class CategoriesService {
 
     const build = (parentId: string | null): CategoryNode[] =>
       (byParent.get(parentId) ?? []).map((row) => {
-        const allowedUserIds = allowByCategory.get(row.id) ?? [];
-        const restricted = allowedUserIds.length > 0;
+        const accessGroupIds = groupsByCategory.get(row.id) ?? [];
+        const restricted = accessGroupIds.length > 0;
         return {
           id: row.id,
           slug: row.slug,
@@ -272,7 +234,7 @@ export class CategoriesService {
           parentId: row.parentId,
           sortOrder: row.sortOrder,
           restricted,
-          ...(includeMembers ? { allowedUserIds } : {}),
+          ...(includeAccessGroups ? { accessGroupIds } : {}),
           children: build(row.id),
         };
       });
@@ -280,7 +242,7 @@ export class CategoriesService {
     return build(null);
   }
 
-  private toRecord(row: CategoryEntity, restricted: boolean, allowedUserIds: string[]) {
+  private toRecord(row: CategoryEntity, restricted: boolean, accessGroupIds: string[]) {
     return {
       id: row.id,
       slug: row.slug,
@@ -289,7 +251,7 @@ export class CategoriesService {
       parentId: row.parentId,
       sortOrder: row.sortOrder,
       restricted,
-      allowedUserIds,
+      accessGroupIds,
     };
   }
 
