@@ -149,6 +149,33 @@ export class AccessGroupsService {
     return map;
   }
 
+  /** Groups each user belongs to (id + name). */
+  async membershipsForUsers(userIds: string[]) {
+    const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))].slice(0, 100);
+    const empty: Record<string, Array<{ id: string; name: string }>> = {};
+    for (const id of unique) empty[id] = [];
+    if (!unique.length) return { data: empty };
+
+    const memberRows = await this.members.find({ where: { userId: In(unique) } });
+    const groupIds = [...new Set(memberRows.map((r) => r.groupId))];
+    const groups = groupIds.length
+      ? await this.groups.find({ where: { id: In(groupIds) } })
+      : [];
+    const nameById = new Map(groups.map((g) => [g.id, g.name]));
+
+    for (const row of memberRows) {
+      const name = nameById.get(row.groupId);
+      if (!name) continue;
+      empty[row.userId]?.push({ id: row.groupId, name });
+    }
+
+    for (const id of unique) {
+      empty[id]?.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    }
+
+    return { data: empty };
+  }
+
   /** Groups the viewer belongs to. */
   async loadViewerGroupIds(viewerId?: string | null): Promise<Set<string>> {
     if (!viewerId) return new Set();

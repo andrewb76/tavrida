@@ -2,6 +2,11 @@ import { bffAuthHeaders } from './apiAuth';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
+export type AdminUserAccessGroup = {
+  id: string;
+  name: string;
+};
+
 export type AdminUserRow = {
   userId: string;
   displayName: string | null;
@@ -12,12 +17,52 @@ export type AdminUserRow = {
   isHardLocked: boolean;
   hardLockedAt: string | null;
   inviterId: string | null;
+  inviterDisplayName: string | null;
   invitationAcceptedAt: string | null;
+  deletedAt: string | null;
   logtoSyncedAt: string | null;
   createdAt: string;
+  updatedAt: string;
   roles: PlatformRole[];
   balance: number;
   currency: string;
+  rating: {
+    totalRating: number;
+    karma: number;
+    effectiveKarma: number;
+    effectiveRating: number;
+    verifiedSales: number;
+    pendingSales: number;
+    feedbackCoverage: number | null;
+    banUntil: string | null;
+    isLimited: boolean;
+  };
+  invites: {
+    issued: number;
+    thisMonth: number;
+    monthlyLimit: number | null;
+    remaining: number | null;
+  };
+  referral: {
+    l1: number;
+    l2: number;
+  };
+  plan: {
+    planId: string;
+    status: string;
+    autoRenew: boolean;
+    expiresAt: string | null;
+  };
+  accessGroups: AdminUserAccessGroup[];
+};
+
+export type AdminWalletTransaction = {
+  id: string;
+  type: string;
+  amount: number;
+  description: string;
+  target: string | null;
+  createdAt: string;
 };
 
 function apiBase(): string {
@@ -104,11 +149,55 @@ export async function patchAdminUserHardLock(
   };
 }
 
+export async function forceSyncAdminUser(userId: string): Promise<{
+  userId: string;
+  synced: boolean;
+  displayName: string | null;
+  email: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  isSuspended: boolean;
+  logtoSyncedAt: string;
+}> {
+  const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/sync-logto`, {
+    method: 'POST',
+  });
+  return (await res.json()) as {
+    userId: string;
+    synced: boolean;
+    displayName: string | null;
+    email: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+    isSuspended: boolean;
+    logtoSyncedAt: string;
+  };
+}
+
+export async function fetchAdminUserWalletTransactions(
+  userId: string,
+  limit = 50,
+): Promise<AdminWalletTransaction[]> {
+  const qs = new URLSearchParams({ limit: String(limit) });
+  const res = await adminFetch(
+    `/admin/users/${encodeURIComponent(userId)}/wallet/transactions?${qs}`,
+  );
+  const body = (await res.json()) as { data: AdminWalletTransaction[] };
+  return body.data ?? [];
+}
+
 export const ROLE_LABELS: Record<PlatformRole, string> = {
   member: 'Участник',
   admin: 'Администратор',
   moderator: 'Модератор',
   expert: 'Эксперт',
+};
+
+export const ROLE_BADGE_LABELS: Record<PlatformRole, string> = {
+  member: 'member',
+  admin: 'admin',
+  moderator: 'moderator',
+  expert: 'expert',
 };
 
 export const MANAGED_ROLES = ['admin', 'moderator', 'expert'] as const;

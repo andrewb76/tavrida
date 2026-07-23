@@ -33,6 +33,12 @@ class SetMembersDto {
   userIds!: string[];
 }
 
+class MembershipsByUsersDto {
+  @IsArray()
+  @IsString({ each: true })
+  userIds!: string[];
+}
+
 @Controller('internal/v1/access-groups')
 export class InternalAccessGroupsController {
   constructor(private readonly accessGroups: AccessGroupsService) {}
@@ -45,6 +51,12 @@ export class InternalAccessGroupsController {
   @Post()
   create(@Body() body: CreateAccessGroupDto) {
     return this.accessGroups.create(body);
+  }
+
+  /** Must be registered before `:id` routes. */
+  @Post('memberships/by-users')
+  membershipsByUsers(@Body() body: MembershipsByUsersDto) {
+    return this.accessGroups.membershipsForUsers(body.userIds ?? []);
   }
 
   @Get(':id')

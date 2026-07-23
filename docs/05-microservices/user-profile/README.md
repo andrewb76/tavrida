@@ -112,6 +112,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | POST | `/internal/v1/users/sync-logto` | Upsert из Logto webhook/backfill |
 | POST | `/internal/v1/users/ensure` | Пустой профиль (lazy) |
 | POST | `/internal/v1/users/lookup` | Batch lookup профилей |
+| POST | `/internal/v1/users/admin-card-stats` | Batch: rating + invites + referral L1/L2 (admin cards) |
 | GET | `/internal/v1/users/{userId}` | Профиль для BFF |
 | GET | `/internal/v1/users/{userId}/public` | Публичная проекция |
 | POST | `/internal/v1/users/{userId}/mark-deleted` | Soft delete |

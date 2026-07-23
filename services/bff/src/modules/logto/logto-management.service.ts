@@ -41,6 +41,7 @@ type LogtoUserRow = {
   name: string | null;
   avatar: string | null;
   createdAt: number;
+  isSuspended: boolean;
 };
 
 @Injectable()
@@ -213,6 +214,7 @@ export class LogtoManagementService {
       name?: string | null;
       avatar?: string | null;
       createdAt?: number;
+      isSuspended?: boolean;
     };
 
     return {
@@ -222,6 +224,7 @@ export class LogtoManagementService {
       name: json.name ?? null,
       avatar: json.avatar ?? null,
       createdAt: json.createdAt ?? 0,
+      isSuspended: Boolean(json.isSuspended),
     };
   }
 }

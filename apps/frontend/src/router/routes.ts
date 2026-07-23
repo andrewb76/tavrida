@@ -149,6 +149,12 @@ const memberChildren: RouteRecordRaw[] = [
         meta: { title: 'Пользователи', requiresMember: true, requiresAdmin: true },
       },
       {
+        path: 'users/:userId/wallet',
+        name: 'admin-user-wallet',
+        component: () => import('@/views/admin/AdminUserWalletView.vue'),
+        meta: { title: 'История кошелька', requiresMember: true, requiresAdmin: true },
+      },
+      {
         path: 'access-groups',
         name: 'admin-access-groups',
         component: () => import('@/views/admin/AdminAccessGroupsView.vue'),

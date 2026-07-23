@@ -62,6 +62,14 @@ class SetHardLockDto {
   locked!: boolean;
 }
 
+class WalletTxQuery {
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  limit?: number;
+}
+
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminUsersController {
@@ -88,6 +96,16 @@ export class AdminUsersController {
     @Body() body: SetHardLockDto,
   ) {
     return this.adminUsers.setHardLock(actor.sub, userId, body.locked);
+  }
+
+  @Post(':userId/sync-logto')
+  syncLogto(@Param('userId') userId: string) {
+    return this.adminUsers.forceSyncFromLogto(userId);
+  }
+
+  @Get(':userId/wallet/transactions')
+  walletTransactions(@Param('userId') userId: string, @Query() query: WalletTxQuery) {
+    return this.adminUsers.listWalletTransactions(userId, query.limit);
   }
 
   @Post(':userId/wallet/deposit')

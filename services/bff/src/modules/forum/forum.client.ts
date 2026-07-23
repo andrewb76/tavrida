@@ -33,6 +33,12 @@ export class ForumClient {
     return this.request<{ data: unknown[] }>('GET', '/internal/v1/access-groups');
   }
 
+  membershipsByUsers(userIds: string[]) {
+    return this.request<{
+      data: Record<string, Array<{ id: string; name: string }>>;
+    }>('POST', '/internal/v1/access-groups/memberships/by-users', { userIds });
+  }
+
   createAccessGroup(input: { name: string; description?: string }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/access-groups', input);
   }

@@ -28,6 +28,24 @@ export type ResolvedInvite = {
   code: string;
 };
 
+export type AdminCardUserStats = {
+  totalRating: number;
+  karma: number;
+  referralKarma: number;
+  referralRating: number;
+  effectiveKarma: number;
+  effectiveRating: number;
+  verifiedSales: number;
+  pendingSales: number;
+  feedbackCoverage: number | null;
+  banUntil: string | null;
+  isLimited: boolean;
+  invitesIssued: number;
+  invitesThisMonth: number;
+  referralL1: number;
+  referralL2: number;
+};
+
 @Injectable()
 export class UserProfileClient {
   constructor(private readonly config: ConfigService) {}
@@ -82,11 +100,17 @@ export class UserProfileClient {
     }>('POST', '/internal/v1/invites/claim', body);
   }
 
-  async listUsers(params: { offset?: number; limit?: number; q?: string }) {
+  async listUsers(params: {
+    offset?: number;
+    limit?: number;
+    q?: string;
+    includeDeleted?: boolean;
+  }) {
     const qs = new URLSearchParams();
     if (params.offset != null) qs.set('offset', String(params.offset));
     if (params.limit != null) qs.set('limit', String(params.limit));
     if (params.q) qs.set('q', params.q);
+    if (params.includeDeleted) qs.set('includeDeleted', 'true');
     const suffix = qs.size ? `?${qs.toString()}` : '';
     return this.request<{
       data: Array<{
@@ -109,6 +133,16 @@ export class UserProfileClient {
       }>;
       pagination: { offset: number; limit: number; total: number };
     }>('GET', `/internal/v1/users${suffix}`);
+  }
+
+  async getAdminCardStats(userIds: string[]): Promise<Record<string, AdminCardUserStats>> {
+    if (!userIds.length) return {};
+    const res = await this.request<{ data: Record<string, AdminCardUserStats> }>(
+      'POST',
+      '/internal/v1/users/admin-card-stats',
+      { ids: userIds },
+    );
+    return res.data ?? {};
   }
 
   async syncFromLogto(body: {

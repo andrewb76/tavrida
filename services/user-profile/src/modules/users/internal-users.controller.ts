@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -8,13 +9,16 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { AdminCardStatsService } from './admin-card-stats.service';
 import { UsersService } from './users.service';
 
 class ListUsersQuery {
   @IsOptional()
+  @Type(() => Number)
   offset?: number;
 
   @IsOptional()
+  @Type(() => Number)
   limit?: number;
 
   @IsOptional()
@@ -22,6 +26,7 @@ class ListUsersQuery {
   q?: string;
 
   @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true' || value === '1')
   @IsBoolean()
   includeDeleted?: boolean;
 }
@@ -81,7 +86,10 @@ class SetHardLockBody {
 
 @Controller('internal/v1/users')
 export class InternalUsersController {
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly adminCardStats: AdminCardStatsService,
+  ) {}
 
   @Get()
   list(@Query() query: ListUsersQuery) {
@@ -101,6 +109,12 @@ export class InternalUsersController {
   @Post('lookup')
   lookup(@Body() body: LookupUsersBody) {
     return this.users.lookupByIds(body.ids);
+  }
+
+  /** Batch stats for admin user cards (rating, invites, referral L1/L2). */
+  @Post('admin-card-stats')
+  adminCardStatsBatch(@Body() body: LookupUsersBody) {
+    return this.adminCardStats.getStatsForUsers(body.ids).then((data) => ({ data }));
   }
 
   @Get('search')

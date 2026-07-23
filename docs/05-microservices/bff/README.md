@@ -45,6 +45,8 @@ BFF **не дублирует** domain logic: валидирует JWT/DTO, пр
 | `/api/v1/admin/scalar-config/*` | registry/domain values | scalar-config |
 | `/api/v1/admin/plan-config/*` | plans/variables | plan-config |
 | `/api/v1/admin/users/*`, `/api/v1/admin/vanga/*` | admin operations | mixed |
+
+Admin users card enrichment: [admin-users-card.md](./admin-users-card.md) (`GET` list + sync-logto + wallet tx).
 | `/api/v1/me/roles`, `/api/v1/me/identity` | GET/POST | Keto + user-profile |
 | `/api/v1/webhooks/logto` | POST | Logto inbound → user-profile |
 
