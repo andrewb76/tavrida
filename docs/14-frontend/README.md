@@ -229,6 +229,7 @@ pnpm --filter @tavrida/frontend lint
 - [x] `useWs()` + реестр каналов (chat Wave B)
 - [ ] auction/forum WS channels
 - [x] Logto Cloud (`@logto/vue`, invite flow, guards) — [logto-setup.md](./logto-setup.md)
+- [x] Cookie consent banner L-07 — [cookie-consent.md](./cookie-consent.md)
 - [ ] Logto self-host + BFF JWT validation
 - [ ] d3 viz: `ActivityHeatmap` (W07)
 - [ ] Vitest + Playwright конфиги
@@ -236,6 +237,7 @@ pnpm --filter @tavrida/frontend lint
 ## 🔗 Связанные разделы
 
 - [platform-for-users](../01-goal/platform-for-users.md) — продукт для людей
+- [cookie-consent.md](./cookie-consent.md) — баннер и политика cookie (L-07)
 - [11-ux-ui](../11-ux-ui/README.md) — wireframes, компоненты, дизайн
 - [bff](../05-microservices/bff/README.md) — API/WS, к которому подключается фронт
 - [06-api](../06-api/README.md) — контракт REST, ошибки, идемпотентность

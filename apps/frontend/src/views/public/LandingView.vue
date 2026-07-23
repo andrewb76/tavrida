@@ -2,6 +2,7 @@
 import { UiButton } from '@tavrida/ui';
 import { RouterLink } from 'vue-router';
 import BrandLogo from '@/components/brand/BrandLogo.vue';
+import CookieSettingsLink from '@/components/legal/CookieSettingsLink.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClubAccess } from '@/composables/useClubAccess';
 import { useThemeStore } from '@/stores/theme';
@@ -248,6 +249,10 @@ const pillars = [
           <RouterLink to="/about">
             О клубе
           </RouterLink>
+          <RouterLink to="/cookies">
+            Политика cookie
+          </RouterLink>
+          <CookieSettingsLink />
           <RouterLink
             v-if="inviteOnly"
             to="/join"

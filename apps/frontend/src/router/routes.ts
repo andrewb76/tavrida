@@ -201,6 +201,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'О клубе', public: true },
       },
       {
+        path: 'cookies',
+        name: 'cookies',
+        component: () => import('@/views/public/CookiePolicyView.vue'),
+        meta: { title: 'Политика cookie', public: true },
+      },
+      {
         path: 'join',
         name: 'join',
         component: () => import('@/views/public/JoinView.vue'),

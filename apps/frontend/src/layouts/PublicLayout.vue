@@ -3,6 +3,7 @@ import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import BrandLogo from '@/components/brand/BrandLogo.vue';
+import CookieSettingsLink from '@/components/legal/CookieSettingsLink.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClubAccess } from '@/composables/useClubAccess';
 import { useThemeStore } from '@/stores/theme';
@@ -127,5 +128,33 @@ const logoTheme = computed(() => {
     >
       <RouterView />
     </main>
+
+    <footer
+      v-if="!isLanding"
+      class="border-t border-border bg-surface/80"
+    >
+      <div
+        class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm text-text-muted sm:px-6"
+      >
+        <nav
+          class="flex flex-wrap items-center gap-4"
+          aria-label="Правовая информация"
+        >
+          <RouterLink
+            to="/about"
+            class="hover:text-text"
+          >
+            О клубе
+          </RouterLink>
+          <RouterLink
+            to="/cookies"
+            class="hover:text-text"
+          >
+            Политика cookie
+          </RouterLink>
+          <CookieSettingsLink class="hover:text-text" />
+        </nav>
+      </div>
+    </footer>
   </div>
 </template>

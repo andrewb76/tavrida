@@ -113,7 +113,9 @@ Dev Swarm (evatorg.su):
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)
+  ✔ Cookie consent banner + /cookies (L-07) @frontend @docs @done(26-07-23)
   ☐ Visual Lab W03: выбрать направление A/B/C → tokens pilot @docs @frontend
+  ☐ L-07 текст утвердить юристом перед production @docs @legal
 
 Review remediation:
 
