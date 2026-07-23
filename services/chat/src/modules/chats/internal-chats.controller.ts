@@ -139,6 +139,44 @@ class SendMessageDto {
   @IsArray()
   @IsUUID('4', { each: true })
   attachmentIds?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  replyToMessageId?: string;
+}
+
+class EditMessageDto {
+  @IsString()
+  @MinLength(1)
+  authorId!: string;
+
+  @IsString()
+  @MinLength(1)
+  body!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MentionDto)
+  mentions?: MessageMention[];
+
+  @IsInt()
+  editWindowMinutes!: number;
+}
+
+class DeleteMessageDto {
+  @IsString()
+  @MinLength(1)
+  authorId!: string;
+
+  @IsInt()
+  deleteWindowMinutes!: number;
+}
+
+class HideChatDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
 }
 
 class MarkReadDto {
@@ -278,7 +316,46 @@ export class InternalChatsController {
       body: body.body,
       mentions: body.mentions,
       attachmentIds: body.attachmentIds,
+      replyToMessageId: body.replyToMessageId,
     });
+  }
+
+  @Post(':chatId/messages/:messageId/edit')
+  edit(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Body() body: EditMessageDto,
+  ) {
+    return this.chats.editMessage({
+      chatId,
+      messageId,
+      authorId: body.authorId,
+      body: body.body,
+      mentions: body.mentions,
+      editWindowMinutes: body.editWindowMinutes,
+    });
+  }
+
+  @Post(':chatId/messages/:messageId/delete')
+  remove(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Body() body: DeleteMessageDto,
+  ) {
+    return this.chats.deleteMessage({
+      chatId,
+      messageId,
+      authorId: body.authorId,
+      deleteWindowMinutes: body.deleteWindowMinutes,
+    });
+  }
+
+  @Post(':chatId/hide')
+  hide(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: HideChatDto,
+  ) {
+    return this.chats.hideChat(chatId, body.userId);
   }
 
   @Post(':chatId/read')

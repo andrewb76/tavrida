@@ -5,6 +5,7 @@
 import { addIcon } from '@iconify/vue';
 import bell from '@iconify-icons/lucide/bell';
 import check from '@iconify-icons/lucide/check';
+import chevronDown from '@iconify-icons/lucide/chevron-down';
 import chevronLeft from '@iconify-icons/lucide/chevron-left';
 import chevronRight from '@iconify-icons/lucide/chevron-right';
 import gavel from '@iconify-icons/lucide/gavel';
@@ -51,6 +52,7 @@ const SUBSET: Record<string, typeof home> = {
   'lucide:check': check,
   'lucide:chevron-right': chevronRight,
   'lucide:chevron-left': chevronLeft,
+  'lucide:chevron-down': chevronDown,
   'lucide:settings': settings,
   'lucide:menu': menu,
   'lucide:message-circle': messageCircle,

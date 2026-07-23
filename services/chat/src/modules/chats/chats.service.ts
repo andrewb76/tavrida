@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   computeMessageDeliveryStatus,
@@ -31,6 +31,8 @@ export type ChatListItem = {
   peerUserId: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  lastMessageAuthorId: string | null;
 };
 
 export type ChatPublicDto = {
@@ -45,6 +47,13 @@ export type ChatPublicDto = {
   createdAt?: string;
 };
 
+export type MessageReplyPreview = {
+  id: string;
+  authorId: string;
+  body: string;
+  deleted: boolean;
+};
+
 export type MessagePublicDto = {
   id: string;
   chatId: string;
@@ -55,6 +64,8 @@ export type MessagePublicDto = {
   editedAt: string | null;
   deletedAt: string | null;
   status: MessageDeliveryStatus | null;
+  replyToMessageId: string | null;
+  replyTo: MessageReplyPreview | null;
 };
 
 @Injectable()
@@ -356,10 +367,16 @@ export class ChatsService {
     for (const row of rows) {
       const unreadCount = await this.countUnread(row.id, userId, row.lastReadAt);
       const last = await this.messages.findOne({
-        where: { chatId: row.id, deletedAt: IsNull() },
+        where: { chatId: row.id },
         order: { createdAt: 'DESC' },
       });
       const peerUserId = await this.resolvePeerUserId(row.id, userId, row.kind, row.self);
+      const preview =
+        last == null
+          ? null
+          : last.deletedAt
+            ? 'Сообщение удалено'
+            : last.body.slice(0, 120);
       items.push({
         id: row.id,
         kind: row.kind,
@@ -370,9 +387,21 @@ export class ChatsService {
         peerUserId,
         unreadCount,
         lastMessageAt: last?.createdAt?.toISOString() ?? null,
+        lastMessagePreview: preview,
+        lastMessageAuthorId: last?.authorId ?? null,
       });
     }
+    items.sort((a, b) => {
+      const ta = a.lastMessageAt ? Date.parse(a.lastMessageAt) : 0;
+      const tb = b.lastMessageAt ? Date.parse(b.lastMessageAt) : 0;
+      return tb - ta;
+    });
     return items;
+  }
+
+  async hideChat(chatId: string, userId: string): Promise<void> {
+    await this.requireChatEntityForMember(chatId, userId);
+    await this.members.update({ chatId, userId }, { hiddenAt: new Date() });
   }
 
   async getUnreadAggregate(userId: string): Promise<{
@@ -403,13 +432,14 @@ export class ChatsService {
   ): Promise<MessagePublicDto[]> {
     const chat = await this.requireChatEntityForMember(chatId, userId);
     const rows = await this.messages.find({
-      where: { chatId, deletedAt: IsNull() },
+      where: { chatId },
       order: { createdAt: 'DESC' },
       take: Math.min(Math.max(limit, 1), 100),
     });
     const otherReads = await this.otherMembersLastReadAt(chatId, userId);
+    const replyMap = await this.loadReplyPreviews(rows);
     return rows.map((msg) =>
-      this.toMessagePublic(msg, userId, chat.self, otherReads),
+      this.toMessagePublic(msg, userId, chat.self, otherReads, replyMap),
     );
   }
 
@@ -419,11 +449,21 @@ export class ChatsService {
     body: string;
     mentions?: MessageMention[];
     attachmentIds?: string[];
+    replyToMessageId?: string | null;
   }): Promise<MessagePublicDto> {
     const body = input.body?.trim() ?? '';
     if (!body) throw new BadRequestException('body is required');
 
     const chat = await this.requireChatEntityForMember(input.chatId, input.authorId);
+
+    let replyToMessageId: string | null = null;
+    if (input.replyToMessageId) {
+      const reply = await this.messages.findOne({
+        where: { id: input.replyToMessageId, chatId: input.chatId },
+      });
+      if (!reply) throw new BadRequestException('replyToMessageId not in this chat');
+      replyToMessageId = reply.id;
+    }
 
     const message = this.messages.create({
       id: uuidv4(),
@@ -431,6 +471,7 @@ export class ChatsService {
       authorId: input.authorId,
       body,
       mentions: input.mentions ?? [],
+      replyToMessageId,
       editedAt: null,
       deletedAt: null,
     });
@@ -451,9 +492,67 @@ export class ChatsService {
       { chatId: input.chatId, userId: input.authorId },
       { lastReadAt: message.createdAt, lastReadMessageId: message.id },
     );
+    await this.members.update({ chatId: input.chatId }, { hiddenAt: null });
 
     const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
-    return this.toMessagePublic(message, input.authorId, chat.self, otherReads);
+    const replyMap = await this.loadReplyPreviews([message]);
+    return this.toMessagePublic(message, input.authorId, chat.self, otherReads, replyMap);
+  }
+
+  async editMessage(input: {
+    chatId: string;
+    messageId: string;
+    authorId: string;
+    body: string;
+    mentions?: MessageMention[];
+    editWindowMinutes: number;
+  }): Promise<MessagePublicDto> {
+    const chat = await this.requireChatEntityForMember(input.chatId, input.authorId);
+    const msg = await this.messages.findOne({
+      where: { id: input.messageId, chatId: input.chatId },
+    });
+    if (!msg || msg.deletedAt) throw new NotFoundException('Message not found');
+    if (msg.authorId !== input.authorId) {
+      throw new ForbiddenException('Can only edit your own messages');
+    }
+    this.assertWithinWindow(msg.createdAt, input.editWindowMinutes, 'edit');
+
+    const body = input.body?.trim() ?? '';
+    if (!body) throw new BadRequestException('body is required');
+    msg.body = body;
+    msg.mentions = input.mentions ?? msg.mentions ?? [];
+    msg.editedAt = new Date();
+    await this.messages.save(msg);
+
+    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
+    const replyMap = await this.loadReplyPreviews([msg]);
+    return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+  }
+
+  async deleteMessage(input: {
+    chatId: string;
+    messageId: string;
+    authorId: string;
+    deleteWindowMinutes: number;
+  }): Promise<MessagePublicDto> {
+    const chat = await this.requireChatEntityForMember(input.chatId, input.authorId);
+    const msg = await this.messages.findOne({
+      where: { id: input.messageId, chatId: input.chatId },
+    });
+    if (!msg || msg.deletedAt) throw new NotFoundException('Message not found');
+    if (msg.authorId !== input.authorId) {
+      throw new ForbiddenException('Can only delete your own messages');
+    }
+    this.assertWithinWindow(msg.createdAt, input.deleteWindowMinutes, 'delete');
+
+    msg.deletedAt = new Date();
+    msg.body = '';
+    msg.mentions = [];
+    await this.messages.save(msg);
+
+    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
+    const replyMap = await this.loadReplyPreviews([msg]);
+    return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
   }
 
   async markRead(
@@ -592,13 +691,15 @@ export class ChatsService {
     viewerId: string,
     selfChat: boolean,
     otherMembersLastReadAt: Array<Date | null>,
+    replyMap: Map<string, MessageReplyPreview> = new Map(),
   ): MessagePublicDto {
+    const replyToMessageId = msg.replyToMessageId ?? null;
     return {
       id: msg.id,
       chatId: msg.chatId,
       authorId: msg.authorId,
       body: msg.deletedAt ? '' : msg.body,
-      mentions: msg.mentions ?? [],
+      mentions: msg.deletedAt ? [] : (msg.mentions ?? []),
       createdAt: msg.createdAt.toISOString(),
       editedAt: msg.editedAt?.toISOString() ?? null,
       deletedAt: msg.deletedAt?.toISOString() ?? null,
@@ -609,7 +710,50 @@ export class ChatsService {
         messageCreatedAt: msg.createdAt,
         otherMembersLastReadAt,
       }),
+      replyToMessageId,
+      replyTo: replyToMessageId ? (replyMap.get(replyToMessageId) ?? null) : null,
     };
+  }
+
+  private async loadReplyPreviews(
+    rows: MessageEntity[],
+  ): Promise<Map<string, MessageReplyPreview>> {
+    const ids = [
+      ...new Set(
+        rows
+          .map((r) => r.replyToMessageId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const map = new Map<string, MessageReplyPreview>();
+    if (!ids.length) return map;
+    const found = await this.messages.find({
+      where: { id: In(ids) },
+    });
+    for (const t of found) {
+      map.set(t.id, {
+        id: t.id,
+        authorId: t.authorId,
+        body: t.deletedAt ? '' : t.body.slice(0, 200),
+        deleted: Boolean(t.deletedAt),
+      });
+    }
+    return map;
+  }
+
+  private assertWithinWindow(
+    createdAt: Date,
+    windowMinutes: number,
+    action: 'edit' | 'delete',
+  ) {
+    if (windowMinutes < 0) return;
+    if (windowMinutes === 0) {
+      throw new ForbiddenException(`Message ${action} is disabled`);
+    }
+    const deadline = createdAt.getTime() + windowMinutes * 60_000;
+    if (Date.now() > deadline) {
+      throw new ForbiddenException(`Message ${action} window expired`);
+    }
   }
 
   private async ensureMember(

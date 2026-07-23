@@ -39,6 +39,8 @@ export type ChatListItemDto = {
   peerUserId?: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
+  lastMessagePreview?: string | null;
+  lastMessageAuthorId?: string | null;
 };
 
 export type MessageDeliveryStatus = 'DELIVERED' | 'READ';
@@ -58,6 +60,13 @@ export type MessageDto = {
   editedAt: string | null;
   deletedAt: string | null;
   status?: MessageDeliveryStatus | null;
+  replyToMessageId?: string | null;
+  replyTo?: {
+    id: string;
+    authorId: string;
+    body: string;
+    deleted: boolean;
+  } | null;
 };
 
 const DEFAULT_TIMEOUT_MS = 5000;
@@ -193,6 +202,7 @@ export class ChatClient {
     body: string;
     mentions?: MessageDto['mentions'];
     attachmentIds?: string[];
+    replyToMessageId?: string;
   }) {
     return this.request<MessageDto>(
       'POST',
@@ -202,8 +212,49 @@ export class ChatClient {
         body: input.body,
         mentions: input.mentions,
         attachmentIds: input.attachmentIds,
+        replyToMessageId: input.replyToMessageId,
       },
     );
+  }
+
+  editMessage(input: {
+    chatId: string;
+    messageId: string;
+    authorId: string;
+    body: string;
+    mentions?: MessageDto['mentions'];
+    editWindowMinutes: number;
+  }) {
+    return this.request<MessageDto>(
+      'POST',
+      `/internal/v1/chats/${input.chatId}/messages/${input.messageId}/edit`,
+      {
+        authorId: input.authorId,
+        body: input.body,
+        mentions: input.mentions,
+        editWindowMinutes: input.editWindowMinutes,
+      },
+    );
+  }
+
+  deleteMessage(input: {
+    chatId: string;
+    messageId: string;
+    authorId: string;
+    deleteWindowMinutes: number;
+  }) {
+    return this.request<MessageDto>(
+      'POST',
+      `/internal/v1/chats/${input.chatId}/messages/${input.messageId}/delete`,
+      {
+        authorId: input.authorId,
+        deleteWindowMinutes: input.deleteWindowMinutes,
+      },
+    );
+  }
+
+  hide(chatId: string, userId: string) {
+    return this.request<void>('POST', `/internal/v1/chats/${chatId}/hide`, { userId });
   }
 
   markRead(chatId: string, userId: string, messageId?: string) {

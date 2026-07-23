@@ -21,6 +21,8 @@ export type ChatListItem = {
   displayTitle?: string | null;
   unreadCount: number;
   lastMessageAt: string | null;
+  lastMessagePreview?: string | null;
+  lastMessageAuthorId?: string | null;
 };
 
 export type ChatDto = {
@@ -53,6 +55,13 @@ export type ChatMessage = {
   editedAt: string | null;
   deletedAt: string | null;
   status?: MessageDeliveryStatus | null;
+  replyToMessageId?: string | null;
+  replyTo?: {
+    id: string;
+    authorId: string;
+    body: string;
+    deleted: boolean;
+  } | null;
 };
 
 export type ChatUnread = {
@@ -228,14 +237,53 @@ export async function listChatMessages(
 export async function sendChatMessage(
   chatId: string,
   body: string,
+  opts?: { replyToMessageId?: string },
 ): Promise<ChatMessage> {
   const res = await fetch(`${apiBase()}/chats/${chatId}/messages`, {
     method: 'POST',
     headers: await bffAuthHeaders(),
-    body: JSON.stringify({ body }),
+    body: JSON.stringify({
+      body,
+      replyToMessageId: opts?.replyToMessageId,
+    }),
   });
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось отправить'));
   return (await res.json()) as ChatMessage;
+}
+
+export async function editChatMessage(
+  chatId: string,
+  messageId: string,
+  body: string,
+): Promise<ChatMessage> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/messages/${messageId}`, {
+    method: 'PATCH',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось изменить'));
+  return (await res.json()) as ChatMessage;
+}
+
+export async function deleteChatMessage(
+  chatId: string,
+  messageId: string,
+): Promise<ChatMessage> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/messages/${messageId}`, {
+    method: 'DELETE',
+    headers: await bffAuthHeaders(undefined, { json: false }),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось удалить'));
+  return (await res.json()) as ChatMessage;
+}
+
+export async function hideChat(chatId: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/hide`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось скрыть чат'));
 }
 
 export async function markChatRead(chatId: string, messageId?: string): Promise<void> {

@@ -1,6 +1,6 @@
 # 💬 Сервис: chat
 
-> **Статус:** scaffold · **Версия:** 0.4 · **Schema:** `chat` · **Port:** 3016  
+> **Статус:** scaffold · **Версия:** 0.5 · **Schema:** `chat` · **Port:** 3016  
 > **Код:** `services/chat` (`@tavrida/chat`)  
 > **Решения:** [requirements/analysis.md](./requirements/analysis.md) · **BFF API:** [chat-api.md](../../06-api/chat-api.md)  
 > **Не путать:** RabbitMQ [messaging](../../03-architecture/messaging.md) · deal-messaging [ADR-009](../../03-architecture/adr/009-deal-messaging-e2ee.md)
@@ -30,6 +30,7 @@
 | Frontend «Мои чаты» + TOPIC bottom sheet | ✅ |
 | DM title = имя peer (BFF enrich) | ✅ |
 | Message status DELIVERED/READ (+ FE SENDING) | ✅ |
+| Wave A: list preview, reply, edit/delete, hide, room UX | ✅ |
 
 ## 📖 Термины
 
@@ -69,7 +70,10 @@ Schema: **`chat`**. Tables: `chat`, `chat_member`, `message`, `message_attachmen
 | POST | `/internal/v1/chats/topic/members/add` | `{ topicId, userId }` |
 | GET | `/internal/v1/chats/:id?userId=` | Детали (member check) |
 | GET | `/internal/v1/chats/:id/messages?userId=` | История |
-| POST | `/internal/v1/chats/:id/messages` | Send |
+| POST | `/internal/v1/chats/:id/messages` | Send (`replyToMessageId` optional) |
+| PATCH | `/internal/v1/chats/:id/messages/:messageId` | Edit own |
+| DELETE | `/internal/v1/chats/:id/messages/:messageId` | Soft-delete own |
+| POST | `/internal/v1/chats/:id/hide` | Hide for member |
 | POST | `/internal/v1/chats/:id/read` | Mark read |
 | GET | `/health`, `/health/ready` | — |
 

@@ -19,6 +19,7 @@ export const uiIcons = {
   check: 'lucide:check',
   chevronRight: 'lucide:chevron-right',
   chevronLeft: 'lucide:chevron-left',
+  chevronDown: 'lucide:chevron-down',
   settings: 'lucide:settings',
   menu: 'lucide:menu',
   reply: 'lucide:message-circle',

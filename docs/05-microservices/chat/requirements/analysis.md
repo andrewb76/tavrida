@@ -150,6 +150,21 @@ Live: later WS `message.read` / `chat.message_read` после mark-read; до W
 
 ---
 
+### 7.3. Telegram-like UX (wave A) — ✅ implemented
+
+Цель: привычный мессенджер, **не** полный клон Telegram.
+
+| Фича | Решение wave A | Статус |
+|------|----------------|--------|
+| Превью в списке | `lastMessagePreview` + `lastMessageAt` (+ authorId) | ✅ |
+| Reply / quote | `replyToMessageId` на message; UI цитата над пузырём | ✅ |
+| Edit / delete своего | окна scalar `editWindowMinutes` / `deleteOwnWindowMinutes`; soft-delete | ✅ |
+| Hide чата | `chat_member.hidden_at`; новый message снимает hide у участников | ✅ |
+| Room UX | дата-сепараторы, denser bubbles, FAB «вниз» | ✅ |
+| Live WS / typing / media | **wave B/C** | later |
+
+---
+
 ## 8. Конфигурация — согласованный список ключей
 
 Правило: [ADR-003](../../../03-architecture/adr/003-settings-vs-financial-policy.md) + кандидаты prefs → [ADR-020](../../../03-architecture/adr/020-three-config-registries.md) (post-MVP).

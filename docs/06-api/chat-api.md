@@ -5,8 +5,8 @@
 
 Публичный BFF surface для «Мои чаты», DIRECT/self/TOPIC, сообщений и unread badge.
 
-**Реализовано в BFF:** list, unread, self, direct, groups, spawn, topic, messages, read, users/search (username prefix), DM `displayTitle`/`peer`, message `status`.  
-**Ещё нет:** hide, transfer ownership, edit/delete message, kick, WS live.
+**Реализовано в BFF:** list (+ `lastMessagePreview`), unread, self, direct, groups, spawn, topic, messages (reply/edit/delete), hide, read, users/search, DM `displayTitle`/`peer`, message `status`.  
+**Ещё нет:** transfer ownership, kick, media attachments, WS live.
 
 ## Endpoints
 
@@ -87,13 +87,15 @@ GET /api/v1/chats/unread
   },
   "displayTitle": "Алиса",
   "unreadCount": 2,
-  "lastMessageAt": "2026-07-22T12:00:00.000Z"
+  "lastMessageAt": "2026-07-22T12:00:00.000Z",
+  "lastMessagePreview": "Привет, как дела?",
+  "lastMessageAuthorId": "logto-sub-peer"
 }
 ```
 
 `displayTitle`: self → «Заметки»; pair → `displayName` \| `@username` \| «Участник»; GROUP/TOPIC → `title` или fallback kind label.
 
-### Message with delivery status
+### Message with delivery status + reply
 
 ```json
 {
@@ -105,7 +107,14 @@ GET /api/v1/chats/unread
   "createdAt": "2026-07-22T12:01:00.000Z",
   "editedAt": null,
   "deletedAt": null,
-  "status": "DELIVERED"
+  "status": "DELIVERED",
+  "replyToMessageId": "uuid-parent",
+  "replyTo": {
+    "id": "uuid-parent",
+    "authorId": "logto-sub-peer",
+    "body": "Исходное…",
+    "deleted": false
+  }
 }
 ```
 
@@ -154,11 +163,14 @@ Content-Type: application/json
 
 {
   "body": "Привет, @alice!",
+  "replyToMessageId": "uuid-optional",
   "attachmentIds": ["media-uuid"]
 }
 ```
 
-Response includes parsed `mentions[]` for rich render. **No** notification from @ alone.
+Response includes parsed `mentions[]` and optional `replyTo` preview. **No** notification from @ alone.  
+Edit/delete: `PATCH`/`DELETE` …/messages/{id} — окна `chat.message.editWindowMinutes` / `deleteOwnWindowMinutes` (soft-delete).  
+Hide: `POST` …/hide — `chat_member.hidden_at`; новое сообщение снимает hide у участников.
 
 ### TOPIC on forum page
 

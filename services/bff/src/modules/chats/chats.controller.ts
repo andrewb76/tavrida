@@ -2,11 +2,13 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   HttpException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -94,6 +96,16 @@ class SendMessageDto {
   @IsArray()
   @IsUUID('4', { each: true })
   attachmentIds?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  replyToMessageId?: string;
+}
+
+class EditMessageDto {
+  @IsString()
+  @MinLength(1)
+  body!: string;
 }
 
 class MarkReadDto {
@@ -290,6 +302,14 @@ export class ChatsController {
     return this.chat.leaveGroup(chatId, user.sub);
   }
 
+  @Post(':chatId/hide')
+  hide(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+  ) {
+    return this.chat.hide(chatId, user.sub);
+  }
+
   @Get(':chatId/messages')
   messages(
     @CurrentUser() user: AuthUser,
@@ -328,6 +348,43 @@ export class ChatsController {
       body: body.body,
       mentions,
       attachmentIds: body.attachmentIds,
+      replyToMessageId: body.replyToMessageId,
+    });
+  }
+
+  @Patch(':chatId/messages/:messageId')
+  async editMessage(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Body() body: EditMessageDto,
+  ) {
+    await this.chat.get(chatId, user.sub);
+    const mentions = await this.resolveMentions(user.sub, body.body);
+    const editWindowMinutes = await this.chatEditWindowMinutes();
+    return this.chat.editMessage({
+      chatId,
+      messageId,
+      authorId: user.sub,
+      body: body.body,
+      mentions,
+      editWindowMinutes,
+    });
+  }
+
+  @Delete(':chatId/messages/:messageId')
+  async deleteMessage(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+  ) {
+    await this.chat.get(chatId, user.sub);
+    const deleteWindowMinutes = await this.chatDeleteWindowMinutes();
+    return this.chat.deleteMessage({
+      chatId,
+      messageId,
+      authorId: user.sub,
+      deleteWindowMinutes,
     });
   }
 
@@ -338,6 +395,18 @@ export class ChatsController {
     @Body() body: MarkReadDto,
   ) {
     return this.chat.markRead(chatId, user.sub, body.messageId);
+  }
+
+  private async chatEditWindowMinutes(): Promise<number> {
+    const settings = await this.scalarConfig.getChatSettings();
+    const v = settings['message.editWindowMinutes'];
+    return typeof v === 'number' ? v : 15;
+  }
+
+  private async chatDeleteWindowMinutes(): Promise<number> {
+    const settings = await this.scalarConfig.getChatSettings();
+    const v = settings['message.deleteOwnWindowMinutes'];
+    return typeof v === 'number' ? v : 60;
   }
 
   private async assertCanWrite(userId: string, kind: ChatKind, self: boolean) {

@@ -25,6 +25,9 @@ export class MessageEntity {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   mentions!: MessageMention[];
 
+  @Column({ name: 'reply_to_message_id', type: 'uuid', nullable: true })
+  replyToMessageId!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

@@ -59,6 +59,9 @@ Chat:
   ☐ Verify: set/change username → webhook → user_profile.username; autocomplete search @user-profile @logto
   ☐ Backfill: pnpm sync:logto-users on Swarm if stale usernames @user-profile @ops
   ✔ user-profile: UNIQUE(lower(username)) + search for @mention @user-profile @chat @done(26-07-22)
+  ✔ Wave A Telegram-like: preview, reply, edit/delete, hide, denser UX @chat @bff @frontend @docs @done(26-07-23)
+  ☐ Wave B: WS live (message.new / read / typing) @chat @bff @frontend
+  ☐ Wave C: media attachments in chat @chat @media @frontend
 
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)
