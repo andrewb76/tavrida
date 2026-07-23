@@ -68,6 +68,7 @@ frontend_image="${REGISTRY}/${OWNER}/tavrida-frontend:${TAG}"
 echo "==> Building ${frontend_image}" >&2
 docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_API_BASE_URL=https://api.${DEV_DOMAIN}/api/v1" \
+  --build-arg "VITE_WS_URL=wss://api.${DEV_DOMAIN}/ws/v1" \
   --build-arg "VITE_IMAGE_PROXY_URL=https://img.${DEV_DOMAIN}" \
   --build-arg "VITE_IMAGE_PROXY_FETCH_BASE_URL=http://minio:9000" \
   --build-arg "VITE_MEDIA_PUBLIC_BASE_URL=https://s3.${DEV_DOMAIN}" \

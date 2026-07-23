@@ -3,6 +3,7 @@
 # Build (pass Vite env at build time):
 #   docker build -f docker/images/Dockerfile.frontend \
 #     --build-arg VITE_API_BASE_URL=https://api.evatorg.su/api/v1 \
+#     --build-arg VITE_WS_URL=wss://api.evatorg.su/ws/v1 \
 #     --build-arg VITE_IMAGE_PROXY_URL=https://img.evatorg.su \
 #     --build-arg VITE_MEDIA_PUBLIC_BASE_URL=https://s3.evatorg.su \
 #     --build-arg VITE_LOGTO_ENDPOINT=https://auth.evatorg.su \
@@ -13,6 +14,7 @@
 FROM node:22-alpine AS build
 
 ARG VITE_API_BASE_URL
+ARG VITE_WS_URL
 ARG VITE_IMAGE_PROXY_URL
 ARG VITE_IMAGE_PROXY_FETCH_BASE_URL=http://minio:9000
 ARG VITE_MEDIA_PUBLIC_BASE_URL
@@ -22,6 +24,7 @@ ARG VITE_LOGTO_APP_ID
 ARG VITE_LOGTO_API_RESOURCE
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_WS_URL=$VITE_WS_URL \
     VITE_IMAGE_PROXY_URL=$VITE_IMAGE_PROXY_URL \
     VITE_IMAGE_PROXY_FETCH_BASE_URL=$VITE_IMAGE_PROXY_FETCH_BASE_URL \
     VITE_MEDIA_PUBLIC_BASE_URL=$VITE_MEDIA_PUBLIC_BASE_URL \

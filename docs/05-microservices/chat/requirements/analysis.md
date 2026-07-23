@@ -161,7 +161,7 @@ Live: later WS `message.read` / `chat.message_read` после mark-read; до W
 | Edit / delete своего | окна scalar `editWindowMinutes` / `deleteOwnWindowMinutes`; soft-delete | ✅ |
 | Hide чата | `chat_member.hidden_at`; новый message снимает hide у участников | ✅ |
 | Room UX | дата-сепараторы, denser bubbles, FAB «вниз» | ✅ |
-| Live WS / typing / media | **wave B/C** | later |
+| Live WS / typing / media | **wave B** WS ✅ · **wave C** media later | WS ✅ |
 
 ---
 

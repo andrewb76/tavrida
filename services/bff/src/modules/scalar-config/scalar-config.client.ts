@@ -28,6 +28,7 @@ export type ChatSettings = {
   'unread.markReadOnOpen'?: boolean;
   'list.defaultFilter'?: string;
   'group.leaveKeepsHistory'?: boolean;
+  'realtime.typingTtlSeconds'?: number;
 };
 
 @Injectable()

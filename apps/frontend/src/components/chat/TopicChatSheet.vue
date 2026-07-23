@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useWs } from '@/composables/useWs';
 import {
   getTopicChat,
   listChatMessages,
@@ -10,7 +11,7 @@ import {
 import { useChatsStore } from '@/stores/chats';
 import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 
 const session = useSessionStore();
 const chatsStore = useChatsStore();
+const ws = useWs();
 
 const chat = ref<ChatDto | null>(null);
 const messages = ref<ChatMessage[]>([]);
@@ -33,19 +35,55 @@ const error = ref<string | null>(null);
 const body = ref('');
 const sending = ref(false);
 const listEl = ref<HTMLElement | null>(null);
+let wsUnsub: (() => void) | null = null;
 
 watch(
   () => [props.open, props.forumTopicId] as const,
   ([open, topicId]) => {
     if (open && topicId) void load(topicId);
+    if (!open) {
+      wsUnsub?.();
+      wsUnsub = null;
+    }
   },
 );
+
+onBeforeUnmount(() => {
+  wsUnsub?.();
+  wsUnsub = null;
+});
+
+function onWsEvent(ev: { event: string; payload: Record<string, unknown> }) {
+  if (ev.event !== 'message.new' || !chat.value) return;
+  const p = ev.payload;
+  const id = String(p.messageId ?? '');
+  if (!id || messages.value.some((m) => m.id === id)) return;
+  if (p.authorId === session.userId) return;
+  messages.value.push({
+    id,
+    chatId: chat.value.id,
+    authorId: String(p.authorId ?? ''),
+    body: String(p.body ?? ''),
+    mentions: (p.mentions as ChatMessage['mentions']) ?? [],
+    createdAt: String(p.createdAt ?? new Date().toISOString()),
+    editedAt: null,
+    deletedAt: null,
+    status: null,
+    replyToMessageId: (p.replyToMessageId as string | null) ?? null,
+    replyTo: (p.replyTo as ChatMessage['replyTo']) ?? null,
+  });
+  void markChatRead(chat.value.id, id);
+  void chatsStore.refreshUnread();
+  void nextTick().then(scrollToBottom);
+}
 
 async function load(topicId: string) {
   loading.value = true;
   error.value = null;
   chat.value = null;
   messages.value = [];
+  wsUnsub?.();
+  wsUnsub = null;
   try {
     const chatRow = await getTopicChat(topicId);
     chat.value = chatRow;
@@ -54,6 +92,11 @@ async function load(topicId: string) {
     const last = msgRows[msgRows.length - 1];
     await markChatRead(chatRow.id, last?.id);
     void chatsStore.refreshUnread();
+    try {
+      wsUnsub = await ws.subscribe(`chat:${chatRow.id}`, onWsEvent);
+    } catch {
+      /* REST fallback */
+    }
     await nextTick();
     scrollToBottom();
   } catch (e) {

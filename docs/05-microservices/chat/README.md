@@ -1,6 +1,6 @@
 # 💬 Сервис: chat
 
-> **Статус:** scaffold · **Версия:** 0.5 · **Schema:** `chat` · **Port:** 3016  
+> **Статус:** scaffold · **Версия:** 0.6 · **Schema:** `chat` · **Port:** 3016  
 > **Код:** `services/chat` (`@tavrida/chat`)  
 > **Решения:** [requirements/analysis.md](./requirements/analysis.md) · **BFF API:** [chat-api.md](../../06-api/chat-api.md)  
 > **Не путать:** RabbitMQ [messaging](../../03-architecture/messaging.md) · deal-messaging [ADR-009](../../03-architecture/adr/009-deal-messaging-e2ee.md)
@@ -31,6 +31,7 @@
 | DM title = имя peer (BFF enrich) | ✅ |
 | Message status DELIVERED/READ (+ FE SENDING) | ✅ |
 | Wave A: list preview, reply, edit/delete, hide, room UX | ✅ |
+| Wave B: outbox → RMQ → BFF `/ws/v1` + FE `useWs` + typing | ✅ |
 
 ## 📖 Термины
 
@@ -79,7 +80,8 @@ Schema: **`chat`**. Tables: `chat`, `chat_member`, `message`, `message_attachmen
 
 ## 📡 WebSocket (BFF)
 
-Канал `chat:{chatId}` — planned. См. [chat-api.md](../../06-api/chat-api.md).
+Канал `chat:{chatId}` — **live** (Wave B). Relay: chat outbox → RMQ → BFF `ChatWsRelayConsumer` → `WsHubService`.  
+Typing — WS-only. См. [chat-api.md](../../06-api/chat-api.md).
 
 ## ⚙️ Переменные scalar-config
 

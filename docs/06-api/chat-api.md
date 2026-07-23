@@ -5,8 +5,8 @@
 
 Публичный BFF surface для «Мои чаты», DIRECT/self/TOPIC, сообщений и unread badge.
 
-**Реализовано в BFF:** list (+ `lastMessagePreview`), unread, self, direct, groups, spawn, topic, messages (reply/edit/delete), hide, read, users/search, DM `displayTitle`/`peer`, message `status`.  
-**Ещё нет:** transfer ownership, kick, media attachments, WS live.
+**Реализовано в BFF:** list (+ `lastMessagePreview`), unread, self, direct, groups, spawn, topic, messages (reply/edit/delete), hide, read, users/search, DM `displayTitle`/`peer`, message `status`, **WSS `/ws/v1`** (`chat:{id}`: `message.new|edited|deleted|read`, `typing`).  
+**Ещё нет:** transfer ownership, kick, media attachments.
 
 ## Endpoints
 
@@ -189,15 +189,21 @@ GET /api/v1/chats/topics/{forumTopicId}
 { "type": "subscribe", "channel": "chat:{chatId}", "requestId": "1" }
 ```
 
-| WS `event` | Payload (кратко) |
-|------------|------------------|
-| `message.new` | `{ messageId, chatId, authorId, body, mentions, createdAt }` |
-| `message.edited` | `{ messageId, body, editedAt }` |
-| `message.deleted` | `{ messageId, deletedAt }` |
-| `message.read` | `{ chatId, userId, lastReadMessageId, lastReadAt }` — later; обновить ticks |
-| `member.joined` | `{ userId, chatId }` |
-| `member.left` | `{ userId, chatId }` |
-| `typing` | `{ userId, expiresAt }` |
+Auth: `wss://…/ws/v1?token={jwt}`. Membership checked on subscribe.
+
+| WS `event` | Payload (кратко) | Source |
+|------------|------------------|--------|
+| `message.new` | `{ messageId, chatId, authorId, body, mentions, createdAt, replyTo? }` | RMQ `chat.message_created` |
+| `message.edited` | `{ messageId, body, editedAt, … }` | `chat.message_edited` |
+| `message.deleted` | `{ messageId, deletedAt }` | `chat.message_deleted` |
+| `message.read` | `{ chatId, userId, lastReadMessageId, lastReadAt }` | `chat.message_read` |
+| `typing` | `{ userId, expiresAt }` | WS-only (client → BFF fanout) |
+
+```json
+{ "type": "typing", "channel": "chat:{chatId}" }
+```
+
+TTL: `chat.realtime.typingTtlSeconds` (default 5).
 
 ---
 

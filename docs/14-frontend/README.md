@@ -8,7 +8,7 @@
 
 Единственное публичное клиентское приложение Tavrida Lot: аукционы, форум,
 профиль, баланс, подписки и маркет услуг. Реализовано как **Vue 3 SPA** и
-общается с backend через BFF REST. WebSocket/realtime остаётся target.
+общается с backend через BFF REST + WebSocket (`/ws/v1`, chat live).
 
 - Каталог и страница лота, ставки в реальном времени
 - Форум: темы, комментарии, реакции, чат *(Pro)*
@@ -27,7 +27,7 @@
 | State (клиентский) | **Pinia** | сессия, UI-состояние, черновики |
 | State (серверный) | direct services + Pinia stores | TanStack Query — target, не runtime layer |
 | HTTP-клиент | тонкие service wrappers над native `fetch` | JWT + `Idempotency-Key` + базовый URL |
-| Realtime | planned | WS client/channel registry пока отсутствуют |
+| Realtime | `useWs()` / `useWsChannel` | chat channels live; auction/forum later |
 | Auth | **Logto Vue SDK** (`@logto/vue`) | OIDC PKCE, silent refresh |
 | Стили | **Tailwind CSS v4** + CSS variables | mobile-first, [stack-decisions](./stack-decisions.md) |
 | UI-компоненты | local components + **`@tavrida/ui`** | Reka UI — target |
@@ -226,7 +226,8 @@ pnpm --filter @tavrida/frontend lint
 - [x] Reka UI primitives (Modal) + AppShell / layouts
 - [x] REST mock adapter + fixtures (W02)
 - [x] Routes + guards по [screen-tree](../11-ux-ui/screen-tree.md)
-- [ ] `useWs()` + реестр каналов
+- [x] `useWs()` + реестр каналов (chat Wave B)
+- [ ] auction/forum WS channels
 - [x] Logto Cloud (`@logto/vue`, invite flow, guards) — [logto-setup.md](./logto-setup.md)
 - [ ] Logto self-host + BFF JWT validation
 - [ ] d3 viz: `ActivityHeatmap` (W07)

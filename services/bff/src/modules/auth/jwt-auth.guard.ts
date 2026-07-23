@@ -28,12 +28,13 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = header.slice('Bearer '.length).trim();
-    const actor = await this.verifyToken(token);
+    const actor = await this.verifyAccessToken(token);
     request.user = await this.actAs.apply(actor, request.headers[ACT_AS_HEADER]);
     return true;
   }
 
-  private async verifyToken(token: string): Promise<AuthUser> {
+  /** Public for WebSocket handshake (`?token=`). Does not apply Act-As. */
+  async verifyAccessToken(token: string): Promise<AuthUser> {
     const jwksUrl = this.config.get<string>('LOGTO_JWKS_URL');
     const audience = this.config.get<string>('LOGTO_AUDIENCE');
     const endpoint = this.config.get<string>('LOGTO_ENDPOINT');

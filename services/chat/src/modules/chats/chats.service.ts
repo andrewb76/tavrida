@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Repository, type EntityManager } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   computeMessageDeliveryStatus,
@@ -20,6 +20,7 @@ import { ChatMemberEntity } from '../../entities/chat-member.entity';
 import { ChatEntity } from '../../entities/chat.entity';
 import { MessageAttachmentEntity } from '../../entities/message-attachment.entity';
 import { MessageEntity } from '../../entities/message.entity';
+import { ChatEventsPublisher } from '../events/chat-events.publisher';
 
 export type ChatListItem = {
   id: string;
@@ -79,6 +80,8 @@ export class ChatsService {
     private readonly messages: Repository<MessageEntity>,
     @InjectRepository(MessageAttachmentEntity)
     private readonly attachments: Repository<MessageAttachmentEntity>,
+    private readonly dataSource: DataSource,
+    private readonly events: ChatEventsPublisher,
   ) {}
 
   async ensureDirect(userId: string, peerUserId: string): Promise<ChatPublicDto> {
@@ -465,38 +468,67 @@ export class ChatsService {
       replyToMessageId = reply.id;
     }
 
-    const message = this.messages.create({
-      id: uuidv4(),
-      chatId: input.chatId,
-      authorId: input.authorId,
-      body,
-      mentions: input.mentions ?? [],
-      replyToMessageId,
-      editedAt: null,
-      deletedAt: null,
-    });
-    await this.messages.save(message);
+    const dto = await this.dataSource.transaction(async (manager) => {
+      const messagesRepo = manager.getRepository(MessageEntity);
+      const attachmentsRepo = manager.getRepository(MessageAttachmentEntity);
+      const membersRepo = manager.getRepository(ChatMemberEntity);
 
-    const attachmentIds = input.attachmentIds ?? [];
-    for (let i = 0; i < attachmentIds.length; i += 1) {
-      await this.attachments.save(
-        this.attachments.create({
-          messageId: message.id,
-          mediaObjectId: attachmentIds[i]!,
-          sortOrder: i,
-        }),
+      const message = messagesRepo.create({
+        id: uuidv4(),
+        chatId: input.chatId,
+        authorId: input.authorId,
+        body,
+        mentions: input.mentions ?? [],
+        replyToMessageId,
+        editedAt: null,
+        deletedAt: null,
+      });
+      await messagesRepo.save(message);
+
+      const attachmentIds = input.attachmentIds ?? [];
+      for (let i = 0; i < attachmentIds.length; i += 1) {
+        await attachmentsRepo.save(
+          attachmentsRepo.create({
+            messageId: message.id,
+            mediaObjectId: attachmentIds[i]!,
+            sortOrder: i,
+          }),
+        );
+      }
+
+      await membersRepo.update(
+        { chatId: input.chatId, userId: input.authorId },
+        { lastReadAt: message.createdAt, lastReadMessageId: message.id },
       );
-    }
+      await membersRepo.update({ chatId: input.chatId }, { hiddenAt: null });
 
-    await this.members.update(
-      { chatId: input.chatId, userId: input.authorId },
-      { lastReadAt: message.createdAt, lastReadMessageId: message.id },
-    );
-    await this.members.update({ chatId: input.chatId }, { hiddenAt: null });
+      const replyMap = await this.loadReplyPreviews([message], manager);
+      const replyTo = message.replyToMessageId
+        ? (replyMap.get(message.replyToMessageId) ?? null)
+        : null;
 
-    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
-    const replyMap = await this.loadReplyPreviews([message]);
-    return this.toMessagePublic(message, input.authorId, chat.self, otherReads, replyMap);
+      await this.events.enqueueMessageCreated(manager, {
+        messageId: message.id,
+        chatId: input.chatId,
+        kind: chat.kind,
+        authorId: input.authorId,
+        body: message.body,
+        mentions: message.mentions ?? [],
+        createdAt: message.createdAt,
+        replyToMessageId: message.replyToMessageId,
+        replyTo,
+      });
+
+      const otherReads = await this.otherMembersLastReadAt(
+        input.chatId,
+        input.authorId,
+        manager,
+      );
+      return this.toMessagePublic(message, input.authorId, chat.self, otherReads, replyMap);
+    });
+
+    this.events.flush();
+    return dto;
   }
 
   async editMessage(input: {
@@ -522,11 +554,28 @@ export class ChatsService {
     msg.body = body;
     msg.mentions = input.mentions ?? msg.mentions ?? [];
     msg.editedAt = new Date();
-    await this.messages.save(msg);
 
-    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
-    const replyMap = await this.loadReplyPreviews([msg]);
-    return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+    const dto = await this.dataSource.transaction(async (manager) => {
+      const messagesRepo = manager.getRepository(MessageEntity);
+      await messagesRepo.save(msg);
+      await this.events.enqueueMessageEdited(manager, {
+        messageId: msg.id,
+        chatId: input.chatId,
+        authorId: input.authorId,
+        body: msg.body,
+        mentions: msg.mentions ?? [],
+        editedAt: msg.editedAt!,
+      });
+      const otherReads = await this.otherMembersLastReadAt(
+        input.chatId,
+        input.authorId,
+        manager,
+      );
+      const replyMap = await this.loadReplyPreviews([msg], manager);
+      return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+    });
+    this.events.flush();
+    return dto;
   }
 
   async deleteMessage(input: {
@@ -548,11 +597,26 @@ export class ChatsService {
     msg.deletedAt = new Date();
     msg.body = '';
     msg.mentions = [];
-    await this.messages.save(msg);
 
-    const otherReads = await this.otherMembersLastReadAt(input.chatId, input.authorId);
-    const replyMap = await this.loadReplyPreviews([msg]);
-    return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+    const dto = await this.dataSource.transaction(async (manager) => {
+      const messagesRepo = manager.getRepository(MessageEntity);
+      await messagesRepo.save(msg);
+      await this.events.enqueueMessageDeleted(manager, {
+        messageId: msg.id,
+        chatId: input.chatId,
+        authorId: input.authorId,
+        deletedAt: msg.deletedAt!,
+      });
+      const otherReads = await this.otherMembersLastReadAt(
+        input.chatId,
+        input.authorId,
+        manager,
+      );
+      const replyMap = await this.loadReplyPreviews([msg], manager);
+      return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+    });
+    this.events.flush();
+    return dto;
   }
 
   async markRead(
@@ -592,10 +656,19 @@ export class ChatsService {
       return;
     }
 
-    await this.members.update(
-      { chatId, userId },
-      { lastReadAt: readAt, lastReadMessageId: readMessageId },
-    );
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(ChatMemberEntity).update(
+        { chatId, userId },
+        { lastReadAt: readAt, lastReadMessageId: readMessageId },
+      );
+      await this.events.enqueueMessageRead(manager, {
+        chatId,
+        userId,
+        lastReadMessageId: readMessageId,
+        lastReadAt: readAt,
+      });
+    });
+    this.events.flush();
   }
 
   private async createGroupEntity(input: {
@@ -656,8 +729,12 @@ export class ChatsService {
   private async otherMembersLastReadAt(
     chatId: string,
     viewerId: string,
+    manager?: EntityManager,
   ): Promise<Array<Date | null>> {
-    const peers = await this.members.find({
+    const repo = manager
+      ? manager.getRepository(ChatMemberEntity)
+      : this.members;
+    const peers = await repo.find({
       where: { chatId, leftAt: IsNull() },
     });
     return peers.filter((m) => m.userId !== viewerId).map((m) => m.lastReadAt);
@@ -717,6 +794,7 @@ export class ChatsService {
 
   private async loadReplyPreviews(
     rows: MessageEntity[],
+    manager?: EntityManager,
   ): Promise<Map<string, MessageReplyPreview>> {
     const ids = [
       ...new Set(
@@ -727,7 +805,8 @@ export class ChatsService {
     ];
     const map = new Map<string, MessageReplyPreview>();
     if (!ids.length) return map;
-    const found = await this.messages.find({
+    const repo = manager ? manager.getRepository(MessageEntity) : this.messages;
+    const found = await repo.find({
       where: { id: In(ids) },
     });
     for (const t of found) {

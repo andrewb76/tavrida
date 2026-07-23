@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useWs } from '@/composables/useWs';
 import { logtoAccountUsernameUrl } from '@/config/logto';
 import {
   chatListTitle,
@@ -27,6 +28,7 @@ const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 const chatsStore = useChatsStore();
+const ws = useWs();
 
 const chatId = computed(() => route.params.chatId as string);
 const chat = ref<ChatDto | null>(null);
@@ -39,6 +41,10 @@ const spawning = ref(false);
 const listEl = ref<HTMLElement | null>(null);
 const composeEl = ref<HTMLTextAreaElement | null>(null);
 const showJumpDown = ref(false);
+const typingPeer = ref(false);
+let typingClearTimer: ReturnType<typeof setTimeout> | null = null;
+let typingSendTimer: ReturnType<typeof setTimeout> | null = null;
+let wsUnsub: (() => void) | null = null;
 
 const replyTo = ref<ChatMessage | null>(null);
 const editingId = ref<string | null>(null);
@@ -92,7 +98,106 @@ watch(chatId, (id) => void load(id), { immediate: true });
 
 onBeforeUnmount(() => {
   if (mentionTimer) clearTimeout(mentionTimer);
+  if (typingClearTimer) clearTimeout(typingClearTimer);
+  if (typingSendTimer) clearTimeout(typingSendTimer);
+  wsUnsub?.();
+  wsUnsub = null;
 });
+
+function applyWsEvent(ev: {
+  event: string;
+  payload: Record<string, unknown>;
+}) {
+  const p = ev.payload;
+  if (ev.event === 'message.new') {
+    const id = String(p.messageId ?? '');
+    if (!id || messages.value.some((m) => m.id === id)) return;
+    if (p.authorId === session.userId) {
+      // REST optimistic path already added; ignore echo
+      return;
+    }
+    messages.value.push({
+      id,
+      chatId: chatId.value,
+      authorId: String(p.authorId ?? ''),
+      body: String(p.body ?? ''),
+      mentions: (p.mentions as ChatMessage['mentions']) ?? [],
+      createdAt: String(p.createdAt ?? new Date().toISOString()),
+      editedAt: null,
+      deletedAt: null,
+      status: null,
+      replyToMessageId: (p.replyToMessageId as string | null) ?? null,
+      replyTo: (p.replyTo as ChatMessage['replyTo']) ?? null,
+    });
+    typingPeer.value = false;
+    void markChatRead(chatId.value, id);
+    void chatsStore.refreshUnread();
+    void nextTick().then(() => {
+      if (!showJumpDown.value) scrollToBottom();
+    });
+    return;
+  }
+  if (ev.event === 'message.edited') {
+    const id = String(p.messageId ?? '');
+    const idx = messages.value.findIndex((m) => m.id === id);
+    if (idx < 0) return;
+    const cur = messages.value[idx]!;
+    messages.value[idx] = {
+      ...cur,
+      body: String(p.body ?? cur.body),
+      mentions: (p.mentions as ChatMessage['mentions']) ?? cur.mentions,
+      editedAt: String(p.editedAt ?? new Date().toISOString()),
+    };
+    return;
+  }
+  if (ev.event === 'message.deleted') {
+    const id = String(p.messageId ?? '');
+    const idx = messages.value.findIndex((m) => m.id === id);
+    if (idx < 0) return;
+    const cur = messages.value[idx]!;
+    messages.value[idx] = {
+      ...cur,
+      body: '',
+      mentions: [],
+      deletedAt: String(p.deletedAt ?? new Date().toISOString()),
+    };
+    return;
+  }
+  if (ev.event === 'message.read') {
+    const readerId = String(p.userId ?? '');
+    if (!readerId || readerId === session.userId) return;
+    const at = p.lastReadAt ? new Date(String(p.lastReadAt)).getTime() : 0;
+    messages.value = messages.value.map((m) => {
+      if (m.authorId !== session.userId || m.deletedAt) return m;
+      if (new Date(m.createdAt).getTime() <= at) {
+        return { ...m, status: 'READ' as const };
+      }
+      return m;
+    });
+    return;
+  }
+  if (ev.event === 'typing') {
+    const uid = String(p.userId ?? '');
+    if (!uid || uid === session.userId) return;
+    typingPeer.value = true;
+    if (typingClearTimer) clearTimeout(typingClearTimer);
+    const exp = p.expiresAt ? new Date(String(p.expiresAt)).getTime() : Date.now() + 5000;
+    typingClearTimer = setTimeout(() => {
+      typingPeer.value = false;
+    }, Math.max(500, exp - Date.now()));
+  }
+}
+
+async function bindWs(id: string) {
+  wsUnsub?.();
+  wsUnsub = null;
+  typingPeer.value = false;
+  try {
+    wsUnsub = await ws.subscribe(`chat:${id}`, (ev) => applyWsEvent(ev));
+  } catch {
+    /* REST-only fallback */
+  }
+}
 
 async function load(id: string) {
   loading.value = true;
@@ -111,6 +216,7 @@ async function load(id: string) {
     const last = [...msgRows].reverse().find((m) => !m.deletedAt) ?? msgRows[msgRows.length - 1];
     await markChatRead(id, last?.id);
     void chatsStore.refreshUnread();
+    await bindWs(id);
     await nextTick();
     scrollToBottom();
   } catch (e) {
@@ -197,15 +303,22 @@ function onComposeInput() {
   const match = before.match(/(^|[\s([{])@([A-Za-z_][\w]{0,31})$/);
   if (!match) {
     closeMention();
-    return;
+  } else {
+    mentionStart.value = caret - (match[2]?.length ?? 0) - 1;
+    mentionQuery.value = match[2] ?? '';
+    mentionOpen.value = true;
+    if (mentionTimer) clearTimeout(mentionTimer);
+    mentionTimer = setTimeout(() => {
+      void runMentionSearch(mentionQuery.value);
+    }, 180);
   }
-  mentionStart.value = caret - (match[2]?.length ?? 0) - 1;
-  mentionQuery.value = match[2] ?? '';
-  mentionOpen.value = true;
-  if (mentionTimer) clearTimeout(mentionTimer);
-  mentionTimer = setTimeout(() => {
-    void runMentionSearch(mentionQuery.value);
-  }, 180);
+
+  if (!editingId.value && body.value.trim()) {
+    if (typingSendTimer) clearTimeout(typingSendTimer);
+    typingSendTimer = setTimeout(() => {
+      ws.sendTyping(`chat:${chatId.value}`);
+    }, 400);
+  }
 }
 
 async function runMentionSearch(q: string) {
@@ -570,6 +683,12 @@ function messageParts(msg: ChatMessage): BodyPart[] {
       </div>
 
       <div class="relative">
+        <p
+          v-if="typingPeer"
+          class="mb-1 px-1 text-xs text-text-muted"
+        >
+          печатает…
+        </p>
         <div
           v-if="replyTo || editingId"
           class="mb-1 flex items-center gap-2 rounded-md border border-border bg-bg px-2 py-1.5 text-xs text-text-muted"
