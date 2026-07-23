@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 
+import { CategoryAllowedUserEntity } from '../../entities/category-allowed-user.entity';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { CategoriesService } from './categories.service';
@@ -21,13 +22,22 @@ function category(
   } as CategoryEntity;
 }
 
-function createHarness(initialCategories: CategoryEntity[] = [], initialTopics: TopicEntity[] = []) {
+function createHarness(
+  initialCategories: CategoryEntity[] = [],
+  initialTopics: TopicEntity[] = [],
+  initialAllow: CategoryAllowedUserEntity[] = [],
+) {
   const categories = [...initialCategories];
   const topics = [...initialTopics];
+  const allow = [...initialAllow];
 
   const categoriesRepo = {
-    find: async () =>
-      [...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title)),
+    find: async (opts?: { select?: string[]; order?: unknown }) => {
+      void opts;
+      return [...categories].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title),
+      );
+    },
     findOne: async ({ where }: { where: { id?: string; slug?: string } }) =>
       categories.find(
         (row) =>
@@ -61,10 +71,49 @@ function createHarness(initialCategories: CategoryEntity[] = [], initialTopics: 
       topics.filter((row) => row.categoryId === where.categoryId).length,
   } as unknown as Repository<TopicEntity>;
 
+  const allowRepo = {
+    find: async (opts?: {
+      where?: { categoryId?: unknown };
+      order?: { userId?: 'ASC' };
+    }) => {
+      let rows = [...allow];
+      const cat = opts?.where?.categoryId;
+      if (typeof cat === 'string') {
+        rows = rows.filter((r) => r.categoryId === cat);
+      } else if (cat && typeof cat === 'object') {
+        const op = cat as { _value?: string[]; value?: string[] };
+        const ids = op._value ?? op.value;
+        if (Array.isArray(ids)) {
+          rows = rows.filter((r) => ids.includes(r.categoryId));
+        }
+      }
+      return rows.sort((a, b) => a.userId.localeCompare(b.userId));
+    },
+    create: (data: Partial<CategoryAllowedUserEntity>) =>
+      ({ ...data }) as CategoryAllowedUserEntity,
+    save: async (rows: CategoryAllowedUserEntity | CategoryAllowedUserEntity[]) => {
+      const list = Array.isArray(rows) ? rows : [rows];
+      for (const row of list) {
+        const idx = allow.findIndex(
+          (a) => a.categoryId === row.categoryId && a.userId === row.userId,
+        );
+        if (idx >= 0) allow[idx] = row;
+        else allow.push(row);
+      }
+      return list;
+    },
+    delete: async ({ categoryId }: { categoryId: string }) => {
+      for (let i = allow.length - 1; i >= 0; i -= 1) {
+        if (allow[i]?.categoryId === categoryId) allow.splice(i, 1);
+      }
+    },
+  } as unknown as Repository<CategoryAllowedUserEntity>;
+
   return {
-    service: new CategoriesService(categoriesRepo, topicsRepo),
+    service: new CategoriesService(categoriesRepo, topicsRepo, allowRepo),
     categories,
     topics,
+    allow,
   };
 }
 
@@ -80,6 +129,74 @@ describe('CategoriesService', () => {
     assert.equal(result.data[0]?.id, 'root');
     assert.equal(result.data[0]?.children.length, 1);
     assert.equal(result.data[0]?.children[0]?.slug, 'finds');
+    assert.equal(result.data[0]?.restricted, false);
+  });
+
+  it('listTree hides restricted category from outsiders', async () => {
+    const { service } = createHarness(
+      [
+        category({ id: 'public', slug: 'general', title: 'Общее' }),
+        category({ id: 'secret', slug: 'staff', title: 'Staff' }),
+      ],
+      [],
+      [{ categoryId: 'secret', userId: 'user-a' } as CategoryAllowedUserEntity],
+    );
+
+    const anon = await service.listTree({ viewerId: null });
+    assert.deepEqual(
+      anon.data.map((n) => n.id),
+      ['public'],
+    );
+
+    const member = await service.listTree({ viewerId: 'user-a' });
+    assert.equal(member.data.length, 2);
+
+    const other = await service.listTree({ viewerId: 'user-b' });
+    assert.deepEqual(
+      other.data.map((n) => n.id),
+      ['public'],
+    );
+
+    const admin = await service.listTree({ viewerId: 'user-b', isAdmin: true, includeMembers: true });
+    assert.equal(admin.data.length, 2);
+    const secret = admin.data.find((n) => n.id === 'secret');
+    assert.equal(secret?.restricted, true);
+    assert.deepEqual(secret?.allowedUserIds, ['user-a']);
+  });
+
+  it('setMembers empty list makes category public again', async () => {
+    const { service, allow } = createHarness([
+      category({ id: 'root', slug: 'general', title: 'Общее' }),
+    ]);
+
+    await service.setMembers('root', ['u1', 'u2', 'u1']);
+    assert.equal(allow.length, 2);
+
+    let members = await service.getMembers('root');
+    assert.deepEqual(members.userIds, ['u1', 'u2']);
+
+    await service.setMembers('root', []);
+    assert.equal(allow.length, 0);
+    members = await service.getMembers('root');
+    assert.deepEqual(members.userIds, []);
+
+    await service.assertAccessible('root', { viewerId: 'stranger' });
+  });
+
+  it('assertAccessible forbids non-members on restricted category', async () => {
+    const { service } = createHarness(
+      [category({ id: 'root', slug: 'general', title: 'Общее' })],
+      [],
+      [{ categoryId: 'root', userId: 'u1' } as CategoryAllowedUserEntity],
+    );
+
+    await assert.rejects(
+      () => service.assertAccessible('root', { viewerId: 'u2' }),
+      (error: unknown) => error instanceof ForbiddenException,
+    );
+
+    await service.assertAccessible('root', { viewerId: 'u1' });
+    await service.assertAccessible('root', { viewerId: 'u2', isAdmin: true });
   });
 
   it('create saves a root category', async () => {
@@ -93,6 +210,7 @@ describe('CategoriesService', () => {
     assert.equal(result.slug, 'faq');
     assert.equal(result.title, 'FAQ');
     assert.equal(result.parentId, null);
+    assert.equal(result.restricted, false);
     assert.equal(categories.length, 1);
   });
 

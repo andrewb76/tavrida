@@ -30,6 +30,7 @@
 | Таблица | Описание |
 |---------|----------|
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
+| `category_allowed_user` | Allowlist ACL: пусто = всем; иначе userIds + admin ([category-acl.md](./category-acl.md)) |
 | `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; `deletedAt` (soft-delete staff); vote counters |
 | `comment` | Комментарий; `promotedTopicId`; `deletedAt`; vote counters |
 | `comment_closure` | Closure table для дерева |
@@ -60,7 +61,8 @@
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/forum/categories` | Дерево |
+| GET | `/forum/categories` | Дерево с ACL (optional JWT); admin видит `allowedUserIds` |
+| GET/PUT | `/admin/forum/categories/{id}/members` | Allowlist (admin) · [category-acl.md](./category-acl.md) |
 | GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
 | DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |

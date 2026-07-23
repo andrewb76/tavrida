@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import {
+  IsArray,
   IsInt,
   IsOptional,
   IsString,
@@ -66,6 +67,12 @@ class UpdateForumCategoryDto {
   sortOrder?: number;
 }
 
+class SetCategoryMembersDto {
+  @IsArray()
+  @IsString({ each: true })
+  userIds!: string[];
+}
+
 @Controller('admin/forum/categories')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminForumController {
@@ -79,6 +86,16 @@ export class AdminForumController {
   @Patch(':id')
   updateCategory(@Param('id') id: string, @Body() body: UpdateForumCategoryDto) {
     return this.forum.updateCategory(id, body);
+  }
+
+  @Get(':id/members')
+  getMembers(@Param('id') id: string) {
+    return this.forum.getCategoryMembers(id);
+  }
+
+  @Put(':id/members')
+  setMembers(@Param('id') id: string, @Body() body: SetCategoryMembersDto) {
+    return this.forum.setCategoryMembers(id, body.userIds ?? []);
   }
 
   @Delete(':id')

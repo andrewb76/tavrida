@@ -26,6 +26,8 @@ export type CategoryNode = {
   description: string;
   parentId: string | null;
   sortOrder: number;
+  restricted?: boolean;
+  allowedUserIds?: string[];
   children: CategoryNode[];
 };
 
@@ -437,4 +439,37 @@ export async function deleteCategory(categoryId: string): Promise<void> {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(err?.detail ?? 'Не удалось удалить категорию');
   }
+}
+
+export async function getCategoryMembers(
+  categoryId: string,
+): Promise<{ categoryId: string; userIds: string[] }> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/members`,
+    { headers: await forumAuthHeaders() },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось загрузить доступ');
+  }
+  return (await res.json()) as { categoryId: string; userIds: string[] };
+}
+
+export async function setCategoryMembers(
+  categoryId: string,
+  userIds: string[],
+): Promise<{ categoryId: string; userIds: string[] }> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/members`,
+    {
+      method: 'PUT',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify({ userIds }),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось сохранить доступ');
+  }
+  return (await res.json()) as { categoryId: string; userIds: string[] };
 }

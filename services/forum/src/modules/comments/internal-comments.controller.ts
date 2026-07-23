@@ -68,6 +68,10 @@ class CreateCommentRequestDto extends CreateCommentDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 }
 
 class UpdateCommentDto {
@@ -119,6 +123,7 @@ export class InternalCommentsController {
     @Param('topicId') topicId: string,
     @Query('viewerId') viewerId?: string,
     @Query('changeWindowMinutes') changeWindowMinutes?: string,
+    @Query('isAdmin') isAdmin?: string,
   ) {
     return this.comments.listByTopic(topicId, {
       userId: viewerId,
@@ -126,6 +131,7 @@ export class InternalCommentsController {
         changeWindowMinutes != null && changeWindowMinutes !== ''
           ? Number(changeWindowMinutes)
           : undefined,
+      isAdmin: isAdmin === '1' || isAdmin === 'true',
     });
   }
 

@@ -7,7 +7,7 @@
     "build": "tsc --build",
     "lint": "eslint src",
     "pretest": "pnpm run build",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node --test $(find dist -name '*.test.js')"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.28",

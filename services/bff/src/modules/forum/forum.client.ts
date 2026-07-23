@@ -16,8 +16,32 @@ export class ForumClient {
     return url.replace(/\/$/, '');
   }
 
-  listCategories() {
-    return this.request<{ data: unknown[] }>('GET', '/internal/v1/categories');
+  listCategories(opts?: {
+    viewerId?: string;
+    isAdmin?: boolean;
+    includeMembers?: boolean;
+  }) {
+    const params = new URLSearchParams();
+    if (opts?.viewerId) params.set('viewerId', opts.viewerId);
+    if (opts?.isAdmin) params.set('isAdmin', '1');
+    if (opts?.includeMembers) params.set('includeMembers', '1');
+    const q = params.size ? `?${params}` : '';
+    return this.request<{ data: unknown[] }>('GET', `/internal/v1/categories${q}`);
+  }
+
+  getCategoryMembers(categoryId: string) {
+    return this.request<{ categoryId: string; userIds: string[] }>(
+      'GET',
+      `/internal/v1/categories/${categoryId}/members`,
+    );
+  }
+
+  setCategoryMembers(categoryId: string, userIds: string[]) {
+    return this.request<{ categoryId: string; userIds: string[] }>(
+      'PUT',
+      `/internal/v1/categories/${categoryId}/members`,
+      { userIds },
+    );
   }
 
   createCategory(input: {
@@ -56,22 +80,30 @@ export class ForumClient {
     limit?: number;
     status?: 'DRAFT' | 'PUBLISHED';
     authorId?: string;
+    viewerId?: string;
+    isAdmin?: boolean;
   }) {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);
     if (query.limit != null) params.set('limit', String(query.limit));
     if (query.status) params.set('status', query.status);
     if (query.authorId) params.set('authorId', query.authorId);
+    if (query.viewerId) params.set('viewerId', query.viewerId);
+    if (query.isAdmin) params.set('isAdmin', '1');
     const suffix = params.size ? `?${params.toString()}` : '';
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
   }
 
-  getTopic(topicId: string, viewer?: { userId?: string; changeWindowMinutes?: number }) {
+  getTopic(
+    topicId: string,
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
+  ) {
     const params = new URLSearchParams();
     if (viewer?.userId) params.set('viewerId', viewer.userId);
     if (viewer?.changeWindowMinutes != null) {
       params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
     }
+    if (viewer?.isAdmin) params.set('isAdmin', '1');
     const q = params.size ? `?${params}` : '';
     return this.request<Record<string, unknown>>('GET', `/internal/v1/topics/${topicId}${q}`);
   }
@@ -90,6 +122,7 @@ export class ForumClient {
     }>;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    isAdmin?: boolean;
   }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/topics', input);
   }
@@ -122,13 +155,14 @@ export class ForumClient {
 
   listComments(
     topicId: string,
-    viewer?: { userId?: string; changeWindowMinutes?: number },
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
   ) {
     const params = new URLSearchParams();
     if (viewer?.userId) params.set('viewerId', viewer.userId);
     if (viewer?.changeWindowMinutes != null) {
       params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
     }
+    if (viewer?.isAdmin) params.set('isAdmin', '1');
     const q = params.size ? `?${params}` : '';
     return this.request<{ data: unknown[] }>(
       'GET',
@@ -150,6 +184,7 @@ export class ForumClient {
       }>;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      isAdmin?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>(

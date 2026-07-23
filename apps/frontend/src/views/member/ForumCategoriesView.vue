@@ -4,10 +4,12 @@ import {
   createCategory,
   deleteCategory,
   listCategories,
+  setCategoryMembers,
   updateCategory,
   type CategoryFormInput,
   type CategoryNode,
 } from '@/services/forum';
+import { fetchAdminUsers, type AdminUserRow } from '@/services/adminUsers';
 import { useSessionStore } from '@/stores/session';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
@@ -34,6 +36,18 @@ type FormState = {
 
 const form = ref<FormState | null>(null);
 const showForm = computed(() => form.value != null);
+
+type AccessState = {
+  categoryId: string;
+  title: string;
+  userIdsText: string;
+  search: string;
+  searchHits: AdminUserRow[];
+};
+
+const access = ref<AccessState | null>(null);
+const accessError = ref<string | null>(null);
+const accessSaving = ref(false);
 
 async function loadTree() {
   loading.value = true;
@@ -189,6 +203,65 @@ async function removeCategory(node: CategoryNode) {
     saving.value = false;
   }
 }
+
+function openAccess(node: CategoryNode) {
+  form.value = null;
+  access.value = {
+    categoryId: node.id,
+    title: node.title,
+    userIdsText: (node.allowedUserIds ?? []).join('\n'),
+    search: '',
+    searchHits: [],
+  };
+  accessError.value = null;
+}
+
+function closeAccess() {
+  access.value = null;
+  accessError.value = null;
+}
+
+async function searchUsersForAccess() {
+  if (!access.value?.search.trim()) {
+    access.value && (access.value.searchHits = []);
+    return;
+  }
+  try {
+    const res = await fetchAdminUsers({ q: access.value.search.trim(), limit: 10 });
+    access.value.searchHits = res.data;
+  } catch {
+    access.value.searchHits = [];
+  }
+}
+
+function addUserIdToAccess(userId: string) {
+  if (!access.value) return;
+  const lines = access.value.userIdsText
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!lines.includes(userId)) lines.push(userId);
+  access.value.userIdsText = lines.join('\n');
+}
+
+async function saveAccess() {
+  if (!access.value) return;
+  accessSaving.value = true;
+  accessError.value = null;
+  try {
+    const userIds = access.value.userIdsText
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    await setCategoryMembers(access.value.categoryId, userIds);
+    closeAccess();
+    await loadTree();
+  } catch (e) {
+    accessError.value = e instanceof Error ? e.message : 'Не удалось сохранить доступ';
+  } finally {
+    accessSaving.value = false;
+  }
+}
 </script>
 
 <template>
@@ -219,8 +292,77 @@ async function removeCategory(node: CategoryNode) {
       v-if="isAdmin"
       class="forum-categories__admin-hint"
     >
-      Режим администратора: можно добавлять, редактировать и удалять разделы.
+      Режим администратора: разделы, доступ (пустой список = всем; иначе только перечисленные + админы).
     </p>
+
+    <div
+      v-if="access"
+      class="forum-categories__form-panel"
+    >
+      <h2>Доступ: {{ access.title }}</h2>
+      <p class="forum-categories__lead">
+        Список userId (Logto), по одному на строку. Пусто — раздел виден всем.
+      </p>
+      <label>
+        Поиск участника
+        <input
+          v-model="access.search"
+          type="search"
+          placeholder="Имя или @username"
+          @input="searchUsersForAccess"
+        >
+      </label>
+      <ul
+        v-if="access.searchHits.length"
+        class="forum-categories__search-hits"
+      >
+        <li
+          v-for="u in access.searchHits"
+          :key="u.userId"
+        >
+          <button
+            type="button"
+            class="forum-categories__hit"
+            @click="addUserIdToAccess(u.userId)"
+          >
+            {{ u.displayName || u.username || u.email || u.userId }}
+            <span class="forum-categories__hit-id">{{ u.userId }}</span>
+          </button>
+        </li>
+      </ul>
+      <label>
+        User ID
+        <textarea
+          v-model="access.userIdsText"
+          rows="6"
+          placeholder="пусто = доступно всем"
+        />
+      </label>
+      <p
+        v-if="accessError"
+        class="forum-categories__error"
+      >
+        {{ accessError }}
+      </p>
+      <div class="forum-categories__form-actions">
+        <UiButton
+          intent="primary"
+          type="button"
+          :disabled="accessSaving"
+          @click="saveAccess"
+        >
+          {{ accessSaving ? 'Сохранение…' : 'Сохранить доступ' }}
+        </UiButton>
+        <UiButton
+          intent="secondary"
+          type="button"
+          :disabled="accessSaving"
+          @click="closeAccess"
+        >
+          Отмена
+        </UiButton>
+      </div>
+    </div>
 
     <div
       v-if="showForm"
@@ -326,6 +468,7 @@ async function removeCategory(node: CategoryNode) {
         :is-admin="isAdmin"
         @edit="openEdit"
         @add-child="openCreateChild"
+        @access="openAccess"
         @delete="removeCategory"
       />
     </ul>
@@ -384,6 +527,38 @@ async function removeCategory(node: CategoryNode) {
 .forum-categories__form label {
   display: grid;
   gap: 0.35rem;
+}
+
+.forum-categories__search-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.forum-categories__hit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.forum-categories__hit:hover {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.forum-categories__hit-id {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #666);
+  word-break: break-all;
 }
 
 .forum-categories__form input,

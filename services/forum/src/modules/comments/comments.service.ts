@@ -10,6 +10,7 @@ import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsPublisher } from '../events/forum-events.publisher';
+import { CategoriesService } from '../categories/categories.service';
 import { VotesService } from '../votes/votes.service';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class CommentsService {
     private readonly closures: Repository<CommentClosureEntity>,
     @InjectRepository(TopicEntity)
     private readonly topics: Repository<TopicEntity>,
+    private readonly categoryAcl: CategoriesService,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
@@ -29,7 +31,7 @@ export class CommentsService {
 
   async listByTopic(
     topicId: string,
-    viewer?: { userId?: string; changeWindowMinutes?: number },
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
   ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
     if (
@@ -39,6 +41,10 @@ export class CommentsService {
     ) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
+    await this.categoryAcl.assertAccessible(topic.categoryId, {
+      viewerId: viewer?.userId,
+      isAdmin: viewer?.isAdmin,
+    });
 
     const rows = await this.comments.find({
       where: { topicId },
@@ -92,6 +98,7 @@ export class CommentsService {
     attachments?: MediaAttachment[];
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    isAdmin?: boolean;
   }) {
     const topic = await this.topics.findOne({ where: { id: input.topicId } });
     if (!topic || topic.deletedAt) {
@@ -103,6 +110,10 @@ export class CommentsService {
         detail: 'Черновик нельзя комментировать — сначала опубликуйте тему',
       });
     }
+    await this.categoryAcl.assertAccessible(topic.categoryId, {
+      viewerId: input.authorId,
+      isAdmin: input.isAdmin,
+    });
 
     if (input.parentId) {
       const parent = await this.comments.findOne({

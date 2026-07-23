@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OutboxMessageEntity } from '@tavrida/outbox';
 import { resolve } from 'node:path';
+import { CategoryAllowedUserEntity } from './entities/category-allowed-user.entity';
 import { CategoryEntity } from './entities/category.entity';
 import { CommentClosureEntity } from './entities/comment-closure.entity';
 import { CommentEntity } from './entities/comment.entity';
@@ -43,6 +44,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
       schema: 'forum',
       entities: [
         CategoryEntity,
+        CategoryAllowedUserEntity,
         TopicEntity,
         CommentEntity,
         CommentClosureEntity,

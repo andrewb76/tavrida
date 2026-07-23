@@ -77,6 +77,14 @@ class ListTopicsQuery {
   @IsString()
   @MinLength(1)
   authorId?: string;
+
+  @IsOptional()
+  @IsString()
+  viewerId?: string;
+
+  @IsOptional()
+  @IsString()
+  isAdmin?: string;
 }
 
 class CreateTopicRequestDto extends CreateTopicDto {
@@ -95,6 +103,10 @@ class CreateTopicRequestDto extends CreateTopicDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 }
 
 class UpdateTopicDto {
@@ -153,7 +165,14 @@ export class InternalTopicsController {
 
   @Get()
   list(@Query() query: ListTopicsQuery) {
-    return this.topics.list(query);
+    return this.topics.list({
+      categoryId: query.categoryId,
+      limit: query.limit,
+      status: query.status,
+      authorId: query.authorId,
+      viewerId: query.viewerId,
+      isAdmin: query.isAdmin === '1' || query.isAdmin === 'true',
+    });
   }
 
   @Get(':id')
@@ -161,6 +180,7 @@ export class InternalTopicsController {
     @Param('id') id: string,
     @Query('viewerId') viewerId?: string,
     @Query('changeWindowMinutes') changeWindowMinutes?: string,
+    @Query('isAdmin') isAdmin?: string,
   ) {
     return this.topics.getById(id, {
       userId: viewerId,
@@ -168,6 +188,7 @@ export class InternalTopicsController {
         changeWindowMinutes != null && changeWindowMinutes !== ''
           ? Number(changeWindowMinutes)
           : undefined,
+      isAdmin: isAdmin === '1' || isAdmin === 'true',
     });
   }
 

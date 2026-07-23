@@ -13,6 +13,7 @@ import { validateForumContent } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsPublisher } from '../events/forum-events.publisher';
+import { CategoriesService } from '../categories/categories.service';
 import { TagsService } from '../tags/tags.service';
 import { VotesService } from '../votes/votes.service';
 
@@ -25,6 +26,7 @@ export class TopicsService {
     private readonly topics: Repository<TopicEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categories: Repository<CategoryEntity>,
+    private readonly categoryAcl: CategoriesService,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
@@ -37,9 +39,16 @@ export class TopicsService {
     limit?: number;
     status?: TopicStatus;
     authorId?: string;
+    viewerId?: string;
+    isAdmin?: boolean;
   }) {
     const take = Math.min(Math.max(input.limit ?? 20, 1), 100);
     const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
+    const access = { viewerId: input.viewerId, isAdmin: input.isAdmin };
+
+    if (input.categoryId) {
+      await this.categoryAcl.assertAccessible(input.categoryId, access);
+    }
 
     if (status === 'DRAFT') {
       if (!input.authorId) {
@@ -71,16 +80,25 @@ export class TopicsService {
       take,
     });
 
+    if (input.categoryId || input.isAdmin) {
+      return { data: rows.map((row) => this.toSummary(row)) };
+    }
+
+    const allowed = new Set(await this.categoryAcl.listAccessibleCategoryIds(access));
     return {
-      data: rows.map((row) => this.toSummary(row)),
+      data: rows.filter((row) => allowed.has(row.categoryId)).map((row) => this.toSummary(row)),
     };
   }
 
   async getById(
     topicId: string,
-    viewer?: { userId?: string; changeWindowMinutes?: number },
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
   ) {
     const row = await this.requireVisibleTopic(topicId, viewer?.userId);
+    await this.categoryAcl.assertAccessible(row.categoryId, {
+      viewerId: viewer?.userId,
+      isAdmin: viewer?.isAdmin,
+    });
     return this.toDetail(row, viewer);
   }
 
@@ -119,6 +137,7 @@ export class TopicsService {
     attachments?: MediaAttachment[];
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    isAdmin?: boolean;
   }) {
     const category = await this.categories.findOne({ where: { id: input.categoryId } });
     if (!category) {
@@ -127,6 +146,10 @@ export class TopicsService {
         detail: `Category ${input.categoryId} not found`,
       });
     }
+    await this.categoryAcl.assertAccessible(input.categoryId, {
+      viewerId: input.authorId,
+      isAdmin: input.isAdmin,
+    });
 
     const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
     const attachments = input.attachments ?? [];

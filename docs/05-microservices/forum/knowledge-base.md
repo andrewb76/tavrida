@@ -19,6 +19,8 @@
 
 Поля на **любой узел** дерева категорий (наследуются вниз, override на дочерней ветке):
 
+> **Доступ к чтению/участию** (кто видит раздел) — отдельный allowlist ACL, не `policy`: [category-acl.md](./category-acl.md).
+
 | Поле | Тип | Default | Описание |
 |------|-----|---------|----------|
 | `kind` | enum | `DISCUSSION` | `DISCUSSION` \| `DOCUMENTATION` \| `LEGAL` |

@@ -42,6 +42,7 @@ Subscriptions (event intent):
 Forum:
   ✔ Topic drafts DRAFT/PUBLISHED (author-only, no unpublish) @forum @frontend @docs @done(26-07-21)
   ✔ Staff mod: edit/delete topics+comments; promote staff-only @forum @bff @frontend @docs @done(26-07-23)
+  ✔ Category ACL allowlist (empty=all; else users+admin) @forum @bff @frontend @docs @done(26-07-23)
 
 Chat:
   ✔ requirements/analysis.md + registry keys + ADR-020 prefs backlog @chat @docs @done(26-07-22)
