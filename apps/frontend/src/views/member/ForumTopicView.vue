@@ -13,6 +13,7 @@ import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   buildCommentTree,
   createComment,
+  deleteTopic,
   fetchForumMeta,
   forumAuthorLabel,
   getTopic,
@@ -26,10 +27,12 @@ import {
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
+import { toast } from 'vue-sonner';
 
 const route = useRoute();
+const router = useRouter();
 const session = useSessionStore();
 const topicId = computed(() => route.params.id as string);
 
@@ -56,6 +59,7 @@ const commentUpload = useMediaUpload('forum');
 
 const canEditTopic = computed(() => {
   if (!topic.value || !session.userId || !forumMeta.value) return false;
+  if (session.isModerator) return true;
   if (topic.value.authorId !== session.userId) return false;
   if (topic.value.status === 'DRAFT') return true;
   return canEditForumContent(
@@ -63,6 +67,13 @@ const canEditTopic = computed(() => {
     forumMeta.value.editWindowMinutes,
   );
 });
+
+const canDeleteTopic = computed(() => {
+  if (!topic.value || !session.userId) return false;
+  return session.isModerator;
+});
+
+const deletingTopic = ref(false);
 
 const isDraft = computed(() => topic.value?.status === 'DRAFT');
 const publishing = ref(false);
@@ -140,12 +151,41 @@ async function publishDraft() {
   }
 }
 
+async function onDeleteTopic() {
+  if (!canDeleteTopic.value || deletingTopic.value) return;
+  if (!window.confirm('Удалить тему? Она исчезнет из списков.')) return;
+  deletingTopic.value = true;
+  try {
+    await deleteTopic(topicId.value);
+    toast.success('Тема удалена');
+    await router.push({ name: 'forum' });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось удалить тему');
+  } finally {
+    deletingTopic.value = false;
+  }
+}
+
 function onCommentCreated(created: ForumComment) {
   comments.value = [...comments.value, created];
 }
 
 function onCommentUpdated(updated: ForumComment) {
   comments.value = comments.value.map((row) => (row.id === updated.id ? updated : row));
+}
+
+function onCommentDeleted(commentId: string) {
+  comments.value = comments.value.map((row) =>
+    row.id === commentId
+      ? {
+          ...row,
+          body: 'Комментарий удалён',
+          attachments: [],
+          deletedAt: row.deletedAt ?? new Date().toISOString(),
+          canChangeVote: false,
+        }
+      : row,
+  );
 }
 
 async function onCommentPromoted() {
@@ -290,6 +330,21 @@ async function submitTopicComment() {
               />
             </UiButton>
             <UiButton
+              v-if="canDeleteTopic && !editingTopic"
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Удалить тему"
+              title="Удалить тему"
+              :disabled="deletingTopic"
+              @click="onDeleteTopic"
+            >
+              <UiIcon
+                name="trash"
+                :size="18"
+              />
+            </UiButton>
+            <UiButton
               v-if="isDraft && canEditTopic && !editingTopic"
               intent="primary"
               size="sm"
@@ -380,7 +435,7 @@ async function submitTopicComment() {
           :topic-id="topic.id"
           :tags="topic.tags ?? []"
           :tag-items="topic.tagItems"
-          :can-edit="Boolean(session.userId && topic.authorId === session.userId)"
+          :can-edit="Boolean(session.userId && (topic.authorId === session.userId || session.isModerator))"
           @updated="onTopicTagsUpdated"
         />
         <div
@@ -427,6 +482,7 @@ async function submitTopicComment() {
             :current-user-id="session.userId"
             @created="onCommentCreated"
             @updated="onCommentUpdated"
+            @deleted="onCommentDeleted"
             @promoted="onCommentPromoted"
           />
         </ul>

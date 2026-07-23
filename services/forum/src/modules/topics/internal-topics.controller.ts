@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -140,6 +141,10 @@ class UpdateTopicRequestDto extends UpdateTopicDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  asModerator?: boolean;
 }
 
 @Controller('internal/v1/topics')
@@ -176,11 +181,28 @@ export class InternalTopicsController {
     return this.topics.update({ topicId: id, ...body });
   }
 
+  @Delete(':id')
+  softDelete(
+    @Param('id') id: string,
+    @Body() body: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.topics.softDelete({
+      topicId: id,
+      actorId: body.actorId,
+      asModerator: body.asModerator,
+    });
+  }
+
   @Put(':id/tags')
   updateTags(
     @Param('id') id: string,
-    @Body() body: { authorId: string; tags: string[] },
+    @Body() body: { authorId: string; tags: string[]; asModerator?: boolean },
   ) {
-    return this.topics.updateTags({ topicId: id, authorId: body.authorId, tags: body.tags });
+    return this.topics.updateTags({
+      topicId: id,
+      authorId: body.authorId,
+      tags: body.tags,
+      asModerator: body.asModerator,
+    });
   }
 }

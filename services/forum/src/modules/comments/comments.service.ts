@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -32,7 +32,11 @@ export class CommentsService {
     viewer?: { userId?: string; changeWindowMinutes?: number },
   ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
-    if (!topic || (topic.status === 'DRAFT' && topic.authorId !== viewer?.userId)) {
+    if (
+      !topic ||
+      topic.deletedAt ||
+      (topic.status === 'DRAFT' && topic.authorId !== viewer?.userId)
+    ) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
 
@@ -58,19 +62,21 @@ export class CommentsService {
           mine?.createdAt ?? null,
           changeWindowMinutes,
         );
+        const deleted = Boolean(row.deletedAt);
         return {
           id: row.id,
           topicId: row.topicId,
           authorId: row.authorId,
           parentId: row.parentId,
-          body: row.body,
-          attachments: row.attachments ?? [],
+          body: deleted ? 'Комментарий удалён' : row.body,
+          attachments: deleted ? [] : row.attachments ?? [],
           promotedTopicId: row.promotedTopicId,
+          deletedAt: row.deletedAt?.toISOString() ?? null,
           votePlusCount: vote.plusCount,
           voteMinusCount: vote.minusCount,
           score: vote.score,
           myVote: vote.myVote,
-          canChangeVote: vote.canChange,
+          canChangeVote: deleted ? false : vote.canChange,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
         };
@@ -88,7 +94,7 @@ export class CommentsService {
     maxAttachmentSizeBytes?: number;
   }) {
     const topic = await this.topics.findOne({ where: { id: input.topicId } });
-    if (!topic) {
+    if (!topic || topic.deletedAt) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
     if (topic.status !== 'PUBLISHED') {
@@ -196,11 +202,12 @@ export class CommentsService {
     editWindowMinutes: number;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    asModerator?: boolean;
   }) {
     const comment = await this.comments.findOne({
       where: { id: input.commentId, topicId: input.topicId },
     });
-    if (!comment) {
+    if (!comment || comment.deletedAt) {
       throw new NotFoundException({
         type: 'not-found',
         detail: `Comment ${input.commentId} not found in topic`,
@@ -212,6 +219,7 @@ export class CommentsService {
       editorId: input.authorId,
       createdAt: comment.createdAt,
       editWindowMinutes: input.editWindowMinutes,
+      asModerator: input.asModerator,
     });
 
     const nextBody = input.body?.trim();
@@ -246,6 +254,7 @@ export class CommentsService {
       body: comment.body,
       attachments: comment.attachments ?? [],
       promotedTopicId: comment.promotedTopicId,
+      deletedAt: null,
       votePlusCount: comment.votePlusCount ?? 0,
       voteMinusCount: comment.voteMinusCount ?? 0,
       score: (comment.votePlusCount ?? 0) - (comment.voteMinusCount ?? 0),
@@ -253,6 +262,36 @@ export class CommentsService {
       canChangeVote: true,
       createdAt: comment.createdAt.toISOString(),
       updatedAt: comment.updatedAt.toISOString(),
+    };
+  }
+
+  async softDelete(input: {
+    topicId: string;
+    commentId: string;
+    actorId: string;
+    asModerator?: boolean;
+  }) {
+    if (!input.asModerator) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Удалять комментарии могут только администратор и модератор',
+      });
+    }
+    const comment = await this.comments.findOne({
+      where: { id: input.commentId, topicId: input.topicId },
+    });
+    if (!comment || comment.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${input.commentId} not found in topic`,
+      });
+    }
+    comment.deletedAt = new Date();
+    await this.comments.save(comment);
+    return {
+      ok: true,
+      commentId: comment.id,
+      deletedAt: comment.deletedAt.toISOString(),
     };
   }
 
@@ -266,16 +305,24 @@ export class CommentsService {
     commentId: string;
     actorId: string;
     title?: string;
+    asModerator?: boolean;
   }) {
+    if (!input.asModerator) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Выделить комментарий в тему могут только администратор и модератор',
+      });
+    }
+
     const sourceTopic = await this.topics.findOne({ where: { id: input.topicId } });
-    if (!sourceTopic) {
+    if (!sourceTopic || sourceTopic.deletedAt) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
 
     const comment = await this.comments.findOne({
       where: { id: input.commentId, topicId: input.topicId },
     });
-    if (!comment) {
+    if (!comment || comment.deletedAt) {
       throw new NotFoundException({
         type: 'not-found',
         detail: `Comment ${input.commentId} not found in topic`,
@@ -287,13 +334,6 @@ export class CommentsService {
         type: 'conflict',
         detail: 'Комментарий уже выделен в тему',
         promotedTopicId: comment.promotedTopicId,
-      });
-    }
-
-    if (comment.authorId !== input.actorId && sourceTopic.authorId !== input.actorId) {
-      throw new BadRequestException({
-        type: 'forbidden',
-        detail: 'Выделить в тему может автор комментария или темы',
       });
     }
 

@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
@@ -52,6 +52,7 @@ export class TopicsService {
         where: {
           status: 'DRAFT',
           authorId: input.authorId,
+          deletedAt: IsNull(),
           ...(input.categoryId ? { categoryId: input.categoryId } : {}),
         },
         order: { updatedAt: 'DESC' },
@@ -63,6 +64,7 @@ export class TopicsService {
     const rows = await this.topics.find({
       where: {
         status: 'PUBLISHED',
+        deletedAt: IsNull(),
         ...(input.categoryId ? { categoryId: input.categoryId } : {}),
       },
       order: { isPinned: 'DESC', createdAt: 'DESC' },
@@ -85,7 +87,7 @@ export class TopicsService {
   /** Load topic if viewer may see it; drafts → author only (404 otherwise). */
   async requireVisibleTopic(topicId: string, viewerId?: string): Promise<TopicEntity> {
     const row = await this.topics.findOne({ where: { id: topicId } });
-    if (!row) {
+    if (!row || row.deletedAt) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
     if (row.status === 'DRAFT' && row.authorId !== viewerId) {
@@ -181,13 +183,14 @@ export class TopicsService {
     editWindowMinutes: number;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    asModerator?: boolean;
   }) {
     const row = await this.topics.findOne({ where: { id: input.topicId } });
-    if (!row) {
+    if (!row || row.deletedAt) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
 
-    if (row.authorId !== input.authorId) {
+    if (!input.asModerator && row.authorId !== input.authorId) {
       throw new BadRequestException({
         type: 'forbidden',
         detail: 'Можно редактировать только свой контент',
@@ -209,6 +212,7 @@ export class TopicsService {
         editorId: input.authorId,
         createdAt: row.publishedAt ?? row.createdAt,
         editWindowMinutes: input.editWindowMinutes,
+        asModerator: input.asModerator,
       });
     }
 
@@ -268,15 +272,36 @@ export class TopicsService {
     return this.toDetail(row);
   }
 
-  async updateTags(input: { topicId: string; authorId: string; tags: string[] }) {
+  async softDelete(input: { topicId: string; actorId: string; asModerator?: boolean }) {
+    if (!input.asModerator) {
+      throw new BadRequestException({
+        type: 'forbidden',
+        detail: 'Удалять темы могут только администратор и модератор',
+      });
+    }
+    const row = await this.topics.findOne({ where: { id: input.topicId } });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+    row.deletedAt = new Date();
+    await this.topics.save(row);
+    return { ok: true, topicId: row.id, deletedAt: row.deletedAt.toISOString() };
+  }
+
+  async updateTags(input: {
+    topicId: string;
+    authorId: string;
+    tags: string[];
+    asModerator?: boolean;
+  }) {
     const row = await this.topics.findOne({ where: { id: input.topicId } });
     if (!row) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
-    if (row.authorId !== input.authorId) {
+    if (!input.asModerator && row.authorId !== input.authorId) {
       throw new BadRequestException({
         type: 'forbidden',
-        detail: 'Только автор может менять теги темы',
+        detail: 'Только автор или модератор может менять теги темы',
       });
     }
     const { tagItems, slugs, addedTagIds } = await this.tags.replaceTopicTags({

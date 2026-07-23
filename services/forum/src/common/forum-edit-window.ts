@@ -20,7 +20,11 @@ export function assertForumEditAllowed(input: {
   editorId: string;
   createdAt: Date;
   editWindowMinutes: number;
+  /** Platform admin/moderator — edit any content without window. */
+  asModerator?: boolean;
 }) {
+  if (input.asModerator) return;
+
   if (input.authorId !== input.editorId) {
     throw new ForbiddenException({
       type: 'forbidden',

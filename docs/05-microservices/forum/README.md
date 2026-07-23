@@ -30,8 +30,8 @@
 | Таблица | Описание |
 |---------|----------|
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
-| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; vote counters |
-| `comment` | Комментарий; `promotedTopicId`; vote counters |
+| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; `deletedAt` (soft-delete staff); vote counters |
+| `comment` | Комментарий; `promotedTopicId`; `deletedAt`; vote counters |
 | `comment_closure` | Closure table для дерева |
 | `reaction` | emoji-реакции (`emojiKey`) |
 | `content_vote` | +/- : `userId`+`contentId` PK, `value` ±1, `createdAt` |
@@ -62,12 +62,15 @@
 |--------|------|----------|
 | GET | `/forum/categories` | Дерево |
 | GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
-| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit; draft → publish via `status` |
+| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
+| DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
-| PUT | `/forum/topics/{id}/tags` | Заменить теги (labels → Tag/ContentTag; ответ `tagItems`) |
-| GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth |
-| POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + перенос subtree (автор comment/topic) |
+| PUT | `/forum/topics/{id}/tags` | Заменить теги (автор **или** staff) |
+| GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth; удалённые — placeholder |
+| PATCH | `/forum/topics/{id}/comments/{commentId}` | Edit (автор в окне **или** staff) |
+| DELETE | `/forum/topics/{id}/comments/{commentId}` | Soft-delete комментария (**только** staff) |
+| POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + subtree (**только** admin/moderator) |
 | POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |
 | POST | `/forum/votes/clear` | Снять голос |
 | GET/POST | `/forum/reactions` | Список / upsert emoji (`+1`, `-1`, `heart`, `surprised`, `thinking`) |

@@ -110,9 +110,14 @@ export class ForumClient {
       editWindowMinutes: number;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      asModerator?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>('PATCH', `/internal/v1/topics/${topicId}`, input);
+  }
+
+  deleteTopic(topicId: string, input: { actorId: string; asModerator?: boolean }) {
+    return this.request<{ ok: boolean }>('DELETE', `/internal/v1/topics/${topicId}`, input);
   }
 
   listComments(
@@ -169,6 +174,7 @@ export class ForumClient {
       editWindowMinutes: number;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      asModerator?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>(
@@ -178,10 +184,22 @@ export class ForumClient {
     );
   }
 
+  deleteComment(
+    topicId: string,
+    commentId: string,
+    input: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.request<{ ok: boolean }>(
+      'DELETE',
+      `/internal/v1/topics/${topicId}/comments/${commentId}`,
+      input,
+    );
+  }
+
   promoteCommentToTopic(
     topicId: string,
     commentId: string,
-    input: { actorId: string; title?: string },
+    input: { actorId: string; title?: string; asModerator?: boolean },
   ) {
     return this.request<Record<string, unknown>>(
       'POST',
@@ -190,7 +208,10 @@ export class ForumClient {
     );
   }
 
-  updateTopicTags(topicId: string, input: { authorId: string; tags: string[] }) {
+  updateTopicTags(
+    topicId: string,
+    input: { authorId: string; tags: string[]; asModerator?: boolean },
+  ) {
     return this.request<Record<string, unknown>>(
       'PUT',
       `/internal/v1/topics/${topicId}/tags`,

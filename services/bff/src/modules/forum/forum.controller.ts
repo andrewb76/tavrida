@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
   Logger,
   Param,
@@ -34,6 +36,7 @@ import {
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
+import { KetoService } from '../keto/keto.service';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { UserProfileClient } from '../user-profile/user-profile.client';
@@ -203,7 +206,16 @@ export class ForumController {
     private readonly mediaStorage: MediaStorageService,
     private readonly forumSettings: ForumSettingsReader,
     private readonly profiles: UserProfileClient,
+    private readonly keto: KetoService,
   ) {}
+
+  private async requireForumStaff(userId: string): Promise<true> {
+    if (await this.keto.isForumStaff(userId)) return true;
+    throw new ForbiddenException({
+      type: 'forbidden',
+      detail: 'Нужна роль администратора или модератора',
+    });
+  }
 
   private validateForumMedia(
     userId: string,
@@ -323,6 +335,7 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    const asModerator = await this.keto.isForumStaff(user.sub);
     return this.authors.enrichOne(
       await this.forum.updateTopic(topicId, {
         ...body,
@@ -330,8 +343,19 @@ export class ForumController {
         editWindowMinutes,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        asModerator,
       }) as { authorId: string },
     );
+  }
+
+  @Delete('topics/:id')
+  @UseGuards(JwtAuthGuard)
+  async deleteTopic(@CurrentUser() user: AuthUser, @Param('id') topicId: string) {
+    await this.requireForumStaff(user.sub);
+    return this.forum.deleteTopic(topicId, {
+      actorId: user.sub,
+      asModerator: true,
+    });
   }
 
   @Get('topics/:id/comments')
@@ -378,6 +402,7 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    const asModerator = await this.keto.isForumStaff(user.sub);
     return this.authors.enrichOne(
       await this.forum.updateComment(topicId, commentId, {
         ...body,
@@ -385,21 +410,38 @@ export class ForumController {
         editWindowMinutes,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        asModerator,
       }) as { authorId: string },
     );
   }
 
+  @Delete('topics/:topicId/comments/:commentId')
+  @UseGuards(JwtAuthGuard)
+  async deleteComment(
+    @CurrentUser() user: AuthUser,
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    await this.requireForumStaff(user.sub);
+    return this.forum.deleteComment(topicId, commentId, {
+      actorId: user.sub,
+      asModerator: true,
+    });
+  }
+
   @Post('topics/:topicId/comments/:commentId/promote-to-topic')
   @UseGuards(JwtAuthGuard)
-  promoteComment(
+  async promoteComment(
     @CurrentUser() user: AuthUser,
     @Param('topicId') topicId: string,
     @Param('commentId') commentId: string,
     @Body() body: PromoteCommentDto,
   ) {
+    await this.requireForumStaff(user.sub);
     return this.forum.promoteCommentToTopic(topicId, commentId, {
       actorId: user.sub,
       title: body.title,
+      asModerator: true,
     });
   }
 
@@ -410,9 +452,11 @@ export class ForumController {
     @Param('id') topicId: string,
     @Body() body: UpdateTopicTagsDto,
   ) {
+    const asModerator = await this.keto.isForumStaff(user.sub);
     const updated = (await this.forum.updateTopicTags(topicId, {
       authorId: user.sub,
       tags: body.tags,
+      asModerator,
     })) as {
       authorId: string;
       addedTagIds?: string[];

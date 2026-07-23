@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
 import { AuthModule } from '../auth/auth.module';
+import { KetoModule } from '../keto/keto.module';
 import { LogtoModule } from '../logto/logto.module';
 import { MediaModule } from '../media/media.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
@@ -18,6 +19,7 @@ import { ForumController } from './forum.controller';
     UserProfileModule,
     ScalarConfigModule,
     LogtoModule,
+    KetoModule,
   ],
   controllers: [ForumController, AdminForumController],
   providers: [ForumClient, ForumAuthorsService, ForumScalarBootstrapService, AdminGuard],

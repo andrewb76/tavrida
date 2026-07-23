@@ -48,6 +48,9 @@ export class TopicEntity {
   @Column('timestamptz', { name: 'published_at', nullable: true })
   publishedAt!: Date | null;
 
+  @Column('timestamptz', { name: 'deleted_at', nullable: true })
+  deletedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

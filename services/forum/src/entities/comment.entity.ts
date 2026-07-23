@@ -37,6 +37,9 @@ export class CommentEntity {
   @Column('int', { name: 'vote_minus_count', default: 0 })
   voteMinusCount!: number;
 
+  @Column('timestamptz', { name: 'deleted_at', nullable: true })
+  deletedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

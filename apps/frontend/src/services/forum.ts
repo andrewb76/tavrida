@@ -155,6 +155,18 @@ export async function updateTopic(
   return (await res.json()) as TopicDetail;
 }
 
+export async function deleteTopic(topicId: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}`, {
+    method: 'DELETE',
+    headers: await forumJsonHeaders(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось удалить тему');
+  }
+}
+
 export async function listComments(topicId: string): Promise<ForumComment[]> {
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {
     headers: await forumAuthHeaders(true),
@@ -198,6 +210,21 @@ export async function updateComment(
     throw new Error(err?.detail ?? 'Не удалось обновить комментарий');
   }
   return (await res.json()) as ForumComment;
+}
+
+export async function deleteComment(topicId: string, commentId: string): Promise<void> {
+  const res = await fetch(
+    `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: 'DELETE',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify({}),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось удалить комментарий');
+  }
 }
 
 export type ForumVoteResult = {

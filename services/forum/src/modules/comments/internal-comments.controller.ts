@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -103,6 +104,10 @@ class UpdateCommentRequestDto extends UpdateCommentDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  asModerator?: boolean;
 }
 
 @Controller('internal/v1/topics/:topicId/comments')
@@ -145,17 +150,32 @@ export class InternalCommentsController {
     });
   }
 
+  @Delete(':commentId')
+  softDelete(
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+    @Body() body: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.comments.softDelete({
+      topicId,
+      commentId,
+      actorId: body.actorId,
+      asModerator: body.asModerator,
+    });
+  }
+
   @Post(':commentId/promote-to-topic')
   promote(
     @Param('topicId') topicId: string,
     @Param('commentId') commentId: string,
-    @Body() body: { actorId: string; title?: string },
+    @Body() body: { actorId: string; title?: string; asModerator?: boolean },
   ) {
     return this.comments.promoteToTopic({
       topicId,
       commentId,
       actorId: body.actorId,
       title: body.title,
+      asModerator: body.asModerator,
     });
   }
 }
