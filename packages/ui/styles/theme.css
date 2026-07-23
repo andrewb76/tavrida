@@ -6,6 +6,7 @@
 @theme inline {
   --color-primary: var(--token-primary);
   --color-primary-hover: var(--token-primary-hover);
+  --color-primary-fg: var(--token-primary-fg);
   --color-accent: var(--token-accent);
   --color-bg: var(--token-bg);
   --color-surface: var(--token-surface);
