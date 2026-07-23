@@ -83,6 +83,62 @@ async function adminFetch(path: string, init?: RequestInit) {
   return res;
 }
 
+const EMPTY_RATING: AdminUserRow['rating'] = {
+  totalRating: 0,
+  karma: 0,
+  effectiveKarma: 0,
+  effectiveRating: 0,
+  verifiedSales: 0,
+  pendingSales: 0,
+  feedbackCoverage: null,
+  banUntil: null,
+  isLimited: false,
+};
+
+const EMPTY_INVITES: AdminUserRow['invites'] = {
+  issued: 0,
+  thisMonth: 0,
+  monthlyLimit: null,
+  remaining: null,
+};
+
+const EMPTY_REFERRAL: AdminUserRow['referral'] = { l1: 0, l2: 0 };
+
+const EMPTY_PLAN: AdminUserRow['plan'] = {
+  planId: 'free',
+  status: 'ACTIVE',
+  autoRenew: false,
+  expiresAt: null,
+};
+
+function normalizeAdminUserRow(raw: Partial<AdminUserRow> & { userId: string }): AdminUserRow {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName ?? null,
+    email: raw.email ?? null,
+    username: raw.username ?? null,
+    avatarUrl: raw.avatarUrl ?? null,
+    isSuspended: Boolean(raw.isSuspended),
+    isHardLocked: Boolean(raw.isHardLocked),
+    hardLockedAt: raw.hardLockedAt ?? null,
+    inviterId: raw.inviterId ?? null,
+    inviterDisplayName: raw.inviterDisplayName ?? null,
+    invitationAcceptedAt: raw.invitationAcceptedAt ?? null,
+    deletedAt: raw.deletedAt ?? null,
+    logtoSyncedAt: raw.logtoSyncedAt ?? null,
+    createdAt: raw.createdAt ?? new Date(0).toISOString(),
+    updatedAt: raw.updatedAt ?? raw.createdAt ?? new Date(0).toISOString(),
+    roles: Array.isArray(raw.roles) ? raw.roles : ['member'],
+    balance: typeof raw.balance === 'number' ? raw.balance : 0,
+    currency: raw.currency ?? 'RUB',
+    rating: { ...EMPTY_RATING, ...(raw.rating ?? {}) },
+    invites: { ...EMPTY_INVITES, ...(raw.invites ?? {}) },
+    referral: { ...EMPTY_REFERRAL, ...(raw.referral ?? {}) },
+    plan: { ...EMPTY_PLAN, ...(raw.plan ?? {}) },
+    accessGroups: Array.isArray(raw.accessGroups) ? raw.accessGroups : [],
+  };
+}
+
 export async function fetchAdminUsers(params?: {
   offset?: number;
   limit?: number;
@@ -94,9 +150,13 @@ export async function fetchAdminUsers(params?: {
   if (params?.q) qs.set('q', params.q);
   const suffix = qs.size ? `?${qs.toString()}` : '';
   const res = await adminFetch(`/admin/users${suffix}`);
-  return (await res.json()) as {
-    data: AdminUserRow[];
+  const body = (await res.json()) as {
+    data: Array<Partial<AdminUserRow> & { userId: string }>;
     pagination: { offset: number; limit: number; total: number };
+  };
+  return {
+    data: (body.data ?? []).map(normalizeAdminUserRow),
+    pagination: body.pagination ?? { offset: 0, limit: 50, total: 0 },
   };
 }
 
