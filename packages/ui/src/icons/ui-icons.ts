@@ -26,7 +26,7 @@ export const uiIcons = {
   more: 'lucide:more-horizontal',
   paperclip: 'lucide:paperclip',
   send: 'lucide:send',
-  reply: 'lucide:message-circle',
+  reply: 'lucide:reply',
   edit: 'lucide:pencil',
   trash: 'lucide:trash-2',
   promote: 'lucide:split',

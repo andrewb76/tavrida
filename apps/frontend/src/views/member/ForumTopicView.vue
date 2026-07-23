@@ -286,6 +286,7 @@ async function submitTopicComment() {
               source-domain="forum"
               target-type="FORUM_TOPIC"
               :target-id="topic.id"
+              compact
             />
             <UiButton
               v-if="session.isMember && !isDraft"
