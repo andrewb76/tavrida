@@ -264,12 +264,15 @@ async function load(id: string) {
     await markChatRead(id, last?.id);
     void chatsStore.refreshUnread();
     await bindWs(id);
-    await nextTick();
-    scrollToBottom();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось открыть чат';
   } finally {
     loading.value = false;
+  }
+  if (!error.value) {
+    await nextTick();
+    scrollToBottom();
+    requestAnimationFrame(() => scrollToBottom());
   }
 }
 

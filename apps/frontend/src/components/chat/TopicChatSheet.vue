@@ -108,12 +108,15 @@ async function load(topicId: string) {
     } catch {
       /* REST fallback */
     }
-    await nextTick();
-    scrollToBottom();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Чат темы недоступен';
   } finally {
     loading.value = false;
+  }
+  if (!error.value) {
+    await nextTick();
+    scrollToBottom();
+    requestAnimationFrame(() => scrollToBottom());
   }
 }
 
