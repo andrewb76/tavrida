@@ -297,12 +297,12 @@ export class InternalChatsController {
     @Param('chatId', ParseUUIDPipe) chatId: string,
     @Query('userId') userId: string,
     @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
   ) {
-    return this.chats.listMessages(
-      chatId,
-      userId,
-      limit ? Number(limit) : 50,
-    );
+    return this.chats.listMessages(chatId, userId, {
+      limit: limit ? Number(limit) : 50,
+      cursor: cursor || null,
+    });
   }
 
   @Post(':chatId/messages')

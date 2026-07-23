@@ -35,6 +35,9 @@ const error = ref<string | null>(null);
 const body = ref('');
 const sending = ref(false);
 const listEl = ref<HTMLElement | null>(null);
+const nextCursor = ref<string | null>(null);
+const historyCapReached = ref(false);
+const loadingOlder = ref(false);
 let wsUnsub: (() => void) | null = null;
 
 watch(
@@ -82,14 +85,18 @@ async function load(topicId: string) {
   error.value = null;
   chat.value = null;
   messages.value = [];
+  nextCursor.value = null;
+  historyCapReached.value = false;
   wsUnsub?.();
   wsUnsub = null;
   try {
     const chatRow = await getTopicChat(topicId);
     chat.value = chatRow;
-    const msgRows = await listChatMessages(chatRow.id);
-    messages.value = msgRows;
-    const last = msgRows[msgRows.length - 1];
+    const page = await listChatMessages(chatRow.id, { loaded: 0 });
+    messages.value = page.data;
+    nextCursor.value = page.nextCursor;
+    historyCapReached.value = page.historyCapReached;
+    const last = page.data[page.data.length - 1];
     await markChatRead(chatRow.id, last?.id);
     void chatsStore.refreshUnread();
     try {
@@ -104,6 +111,38 @@ async function load(topicId: string) {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadOlder() {
+  if (!chat.value || loadingOlder.value || !nextCursor.value || historyCapReached.value) {
+    return;
+  }
+  const el = listEl.value;
+  const prevHeight = el?.scrollHeight ?? 0;
+  const prevTop = el?.scrollTop ?? 0;
+  loadingOlder.value = true;
+  try {
+    const page = await listChatMessages(chat.value.id, {
+      cursor: nextCursor.value,
+      loaded: messages.value.length,
+    });
+    const existing = new Set(messages.value.map((m) => m.id));
+    const older = page.data.filter((m) => !existing.has(m.id));
+    messages.value = [...older, ...messages.value];
+    nextCursor.value = page.nextCursor;
+    historyCapReached.value = page.historyCapReached;
+    await nextTick();
+    if (el) el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
+  } catch {
+    /* ignore */
+  } finally {
+    loadingOlder.value = false;
+  }
+}
+
+function onListScroll() {
+  const el = listEl.value;
+  if (el && el.scrollTop < 80) void loadOlder();
 }
 
 function close() {
@@ -207,7 +246,14 @@ function onBackdrop(e: MouseEvent) {
           <div
             ref="listEl"
             class="topic-chat-sheet__messages"
+            @scroll="onListScroll"
           >
+            <p
+              v-if="loadingOlder"
+              class="pb-2 text-center text-xs text-text-muted"
+            >
+              Загрузка…
+            </p>
             <p
               v-if="!messages.length"
               class="text-sm text-text-muted"

@@ -72,6 +72,11 @@ class PatchChatSettingsBodyDto {
   'message.lengthHardMax'?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  'message.pageSize'?: number;
+
+  @IsOptional()
   @IsBoolean()
   'topic.authorJoinOnPublish'?: boolean;
 

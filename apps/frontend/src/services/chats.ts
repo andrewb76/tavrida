@@ -230,15 +230,37 @@ export async function getChat(chatId: string): Promise<ChatDto> {
 
 export async function listChatMessages(
   chatId: string,
-  limit = 50,
-): Promise<ChatMessage[]> {
+  opts?: { cursor?: string | null; loaded?: number },
+): Promise<{
+  data: ChatMessage[];
+  nextCursor: string | null;
+  pageSize: number;
+  historyMax: number;
+  historyCapReached: boolean;
+}> {
+  const params = new URLSearchParams();
+  if (opts?.cursor) params.set('cursor', opts.cursor);
+  if (opts?.loaded != null) params.set('loaded', String(opts.loaded));
+  const qs = params.toString();
   const res = await fetch(
-    `${apiBase()}/chats/${chatId}/messages?limit=${limit}`,
+    `${apiBase()}/chats/${chatId}/messages${qs ? `?${qs}` : ''}`,
     { headers: await bffAuthHeaders(undefined, { json: false }) },
   );
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось загрузить сообщения'));
-  const rows = (await res.json()) as ChatMessage[];
-  return [...rows].reverse();
+  const json = (await res.json()) as {
+    data: ChatMessage[];
+    nextCursor: string | null;
+    pageSize: number;
+    historyMax: number;
+    historyCapReached: boolean;
+  };
+  return {
+    data: [...json.data].reverse(),
+    nextCursor: json.nextCursor ?? null,
+    pageSize: json.pageSize ?? 50,
+    historyMax: json.historyMax ?? -1,
+    historyCapReached: Boolean(json.historyCapReached),
+  };
 }
 
 export async function sendChatMessage(

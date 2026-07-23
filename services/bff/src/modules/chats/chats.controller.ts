@@ -322,14 +322,48 @@ export class ChatsController {
   async messages(
     @CurrentUser() user: AuthUser,
     @Param('chatId', ParseUUIDPipe) chatId: string,
-    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+    @Query('loaded') loadedRaw?: string,
   ) {
-    const rows = await this.chat.listMessages(
-      chatId,
+    await this.chat.get(chatId, user.sub);
+    const pageSize = await this.chatMessagePageSize();
+    const historyMaxRaw = await this.planConfig.resolveLimitValue(
       user.sub,
-      limit ? Number(limit) : 50,
+      'chat.member.message.historyMax',
     );
-    return this.enrichMessages(rows);
+    const historyMax =
+      historyMaxRaw == null || historyMaxRaw < 0 ? -1 : historyMaxRaw;
+    const alreadyLoaded = Math.max(0, Number(loadedRaw ?? 0) || 0);
+
+    let limit = pageSize;
+    if (historyMax >= 0) {
+      const remaining = historyMax - alreadyLoaded;
+      if (remaining <= 0) {
+        return {
+          data: [],
+          nextCursor: null,
+          pageSize,
+          historyMax,
+          historyCapReached: true,
+        };
+      }
+      limit = Math.min(pageSize, remaining);
+    }
+
+    const page = await this.chat.listMessages(chatId, user.sub, {
+      limit,
+      cursor: cursor || null,
+    });
+    const data = await this.enrichMessages(page.data);
+    const loadedAfter = alreadyLoaded + data.length;
+    const historyCapReached = historyMax >= 0 && loadedAfter >= historyMax;
+    return {
+      data,
+      nextCursor: historyCapReached ? null : page.nextCursor,
+      pageSize,
+      historyMax,
+      historyCapReached,
+    };
   }
 
   @Post(':chatId/messages')
@@ -429,6 +463,13 @@ export class ChatsController {
     const settings = await this.scalarConfig.getChatSettings();
     const v = settings['message.editWindowMinutes'];
     return typeof v === 'number' ? v : 15;
+  }
+
+  private async chatMessagePageSize(): Promise<number> {
+    const settings = await this.scalarConfig.getChatSettings();
+    const v = settings['message.pageSize'];
+    const n = typeof v === 'number' ? v : 50;
+    return Math.min(Math.max(n, 1), 100);
   }
 
   private async chatDeleteWindowMinutes(): Promise<number> {

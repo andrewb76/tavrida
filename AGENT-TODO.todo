@@ -62,6 +62,7 @@ Chat:
   ✔ Wave A Telegram-like: preview, reply, edit/delete, hide, denser UX @chat @bff @frontend @docs @done(26-07-23)
   ✔ Wave B: WS live (message.new / read / typing) @chat @bff @frontend @docs @done(26-07-23)
   ✔ Wave C: media attachments in chat @chat @media @frontend @docs @done(26-07-23)
+  ✔ Chat history: cursor + scalar pageSize + plan historyMax + scroll-up load @chat @bff @frontend @docs @done(26-07-23)
 
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)

@@ -177,6 +177,7 @@ Live: later WS `message.read` / `chat.message_read` после mark-read; до W
 | `chat.message.editWindowMinutes` | number | `15` | Окно правки своего (`0` = нельзя, `-1` = всегда) |
 | `chat.message.deleteOwnWindowMinutes` | number | `60` | Окно удаления своего |
 | `chat.message.lengthHardMax` | number | `10000` | Абсолютный max длины; plan ≤ этого |
+| `chat.message.pageSize` | number | `50` | Размер страницы истории (подгрузка; hard max 100) |
 | `chat.markdown.sanitizeLevel` | enum | `strict` | `strict` \| `documentation` |
 | `chat.moderation.bannedWordsList` | string[] | `[]` | Фильтр текста |
 | `chat.history.retentionDays` | number | `0` | `0` = без авто-purge |
@@ -221,6 +222,7 @@ Facet `member`. Seed-предложение Free/Basic/Pro — ориентир 
 | `chat.member.message.lengthMax` | 500 | 2000 | 5000 | ≤ `lengthHardMax` |
 | `chat.member.attachment.countMax` | 0 | 3 | 10 | Файлов на сообщение |
 | `chat.member.attachment.sizeMaxMb` | 0 | 5 | 20 | Размер файла (MB) |
+| `chat.member.message.historyMax` | 100 | 500 | ∞ | Глубина истории (скролл вверх + подгрузки) |
 
 **Не вводим:** `chat.member.dm.activeMax` — достаточно `message.dailyMax`.
 

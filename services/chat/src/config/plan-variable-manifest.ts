@@ -89,4 +89,9 @@ export const CHAT_PLAN_VARIABLE_MANIFEST = [
     valueType: 'limit' as const,
     planValues: { free: 0, basic: 5, pro: 20 },
   },
+  {
+    key: 'chat.member.message.historyMax',
+    valueType: 'limit' as const,
+    planValues: { free: 100, basic: 500, pro: -1 },
+  },
 ] as const;

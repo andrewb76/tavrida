@@ -99,6 +99,7 @@ Default `rating.contextWeights`:
 | `chat.message.editWindowMinutes` | number | `15` | global | Окно правки своего сообщения (`0` / `-1`) |
 | `chat.message.deleteOwnWindowMinutes` | number | `60` | global | Окно удаления своего сообщения |
 | `chat.message.lengthHardMax` | number | `10000` | global | Абсолютный max длины сообщения |
+| `chat.message.pageSize` | number | `50` | global | Размер страницы истории (подгрузка вверх; hard max 100) |
 | `chat.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
 | `chat.moderation.bannedWordsList` | string[] | `[]` | global | Список запрещённых слов |
 | `chat.history.retentionDays` | number | `0` | global | Авто-purge (`0` = выкл) |
@@ -274,6 +275,7 @@ Default `rating.contextWeights`:
 | `chat.member.message.lengthMax` | limit | 500 | 2000 | 5000 | Длина сообщения |
 | `chat.member.attachment.countMax` | limit | 0 | 3 | 10 | Файлов на сообщение |
 | `chat.member.attachment.sizeMaxMb` | limit | 0 | 5 | 20 | Размер файла (MB) |
+| `chat.member.message.historyMax` | limit | 100 | 500 | ∞ | Макс. сообщений истории, до которых можно доскроллить (подгрузки) |
 
 ### rating
 

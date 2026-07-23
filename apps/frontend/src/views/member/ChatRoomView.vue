@@ -46,6 +46,10 @@ const listEl = ref<HTMLElement | null>(null);
 const composeEl = ref<HTMLTextAreaElement | null>(null);
 const showJumpDown = ref(false);
 const typingPeer = ref(false);
+const nextCursor = ref<string | null>(null);
+const historyMax = ref(-1);
+const historyCapReached = ref(false);
+const loadingOlder = ref(false);
 let typingClearTimer: ReturnType<typeof setTimeout> | null = null;
 let typingSendTimer: ReturnType<typeof setTimeout> | null = null;
 let wsUnsub: (() => void) | null = null;
@@ -209,16 +213,21 @@ async function load(id: string) {
   error.value = null;
   chat.value = null;
   messages.value = [];
+  nextCursor.value = null;
+  historyCapReached.value = false;
   replyTo.value = null;
   editingId.value = null;
   try {
-    const [chatRow, msgRows] = await Promise.all([
+    const [chatRow, page] = await Promise.all([
       getChat(id),
-      listChatMessages(id),
+      listChatMessages(id, { loaded: 0 }),
     ]);
     chat.value = chatRow;
-    messages.value = msgRows;
-    const last = [...msgRows].reverse().find((m) => !m.deletedAt) ?? msgRows[msgRows.length - 1];
+    messages.value = page.data;
+    nextCursor.value = page.nextCursor;
+    historyMax.value = page.historyMax;
+    historyCapReached.value = page.historyCapReached;
+    const last = [...page.data].reverse().find((m) => !m.deletedAt) ?? page.data[page.data.length - 1];
     await markChatRead(id, last?.id);
     void chatsStore.refreshUnread();
     await bindWs(id);
@@ -231,11 +240,54 @@ async function load(id: string) {
   }
 }
 
+async function loadOlder() {
+  if (
+    loadingOlder.value ||
+    loading.value ||
+    !nextCursor.value ||
+    historyCapReached.value
+  ) {
+    return;
+  }
+  const el = listEl.value;
+  const prevHeight = el?.scrollHeight ?? 0;
+  const prevTop = el?.scrollTop ?? 0;
+  loadingOlder.value = true;
+  try {
+    const page = await listChatMessages(chatId.value, {
+      cursor: nextCursor.value,
+      loaded: messages.value.length,
+    });
+    if (!page.data.length) {
+      nextCursor.value = null;
+      historyCapReached.value = page.historyCapReached || !page.nextCursor;
+      return;
+    }
+    const existing = new Set(messages.value.map((m) => m.id));
+    const older = page.data.filter((m) => !existing.has(m.id));
+    messages.value = [...older, ...messages.value];
+    nextCursor.value = page.nextCursor;
+    historyMax.value = page.historyMax;
+    historyCapReached.value = page.historyCapReached;
+    await nextTick();
+    if (el) {
+      el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
+    }
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось подгрузить историю');
+  } finally {
+    loadingOlder.value = false;
+  }
+}
+
 function onScroll() {
   const el = listEl.value;
   if (!el) return;
   const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
   showJumpDown.value = dist > 120;
+  if (el.scrollTop < 80) {
+    void loadOlder();
+  }
 }
 
 function scrollToBottom() {
@@ -584,6 +636,18 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           class="h-full space-y-1 overflow-y-auto rounded-lg border border-border bg-surface px-2 py-3"
           @scroll="onScroll"
         >
+          <p
+            v-if="loadingOlder"
+            class="px-2 pb-2 text-center text-xs text-text-muted"
+          >
+            Загрузка…
+          </p>
+          <p
+            v-else-if="historyCapReached && messages.length"
+            class="px-2 pb-2 text-center text-xs text-text-muted"
+          >
+            Достигнут лимит истории тарифа
+          </p>
           <p
             v-if="!messages.length"
             class="px-2 text-sm text-text-muted"

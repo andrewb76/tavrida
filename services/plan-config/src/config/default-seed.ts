@@ -300,6 +300,13 @@ export const SEED_PLAN_VARIABLES: SeedPlanVariable[] = [
     valueType: 'limit',
   },
   {
+    key: 'chat.member.message.historyMax',
+    service: 'chat',
+    name: 'Глубина истории чата',
+    description: 'Макс. сообщений, до которых можно доскроллить (подгрузки). −1 = без лимита.',
+    valueType: 'limit',
+  },
+  {
     key: 'referralRewards.program.enabled',
     service: 'referral-rewards',
     name: 'Денежный реферал',
@@ -589,6 +596,12 @@ export const SEED_PLAN_VARIABLE_TIERS: SeedPlanVariableTiers[] = [
     free: { limitValue: 0 },
     basic: { limitValue: 5 },
     pro: { limitValue: 20 },
+  },
+  {
+    variableKey: 'chat.member.message.historyMax',
+    free: { limitValue: 100 },
+    basic: { limitValue: 500 },
+    pro: { limitValue: -1 },
   },
   {
     variableKey: 'referralRewards.program.enabled',

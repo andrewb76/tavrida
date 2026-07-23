@@ -61,6 +61,7 @@ export type ChatSettings = {
   'message.editWindowMinutes'?: number;
   'message.deleteOwnWindowMinutes'?: number;
   'message.lengthHardMax'?: number;
+  'message.pageSize'?: number;
   'topic.authorJoinOnPublish'?: boolean;
   'topic.joinOnComment'?: boolean;
   'dm.selfAutoCreate'?: boolean;

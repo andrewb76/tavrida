@@ -42,6 +42,7 @@ const chatForm = ref({
   editWindowMinutes: 15,
   deleteOwnWindowMinutes: 60,
   lengthHardMax: 10000,
+  pageSize: 50,
   authorJoinOnPublish: true,
   joinOnComment: true,
   selfAutoCreate: true,
@@ -76,6 +77,7 @@ async function load() {
     chatForm.value.editWindowMinutes = chat['message.editWindowMinutes'] ?? 15;
     chatForm.value.deleteOwnWindowMinutes = chat['message.deleteOwnWindowMinutes'] ?? 60;
     chatForm.value.lengthHardMax = chat['message.lengthHardMax'] ?? 10000;
+    chatForm.value.pageSize = chat['message.pageSize'] ?? 50;
     chatForm.value.authorJoinOnPublish = chat['topic.authorJoinOnPublish'] ?? true;
     chatForm.value.joinOnComment = chat['topic.joinOnComment'] ?? true;
     chatForm.value.selfAutoCreate = chat['dm.selfAutoCreate'] ?? true;
@@ -172,6 +174,7 @@ async function saveChat() {
       'message.editWindowMinutes': Number(chatForm.value.editWindowMinutes),
       'message.deleteOwnWindowMinutes': Number(chatForm.value.deleteOwnWindowMinutes),
       'message.lengthHardMax': Number(chatForm.value.lengthHardMax),
+      'message.pageSize': Number(chatForm.value.pageSize),
       'topic.authorJoinOnPublish': chatForm.value.authorJoinOnPublish,
       'topic.joinOnComment': chatForm.value.joinOnComment,
       'dm.selfAutoCreate': chatForm.value.selfAutoCreate,
@@ -183,6 +186,7 @@ async function saveChat() {
     chatForm.value.editWindowMinutes = updated['message.editWindowMinutes'] ?? 15;
     chatForm.value.deleteOwnWindowMinutes = updated['message.deleteOwnWindowMinutes'] ?? 60;
     chatForm.value.lengthHardMax = updated['message.lengthHardMax'] ?? 10000;
+    chatForm.value.pageSize = updated['message.pageSize'] ?? 50;
     chatForm.value.authorJoinOnPublish = updated['topic.authorJoinOnPublish'] ?? true;
     chatForm.value.joinOnComment = updated['topic.joinOnComment'] ?? true;
     chatForm.value.selfAutoCreate = updated['dm.selfAutoCreate'] ?? true;
@@ -413,6 +417,16 @@ onMounted(() => {
             v-model.number="chatForm.lengthHardMax"
             type="number"
             min="1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Размер страницы истории (подгрузка)</span>
+          <input
+            v-model.number="chatForm.pageSize"
+            type="number"
+            min="1"
+            max="100"
             class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
           >
         </label>

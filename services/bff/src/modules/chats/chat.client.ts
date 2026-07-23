@@ -197,10 +197,15 @@ export class ChatClient {
     return this.request<ChatDto>('GET', `/internal/v1/chats/${chatId}?${params}`);
   }
 
-  listMessages(chatId: string, userId: string, limit?: number) {
+  listMessages(
+    chatId: string,
+    userId: string,
+    opts?: { limit?: number; cursor?: string | null },
+  ) {
     const params = new URLSearchParams({ userId });
-    if (limit != null) params.set('limit', String(limit));
-    return this.request<MessageDto[]>(
+    if (opts?.limit != null) params.set('limit', String(opts.limit));
+    if (opts?.cursor) params.set('cursor', opts.cursor);
+    return this.request<{ data: MessageDto[]; nextCursor: string | null }>(
       'GET',
       `/internal/v1/chats/${chatId}/messages?${params}`,
     );

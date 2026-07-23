@@ -31,6 +31,13 @@ export const CHAT_SCALAR_REGISTRY: ScalarVariableRegistration[] = [
     description: 'Абсолютный max длины сообщения (символы).',
   },
   {
+    key: 'chat.message.pageSize',
+    type: 'number',
+    default: 50,
+    service: 'chat',
+    description: 'Размер страницы истории сообщений (подгрузка вверх). Hard max 100.',
+  },
+  {
     key: 'chat.markdown.sanitizeLevel',
     type: 'enum',
     default: 'strict',

@@ -50,8 +50,23 @@
 
 | Param | Тип | Описание |
 |-------|-----|----------|
-| `cursor` | string | Older messages |
-| `limit` | int | default 50, max 100 |
+| `cursor` | string | Older messages (opaque; from previous `nextCursor`) |
+| `loaded` | int | Сколько сообщений уже в UI — для clamp по `historyMax` |
+
+**Размер страницы:** scalar `chat.message.pageSize` (default 50, hard max 100).  
+**Глубина:** plan `chat.member.message.historyMax` (Free 100 / Basic 500 / Pro ∞).
+
+```json
+{
+  "data": [/* newest page; client may reverse for chrono ASC */],
+  "nextCursor": "base64url…",
+  "pageSize": 50,
+  "historyMax": 500,
+  "historyCapReached": false
+}
+```
+
+Upstream chat returns messages **DESC**; BFF preserves order in `data` (newest first). SPA reverses for display.
 
 ---
 

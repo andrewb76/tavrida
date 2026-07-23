@@ -75,6 +75,11 @@ export type MessagePublicDto = {
   attachments: MessageAttachmentDto[];
 };
 
+export type MessageListPage = {
+  data: MessagePublicDto[];
+  nextCursor: string | null;
+};
+
 @Injectable()
 export class ChatsService {
   constructor(
@@ -444,18 +449,33 @@ export class ChatsService {
   async listMessages(
     chatId: string,
     userId: string,
-    limit = 50,
-  ): Promise<MessagePublicDto[]> {
+    opts: { limit?: number; cursor?: string | null } = {},
+  ): Promise<MessageListPage> {
     const chat = await this.requireChatEntityForMember(chatId, userId);
-    const rows = await this.messages.find({
-      where: { chatId },
-      order: { createdAt: 'DESC' },
-      take: Math.min(Math.max(limit, 1), 100),
-    });
+    const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
+
+    const qb = this.messages
+      .createQueryBuilder('m')
+      .where('m.chat_id = :chatId', { chatId })
+      .orderBy('m.created_at', 'DESC')
+      .addOrderBy('m.id', 'DESC')
+      .take(limit + 1);
+
+    if (opts.cursor) {
+      const parsed = decodeMessageCursor(opts.cursor);
+      qb.andWhere(
+        '(m.created_at < :cAt OR (m.created_at = :cAt AND m.id < :cId))',
+        { cAt: parsed.createdAt, cId: parsed.id },
+      );
+    }
+
+    const rows = await qb.getMany();
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
     const otherReads = await this.otherMembersLastReadAt(chatId, userId);
-    const replyMap = await this.loadReplyPreviews(rows);
-    const attachmentMap = await this.loadAttachments(rows.map((r) => r.id));
-    return rows.map((msg) =>
+    const replyMap = await this.loadReplyPreviews(page);
+    const attachmentMap = await this.loadAttachments(page.map((r) => r.id));
+    const data = page.map((msg) =>
       this.toMessagePublic(
         msg,
         userId,
@@ -465,6 +485,11 @@ export class ChatsService {
         attachmentMap.get(msg.id) ?? [],
       ),
     );
+    const oldest = page[page.length - 1];
+    return {
+      data,
+      nextCursor: hasMore && oldest ? encodeMessageCursor(oldest) : null,
+    };
   }
 
   async sendMessage(input: {
@@ -957,5 +982,26 @@ export class ChatsService {
       qb.andWhere('msg.created_at > :lastReadAt', { lastReadAt });
     }
     return qb.getCount();
+  }
+}
+
+function encodeMessageCursor(msg: MessageEntity): string {
+  const payload = JSON.stringify({
+    t: msg.createdAt.toISOString(),
+    i: msg.id,
+  });
+  return Buffer.from(payload, 'utf8').toString('base64url');
+}
+
+function decodeMessageCursor(cursor: string): { createdAt: Date; id: string } {
+  try {
+    const raw = Buffer.from(cursor, 'base64url').toString('utf8');
+    const parsed = JSON.parse(raw) as { t?: string; i?: string };
+    if (!parsed.t || !parsed.i) throw new Error('incomplete');
+    const createdAt = new Date(parsed.t);
+    if (Number.isNaN(createdAt.getTime())) throw new Error('bad date');
+    return { createdAt, id: parsed.i };
+  } catch {
+    throw new BadRequestException('Invalid messages cursor');
   }
 }
