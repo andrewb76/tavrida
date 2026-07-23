@@ -46,6 +46,10 @@ function createHarness(rows: UserProfileEntity[]) {
             filtered = filtered.filter((row) => !row.isSuspended);
             return api;
           }
+          if (clause.includes('isHardLocked')) {
+            filtered = filtered.filter((row) => !row.isHardLocked);
+            return api;
+          }
           if (clause.includes('lower(profile.username) LIKE') && params?.prefix) {
             prefix = params.prefix.replace(/%/g, '').toLowerCase();
             filtered = filtered.filter((row) =>
@@ -78,8 +82,16 @@ function createHarness(rows: UserProfileEntity[]) {
       };
       return api;
     },
-    findOne: async ({ where }: { where: { userId: string } }) =>
-      store.find((row) => row.userId === where.userId) ?? null,
+    findOne: async ({
+      where,
+      select,
+    }: {
+      where: { userId: string };
+      select?: string[];
+    }) => {
+      void select;
+      return store.find((row) => row.userId === where.userId) ?? null;
+    },
     create: (data: Partial<UserProfileEntity>) => ({ ...data }) as UserProfileEntity,
     save: async (row: UserProfileEntity) => {
       const now = new Date('2026-01-02');
@@ -103,6 +115,9 @@ function profile(partial: Partial<UserProfileEntity> & { userId: string }): User
     avatarUrl: null,
     primaryPhone: null,
     isSuspended: false,
+    isHardLocked: false,
+    hardLockedAt: null,
+    hardLockedBy: null,
     deletedAt: null,
     logtoSyncedAt: null,
     inviterId: null,
@@ -170,9 +185,35 @@ describe('UsersService', () => {
       username: 'alice',
       avatarUrl: 'https://cdn.example/a.png',
       isSuspended: false,
+      isHardLocked: false,
       memberSince: '2026-01-01T00:00:00.000Z',
     });
     assert.equal('email' in result, false);
+  });
+
+  it('setHardLock toggles platform lock without touching Logto suspension', async () => {
+    const { service, store } = createHarness([
+      profile({ userId: 'user-a', isSuspended: false }),
+    ]);
+
+    const locked = await service.setHardLock({
+      userId: 'user-a',
+      locked: true,
+      actorId: 'admin-1',
+    });
+    assert.equal(locked.isHardLocked, true);
+    assert.equal(locked.hardLockedBy, 'admin-1');
+    assert.ok(locked.hardLockedAt);
+    assert.equal(store[0]?.isSuspended, false);
+
+    const unlocked = await service.setHardLock({
+      userId: 'user-a',
+      locked: false,
+      actorId: 'admin-1',
+    });
+    assert.equal(unlocked.isHardLocked, false);
+    assert.equal(unlocked.hardLockedAt, null);
+    assert.equal(unlocked.hardLockedBy, null);
   });
 
   it('searchByUsername prefix-matches and hides reserved', async () => {

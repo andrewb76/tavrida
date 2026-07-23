@@ -42,6 +42,9 @@ export class UsersService {
       avatarUrl: row.avatarUrl,
       primaryPhone: row.primaryPhone,
       isSuspended: row.isSuspended,
+      isHardLocked: row.isHardLocked,
+      hardLockedAt: row.hardLockedAt?.toISOString() ?? null,
+      hardLockedBy: row.hardLockedBy,
       inviterId: row.inviterId,
       invitationAcceptedAt: row.invitationAcceptedAt?.toISOString() ?? null,
       deletedAt: row.deletedAt?.toISOString() ?? null,
@@ -58,6 +61,7 @@ export class UsersService {
       username: row.username,
       avatarUrl: row.avatarUrl,
       isSuspended: row.isSuspended,
+      isHardLocked: row.isHardLocked,
       memberSince: row.createdAt.toISOString(),
     };
   }
@@ -107,6 +111,7 @@ export class UsersService {
       .where('profile.deletedAt IS NULL')
       .andWhere('profile.username IS NOT NULL')
       .andWhere('profile.isSuspended = false')
+      .andWhere('profile.isHardLocked = false')
       .andWhere('lower(profile.username) LIKE lower(:prefix)', {
         prefix: `${raw}%`,
       })
@@ -184,6 +189,9 @@ export class UsersService {
         avatarUrl: null,
         primaryPhone: null,
         isSuspended: false,
+        isHardLocked: false,
+        hardLockedAt: null,
+        hardLockedBy: null,
         deletedAt: null,
         logtoSyncedAt: null,
       });
@@ -196,6 +204,41 @@ export class UsersService {
       ensured: true,
       createdAt: row.createdAt.toISOString(),
     };
+  }
+
+  async setHardLock(input: {
+    userId: string;
+    locked: boolean;
+    actorId: string;
+  }) {
+    const row = await this.profiles.findOne({ where: { userId: input.userId } });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `User ${input.userId} not found`,
+      });
+    }
+
+    if (input.locked) {
+      row.isHardLocked = true;
+      row.hardLockedAt = new Date();
+      row.hardLockedBy = input.actorId.trim() || null;
+    } else {
+      row.isHardLocked = false;
+      row.hardLockedAt = null;
+      row.hardLockedBy = null;
+    }
+
+    await this.profiles.save(row);
+    return this.toDto(row);
+  }
+
+  async isHardLocked(userId: string): Promise<{ userId: string; isHardLocked: boolean }> {
+    const row = await this.profiles.findOne({
+      where: { userId },
+      select: ['userId', 'isHardLocked'],
+    });
+    return { userId, isHardLocked: Boolean(row?.isHardLocked) };
   }
 
   async syncFromLogto(input: LogtoUserSyncInput) {
@@ -212,6 +255,9 @@ export class UsersService {
         avatarUrl: input.avatar ?? null,
         primaryPhone: input.primaryPhone ?? null,
         isSuspended: input.isSuspended ?? false,
+        isHardLocked: false,
+        hardLockedAt: null,
+        hardLockedBy: null,
         inviterId: null,
         invitationAcceptedAt: null,
         deletedAt: null,

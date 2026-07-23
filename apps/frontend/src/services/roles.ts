@@ -29,6 +29,12 @@ export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
   });
 
   if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { type?: string; detail?: string } | null;
+    if (res.status === 403 && err?.type === 'hard_locked') {
+      const hardLockError = new Error(err.detail ?? 'Аккаунт заблокирован администратором');
+      (hardLockError as Error & { code?: string }).code = 'hard_locked';
+      throw hardLockError;
+    }
     throw new Error(`Failed to load roles (${res.status})`);
   }
 
@@ -60,20 +66,35 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
         }
         return roles;
       })
-      .catch(() => {
+      .catch(async (error) => {
         const current = useSessionStore();
+        const hardLocked =
+          error instanceof Error && (error as Error & { code?: string }).code === 'hard_locked';
+        if (hardLocked) {
+          const { toast } = await import('vue-sonner');
+          toast.error(error instanceof Error ? error.message : 'Аккаунт заблокирован');
+          current.clearProfile();
+          current.setPlatformRoles([]);
+          try {
+            const { useAuth } = await import('@/composables/useAuth');
+            await useAuth().signOut();
+          } catch {
+            window.location.assign('/');
+          }
+          return [] as PlatformRole[];
+        }
         if ((current.actAsUserId ?? current.userId) === identity) {
           current.setPlatformRoles(['member']);
         }
         return ['member'] as PlatformRole[];
       })
-      .finally(() => {
-        const current = useSessionStore();
-        if ((current.actAsUserId ?? current.userId) === identity) {
-          current.setRolesLoading(false);
-        }
-        if (refreshPromises.get(identity) === request) refreshPromises.delete(identity);
-      });
+    .finally(() => {
+      const current = useSessionStore();
+      if ((current.actAsUserId ?? current.userId) === identity) {
+        current.setRolesLoading(false);
+      }
+      if (refreshPromises.get(identity) === request) refreshPromises.delete(identity);
+    });
   refreshPromises.set(identity, request);
   return request;
 }

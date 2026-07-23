@@ -3,6 +3,7 @@ import {
   adminDepositUser,
   fetchAdminUsers,
   MANAGED_ROLES,
+  patchAdminUserHardLock,
   patchAdminUserRoles,
   ROLE_LABELS,
   type AdminUserRow,
@@ -25,6 +26,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const search = ref('');
 const savingRolesFor = ref<string | null>(null);
+const lockingFor = ref<string | null>(null);
 const avatarFailed = ref<Record<string, boolean>>({});
 
 const depositOpen = ref(false);
@@ -73,6 +75,35 @@ function connectBlockReason(row: AdminUserRow): string | null {
 
 function canConnect(row: AdminUserRow): boolean {
   return connectBlockReason(row) == null;
+}
+
+function hardLockBlockReason(row: AdminUserRow): string | null {
+  if (row.userId === session.userId) return 'Нельзя заблокировать себя';
+  if (row.roles.includes('admin')) return 'Нельзя заблокировать администратора';
+  return null;
+}
+
+async function toggleHardLock(row: AdminUserRow) {
+  const block = hardLockBlockReason(row);
+  if (block) {
+    toast.error(block);
+    return;
+  }
+  const next = !row.isHardLocked;
+  const label = next ? 'заблокировать' : 'разблокировать';
+  if (!confirm(`Точно ${label} доступ для «${displayLabel(row)}»?`)) return;
+
+  lockingFor.value = row.userId;
+  try {
+    const result = await patchAdminUserHardLock(row.userId, next);
+    row.isHardLocked = result.isHardLocked;
+    row.hardLockedAt = result.hardLockedAt;
+    toast.success(next ? 'Жёсткая блокировка включена' : 'Блокировка снята');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось изменить блокировку');
+  } finally {
+    lockingFor.value = null;
+  }
 }
 
 async function load() {
@@ -277,11 +308,15 @@ async function confirmDeposit() {
               <p class="mt-1 text-xs text-text-muted">
                 {{ new Date(row.createdAt).toLocaleDateString('ru-RU') }}
                 <span
+                  v-if="row.isHardLocked"
+                  class="text-red-700"
+                > · жёсткая блокировка</span>
+                <span
                   v-if="row.isSuspended"
                   class="text-orange-600"
-                > · заблокирован</span>
+                > · приостановлен (Logto)</span>
                 <span
-                  v-else-if="!row.logtoSyncedAt"
+                  v-else-if="!row.isHardLocked && !row.logtoSyncedAt"
                   class="text-orange-600"
                 > · ожидает синхронизацию</span>
               </p>
@@ -306,6 +341,26 @@ async function confirmDeposit() {
             </button>
             <button
               type="button"
+              class="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70"
+              :class="
+                row.isHardLocked
+                  ? 'border-emerald-700 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                  : 'border-red-700 bg-red-50 text-red-900 hover:bg-red-100'
+              "
+              :disabled="lockingFor === row.userId || hardLockBlockReason(row) != null"
+              :title="hardLockBlockReason(row) ?? (row.isHardLocked ? 'Снять жёсткую блокировку' : 'Включить жёсткую блокировку')"
+              @click="toggleHardLock(row)"
+            >
+              {{
+                lockingFor === row.userId
+                  ? '…'
+                  : row.isHardLocked
+                    ? 'Разблокировать'
+                    : 'Жёсткая блокировка'
+              }}
+            </button>
+            <button
+              type="button"
               class="inline-flex h-9 items-center justify-center rounded-md border border-amber-600 bg-amber-500 px-3 text-sm font-medium text-stone-900 hover:bg-amber-400 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg disabled:text-text-muted disabled:opacity-70"
               :disabled="!canConnect(row)"
               :title="connectBlockReason(row) ?? 'Работать от имени пользователя'"
@@ -314,10 +369,10 @@ async function confirmDeposit() {
               Подключиться
             </button>
             <p
-              v-if="connectBlockReason(row)"
+              v-if="hardLockBlockReason(row) || connectBlockReason(row)"
               class="text-[11px] leading-snug text-text-muted sm:max-w-[11rem] sm:text-right"
             >
-              {{ connectBlockReason(row) }}
+              {{ hardLockBlockReason(row) ?? connectBlockReason(row) }}
             </p>
           </div>
         </div>

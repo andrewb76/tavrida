@@ -35,7 +35,9 @@
 | `username` | varchar nullable | Club handle — см. [requirements/username.md](./requirements/username.md) |
 | `avatarUrl` | varchar nullable | Logto `avatar` (URL) |
 | `primaryPhone` | varchar nullable | Logto phone |
-| `isSuspended` | boolean | Logto suspension |
+| `isSuspended` | boolean | Logto suspension (зеркало webhook) |
+| `isHardLocked` | boolean | Admin hard lock — [hard-lock.md](./hard-lock.md) |
+| `hardLockedAt` / `hardLockedBy` | timestamptz / varchar | Когда / кто включил hard lock |
 | `deletedAt` | timestamptz nullable | Soft delete (`User.Deleted`) |
 | `logtoSyncedAt` | timestamptz nullable | Последний webhook/backfill |
 | `bio` | text nullable | — (ручной override, позже) |

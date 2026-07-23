@@ -9,6 +9,8 @@ export type AdminUserRow = {
   username: string | null;
   avatarUrl: string | null;
   isSuspended: boolean;
+  isHardLocked: boolean;
+  hardLockedAt: string | null;
   inviterId: string | null;
   invitationAcceptedAt: string | null;
   logtoSyncedAt: string | null;
@@ -78,6 +80,27 @@ export async function adminDepositUser(
     balanceAfter: number;
     balance: number;
     currency: string;
+  };
+}
+
+export async function patchAdminUserHardLock(
+  userId: string,
+  locked: boolean,
+): Promise<{
+  userId: string;
+  isHardLocked: boolean;
+  hardLockedAt: string | null;
+  hardLockedBy: string | null;
+}> {
+  const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/hard-lock`, {
+    method: 'PATCH',
+    body: JSON.stringify({ locked }),
+  });
+  return (await res.json()) as {
+    userId: string;
+    isHardLocked: boolean;
+    hardLockedAt: string | null;
+    hardLockedBy: string | null;
   };
 }
 

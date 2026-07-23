@@ -1,6 +1,7 @@
 import {
   Injectable,
   Logger,
+  ForbiddenException,
   OnApplicationBootstrap,
   OnModuleDestroy,
 } from '@nestjs/common';
@@ -84,6 +85,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
         return;
       }
       const user = await this.jwt.verifyAccessToken(token);
+      await this.jwt.assertNotHardLocked(user.sub);
       this.sockets.set(socket, { userId: user.sub, channels: new Set() });
       socket.on('message', (raw) => {
         void this.onMessage(socket, raw.toString());
@@ -93,7 +95,12 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
       this.send(socket, { type: 'ready', userId: user.sub });
     } catch (err) {
       this.logger.debug(`WS auth failed: ${String(err)}`);
-      socket.close(4401, 'unauthorized');
+      const hardLocked =
+        err instanceof ForbiddenException &&
+        typeof err.getResponse() === 'object' &&
+        err.getResponse() != null &&
+        (err.getResponse() as { type?: string }).type === 'hard_locked';
+      socket.close(hardLocked ? 4403 : 4401, hardLocked ? 'hard_locked' : 'unauthorized');
     }
   }
 

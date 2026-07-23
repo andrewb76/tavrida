@@ -36,6 +36,8 @@ export class AdminUsersService {
           username: row.username,
           avatarUrl: row.avatarUrl,
           isSuspended: row.isSuspended,
+          isHardLocked: Boolean(row.isHardLocked),
+          hardLockedAt: row.hardLockedAt ?? null,
           inviterId: row.inviterId,
           invitationAcceptedAt: row.invitationAcceptedAt,
           logtoSyncedAt: row.logtoSyncedAt,
@@ -89,5 +91,31 @@ export class AdminUsersService {
 
     const balance = await this.billing.getBalance(targetUserId);
     return { ...result, balance: balance.balance, currency: balance.currency };
+  }
+
+  async setHardLock(actorId: string, targetUserId: string, locked: boolean) {
+    if (actorId === targetUserId) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Нельзя заблокировать собственный аккаунт',
+      });
+    }
+
+    const targetRoles = await this.keto.getPlatformRoles(targetUserId);
+    if (targetRoles.includes('admin')) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Нельзя заблокировать администратора',
+      });
+    }
+
+    await this.profiles.ensureUser(targetUserId);
+    const row = await this.profiles.setHardLock(targetUserId, locked, actorId);
+    return {
+      userId: row.userId,
+      isHardLocked: row.isHardLocked,
+      hardLockedAt: row.hardLockedAt,
+      hardLockedBy: row.hardLockedBy,
+    };
   }
 }

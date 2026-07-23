@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -70,6 +70,15 @@ class SyncLogtoBody {
   isSuspended?: boolean;
 }
 
+class SetHardLockBody {
+  @IsBoolean()
+  locked!: boolean;
+
+  @IsString()
+  @MinLength(1)
+  actorId!: string;
+}
+
 @Controller('internal/v1/users')
 export class InternalUsersController {
   constructor(private readonly users: UsersService) {}
@@ -113,6 +122,20 @@ export class InternalUsersController {
   @Get(':userId/public')
   getPublic(@Param('userId') userId: string) {
     return this.users.getPublicProfile(userId);
+  }
+
+  @Get(':userId/hard-lock')
+  getHardLock(@Param('userId') userId: string) {
+    return this.users.isHardLocked(userId);
+  }
+
+  @Patch(':userId/hard-lock')
+  setHardLock(@Param('userId') userId: string, @Body() body: SetHardLockBody) {
+    return this.users.setHardLock({
+      userId,
+      locked: body.locked,
+      actorId: body.actorId,
+    });
   }
 
   @Get(':userId')

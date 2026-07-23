@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import type { Request } from 'express';
 import { ActAsService, ACT_AS_HEADER } from './act-as.service';
 import { resolveAuthMode } from './auth-config';
 import type { AuthUser } from './current-user.decorator';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,6 +20,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly config: ConfigService,
     private readonly actAs: ActAsService,
+    private readonly profiles: UserProfileClient,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,6 +32,7 @@ export class JwtAuthGuard implements CanActivate {
 
     const token = header.slice('Bearer '.length).trim();
     const actor = await this.verifyAccessToken(token);
+    await this.assertNotHardLocked(actor.sub);
     request.user = await this.actAs.apply(actor, request.headers[ACT_AS_HEADER]);
     return true;
   }
@@ -69,6 +73,22 @@ export class JwtAuthGuard implements CanActivate {
         type: 'unauthorized',
         detail: reason,
       });
+    }
+  }
+
+  /** Used by WS after `verifyAccessToken`. Fail-open if user-profile is down. */
+  async assertNotHardLocked(userId: string): Promise<void> {
+    try {
+      const status = await this.profiles.isHardLocked(userId);
+      if (status.isHardLocked) {
+        throw new ForbiddenException({
+          type: 'hard_locked',
+          detail: 'Аккаунт заблокирован администратором',
+        });
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenException) throw error;
+      /* upstream unavailable — do not lock everyone out */
     }
   }
 

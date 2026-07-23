@@ -97,6 +97,9 @@ export class UserProfileClient {
         avatarUrl: string | null;
         primaryPhone: string | null;
         isSuspended: boolean;
+        isHardLocked: boolean;
+        hardLockedAt: string | null;
+        hardLockedBy: string | null;
         inviterId: string | null;
         invitationAcceptedAt: string | null;
         deletedAt: string | null;
@@ -130,6 +133,25 @@ export class UserProfileClient {
   async ensureUser(userId: string) {
     return this.request<{ userId: string; ensured: boolean }>('POST', '/internal/v1/users/ensure', {
       userId,
+    });
+  }
+
+  async isHardLocked(userId: string) {
+    return this.request<{ userId: string; isHardLocked: boolean }>(
+      'GET',
+      `/internal/v1/users/${encodeURIComponent(userId)}/hard-lock`,
+    );
+  }
+
+  async setHardLock(userId: string, locked: boolean, actorId: string) {
+    return this.request<{
+      userId: string;
+      isHardLocked: boolean;
+      hardLockedAt: string | null;
+      hardLockedBy: string | null;
+    }>('PATCH', `/internal/v1/users/${encodeURIComponent(userId)}/hard-lock`, {
+      locked,
+      actorId,
     });
   }
 
@@ -281,14 +303,22 @@ export class UserProfileClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.baseUrl()}${path}`, {
-      method,
-      headers: internalServiceHeaders(
-        this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
-        body ? { 'Content-Type': 'application/json' } : {},
-      ),
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl()}${path}`, {
+        method,
+        headers: internalServiceHeaders(
+          this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+          body ? { 'Content-Type': 'application/json' } : {},
+        ),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      throw new ServiceUnavailableException({
+        type: 'upstream_unavailable',
+        detail: `user-profile ${method} ${path}: unavailable`,
+      });
+    }
 
     const raw = await res.text();
     const payload = parseJsonBody(raw);
