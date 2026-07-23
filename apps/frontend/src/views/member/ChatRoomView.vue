@@ -45,9 +45,12 @@ const body = ref('');
 const sending = ref(false);
 const spawning = ref(false);
 const listEl = ref<HTMLElement | null>(null);
+const bottomAnchor = ref<HTMLElement | null>(null);
 const composeEl = ref<HTMLTextAreaElement | null>(null);
 const attachInput = ref<HTMLInputElement | null>(null);
 const showJumpDown = ref(false);
+/** Block history pagination until first scroll-to-bottom settles. */
+const readyForHistory = ref(false);
 const typingPeer = ref(false);
 const nextCursor = ref<string | null>(null);
 const historyCapReached = ref(false);
@@ -247,6 +250,7 @@ async function load(id: string) {
   messages.value = [];
   nextCursor.value = null;
   historyCapReached.value = false;
+  readyForHistory.value = false;
   replyTo.value = null;
   editingId.value = null;
   actionMsg.value = null;
@@ -270,14 +274,14 @@ async function load(id: string) {
     loading.value = false;
   }
   if (!error.value) {
-    await nextTick();
-    scrollToBottom();
-    requestAnimationFrame(() => scrollToBottom());
+    await settleScrollToBottom();
+    readyForHistory.value = true;
   }
 }
 
 async function loadOlder() {
   if (
+    !readyForHistory.value ||
     loadingOlder.value ||
     loading.value ||
     !nextCursor.value ||
@@ -327,8 +331,19 @@ function onScroll() {
 
 function scrollToBottom() {
   const el = listEl.value;
-  if (el) el.scrollTop = el.scrollHeight;
+  if (el) {
+    el.scrollTop = el.scrollHeight;
+  }
+  bottomAnchor.value?.scrollIntoView({ block: 'end', inline: 'nearest' });
   showJumpDown.value = false;
+}
+
+async function settleScrollToBottom() {
+  for (let i = 0; i < 6; i += 1) {
+    await nextTick();
+    scrollToBottom();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
 }
 
 function autosizeCompose() {
@@ -761,6 +776,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           class="chat-room__feed"
           @scroll="onScroll"
         >
+          <div class="chat-room__feed-inner">
           <p
             v-if="loadingOlder"
             class="chat-room__hint"
@@ -910,6 +926,12 @@ function messageParts(msg: ChatMessage): BodyPart[] {
               </div>
             </div>
           </template>
+          <div
+            ref="bottomAnchor"
+            class="chat-room__bottom-anchor"
+            aria-hidden="true"
+          />
+          </div>
         </div>
 
         <button
@@ -1281,7 +1303,21 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   padding: 0.5rem 0.625rem 0.75rem;
   display: flex;
   flex-direction: column;
+}
+
+.chat-room__feed-inner {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
   gap: 0.35rem;
+  min-height: min-content;
+}
+
+.chat-room__bottom-anchor {
+  width: 100%;
+  height: 1px;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .chat-room__hint {

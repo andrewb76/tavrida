@@ -38,9 +38,11 @@ const error = ref<string | null>(null);
 const body = ref('');
 const sending = ref(false);
 const listEl = ref<HTMLElement | null>(null);
+const bottomAnchor = ref<HTMLElement | null>(null);
 const nextCursor = ref<string | null>(null);
 const historyCapReached = ref(false);
 const loadingOlder = ref(false);
+const readyForHistory = ref(false);
 let wsUnsub: (() => void) | null = null;
 
 watch(
@@ -91,6 +93,7 @@ async function load(topicId: string) {
   messages.value = [];
   nextCursor.value = null;
   historyCapReached.value = false;
+  readyForHistory.value = false;
   wsUnsub?.();
   wsUnsub = null;
   try {
@@ -114,14 +117,19 @@ async function load(topicId: string) {
     loading.value = false;
   }
   if (!error.value) {
-    await nextTick();
-    scrollToBottom();
-    requestAnimationFrame(() => scrollToBottom());
+    await settleScrollToBottom();
+    readyForHistory.value = true;
   }
 }
 
 async function loadOlder() {
-  if (!chat.value || loadingOlder.value || !nextCursor.value || historyCapReached.value) {
+  if (
+    !readyForHistory.value ||
+    !chat.value ||
+    loadingOlder.value ||
+    !nextCursor.value ||
+    historyCapReached.value
+  ) {
     return;
   }
   const el = listEl.value;
@@ -159,6 +167,15 @@ function close() {
 function scrollToBottom() {
   const el = listEl.value;
   if (el) el.scrollTop = el.scrollHeight;
+  bottomAnchor.value?.scrollIntoView({ block: 'end', inline: 'nearest' });
+}
+
+async function settleScrollToBottom() {
+  for (let i = 0; i < 6; i += 1) {
+    await nextTick();
+    scrollToBottom();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
 }
 
 async function send() {
@@ -296,6 +313,11 @@ function onBackdrop(e: MouseEvent) {
                 </time>
               </div>
             </div>
+            <div
+              ref="bottomAnchor"
+              class="h-px w-full shrink-0"
+              aria-hidden="true"
+            />
           </div>
 
           <form
