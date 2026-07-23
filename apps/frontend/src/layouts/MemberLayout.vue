@@ -177,7 +177,7 @@ function isActive(path: string) {
       class="mx-auto w-full max-w-5xl flex-1"
       :class="
         isChatRoom
-          ? 'flex min-h-0 max-w-none flex-col overflow-hidden p-0 max-sm:h-dvh sm:max-w-5xl sm:px-4 sm:pb-24 sm:pt-4'
+          ? 'flex min-h-0 max-w-none flex-col overflow-hidden p-0 max-sm:h-dvh sm:max-w-5xl sm:h-[calc(100dvh-4rem)] sm:px-4 sm:pb-24 sm:pt-4'
           : isChatsSection
             ? 'px-0 pb-24 pt-0 sm:px-4 sm:pt-4'
             : 'px-4 py-6 pb-24'

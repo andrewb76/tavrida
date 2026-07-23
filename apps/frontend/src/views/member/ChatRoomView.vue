@@ -776,7 +776,6 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           class="chat-room__feed"
           @scroll="onScroll"
         >
-          <div class="chat-room__feed-inner">
           <p
             v-if="loadingOlder"
             class="chat-room__hint"
@@ -931,7 +930,6 @@ function messageParts(msg: ChatMessage): BodyPart[] {
             class="chat-room__bottom-anchor"
             aria-hidden="true"
           />
-          </div>
         </div>
 
         <button
@@ -1160,6 +1158,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   min-height: 0;
   flex: 1 1 auto;
   height: 100%;
+  overflow: hidden;
   background:
     radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--token-primary) 8%, transparent), transparent 42%),
     radial-gradient(circle at 80% 90%, color-mix(in srgb, var(--token-accent) 10%, transparent), transparent 40%),
@@ -1172,7 +1171,6 @@ function messageParts(msg: ChatMessage): BodyPart[] {
     max-height: calc(100dvh - 8rem);
     border: 1px solid var(--token-border);
     border-radius: var(--token-radius-lg);
-    overflow: hidden;
   }
 }
 
@@ -1293,24 +1291,19 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chat-room__feed {
   height: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 0.5rem 0.625rem 0.75rem;
   display: flex;
   flex-direction: column;
-}
-
-.chat-room__feed-inner {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
   gap: 0.35rem;
-  min-height: min-content;
 }
 
 .chat-room__bottom-anchor {
