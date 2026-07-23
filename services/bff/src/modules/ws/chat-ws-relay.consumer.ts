@@ -6,6 +6,7 @@ import amqp, {
   type ConsumeMessage,
 } from 'amqplib';
 import { MediaService } from '../media/media.service';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 import { WsHubService } from './ws-hub.service';
 
 const EXCHANGE = 'tavrida-lot.events';
@@ -35,6 +36,7 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly hub: WsHubService,
     private readonly media: MediaService,
+    private readonly users: UserProfileClient,
   ) {}
 
   async onModuleInit() {
@@ -67,6 +69,10 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     try {
       await this.channel?.close();
+    } catch {
+      /* ignore */
+    }
+    try {
       await this.conn?.close();
     } catch {
       /* ignore */
@@ -77,7 +83,7 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
     if (!msg || !this.channel) return;
     try {
       const envelope = JSON.parse(msg.content.toString('utf8')) as Envelope;
-      const mapped = await mapChatEvent(envelope, this.media);
+      const mapped = await mapChatEvent(envelope, this.media, this.users);
       if (mapped) {
         this.hub.publish(mapped.channel, mapped.event, mapped.payload);
       }
@@ -143,6 +149,7 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
 async function mapChatEvent(
   envelope: Envelope,
   media: MediaService,
+  users: UserProfileClient,
 ): Promise<{
   channel: string;
   event: string;
@@ -157,7 +164,28 @@ async function mapChatEvent(
     const attachmentIds = Array.isArray(p.attachmentIds)
       ? (p.attachmentIds as string[])
       : [];
-    const attachments = await media.resolveReadyAttachments(attachmentIds);
+    const authorId = typeof p.authorId === 'string' ? p.authorId : '';
+    const replyTo =
+      p.replyTo && typeof p.replyTo === 'object'
+        ? (p.replyTo as {
+            id: string;
+            authorId: string;
+            body: string;
+            deleted: boolean;
+          })
+        : null;
+    const lookupIds = [authorId, replyTo?.authorId].filter(
+      (id): id is string => Boolean(id),
+    );
+    const [attachments, profiles] = await Promise.all([
+      media.resolveReadyAttachments(attachmentIds),
+      users.lookupByIds(lookupIds),
+    ]);
+    const byUserId = new Map(profiles.map((row) => [row.userId, row]));
+    const authorProfile = authorId ? byUserId.get(authorId) : undefined;
+    const replyProfile = replyTo?.authorId
+      ? byUserId.get(replyTo.authorId)
+      : undefined;
     return {
       channel,
       event: 'message.new',
@@ -165,13 +193,35 @@ async function mapChatEvent(
         messageId: p.messageId,
         chatId,
         authorId: p.authorId,
+        author: authorProfile
+          ? {
+              userId: authorProfile.userId,
+              displayName: authorProfile.displayName,
+              username: authorProfile.username,
+              avatarUrl: authorProfile.avatarUrl,
+            }
+          : authorId
+            ? {
+                userId: authorId,
+                displayName: null,
+                username: null,
+                avatarUrl: null,
+              }
+            : null,
         body: p.body,
         mentions: p.mentions ?? [],
         createdAt: p.createdAt,
         editedAt: null,
         deletedAt: null,
         replyToMessageId: p.replyToMessageId ?? null,
-        replyTo: p.replyTo ?? null,
+        replyTo: replyTo
+          ? {
+              ...replyTo,
+              authorDisplayName:
+                replyProfile?.displayName?.trim() ||
+                (replyProfile?.username ? `@${replyProfile.username}` : null),
+            }
+          : null,
         attachments,
       },
     };

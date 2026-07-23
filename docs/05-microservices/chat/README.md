@@ -1,6 +1,6 @@
 # 💬 Сервис: chat
 
-> **Статус:** scaffold · **Версия:** 0.7 · **Schema:** `chat` · **Port:** 3016  
+> **Статус:** scaffold · **Версия:** 0.8 · **Schema:** `chat` · **Port:** 3016  
 > **Код:** `services/chat` (`@tavrida/chat`)  
 > **Решения:** [requirements/analysis.md](./requirements/analysis.md) · **BFF API:** [chat-api.md](../../06-api/chat-api.md)  
 > **Не путать:** RabbitMQ [messaging](../../03-architecture/messaging.md) · deal-messaging [ADR-009](../../03-architecture/adr/009-deal-messaging-e2ee.md)
@@ -33,6 +33,9 @@
 | Wave A: list preview, reply, edit/delete, hide, room UX | ✅ |
 | Wave B: outbox → RMQ → BFF `/ws/v1` + FE `useWs` + typing | ✅ |
 | Wave C: media attachments (`domain=chat`, enrich DTO) | ✅ |
+| History: cursor + `pageSize` / `historyMax` + scroll-up | ✅ |
+| Mobile Telegram-like UI (immersive room, long-press, composer) | ✅ |
+| Message `author` enrich + name on GROUP/TOPIC bubbles | ✅ |
 
 ## 📖 Термины
 

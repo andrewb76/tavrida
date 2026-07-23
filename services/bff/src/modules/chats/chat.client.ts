@@ -45,10 +45,19 @@ export type ChatListItemDto = {
 
 export type MessageDeliveryStatus = 'DELIVERED' | 'READ';
 
+export type MessageAuthorDto = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+};
+
 export type MessageDto = {
   id: string;
   chatId: string;
   authorId: string;
+  /** BFF enrich from user-profile (GROUP/TOPIC UI). */
+  author?: MessageAuthorDto | null;
   body: string;
   mentions: Array<{
     userId: string;
@@ -66,6 +75,7 @@ export type MessageDto = {
     authorId: string;
     body: string;
     deleted: boolean;
+    authorDisplayName?: string | null;
   } | null;
   attachments?: Array<
     | { mediaObjectId: string; sortOrder: number }
@@ -99,9 +109,10 @@ export class ChatClient {
     );
   }
 
-  list(userId: string, kind?: ChatKind) {
+  list(userId: string, kind?: ChatKind, opts?: { hidden?: boolean }) {
     const params = new URLSearchParams({ userId });
     if (kind) params.set('kind', kind);
+    if (opts?.hidden) params.set('hidden', '1');
     return this.request<ChatListItemDto[]>('GET', `/internal/v1/chats?${params}`);
   }
 
@@ -270,6 +281,10 @@ export class ChatClient {
 
   hide(chatId: string, userId: string) {
     return this.request<void>('POST', `/internal/v1/chats/${chatId}/hide`, { userId });
+  }
+
+  unhide(chatId: string, userId: string) {
+    return this.request<void>('POST', `/internal/v1/chats/${chatId}/unhide`, { userId });
   }
 
   markRead(chatId: string, userId: string, messageId?: string) {

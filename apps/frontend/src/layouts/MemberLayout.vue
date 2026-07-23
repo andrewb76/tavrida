@@ -24,6 +24,10 @@ const unreadBadge = computed(() => {
   return `${chatsWithUnread}/${totalUnreadMessages}`;
 });
 
+/** Immersive Telegram-like room: no app chrome on phone. */
+const isChatRoom = computed(() => route.name === 'chat-room');
+const isChatsSection = computed(() => route.path.startsWith('/chats'));
+
 const navItems = computed(() => {
   const items: Array<{ to: string; label: string; icon: string }> = [
     { to: '/app', label: 'Главная', icon: 'home' },
@@ -67,7 +71,10 @@ function isActive(path: string) {
     <ImpersonationBanner />
     <header
       class="sticky z-40 border-b border-border bg-surface"
-      :class="session.isImpersonating ? 'top-7' : 'top-0'"
+      :class="[
+        session.isImpersonating ? 'top-7' : 'top-0',
+        isChatRoom ? 'max-sm:hidden' : '',
+      ]"
     >
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
         <RouterLink
@@ -166,12 +173,22 @@ function isActive(path: string) {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-24">
+    <main
+      class="mx-auto w-full max-w-5xl flex-1"
+      :class="
+        isChatRoom
+          ? 'flex min-h-0 max-w-none flex-col overflow-hidden p-0 max-sm:h-dvh sm:max-w-5xl sm:px-4 sm:pb-24 sm:pt-4'
+          : isChatsSection
+            ? 'px-0 pb-24 pt-0 sm:px-4 sm:pt-4'
+            : 'px-4 py-6 pb-24'
+      "
+    >
       <RouterView />
     </main>
 
     <nav
       class="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+      :class="isChatRoom ? 'max-sm:hidden' : ''"
       aria-label="Основная навигация"
     >
       <ul class="mx-auto flex max-w-5xl">

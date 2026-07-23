@@ -40,10 +40,18 @@ export type ChatDto = {
 /** API statuses; `SENDING` is client-only optimistic. */
 export type MessageDeliveryStatus = 'SENDING' | 'DELIVERED' | 'READ';
 
+export type ChatMessageAuthor = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   chatId: string;
   authorId: string;
+  author?: ChatMessageAuthor | null;
   body: string;
   mentions: Array<{
     userId: string;
@@ -61,6 +69,7 @@ export type ChatMessage = {
     authorId: string;
     body: string;
     deleted: boolean;
+    authorDisplayName?: string | null;
   } | null;
   attachments?: Array<{
     id: string;
@@ -117,6 +126,26 @@ export function chatListTitle(row: ChatListItem | ChatDto): string {
   return chatKindLabel(row.kind, row.self);
 }
 
+export function messageAuthorLabel(msg: {
+  authorId: string;
+  author?: ChatMessageAuthor | null;
+}): string {
+  const name = msg.author?.displayName?.trim();
+  if (name) return name;
+  const username = msg.author?.username?.trim();
+  if (username) return `@${username}`;
+  return 'Участник';
+}
+
+/** Stable hue for Telegram-like colored names in GROUP/TOPIC. */
+export function authorHue(userId: string): number {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) {
+    h = (h + userId.charCodeAt(i) * (i + 3)) % 360;
+  }
+  return h;
+}
+
 export function messageStatusLabel(status: MessageDeliveryStatus | null | undefined): string {
   if (status === 'SENDING') return 'отправляется';
   if (status === 'DELIVERED') return 'доставлено';
@@ -124,9 +153,15 @@ export function messageStatusLabel(status: MessageDeliveryStatus | null | undefi
   return '';
 }
 
-export async function listChats(kind?: ChatKind): Promise<ChatListItem[]> {
-  const params = kind ? `?kind=${encodeURIComponent(kind)}` : '';
-  const res = await fetch(`${apiBase()}/chats${params}`, {
+export async function listChats(opts?: {
+  kind?: ChatKind;
+  hidden?: boolean;
+}): Promise<ChatListItem[]> {
+  const qs = new URLSearchParams();
+  if (opts?.kind) qs.set('kind', opts.kind);
+  if (opts?.hidden) qs.set('hidden', '1');
+  const suffix = qs.size ? `?${qs.toString()}` : '';
+  const res = await fetch(`${apiBase()}/chats${suffix}`, {
     headers: await bffAuthHeaders(undefined, { json: false }),
   });
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось загрузить чаты'));
@@ -314,6 +349,15 @@ export async function hideChat(chatId: string): Promise<void> {
     body: JSON.stringify({}),
   });
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось скрыть чат'));
+}
+
+export async function unhideChat(chatId: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}/unhide`, {
+    method: 'POST',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось вернуть чат'));
 }
 
 export async function markChatRead(chatId: string, messageId?: string): Promise<void> {

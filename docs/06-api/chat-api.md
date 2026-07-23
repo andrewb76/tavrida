@@ -21,7 +21,8 @@
 | `GET` | `/api/v1/chats/topics/{forumTopicId}` | TOPIC room для W06 |
 | `GET` | `/api/v1/chats/{chatId}` | Детали чата |
 | `PATCH` | `/api/v1/chats/{chatId}` | Обновить GROUP title |
-| `POST` | `/api/v1/chats/{chatId}/hide` | Скрыть для себя |
+| `POST` | `/api/v1/chats/{chatId}/hide` | Убрать из списка (только у себя) |
+| `POST` | `/api/v1/chats/{chatId}/unhide` | Вернуть в список |
 | `POST` | `/api/v1/chats/{chatId}/leave` | Покинуть GROUP |
 | `POST` | `/api/v1/chats/{chatId}/members` | Invite в GROUP |
 | `DELETE` | `/api/v1/chats/{chatId}/members/{userId}` | Kick (owner) |
@@ -42,6 +43,7 @@
 | Param | Тип | Описание |
 |-------|-----|----------|
 | `kind` | enum | `DIRECT` \| `GROUP` \| `TOPIC` — фильтр (UI: Все / Личные / Группы / Темы) |
+| `hidden` | `1` / `true` | Только скрытые (`chat_member.hidden_at`); без параметра — обычный список |
 | `q` | string | Поиск по title / participant displayName / username |
 | `cursor` | string | Cursor pagination |
 | `limit` | int | default 30, max 100 |
@@ -117,6 +119,12 @@ GET /api/v1/chats/unread
   "id": "uuid",
   "chatId": "uuid",
   "authorId": "logto-sub",
+  "author": {
+    "userId": "logto-sub",
+    "displayName": "Иван",
+    "username": "ivan",
+    "avatarUrl": null
+  },
   "body": "Привет",
   "mentions": [],
   "createdAt": "2026-07-22T12:01:00.000Z",
@@ -127,11 +135,14 @@ GET /api/v1/chats/unread
   "replyTo": {
     "id": "uuid-parent",
     "authorId": "logto-sub-peer",
+    "authorDisplayName": "Мария",
     "body": "Исходное…",
     "deleted": false
   }
 }
 ```
+
+`author` — BFF enrich из user-profile (для GROUP/TOPIC UI). В DIRECT имя на пузыре не показывают (как в Telegram).
 
 | `status` | Смысл |
 |----------|--------|
@@ -207,7 +218,7 @@ Auth: `wss://…/ws/v1?token={jwt}`. Membership checked on subscribe.
 
 | WS `event` | Payload (кратко) | Source |
 |------------|------------------|--------|
-| `message.new` | `{ messageId, chatId, authorId, body, mentions, createdAt, replyTo? }` | RMQ `chat.message_created` |
+| `message.new` | `{ messageId, chatId, authorId, author?, body, mentions, createdAt, replyTo?, attachments? }` | RMQ `chat.message_created` |
 | `message.edited` | `{ messageId, body, editedAt, … }` | `chat.message_edited` |
 | `message.deleted` | `{ messageId, deletedAt }` | `chat.message_deleted` |
 | `message.read` | `{ chatId, userId, lastReadMessageId, lastReadAt }` | `chat.message_read` |

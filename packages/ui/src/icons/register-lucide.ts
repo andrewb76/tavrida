@@ -5,6 +5,7 @@
 import { addIcon } from '@iconify/vue';
 import bell from '@iconify-icons/lucide/bell';
 import check from '@iconify-icons/lucide/check';
+import checkCheck from '@iconify-icons/lucide/check-check';
 import chevronDown from '@iconify-icons/lucide/chevron-down';
 import chevronLeft from '@iconify-icons/lucide/chevron-left';
 import chevronRight from '@iconify-icons/lucide/chevron-right';
@@ -15,10 +16,13 @@ import menu from '@iconify-icons/lucide/menu';
 import messageCircle from '@iconify-icons/lucide/message-circle';
 import messagesSquare from '@iconify-icons/lucide/messages-square';
 import moon from '@iconify-icons/lucide/moon';
+import moreHorizontal from '@iconify-icons/lucide/more-horizontal';
 import packageIcon from '@iconify-icons/lucide/package';
+import paperclip from '@iconify-icons/lucide/paperclip';
 import pencil from '@iconify-icons/lucide/pencil';
 import plus from '@iconify-icons/lucide/plus';
 import search from '@iconify-icons/lucide/search';
+import send from '@iconify-icons/lucide/send';
 import settings from '@iconify-icons/lucide/settings';
 import shield from '@iconify-icons/lucide/shield';
 import split from '@iconify-icons/lucide/split';
@@ -27,6 +31,7 @@ import sun from '@iconify-icons/lucide/sun';
 import tag from '@iconify-icons/lucide/tag';
 import thumbsDown from '@iconify-icons/lucide/thumbs-down';
 import thumbsUp from '@iconify-icons/lucide/thumbs-up';
+import trash2 from '@iconify-icons/lucide/trash-2';
 import user from '@iconify-icons/lucide/user';
 import wallet from '@iconify-icons/lucide/wallet';
 import x from '@iconify-icons/lucide/x';
@@ -50,17 +55,22 @@ const SUBSET: Record<string, typeof home> = {
   'lucide:plus': plus,
   'lucide:x': x,
   'lucide:check': check,
+  'lucide:check-check': checkCheck,
   'lucide:chevron-right': chevronRight,
   'lucide:chevron-left': chevronLeft,
   'lucide:chevron-down': chevronDown,
   'lucide:settings': settings,
   'lucide:menu': menu,
   'lucide:message-circle': messageCircle,
+  'lucide:more-horizontal': moreHorizontal,
+  'lucide:paperclip': paperclip,
   'lucide:pencil': pencil,
+  'lucide:send': send,
   'lucide:split': split,
   'lucide:tag': tag,
   'lucide:thumbs-up': thumbsUp,
   'lucide:thumbs-down': thumbsDown,
+  'lucide:trash-2': trash2,
 };
 
 export function registerLucideIcons(): void {

@@ -64,6 +64,17 @@ function avatarInitial(row: AdminUserRow) {
   return displayLabel(row).charAt(0).toUpperCase();
 }
 
+/** ADR-018: нельзя X-Act-As на себя или на другого admin. */
+function connectBlockReason(row: AdminUserRow): string | null {
+  if (row.userId === session.userId) return 'Это ваш аккаунт';
+  if (row.roles.includes('admin')) return 'Нельзя войти как администратор';
+  return null;
+}
+
+function canConnect(row: AdminUserRow): boolean {
+  return connectBlockReason(row) == null;
+}
+
 async function load() {
   loading.value = true;
   error.value = null;
@@ -245,8 +256,16 @@ async function confirmDeposit() {
             </div>
 
             <div class="min-w-0">
-              <p class="truncate text-base font-semibold text-text">
-                {{ displayLabel(row) }}
+              <p class="flex flex-wrap items-center gap-2 text-base font-semibold text-text">
+                <span class="truncate">{{ displayLabel(row) }}</span>
+                <span
+                  v-if="row.userId === session.userId"
+                  class="rounded-full bg-bg px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted"
+                >вы</span>
+                <span
+                  v-if="row.roles.includes('admin')"
+                  class="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary"
+                >admin</span>
               </p>
               <p
                 v-if="row.email"
@@ -269,29 +288,37 @@ async function confirmDeposit() {
             </div>
           </div>
 
-          <div class="relative z-10 shrink-0 text-right">
-            <p class="text-xs text-text-muted">
-              Баланс
-            </p>
-            <p class="text-lg font-semibold tabular-nums">
-              {{ formatMoney(row.balance) }}
-            </p>
+          <div class="relative z-10 flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+            <div class="text-left sm:text-right">
+              <p class="text-xs text-text-muted">
+                Баланс
+              </p>
+              <p class="text-lg font-semibold tabular-nums">
+                {{ formatMoney(row.balance) }}
+              </p>
+            </div>
             <button
               type="button"
-              class="mt-2 inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-white hover:bg-primary-hover"
+              class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-white hover:bg-primary-hover"
               @click="openDeposit(row)"
             >
               Пополнить
             </button>
             <button
-              v-if="!row.roles.includes('admin') && row.userId !== session.userId"
               type="button"
-              class="mt-2 ml-2 inline-flex h-9 items-center justify-center rounded-md border border-amber-600 bg-amber-500 px-3 text-sm font-medium text-stone-900 hover:bg-amber-400"
-              title="Работать от имени пользователя"
+              class="inline-flex h-9 items-center justify-center rounded-md border border-amber-600 bg-amber-500 px-3 text-sm font-medium text-stone-900 hover:bg-amber-400 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg disabled:text-text-muted disabled:opacity-70"
+              :disabled="!canConnect(row)"
+              :title="connectBlockReason(row) ?? 'Работать от имени пользователя'"
               @click="impersonate(row)"
             >
               Подключиться
             </button>
+            <p
+              v-if="connectBlockReason(row)"
+              class="text-[11px] leading-snug text-text-muted sm:max-w-[11rem] sm:text-right"
+            >
+              {{ connectBlockReason(row) }}
+            </p>
           </div>
         </div>
 

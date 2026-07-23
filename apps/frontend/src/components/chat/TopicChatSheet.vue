@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useWs } from '@/composables/useWs';
 import {
+  authorHue,
   getTopicChat,
   listChatMessages,
   markChatRead,
+  messageAuthorLabel,
   sendChatMessage,
   type ChatDto,
   type ChatMessage,
+  type ChatMessageAuthor,
 } from '@/services/chats';
 import { useChatsStore } from '@/stores/chats';
 import { useSessionStore } from '@/stores/session';
@@ -66,6 +69,7 @@ function onWsEvent(ev: { event: string; payload: Record<string, unknown> }) {
     id,
     chatId: chat.value.id,
     authorId: String(p.authorId ?? ''),
+    author: (p.author as ChatMessageAuthor | null | undefined) ?? null,
     body: String(p.body ?? ''),
     mentions: (p.mentions as ChatMessage['mentions']) ?? [],
     createdAt: String(p.createdAt ?? new Date().toISOString()),
@@ -274,6 +278,13 @@ function onBackdrop(e: MouseEvent) {
                     : 'bg-bg text-text'
                 "
               >
+                <p
+                  v-if="!isMine(msg)"
+                  class="mb-0.5 text-xs font-semibold"
+                  :style="{ color: `hsl(${authorHue(msg.authorId)} 55% 42%)` }"
+                >
+                  {{ messageAuthorLabel(msg) }}
+                </p>
                 <p class="whitespace-pre-wrap break-words">
                   {{ msg.body }}
                 </p>

@@ -3,26 +3,28 @@ import { useWs } from '@/composables/useWs';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import { logtoAccountUsernameUrl } from '@/config/logto';
 import AttachmentList from '@/components/media/AttachmentList.vue';
-import MediaUploader from '@/components/media/MediaUploader.vue';
 import {
+  authorHue,
   chatListTitle,
   deleteChatMessage,
   editChatMessage,
   getChat,
   listChatMessages,
   markChatRead,
+  messageAuthorLabel,
   messageStatusLabel,
   searchChatUsers,
   sendChatMessage,
   spawnGroupFromDirect,
   type ChatDto,
   type ChatMessage,
+  type ChatMessageAuthor,
   type ChatUserHit,
   type MessageDeliveryStatus,
 } from '@/services/chats';
 import { useChatsStore } from '@/stores/chats';
 import { useSessionStore } from '@/stores/session';
-import { UiButton, UiIcon } from '@tavrida/ui';
+import { UiIcon } from '@tavrida/ui';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
@@ -44,18 +46,22 @@ const sending = ref(false);
 const spawning = ref(false);
 const listEl = ref<HTMLElement | null>(null);
 const composeEl = ref<HTMLTextAreaElement | null>(null);
+const attachInput = ref<HTMLInputElement | null>(null);
 const showJumpDown = ref(false);
 const typingPeer = ref(false);
 const nextCursor = ref<string | null>(null);
-const historyMax = ref(-1);
 const historyCapReached = ref(false);
 const loadingOlder = ref(false);
 let typingClearTimer: ReturnType<typeof setTimeout> | null = null;
 let typingSendTimer: ReturnType<typeof setTimeout> | null = null;
 let wsUnsub: (() => void) | null = null;
+let pressTimer: ReturnType<typeof setTimeout> | null = null;
+let pressMoved = false;
 
 const replyTo = ref<ChatMessage | null>(null);
 const editingId = ref<string | null>(null);
+const actionMsg = ref<ChatMessage | null>(null);
+const headerMenuOpen = ref(false);
 
 const mentionHits = ref<ChatUserHit[]>([]);
 const mentionOpen = ref(false);
@@ -74,11 +80,35 @@ const canSpawnGroup = computed(
 
 const showStatus = computed(() => Boolean(chat.value && !chat.value.self));
 
+/** Telegram-like: names only in multi-party rooms, and only on others' bubbles. */
+const showAuthorNames = computed(
+  () => chat.value?.kind === 'GROUP' || chat.value?.kind === 'TOPIC',
+);
+
 const usernameAccountUrl = computed(() => logtoAccountUsernameUrl());
 
 const needsUsernameBanner = computed(
   () => Boolean(session.logtoEnabled && session.isAuthenticated && !session.username),
 );
+
+const canSend = computed(() => {
+  if (sending.value) return false;
+  if (editingId.value) return Boolean(body.value.trim());
+  if (upload.items.value.some((i) => i.status === 'uploading' || i.status === 'queued')) {
+    return false;
+  }
+  return Boolean(body.value.trim() || upload.readyAttachments.value.length);
+});
+
+const subtitle = computed(() => {
+  if (!chat.value) return '';
+  if (typingPeer.value) return 'печатает…';
+  if (chat.value.kind === 'TOPIC') return 'Чат темы';
+  if (chat.value.kind === 'GROUP') return 'Группа';
+  if (chat.value.self) return 'только вы';
+  if (chat.value.peer?.username) return `@${chat.value.peer.username}`;
+  return 'в сети недавно';
+});
 
 type TimelineItem =
   | { type: 'day'; key: string; label: string }
@@ -103,11 +133,13 @@ const timeline = computed((): TimelineItem[] => {
 });
 
 watch(chatId, (id) => void load(id), { immediate: true });
+watch(body, () => void nextTick(autosizeCompose));
 
 onBeforeUnmount(() => {
   if (mentionTimer) clearTimeout(mentionTimer);
   if (typingClearTimer) clearTimeout(typingClearTimer);
   if (typingSendTimer) clearTimeout(typingSendTimer);
+  if (pressTimer) clearTimeout(pressTimer);
   wsUnsub?.();
   wsUnsub = null;
 });
@@ -121,13 +153,13 @@ function applyWsEvent(ev: {
     const id = String(p.messageId ?? '');
     if (!id || messages.value.some((m) => m.id === id)) return;
     if (p.authorId === session.userId) {
-      // REST optimistic path already added; ignore echo
       return;
     }
     messages.value.push({
       id,
       chatId: chatId.value,
       authorId: String(p.authorId ?? ''),
+      author: (p.author as ChatMessageAuthor | null | undefined) ?? null,
       body: String(p.body ?? ''),
       mentions: (p.mentions as ChatMessage['mentions']) ?? [],
       createdAt: String(p.createdAt ?? new Date().toISOString()),
@@ -217,6 +249,8 @@ async function load(id: string) {
   historyCapReached.value = false;
   replyTo.value = null;
   editingId.value = null;
+  actionMsg.value = null;
+  headerMenuOpen.value = false;
   try {
     const [chatRow, page] = await Promise.all([
       getChat(id),
@@ -225,7 +259,6 @@ async function load(id: string) {
     chat.value = chatRow;
     messages.value = page.data;
     nextCursor.value = page.nextCursor;
-    historyMax.value = page.historyMax;
     historyCapReached.value = page.historyCapReached;
     const last = [...page.data].reverse().find((m) => !m.deletedAt) ?? page.data[page.data.length - 1];
     await markChatRead(id, last?.id);
@@ -267,7 +300,6 @@ async function loadOlder() {
     const older = page.data.filter((m) => !existing.has(m.id));
     messages.value = [...older, ...messages.value];
     nextCursor.value = page.nextCursor;
-    historyMax.value = page.historyMax;
     historyCapReached.value = page.historyCapReached;
     await nextTick();
     if (el) {
@@ -296,7 +328,15 @@ function scrollToBottom() {
   showJumpDown.value = false;
 }
 
+function autosizeCompose() {
+  const el = composeEl.value;
+  if (!el) return;
+  el.style.height = '0px';
+  el.style.height = `${Math.min(Math.max(el.scrollHeight, 40), 128)}px`;
+}
+
 async function spawnGroup() {
+  headerMenuOpen.value = false;
   if (!canSpawnGroup.value || spawning.value) return;
   const groupTitle = window.prompt('Название группы', 'Группа')?.trim();
   if (groupTitle === undefined) return;
@@ -319,10 +359,52 @@ async function spawnGroup() {
   }
 }
 
+function openActions(msg: ChatMessage) {
+  if (msg.deletedAt) return;
+  actionMsg.value = msg;
+}
+
+function closeActions() {
+  actionMsg.value = null;
+}
+
+function onMsgPointerDown(msg: ChatMessage, ev: PointerEvent) {
+  if (msg.deletedAt || ev.pointerType === 'mouse' && ev.button !== 0) return;
+  pressMoved = false;
+  if (pressTimer) clearTimeout(pressTimer);
+  pressTimer = setTimeout(() => {
+    if (!pressMoved) {
+      openActions(msg);
+      if (navigator.vibrate) navigator.vibrate(12);
+    }
+  }, 420);
+}
+
+function onMsgPointerMove() {
+  pressMoved = true;
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+}
+
+function onMsgPointerUp() {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+}
+
+function onMsgContextMenu(msg: ChatMessage, ev: MouseEvent) {
+  ev.preventDefault();
+  openActions(msg);
+}
+
 function startReply(msg: ChatMessage) {
   if (msg.deletedAt) return;
   editingId.value = null;
   replyTo.value = msg;
+  actionMsg.value = null;
   composeEl.value?.focus();
 }
 
@@ -331,16 +413,22 @@ function startEdit(msg: ChatMessage) {
   replyTo.value = null;
   editingId.value = msg.id;
   body.value = msg.body;
-  composeEl.value?.focus();
+  actionMsg.value = null;
+  void nextTick(() => {
+    autosizeCompose();
+    composeEl.value?.focus();
+  });
 }
 
 function cancelComposeMode() {
   replyTo.value = null;
   editingId.value = null;
+  void nextTick(autosizeCompose);
 }
 
 async function removeMessage(msg: ChatMessage) {
   if (!isMine(msg) || msg.deletedAt) return;
+  actionMsg.value = null;
   if (!window.confirm('Удалить сообщение?')) return;
   try {
     const updated = await deleteChatMessage(chatId.value, msg.id);
@@ -352,6 +440,7 @@ async function removeMessage(msg: ChatMessage) {
 }
 
 function onComposeInput() {
+  autosizeCompose();
   const el = composeEl.value;
   if (!el) return;
   const value = body.value;
@@ -410,7 +499,14 @@ function insertMention(hit: ChatUserHit) {
     const pos = start + insert.length;
     composeEl.value.focus();
     composeEl.value.setSelectionRange(pos, pos);
+    autosizeCompose();
   });
+}
+
+function onAttachPick(ev: Event) {
+  const input = ev.target as HTMLInputElement;
+  if (input.files?.length) upload.addFiles(input.files);
+  input.value = '';
 }
 
 async function send() {
@@ -418,8 +514,7 @@ async function send() {
   const attachmentIds = upload.readyAttachments.value
     .map((a) => a.id)
     .filter((id): id is string => Boolean(id));
-  if (sending.value) return;
-  if (!text && !attachmentIds.length) return;
+  if (!canSend.value) return;
   if (upload.items.value.some((i) => i.status === 'uploading' || i.status === 'queued')) {
     toast.message('Дождитесь окончания загрузки файлов');
     return;
@@ -459,6 +554,12 @@ async function send() {
     id: tempId,
     chatId: chatId.value,
     authorId: session.userId ?? '',
+    author: {
+      userId: session.userId ?? '',
+      displayName: session.displayName || null,
+      username: session.username ?? null,
+      avatarUrl: session.avatarUrl ?? null,
+    },
     body: text,
     mentions: [],
     createdAt: new Date().toISOString(),
@@ -472,6 +573,7 @@ async function send() {
           authorId: replySnapshot.authorId,
           body: replySnapshot.body.slice(0, 200),
           deleted: Boolean(replySnapshot.deletedAt),
+          authorDisplayName: messageAuthorLabel(replySnapshot),
         }
       : null,
     attachments: optimisticAttachments,
@@ -482,6 +584,7 @@ async function send() {
   closeMention();
   cancelComposeMode();
   await nextTick();
+  autosizeCompose();
   scrollToBottom();
 
   try {
@@ -510,11 +613,14 @@ function isMine(msg: ChatMessage) {
   return msg.authorId === session.userId;
 }
 
-function statusGlyph(status: MessageDeliveryStatus | null | undefined): string {
-  if (status === 'SENDING') return '…';
-  if (status === 'DELIVERED') return '✓';
-  if (status === 'READ') return '✓✓';
-  return '';
+function shouldShowAuthor(msg: ChatMessage) {
+  return showAuthorNames.value && !isMine(msg) && !msg.deletedAt;
+}
+
+function statusIcon(status: MessageDeliveryStatus | null | undefined): 'check' | 'checkCheck' | null {
+  if (status === 'DELIVERED') return 'check';
+  if (status === 'READ') return 'checkCheck';
+  return null;
 }
 
 function formatTime(iso: string) {
@@ -556,101 +662,117 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 </script>
 
 <template>
-  <section class="relative flex min-h-[70dvh] flex-col gap-2">
-    <header class="flex items-center gap-2">
+  <section class="chat-room">
+    <header class="chat-room__header">
       <RouterLink
         to="/chats"
-        class="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-bg hover:text-text"
+        class="chat-room__icon-btn"
         title="К списку"
       >
         <UiIcon
           name="chevronLeft"
-          :size="20"
+          :size="22"
           label="Назад"
         />
       </RouterLink>
-      <div class="min-w-0 flex-1">
-        <h1 class="truncate text-lg font-semibold text-text">
+      <div class="chat-room__title-wrap">
+        <h1 class="chat-room__title">
           {{ title }}
         </h1>
-        <p
-          v-if="chat?.kind === 'TOPIC' && chat.contextId"
-          class="truncate text-xs text-text-muted"
-        >
-          <RouterLink
-            :to="{ name: 'forum-topic', params: { id: chat.contextId } }"
-            class="hover:text-primary"
-          >
-            К теме форума
-          </RouterLink>
-        </p>
-        <p
-          v-else-if="chat?.kind === 'DIRECT' && !chat.self && chat.peer?.username"
-          class="truncate text-xs text-text-muted"
-        >
-          @{{ chat.peer.username }}
+        <p class="chat-room__subtitle">
+          <template v-if="chat?.kind === 'TOPIC' && chat.contextId">
+            <RouterLink
+              :to="{ name: 'forum-topic', params: { id: chat.contextId } }"
+              class="hover:text-primary"
+            >
+              К теме форума
+            </RouterLink>
+          </template>
+          <template v-else>
+            {{ subtitle }}
+          </template>
         </p>
       </div>
-      <UiButton
-        v-if="canSpawnGroup"
-        intent="secondary"
-        size="sm"
-        type="button"
-        :disabled="spawning"
-        @click="spawnGroup"
-      >
-        {{ spawning ? '…' : 'Группа' }}
-      </UiButton>
+      <div class="relative">
+        <button
+          v-if="canSpawnGroup"
+          type="button"
+          class="chat-room__icon-btn"
+          title="Ещё"
+          @click="headerMenuOpen = !headerMenuOpen"
+        >
+          <UiIcon
+            name="more"
+            :size="20"
+            label="Ещё"
+          />
+        </button>
+        <div
+          v-if="headerMenuOpen"
+          class="chat-room__menu"
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            :disabled="spawning"
+            @click="spawnGroup"
+          >
+            {{ spawning ? 'Создание…' : 'Создать группу' }}
+          </button>
+        </div>
+      </div>
     </header>
 
     <p
       v-if="needsUsernameBanner"
-      class="rounded-md border border-border bg-bg px-3 py-2 text-sm text-text-muted"
+      class="chat-room__banner"
     >
-      Чтобы упоминать участников через
-      <span class="text-text">@ник</span>, задайте свой handle в Logto.
+      Задайте
+      <span class="text-text">@ник</span>
+      для упоминаний.
       <a
         v-if="usernameAccountUrl"
         :href="usernameAccountUrl"
-        class="ml-1 text-primary hover:underline"
-      >Изменить @ник</a>
+        class="text-primary"
+      >Изменить</a>
     </p>
 
     <p
       v-if="loading"
-      class="text-sm text-text-muted"
+      class="chat-room__state"
     >
       Загрузка…
     </p>
     <p
       v-else-if="error"
-      class="text-sm text-danger"
+      class="chat-room__state chat-room__state--error"
     >
       {{ error }}
     </p>
 
     <template v-else>
-      <div class="relative min-h-0 flex-1">
+      <div class="chat-room__feed-wrap">
         <div
           ref="listEl"
-          class="h-full space-y-1 overflow-y-auto rounded-lg border border-border bg-surface px-2 py-3"
+          class="chat-room__feed"
           @scroll="onScroll"
         >
           <p
             v-if="loadingOlder"
-            class="px-2 pb-2 text-center text-xs text-text-muted"
+            class="chat-room__hint"
           >
             Загрузка…
           </p>
           <p
             v-else-if="historyCapReached && messages.length"
-            class="px-2 pb-2 text-center text-xs text-text-muted"
+            class="chat-room__hint"
           >
             Достигнут лимит истории тарифа
           </p>
           <p
             v-if="!messages.length"
-            class="px-2 text-sm text-text-muted"
+            class="chat-room__hint"
           >
             Пока нет сообщений. Напишите первое.
           </p>
@@ -660,104 +782,127 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           >
             <div
               v-if="item.type === 'day'"
-              class="sticky top-0 z-[1] flex justify-center py-2"
+              class="chat-room__day"
             >
-              <span class="rounded-full bg-bg/90 px-2.5 py-0.5 text-[11px] text-text-muted backdrop-blur">
-                {{ item.label }}
-              </span>
+              <span>{{ item.label }}</span>
             </div>
             <div
               v-else
-              class="group flex"
-              :class="isMine(item.msg) ? 'justify-end' : 'justify-start'"
+              class="chat-room__row"
+              :class="isMine(item.msg) ? 'chat-room__row--mine' : 'chat-room__row--peer'"
             >
               <div
-                class="max-w-[85%] rounded-2xl px-2.5 py-1.5 text-sm"
-                :class="[
-                  isMine(item.msg)
-                    ? 'bg-primary text-primary-fg'
-                    : 'bg-bg text-text',
-                  item.msg.deletedAt ? 'opacity-70 italic' : '',
-                ]"
+                class="chat-room__msg"
+                :class="isMine(item.msg) ? 'chat-room__msg--mine' : 'chat-room__msg--peer'"
               >
+                <button
+                  v-if="!item.msg.deletedAt"
+                  type="button"
+                  class="chat-room__msg-menu"
+                  title="Действия"
+                  @click.stop="openActions(item.msg)"
+                >
+                  <UiIcon
+                    name="more"
+                    :size="18"
+                    label="Действия"
+                  />
+                </button>
                 <div
-                  v-if="item.msg.replyTo"
-                  class="mb-1 rounded-md border-l-2 border-current/40 bg-black/10 px-2 py-1 text-[11px] opacity-90"
+                  class="chat-bubble"
+                  :class="[
+                    isMine(item.msg) ? 'chat-bubble--mine' : 'chat-bubble--peer',
+                    item.msg.deletedAt ? 'chat-bubble--deleted' : '',
+                  ]"
+                  @pointerdown="onMsgPointerDown(item.msg, $event)"
+                  @pointermove="onMsgPointerMove"
+                  @pointerup="onMsgPointerUp"
+                  @pointercancel="onMsgPointerUp"
+                  @contextmenu="onMsgContextMenu(item.msg, $event)"
                 >
-                  <p class="truncate font-medium">
-                    {{ item.msg.replyTo.deleted ? 'Удалённое сообщение' : item.msg.replyTo.body }}
-                  </p>
-                </div>
-                <AttachmentList
-                  v-if="item.msg.attachments?.length && !item.msg.deletedAt"
-                  :attachments="item.msg.attachments"
-                  variant="compact"
-                  class="mb-1"
-                />
-                <p
-                  v-if="item.msg.body || item.msg.deletedAt"
-                  class="whitespace-pre-wrap break-words"
-                >
-                  <template
-                    v-for="(part, idx) in messageParts(item.msg)"
-                    :key="idx"
+                  <div
+                    v-if="item.msg.replyTo"
+                    class="chat-bubble__reply"
+                  >
+                    <p
+                      v-if="item.msg.replyTo.authorDisplayName"
+                      class="chat-bubble__reply-author"
+                    >
+                      {{ item.msg.replyTo.authorDisplayName }}
+                    </p>
+                    <p class="truncate">
+                      {{ item.msg.replyTo.deleted ? 'Удалённое сообщение' : item.msg.replyTo.body }}
+                    </p>
+                  </div>
+                  <p
+                    v-if="shouldShowAuthor(item.msg)"
+                    class="chat-bubble__author"
+                    :style="{ '--author-hue': String(authorHue(item.msg.authorId)) }"
                   >
                     <RouterLink
-                      v-if="part.type === 'mention'"
-                      :to="{ name: 'profile-user', params: { userId: part.userId } }"
-                      class="font-medium underline underline-offset-2"
+                      :to="{ name: 'profile-user', params: { userId: item.msg.authorId } }"
+                      class="hover:underline"
                       @click.stop
                     >
-                      {{ part.text }}
+                      {{ messageAuthorLabel(item.msg) }}
                     </RouterLink>
-                    <template v-else>{{ part.text }}</template>
-                  </template>
-                </p>
-                <div class="mt-0.5 flex items-center justify-end gap-1.5 text-[10px] opacity-70">
-                  <span
-                    v-if="item.msg.editedAt && !item.msg.deletedAt"
-                    class="mr-auto opacity-80"
-                  >изм.</span>
-                  <time :datetime="item.msg.createdAt">
-                    {{ formatTime(item.msg.createdAt) }}
-                  </time>
-                  <span
-                    v-if="showStatus && isMine(item.msg) && item.msg.status && !item.msg.deletedAt"
-                    class="tabular-nums"
-                    :title="messageStatusLabel(item.msg.status)"
-                    :aria-label="messageStatusLabel(item.msg.status)"
+                  </p>
+                  <AttachmentList
+                    v-if="item.msg.attachments?.length && !item.msg.deletedAt"
+                    :attachments="item.msg.attachments"
+                    variant="compact"
+                    class="mb-1"
+                  />
+                  <p
+                    v-if="item.msg.body || item.msg.deletedAt"
+                    class="chat-bubble__text"
                   >
-                    {{ statusGlyph(item.msg.status) }}
-                  </span>
-                </div>
-                <div
-                  v-if="!item.msg.deletedAt"
-                  class="mt-1 hidden gap-2 text-[11px] opacity-80 group-hover:flex"
-                  :class="isMine(item.msg) ? 'justify-end' : 'justify-start'"
-                >
-                  <button
-                    type="button"
-                    class="hover:underline"
-                    @click="startReply(item.msg)"
+                    <template
+                      v-for="(part, idx) in messageParts(item.msg)"
+                      :key="idx"
+                    >
+                      <RouterLink
+                        v-if="part.type === 'mention'"
+                        :to="{ name: 'profile-user', params: { userId: part.userId } }"
+                        class="chat-bubble__mention"
+                        @click.stop
+                      >
+                        {{ part.text }}
+                      </RouterLink>
+                      <template v-else>{{ part.text }}</template>
+                    </template>
+                    <span class="chat-bubble__meta">
+                      <span
+                        v-if="item.msg.editedAt && !item.msg.deletedAt"
+                        class="chat-bubble__edited"
+                      >изм.</span>
+                      <time :datetime="item.msg.createdAt">
+                        {{ formatTime(item.msg.createdAt) }}
+                      </time>
+                      <span
+                        v-if="showStatus && isMine(item.msg) && !item.msg.deletedAt"
+                        class="chat-bubble__status"
+                        :class="{ 'chat-bubble__status--read': item.msg.status === 'READ' }"
+                        :title="messageStatusLabel(item.msg.status)"
+                        :aria-label="messageStatusLabel(item.msg.status)"
+                      >
+                        <template v-if="item.msg.status === 'SENDING'">…</template>
+                        <UiIcon
+                          v-else-if="statusIcon(item.msg.status)"
+                          :name="statusIcon(item.msg.status)!"
+                          :size="14"
+                        />
+                      </span>
+                    </span>
+                  </p>
+                  <p
+                    v-else
+                    class="chat-bubble__meta chat-bubble__meta--solo"
                   >
-                    Ответить
-                  </button>
-                  <button
-                    v-if="isMine(item.msg)"
-                    type="button"
-                    class="hover:underline"
-                    @click="startEdit(item.msg)"
-                  >
-                    Изменить
-                  </button>
-                  <button
-                    v-if="isMine(item.msg)"
-                    type="button"
-                    class="hover:underline"
-                    @click="removeMessage(item.msg)"
-                  >
-                    Удалить
-                  </button>
+                    <time :datetime="item.msg.createdAt">
+                      {{ formatTime(item.msg.createdAt) }}
+                    </time>
+                  </p>
                 </div>
               </div>
             </div>
@@ -767,7 +912,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
         <button
           v-if="showJumpDown"
           type="button"
-          class="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-text shadow-md"
+          class="chat-room__jump"
           title="Вниз"
           @click="scrollToBottom"
         >
@@ -779,33 +924,65 @@ function messageParts(msg: ChatMessage): BodyPart[] {
         </button>
       </div>
 
-      <div class="relative">
-        <p
-          v-if="typingPeer"
-          class="mb-1 px-1 text-xs text-text-muted"
-        >
-          печатает…
-        </p>
+      <footer class="chat-room__composer">
         <div
           v-if="replyTo || editingId"
-          class="mb-1 flex items-center gap-2 rounded-md border border-border bg-bg px-2 py-1.5 text-xs text-text-muted"
+          class="chat-room__compose-mode"
         >
-          <span class="min-w-0 flex-1 truncate">
-            <template v-if="editingId">Редактирование</template>
-            <template v-else>Ответ: {{ replyTo?.body }}</template>
-          </span>
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-primary">
+              {{ editingId ? 'Редактирование' : 'Ответ' }}
+            </p>
+            <p class="truncate text-text-muted">
+              {{ editingId ? body : replyTo?.body }}
+            </p>
+          </div>
           <button
             type="button"
-            class="shrink-0 hover:text-text"
+            class="chat-room__icon-btn"
             @click="cancelComposeMode"
           >
-            ✕
+            <UiIcon
+              name="close"
+              :size="18"
+              label="Отмена"
+            />
           </button>
         </div>
 
         <ul
+          v-if="upload.items.value.length && !editingId"
+          class="chat-room__attach-preview"
+        >
+          <li
+            v-for="item in upload.items.value"
+            :key="item.id"
+            class="chat-room__attach-chip"
+          >
+            <img
+              v-if="item.previewUrl"
+              :src="item.previewUrl"
+              alt=""
+            >
+            <span v-else>{{ item.file.name }}</span>
+            <button
+              type="button"
+              @click="upload.removeItem(item.id)"
+            >
+              ✕
+            </button>
+          </li>
+        </ul>
+        <p
+          v-if="upload.globalError.value"
+          class="px-1 text-xs text-error"
+        >
+          {{ upload.globalError.value }}
+        </p>
+
+        <ul
           v-if="mentionOpen && mentionHits.length"
-          class="absolute bottom-full left-0 z-10 mb-1 max-h-40 w-full overflow-y-auto rounded-md border border-border bg-surface shadow-md"
+          class="chat-room__mentions"
           role="listbox"
         >
           <li
@@ -814,10 +991,9 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           >
             <button
               type="button"
-              class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-bg"
               @mousedown.prevent="insertMention(hit)"
             >
-              <span class="font-medium text-text">@{{ hit.username }}</span>
+              <span class="font-medium">@{{ hit.username }}</span>
               <span
                 v-if="hit.displayName"
                 class="truncate text-text-muted"
@@ -827,48 +1003,687 @@ function messageParts(msg: ChatMessage): BodyPart[] {
         </ul>
 
         <form
-          class="flex flex-col gap-2"
+          class="chat-room__compose-row"
           @submit.prevent="send"
         >
-          <MediaUploader
-            v-if="!editingId"
-            class="text-text"
-            :items="upload.items.value"
+          <input
+            ref="attachInput"
+            type="file"
+            class="sr-only"
             :accept="upload.limits.value?.accept ?? 'image/*,.pdf'"
-            :can-add-more="upload.canAddMore.value"
-            :hint="upload.limits.value ? `До ${upload.limits.value.countMax} файлов, ≤ ${upload.limits.value.sizeMaxMb} MB` : undefined"
-            @select="upload.addFiles($event)"
-            @remove="upload.removeItem"
-          />
-          <p
-            v-if="upload.globalError.value"
-            class="text-xs text-danger"
+            multiple
+            @change="onAttachPick"
           >
-            {{ upload.globalError.value }}
-          </p>
-          <div class="flex gap-2">
-          <label class="sr-only" for="chat-compose">Сообщение</label>
+          <button
+            v-if="!editingId"
+            type="button"
+            class="chat-room__icon-btn"
+            :disabled="!upload.canAddMore.value"
+            title="Вложение"
+            @click="attachInput?.click()"
+          >
+            <UiIcon
+              name="paperclip"
+              :size="22"
+              label="Вложение"
+            />
+          </button>
+          <label
+            class="sr-only"
+            for="chat-compose"
+          >Сообщение</label>
           <textarea
             id="chat-compose"
             ref="composeEl"
             v-model="body"
-            rows="2"
-            class="min-h-11 flex-1 resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
-            :placeholder="editingId ? 'Изменить сообщение…' : 'Сообщение… (@ник)'"
+            rows="1"
+            class="chat-room__input"
+            :placeholder="editingId ? 'Изменить…' : 'Сообщение'"
+            enterkeyhint="send"
             @input="onComposeInput"
             @keydown.enter.exact.prevent="send"
             @keydown.escape="closeMention(); cancelComposeMode()"
           />
-          <UiButton
-            intent="primary"
+          <button
             type="submit"
-            :disabled="Boolean(sending || (editingId ? !body.trim() : !body.trim() && !upload.readyAttachments.value.length))"
+            class="chat-room__send"
+            :disabled="!canSend"
+            :title="editingId ? 'Сохранить' : 'Отправить'"
           >
-            {{ editingId ? 'Сохранить' : 'Отправить' }}
-          </UiButton>
-          </div>
+            <UiIcon
+              :name="editingId ? 'check' : 'send'"
+              :size="18"
+              :label="editingId ? 'Сохранить' : 'Отправить'"
+            />
+          </button>
         </form>
-      </div>
+      </footer>
     </template>
+
+    <Teleport to="body">
+      <div
+        v-if="actionMsg"
+        class="chat-sheet"
+        @click.self="closeActions"
+      >
+        <div
+          class="chat-sheet__panel"
+          role="dialog"
+          aria-label="Действия с сообщением"
+        >
+          <p class="chat-sheet__preview">
+            {{ actionMsg.deletedAt ? 'Сообщение удалено' : actionMsg.body || 'Вложение' }}
+          </p>
+          <button
+            type="button"
+            class="chat-sheet__action"
+            @click="startReply(actionMsg)"
+          >
+            <span class="chat-sheet__icon" aria-hidden="true">
+              <UiIcon
+                name="reply"
+                :size="20"
+              />
+            </span>
+            Ответить
+          </button>
+          <button
+            v-if="isMine(actionMsg)"
+            type="button"
+            class="chat-sheet__action"
+            @click="startEdit(actionMsg)"
+          >
+            <span class="chat-sheet__icon" aria-hidden="true">
+              <UiIcon
+                name="edit"
+                :size="20"
+              />
+            </span>
+            Изменить
+          </button>
+          <button
+            v-if="isMine(actionMsg)"
+            type="button"
+            class="chat-sheet__action chat-sheet__danger"
+            @click="removeMessage(actionMsg)"
+          >
+            <span class="chat-sheet__icon" aria-hidden="true">
+              <UiIcon
+                name="trash"
+                :size="20"
+              />
+            </span>
+            Удалить
+          </button>
+          <button
+            type="button"
+            class="chat-sheet__cancel"
+            @click="closeActions"
+          >
+            Отмена
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>
+
+<style scoped>
+.chat-room {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--token-primary) 8%, transparent), transparent 42%),
+    radial-gradient(circle at 80% 90%, color-mix(in srgb, var(--token-accent) 10%, transparent), transparent 40%),
+    color-mix(in srgb, var(--token-bg) 88%, var(--token-surface));
+}
+
+@media (min-width: 640px) {
+  .chat-room {
+    min-height: min(70dvh, 720px);
+    max-height: calc(100dvh - 8rem);
+    border: 1px solid var(--token-border);
+    border-radius: var(--token-radius-lg);
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 639px) {
+  .chat-room {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+.chat-room__header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.5rem;
+  padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--token-border);
+  background: color-mix(in srgb, var(--token-surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.chat-room__title-wrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-room__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--token-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-room__subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--token-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-room__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  color: var(--token-text-muted);
+  flex-shrink: 0;
+}
+
+.chat-room__icon-btn:hover,
+.chat-room__icon-btn:focus-visible {
+  background: var(--token-bg);
+  color: var(--token-text);
+  outline: none;
+}
+
+.chat-room__icon-btn:disabled {
+  opacity: 0.4;
+}
+
+.chat-room__menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  min-width: 11rem;
+  border: 1px solid var(--token-border);
+  border-radius: var(--token-radius-md);
+  background: var(--token-surface);
+  box-shadow: var(--token-shadow-card);
+  padding: 0.25rem;
+}
+
+.chat-room__menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.75rem;
+  border-radius: var(--token-radius-sm);
+  font-size: 0.875rem;
+}
+
+.chat-room__menu button:hover {
+  background: var(--token-bg);
+}
+
+.chat-room__banner {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--token-text-muted);
+  background: var(--token-bg);
+  border-bottom: 1px solid var(--token-border);
+}
+
+.chat-room__state {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--token-text-muted);
+  font-size: 0.875rem;
+}
+
+.chat-room__state--error {
+  color: var(--token-error);
+}
+
+.chat-room__feed-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.chat-room__feed {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.chat-room__hint {
+  margin: 0;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--token-text-muted);
+}
+
+.chat-room__day {
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.35rem 0;
+}
+
+.chat-room__day span {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--token-surface) 85%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.6875rem;
+  color: var(--token-text-muted);
+}
+
+.chat-room__row {
+  display: flex;
+}
+
+.chat-room__row--mine {
+  justify-content: flex-end;
+}
+
+.chat-room__row--peer {
+  justify-content: flex-start;
+}
+
+.chat-room__msg {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: min(92%, 30rem);
+}
+
+.chat-room__msg--mine {
+  flex-direction: row;
+}
+
+.chat-room__msg--peer {
+  flex-direction: row-reverse;
+}
+
+.chat-room__msg-menu {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--token-text-muted);
+}
+
+.chat-room__msg-menu:hover,
+.chat-room__msg-menu:focus-visible {
+  background: color-mix(in srgb, var(--token-surface) 80%, transparent);
+  color: var(--token-text);
+  outline: none;
+}
+
+.chat-bubble {
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0.4rem 0.55rem 0.3rem;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  touch-action: pan-y;
+}
+
+.chat-bubble--mine {
+  border-radius: 1rem 1rem 0.35rem 1rem;
+  background: color-mix(in srgb, var(--token-primary) 88%, #0b2a3d);
+  color: var(--token-primary-fg, #fff);
+}
+
+html[data-theme='dark'] .chat-bubble--mine {
+  background: color-mix(in srgb, var(--token-primary) 35%, var(--token-surface));
+  color: var(--token-text);
+}
+
+.chat-bubble--peer {
+  border-radius: 1rem 1rem 1rem 0.35rem;
+  background: var(--token-surface);
+  color: var(--token-text);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
+}
+
+.chat-bubble--deleted {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.chat-bubble__reply {
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0.45rem;
+  border-left: 2px solid currentColor;
+  border-radius: 0.35rem;
+  background: rgb(0 0 0 / 0.08);
+  font-size: 0.75rem;
+  opacity: 0.92;
+}
+
+.chat-bubble__reply-author {
+  margin: 0 0 0.1rem;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.chat-bubble__author {
+  margin: 0 0 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: hsl(var(--author-hue, 200) 55% 38%);
+}
+
+html[data-theme='dark'] .chat-bubble__author {
+  color: hsl(var(--author-hue, 200) 60% 68%);
+}
+
+.chat-bubble__text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-bubble__mention {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-bubble__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  float: right;
+  margin: 0.35rem 0 0 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  opacity: 0.72;
+  white-space: nowrap;
+}
+
+.chat-bubble__meta--solo {
+  float: none;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 0.15rem;
+}
+
+.chat-bubble__edited {
+  margin-right: 0.15rem;
+}
+
+.chat-bubble__status {
+  display: inline-flex;
+  opacity: 0.85;
+}
+
+.chat-bubble__status--read {
+  color: color-mix(in srgb, #7dd3fc 70%, currentColor);
+  opacity: 1;
+}
+
+.chat-room__jump {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--token-border);
+  background: var(--token-surface);
+  color: var(--token-text);
+  box-shadow: var(--token-shadow-card);
+}
+
+.chat-room__composer {
+  position: relative;
+  flex-shrink: 0;
+  border-top: 1px solid var(--token-border);
+  background: color-mix(in srgb, var(--token-surface) 94%, transparent);
+  backdrop-filter: blur(10px);
+  padding: 0.4rem 0.4rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+}
+
+.chat-room__compose-mode {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0.35rem 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border-left: 3px solid var(--token-primary);
+  border-radius: 0 var(--token-radius-sm) var(--token-radius-sm) 0;
+  background: var(--token-bg);
+  font-size: 0.75rem;
+}
+
+.chat-room__attach-preview {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  list-style: none;
+  margin: 0 0.35rem 0.35rem;
+  padding: 0;
+}
+
+.chat-room__attach-chip {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--token-radius-sm);
+  overflow: hidden;
+  background: var(--token-bg);
+  font-size: 0.625rem;
+}
+
+.chat-room__attach-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-room__attach-chip button {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.1rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 0.625rem;
+}
+
+.chat-room__mentions {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 100%;
+  margin-bottom: 0.25rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0.25rem;
+  border: 1px solid var(--token-border);
+  border-radius: var(--token-radius-md);
+  background: var(--token-surface);
+  box-shadow: var(--token-shadow-card);
+  z-index: 10;
+}
+
+.chat-room__mentions button {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border-radius: var(--token-radius-sm);
+}
+
+.chat-room__mentions button:hover {
+  background: var(--token-bg);
+}
+
+.chat-room__compose-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.chat-room__input {
+  flex: 1;
+  min-height: 2.5rem;
+  max-height: 8rem;
+  resize: none;
+  border: 1px solid var(--token-border);
+  border-radius: 1.25rem;
+  background: var(--token-bg);
+  color: var(--token-text);
+  padding: 0.65rem 0.9rem;
+  font-size: 1rem;
+  line-height: 1.3;
+  field-sizing: content;
+}
+
+.chat-room__input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--token-primary) 50%, var(--token-border));
+}
+
+.chat-room__send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: var(--token-primary);
+  color: var(--token-primary-fg, #fff);
+  flex-shrink: 0;
+}
+
+.chat-room__send:disabled {
+  opacity: 0.4;
+}
+
+.chat-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.4);
+  padding: 0.75rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.chat-sheet__panel {
+  width: min(100%, 24rem);
+  border-radius: var(--token-radius-lg);
+  background: var(--token-surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-sheet__preview {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--token-text-muted);
+  border-bottom: 1px solid var(--token-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-sheet__action {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+  text-align: left;
+  color: var(--token-text);
+  min-height: 3.25rem;
+}
+
+.chat-sheet__icon {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--token-bg);
+  color: var(--token-text);
+}
+
+.chat-sheet__action:active {
+  background: var(--token-bg);
+}
+
+.chat-sheet__danger {
+  color: var(--token-error) !important;
+}
+
+.chat-sheet__danger .chat-sheet__icon {
+  background: color-mix(in srgb, var(--token-error) 12%, var(--token-bg));
+  color: var(--token-error);
+}
+
+.chat-sheet__cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--token-border);
+  padding: 0.95rem 1rem;
+  min-height: 3rem;
+  color: var(--token-text-muted) !important;
+  font-size: 1rem;
+}
+</style>

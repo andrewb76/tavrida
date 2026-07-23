@@ -344,14 +344,20 @@ export class ChatsService {
   async listForUser(
     userId: string,
     kind?: ChatKind,
+    opts: { hidden?: boolean } = {},
   ): Promise<ChatListItem[]> {
     const qb = this.members
       .createQueryBuilder('m')
       .innerJoin(ChatEntity, 'c', 'c.id = m.chat_id')
       .where('m.user_id = :userId', { userId })
       .andWhere('m.left_at IS NULL')
-      .andWhere('m.hidden_at IS NULL')
       .orderBy('c.created_at', 'DESC');
+
+    if (opts.hidden) {
+      qb.andWhere('m.hidden_at IS NOT NULL');
+    } else {
+      qb.andWhere('m.hidden_at IS NULL');
+    }
 
     if (kind) {
       qb.andWhere('c.kind = :kind', { kind });
@@ -423,6 +429,11 @@ export class ChatsService {
   async hideChat(chatId: string, userId: string): Promise<void> {
     await this.requireChatEntityForMember(chatId, userId);
     await this.members.update({ chatId, userId }, { hiddenAt: new Date() });
+  }
+
+  async unhideChat(chatId: string, userId: string): Promise<void> {
+    await this.requireChatEntityForMember(chatId, userId);
+    await this.members.update({ chatId, userId }, { hiddenAt: null });
   }
 
   async getUnreadAggregate(userId: string): Promise<{

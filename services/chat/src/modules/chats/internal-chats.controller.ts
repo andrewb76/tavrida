@@ -197,8 +197,10 @@ export class InternalChatsController {
   list(
     @Query('userId') userId: string,
     @Query('kind') kind?: ChatKind,
+    @Query('hidden') hidden?: string,
   ) {
-    return this.chats.listForUser(userId, kind);
+    const wantHidden = hidden === '1' || hidden === 'true';
+    return this.chats.listForUser(userId, kind, { hidden: wantHidden });
   }
 
   @Get('unread')
@@ -356,6 +358,14 @@ export class InternalChatsController {
     @Body() body: HideChatDto,
   ) {
     return this.chats.hideChat(chatId, body.userId);
+  }
+
+  @Post(':chatId/unhide')
+  unhide(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: HideChatDto,
+  ) {
+    return this.chats.unhideChat(chatId, body.userId);
   }
 
   @Post(':chatId/read')

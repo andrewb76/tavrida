@@ -137,11 +137,15 @@ export class ChatsController {
   async list(
     @CurrentUser() user: AuthUser,
     @Query('kind') kind?: string,
+    @Query('hidden') hidden?: string,
   ) {
     if (kind && !CHAT_KINDS.includes(kind as (typeof CHAT_KINDS)[number])) {
       throw new BadRequestException('Invalid kind');
     }
-    const rows = await this.chat.list(user.sub, kind as ChatKind | undefined);
+    const wantHidden = hidden === '1' || hidden === 'true';
+    const rows = await this.chat.list(user.sub, kind as ChatKind | undefined, {
+      hidden: wantHidden,
+    });
     return this.enrichChatList(rows);
   }
 
@@ -316,6 +320,14 @@ export class ChatsController {
     @Param('chatId', ParseUUIDPipe) chatId: string,
   ) {
     return this.chat.hide(chatId, user.sub);
+  }
+
+  @Post(':chatId/unhide')
+  unhide(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+  ) {
+    return this.chat.unhide(chatId, user.sub);
   }
 
   @Get(':chatId/messages')
@@ -625,7 +637,7 @@ export class ChatsController {
   }
 
   private async enrichMessages(rows: MessageDto[]): Promise<MessageDto[]> {
-    const ids = [
+    const attachmentIds = [
       ...new Set(
         rows.flatMap((m) =>
           (m.attachments ?? [])
@@ -640,29 +652,71 @@ export class ChatsController {
         ),
       ),
     ];
-    const resolved = await this.media.resolveReadyAttachments(ids);
-    const byId = new Map(resolved.map((a) => [a.id, a]));
-    return rows.map((msg) => ({
-      ...msg,
-      attachments: (msg.attachments ?? [])
-        .map((a) => {
-          const id =
-            'mediaObjectId' in a && typeof a.mediaObjectId === 'string'
-              ? a.mediaObjectId
-              : 'id' in a && typeof a.id === 'string'
-                ? a.id
-                : null;
-          return id ? byId.get(id) : undefined;
-        })
-        .filter((a): a is NonNullable<typeof a> => Boolean(a))
-        .map((a) => ({
-          id: a.id,
-          url: a.url,
-          filename: a.filename,
-          contentType: a.contentType,
-          sizeBytes: a.sizeBytes,
-        })),
-    }));
+    const authorIds = [
+      ...new Set(
+        rows.flatMap((m) => {
+          const ids = [m.authorId];
+          if (m.replyTo?.authorId) ids.push(m.replyTo.authorId);
+          return ids;
+        }).filter(Boolean),
+      ),
+    ];
+
+    const [resolved, profiles] = await Promise.all([
+      this.media.resolveReadyAttachments(attachmentIds),
+      this.users.lookupByIds(authorIds),
+    ]);
+    const byAttachmentId = new Map(resolved.map((a) => [a.id, a]));
+    const byUserId = new Map(profiles.map((p) => [p.userId, p]));
+
+    return rows.map((msg) => {
+      const profile = byUserId.get(msg.authorId);
+      const replyProfile = msg.replyTo?.authorId
+        ? byUserId.get(msg.replyTo.authorId)
+        : undefined;
+      return {
+        ...msg,
+        author: profile
+          ? {
+              userId: profile.userId,
+              displayName: profile.displayName,
+              username: profile.username,
+              avatarUrl: profile.avatarUrl,
+            }
+          : {
+              userId: msg.authorId,
+              displayName: null,
+              username: null,
+              avatarUrl: null,
+            },
+        replyTo: msg.replyTo
+          ? {
+              ...msg.replyTo,
+              authorDisplayName:
+                replyProfile?.displayName?.trim() ||
+                (replyProfile?.username ? `@${replyProfile.username}` : null),
+            }
+          : msg.replyTo,
+        attachments: (msg.attachments ?? [])
+          .map((a) => {
+            const id =
+              'mediaObjectId' in a && typeof a.mediaObjectId === 'string'
+                ? a.mediaObjectId
+                : 'id' in a && typeof a.id === 'string'
+                  ? a.id
+                  : null;
+            return id ? byAttachmentId.get(id) : undefined;
+          })
+          .filter((a): a is NonNullable<typeof a> => Boolean(a))
+          .map((a) => ({
+            id: a.id,
+            url: a.url,
+            filename: a.filename,
+            contentType: a.contentType,
+            sizeBytes: a.sizeBytes,
+          })),
+      };
+    });
   }
 
   private async enrichChatList(rows: ChatListItemDto[]) {

@@ -159,7 +159,7 @@ Live: later WS `message.read` / `chat.message_read` после mark-read; до W
 | Превью в списке | `lastMessagePreview` + `lastMessageAt` (+ authorId) | ✅ |
 | Reply / quote | `replyToMessageId` на message; UI цитата над пузырём | ✅ |
 | Edit / delete своего | окна scalar `editWindowMinutes` / `deleteOwnWindowMinutes`; soft-delete | ✅ |
-| Hide чата | `chat_member.hidden_at`; новый message снимает hide у участников | ✅ |
+| Hide чата | `chat_member.hidden_at`; новый message снимает hide у участников; UI: вкладка «Скрытые» + unhide | ✅ |
 | Room UX | дата-сепараторы, denser bubbles, FAB «вниз» | ✅ |
 | Live WS / typing / media | **wave B** WS ✅ · **wave C** media ✅ | ✅ |
 

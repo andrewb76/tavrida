@@ -3,11 +3,12 @@ import { AuthModule } from '../auth/auth.module';
 import { ChatsModule } from '../chats/chats.module';
 import { MediaModule } from '../media/media.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 import { ChatWsRelayConsumer } from './chat-ws-relay.consumer';
 import { WsHubService } from './ws-hub.service';
 
 @Module({
-  imports: [AuthModule, ChatsModule, ScalarConfigModule, MediaModule],
+  imports: [AuthModule, ChatsModule, ScalarConfigModule, MediaModule, UserProfileModule],
   providers: [WsHubService, ChatWsRelayConsumer],
   exports: [WsHubService],
 })
