@@ -1,6 +1,6 @@
 # ⚙️ GitHub Actions
 
-> **Статус:** spec ready · **Версия:** 0.2  
+> **Статус:** spec ready · **Версия:** 0.3  
 > **Статический сайт:** `@tavrida/docs-site` (VitePress) · **Источник:** `docs/`
 
 ## 🎯 Обзор
@@ -251,6 +251,26 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 Подробнее: [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md).
 
+## 🧪 Test results badge
+
+По [Publish Test Results](https://github.com/marketplace/actions/publish-test-results)
+(«Create a badge from test results»):
+
+1. Job `test` пишет JUnit (`scripts/node-test.mjs` → `**/test-results/junit.xml`).
+2. `EnricoMi/publish-unit-test-result-action` → check + `steps.test-results.outputs.json`.
+3. На **push `master`**: цвет/текст бейджа из `conclusion` + `formatted.stats` → `badge.svg`.
+4. SVG пушится в orphan-ветку **`badges`** (`peaceiris/actions-gh-pages`), без отдельного `GIST_TOKEN`.
+
+В [README.md](../../README.md):
+
+```markdown
+![Tests](https://raw.githubusercontent.com/andrewb76/tavrida/badges/badge.svg)
+```
+
+Первый бейдж появится после успешного CI на `master`. До этого raw-URL может отдавать 404.
+
+Опционально (как в marketplace): Gist + secret `GIST_TOKEN` + `andymckay/append-gist-action`.
+
 ## 📋 Roadmap pipelines
 
 
@@ -259,7 +279,8 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 | Lint + docs build                   | ✅ workflow                                                 |
 | Actions on Node 24 (`checkout@v5`…) | ✅ workflows                                                |
 | GitHub Pages                        | ✅ workflow                                                 |
-| `pnpm test` в CI                    | ✅ в `ci.yml`                                               |
+| `pnpm test` в CI                    | ✅ в `ci.yml` (+ JUnit check **Test Results**)              |
+| Test results badge (`badges` branch)| ✅ SVG после push `master` → [README](../../README.md)       |
 | Docker matrix → GHCR + Swarm deploy | ✅ `deploy-dev.yml`                                         |
 | Sync secrets → Swarm                | ✅ `sync-secrets-dev.yml`                                   |
 | Prune old GHCR images               | ✅ `prune-ghcr-dev.yml`                                     |
@@ -277,4 +298,4 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.2-spec
+**Автор:** команда разработки · **Версия:** 0.3-spec

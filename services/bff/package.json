@@ -7,7 +7,7 @@
     "build": "pnpm --filter @tavrida/object-storage run build && pnpm --filter @tavrida/monetization-engine run build && tsc --build",
     "lint": "eslint src",
     "pretest": "pnpm run build",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node ../../scripts/node-test.mjs \"dist/**/*.test.js\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
