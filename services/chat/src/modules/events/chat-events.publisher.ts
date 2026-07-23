@@ -52,6 +52,7 @@ export class ChatEventsPublisher implements OnModuleInit, OnModuleDestroy {
       createdAt: Date;
       replyToMessageId: string | null;
       replyTo: ReplyPreviewPayload | null;
+      attachmentIds?: string[];
     },
   ): Promise<void> {
     await enqueueDomainEvent(manager, {
@@ -68,6 +69,7 @@ export class ChatEventsPublisher implements OnModuleInit, OnModuleDestroy {
         createdAt: input.createdAt.toISOString(),
         replyToMessageId: input.replyToMessageId,
         replyTo: input.replyTo,
+        attachmentIds: input.attachmentIds ?? [],
         mentionUserIds: input.mentions.map((m) => m.userId),
       },
     });

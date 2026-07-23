@@ -62,6 +62,13 @@ export type ChatMessage = {
     body: string;
     deleted: boolean;
   } | null;
+  attachments?: Array<{
+    id: string;
+    url: string;
+    filename: string;
+    contentType: string;
+    sizeBytes: number;
+  }>;
 };
 
 export type ChatUnread = {
@@ -237,7 +244,7 @@ export async function listChatMessages(
 export async function sendChatMessage(
   chatId: string,
   body: string,
-  opts?: { replyToMessageId?: string },
+  opts?: { replyToMessageId?: string; attachmentIds?: string[] },
 ): Promise<ChatMessage> {
   const res = await fetch(`${apiBase()}/chats/${chatId}/messages`, {
     method: 'POST',
@@ -245,6 +252,7 @@ export async function sendChatMessage(
     body: JSON.stringify({
       body,
       replyToMessageId: opts?.replyToMessageId,
+      attachmentIds: opts?.attachmentIds,
     }),
   });
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось отправить'));

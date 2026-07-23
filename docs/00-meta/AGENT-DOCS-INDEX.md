@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-23 (chat Wave B WebSocket live)
+**Последнее обновление индекса:** 2026-07-23 (chat Wave C media attachments)
 
 ---
 

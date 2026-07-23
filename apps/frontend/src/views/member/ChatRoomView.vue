@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useWs } from '@/composables/useWs';
+import { useMediaUpload } from '@/composables/useMediaUpload';
 import { logtoAccountUsernameUrl } from '@/config/logto';
+import AttachmentList from '@/components/media/AttachmentList.vue';
+import MediaUploader from '@/components/media/MediaUploader.vue';
 import {
   chatListTitle,
   deleteChatMessage,
@@ -29,6 +32,7 @@ const router = useRouter();
 const session = useSessionStore();
 const chatsStore = useChatsStore();
 const ws = useWs();
+const upload = useMediaUpload('chat');
 
 const chatId = computed(() => route.params.chatId as string);
 const chat = ref<ChatDto | null>(null);
@@ -128,6 +132,7 @@ function applyWsEvent(ev: {
       status: null,
       replyToMessageId: (p.replyToMessageId as string | null) ?? null,
       replyTo: (p.replyTo as ChatMessage['replyTo']) ?? null,
+      attachments: (p.attachments as ChatMessage['attachments']) ?? [],
     });
     typingPeer.value = false;
     void markChatRead(chatId.value, id);
@@ -358,9 +363,18 @@ function insertMention(hit: ChatUserHit) {
 
 async function send() {
   const text = body.value.trim();
-  if (!text || sending.value) return;
+  const attachmentIds = upload.readyAttachments.value
+    .map((a) => a.id)
+    .filter((id): id is string => Boolean(id));
+  if (sending.value) return;
+  if (!text && !attachmentIds.length) return;
+  if (upload.items.value.some((i) => i.status === 'uploading' || i.status === 'queued')) {
+    toast.message('Дождитесь окончания загрузки файлов');
+    return;
+  }
 
   if (editingId.value) {
+    if (!text) return;
     sending.value = true;
     try {
       const updated = await editChatMessage(chatId.value, editingId.value, text);
@@ -382,6 +396,13 @@ async function send() {
   sending.value = true;
   const tempId = `tmp-${Date.now()}`;
   const replySnapshot = replyTo.value;
+  const optimisticAttachments = upload.readyAttachments.value.map((a) => ({
+    id: a.id ?? '',
+    url: a.url,
+    filename: a.filename,
+    contentType: a.contentType,
+    sizeBytes: a.sizeBytes,
+  }));
   const optimistic: ChatMessage = {
     id: tempId,
     chatId: chatId.value,
@@ -401,9 +422,11 @@ async function send() {
           deleted: Boolean(replySnapshot.deletedAt),
         }
       : null,
+    attachments: optimisticAttachments,
   };
   messages.value.push(optimistic);
   body.value = '';
+  upload.reset();
   closeMention();
   cancelComposeMode();
   await nextTick();
@@ -412,6 +435,7 @@ async function send() {
   try {
     const msg = await sendChatMessage(chatId.value, text, {
       replyToMessageId: replySnapshot?.id,
+      attachmentIds,
     });
     const idx = messages.value.findIndex((m) => m.id === tempId);
     if (idx >= 0) messages.value[idx] = msg;
@@ -600,7 +624,16 @@ function messageParts(msg: ChatMessage): BodyPart[] {
                     {{ item.msg.replyTo.deleted ? 'Удалённое сообщение' : item.msg.replyTo.body }}
                   </p>
                 </div>
-                <p class="whitespace-pre-wrap break-words">
+                <AttachmentList
+                  v-if="item.msg.attachments?.length && !item.msg.deletedAt"
+                  :attachments="item.msg.attachments"
+                  variant="compact"
+                  class="mb-1"
+                />
+                <p
+                  v-if="item.msg.body || item.msg.deletedAt"
+                  class="whitespace-pre-wrap break-words"
+                >
                   <template
                     v-for="(part, idx) in messageParts(item.msg)"
                     :key="idx"
@@ -730,9 +763,26 @@ function messageParts(msg: ChatMessage): BodyPart[] {
         </ul>
 
         <form
-          class="flex gap-2"
+          class="flex flex-col gap-2"
           @submit.prevent="send"
         >
+          <MediaUploader
+            v-if="!editingId"
+            class="text-text"
+            :items="upload.items.value"
+            :accept="upload.limits.value?.accept ?? 'image/*,.pdf'"
+            :can-add-more="upload.canAddMore.value"
+            :hint="upload.limits.value ? `До ${upload.limits.value.countMax} файлов, ≤ ${upload.limits.value.sizeMaxMb} MB` : undefined"
+            @select="upload.addFiles($event)"
+            @remove="upload.removeItem"
+          />
+          <p
+            v-if="upload.globalError.value"
+            class="text-xs text-danger"
+          >
+            {{ upload.globalError.value }}
+          </p>
+          <div class="flex gap-2">
           <label class="sr-only" for="chat-compose">Сообщение</label>
           <textarea
             id="chat-compose"
@@ -748,10 +798,11 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           <UiButton
             intent="primary"
             type="submit"
-            :disabled="sending || !body.trim()"
+            :disabled="Boolean(sending || (editingId ? !body.trim() : !body.trim() && !upload.readyAttachments.value.length))"
           >
             {{ editingId ? 'Сохранить' : 'Отправить' }}
           </UiButton>
+          </div>
         </form>
       </div>
     </template>

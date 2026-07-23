@@ -4,7 +4,7 @@
 
 ## Область
 
-Единый контур загрузки файлов для **аукциона** (фото лотов), **форума** (вложения) и **marketplace** (портфолио услуг). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
+Единый контур загрузки файлов для **аукциона** (фото лотов), **форума** (вложения), **marketplace** (портфолио услуг) и **чата** (вложения сообщений). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
 
 ## Бакеты
 
@@ -13,8 +13,9 @@
 | `auction` | `auction-images` | public |
 | `forum` | `forum-attachments` | public |
 | `marketplace` | `marketplace-portfolio` | public |
+| `chat` | `chat-attachments` | public |
 
-На Swarm бакеты создаёт **`minio-buckets-init`** (`forum-attachments`, `auction-images`, `marketplace-portfolio`, `avatars`, `logto-avatars`). BFF в `NODE_ENV=production` **не** вызывает `ensurePublicBucket`.
+На Swarm бакеты создаёт **`minio-buckets-init`** (`forum-attachments`, `auction-images`, `marketplace-portfolio`, `chat-attachments`, `avatars`, `logto-avatars`). BFF в `NODE_ENV=production` **не** вызывает `ensurePublicBucket`.
 
 Если Docker Hub недоступен на VPS и init не подтянул `minio/mc`:
 
@@ -46,12 +47,13 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 | auction | `auction.seller.image.countMax`, `auction.seller.image.sizeMaxMb` |
 | forum | `forum.author.attachment.countMax`, `forum.author.attachment.sizeMaxMb` |
 | marketplace | `marketplace.seller.portfolio.itemMax`, `marketplace.seller.portfolio.image.sizeMaxMb` |
+| chat | `chat.member.attachment.countMax`, `chat.member.attachment.sizeMaxMb` |
 
 ## API (BFF `/api/v1/media`)
 
 | Method | Path | Auth | Описание |
 |--------|------|------|----------|
-| GET | `/limits?domain=auction\|forum\|marketplace` | JWT | Лимиты тарифа |
+| GET | `/limits?domain=auction\|forum\|marketplace\|chat` | JWT | Лимиты тарифа |
 | POST | `/upload-intents` | JWT | Создать сессию + presigned PUT |
 | POST | `/upload-intents/:id/confirm` | JWT | Подтвердить после PUT |
 | DELETE | `/upload-intents/:id` | JWT | Отменить pending |
@@ -87,6 +89,7 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 - **Auction:** `images: string[]` — только URL после confirm.
 - **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
 - **Marketplace:** `portfolio_item.imageUrl` — URL после confirm (`domain=marketplace`).
+- **Chat:** `attachmentIds: uuid[]` = upload intent ids; BFF enrich → `attachments: MediaAttachment[]` на сообщениях.
 
 ## Image proxy (imgproxy)
 

@@ -11,6 +11,7 @@ const buckets = [
   'forum-attachments',
   'auction-images',
   'marketplace-portfolio',
+  'chat-attachments',
   'avatars',
   'logto-avatars',
 ];

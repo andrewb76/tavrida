@@ -208,7 +208,7 @@ services:
           echo "waiting for minio..."
           sleep 3
         done
-        for b in forum-attachments auction-images marketplace-portfolio avatars logto-avatars; do
+        for b in forum-attachments auction-images marketplace-portfolio chat-attachments avatars logto-avatars; do
           mc mb "local/$$b" --ignore-existing
           mc anonymous set download "local/$$b"
           echo "minio bucket ok: $$b"

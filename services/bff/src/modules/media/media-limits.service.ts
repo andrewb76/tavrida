@@ -20,6 +20,10 @@ const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
     count: 'marketplace.seller.portfolio.itemMax',
     size: 'marketplace.seller.portfolio.image.sizeMaxMb',
   },
+  chat: {
+    count: 'chat.member.attachment.countMax',
+    size: 'chat.member.attachment.sizeMaxMb',
+  },
 };
 
 @Injectable()

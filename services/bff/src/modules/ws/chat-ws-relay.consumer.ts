@@ -5,6 +5,7 @@ import amqp, {
   type ConfirmChannel,
   type ConsumeMessage,
 } from 'amqplib';
+import { MediaService } from '../media/media.service';
 import { WsHubService } from './ws-hub.service';
 
 const EXCHANGE = 'tavrida-lot.events';
@@ -33,6 +34,7 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     private readonly hub: WsHubService,
+    private readonly media: MediaService,
   ) {}
 
   async onModuleInit() {
@@ -75,7 +77,7 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
     if (!msg || !this.channel) return;
     try {
       const envelope = JSON.parse(msg.content.toString('utf8')) as Envelope;
-      const mapped = mapChatEvent(envelope);
+      const mapped = await mapChatEvent(envelope, this.media);
       if (mapped) {
         this.hub.publish(mapped.channel, mapped.event, mapped.payload);
       }
@@ -138,17 +140,24 @@ export class ChatWsRelayConsumer implements OnModuleInit, OnModuleDestroy {
   }
 }
 
-function mapChatEvent(envelope: Envelope): {
+async function mapChatEvent(
+  envelope: Envelope,
+  media: MediaService,
+): Promise<{
   channel: string;
   event: string;
   payload: Record<string, unknown>;
-} | null {
+} | null> {
   const p = envelope.payload;
   const chatId = typeof p.chatId === 'string' ? p.chatId : null;
   if (!chatId) return null;
   const channel = `chat:${chatId}`;
 
   if (envelope.eventType === 'chat.message_created') {
+    const attachmentIds = Array.isArray(p.attachmentIds)
+      ? (p.attachmentIds as string[])
+      : [];
+    const attachments = await media.resolveReadyAttachments(attachmentIds);
     return {
       channel,
       event: 'message.new',
@@ -163,6 +172,7 @@ function mapChatEvent(envelope: Envelope): {
         deletedAt: null,
         replyToMessageId: p.replyToMessageId ?? null,
         replyTo: p.replyTo ?? null,
+        attachments,
       },
     };
   }

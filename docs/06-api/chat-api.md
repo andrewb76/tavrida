@@ -5,8 +5,8 @@
 
 Публичный BFF surface для «Мои чаты», DIRECT/self/TOPIC, сообщений и unread badge.
 
-**Реализовано в BFF:** list (+ `lastMessagePreview`), unread, self, direct, groups, spawn, topic, messages (reply/edit/delete), hide, read, users/search, DM `displayTitle`/`peer`, message `status`, **WSS `/ws/v1`** (`chat:{id}`: `message.new|edited|deleted|read`, `typing`).  
-**Ещё нет:** transfer ownership, kick, media attachments.
+**Реализовано в BFF:** list (+ `lastMessagePreview`), unread, self, direct, groups, spawn, topic, messages (reply/edit/delete + **attachments**), hide, read, users/search, DM `displayTitle`/`peer`, message `status`, **WSS `/ws/v1`**.  
+**Ещё нет:** transfer ownership, kick.
 
 ## Endpoints
 
@@ -164,13 +164,12 @@ Content-Type: application/json
 {
   "body": "Привет, @alice!",
   "replyToMessageId": "uuid-optional",
-  "attachmentIds": ["media-uuid"]
+  "attachmentIds": ["upload-intent-uuid"]
 }
 ```
 
-Response includes parsed `mentions[]` and optional `replyTo` preview. **No** notification from @ alone.  
-Edit/delete: `PATCH`/`DELETE` …/messages/{id} — окна `chat.message.editWindowMinutes` / `deleteOwnWindowMinutes` (soft-delete).  
-Hide: `POST` …/hide — `chat_member.hidden_at`; новое сообщение снимает hide у участников.
+`attachmentIds` — confirmed media upload intents (`domain=chat`). Ответ и история отдают `attachments: [{ id, url, filename, contentType, sizeBytes }]`.  
+Тело может быть пустым, если есть вложения.
 
 ### TOPIC on forum page
 

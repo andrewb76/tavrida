@@ -152,7 +152,7 @@ API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_
 
 ### Logto avatar storage (MinIO)
 
-Сервис **`minio-buckets-init`** создаёт public-read buckets: `forum-attachments`, `auction-images`, `marketplace-portfolio`, `avatars`, `logto-avatars`.
+Сервис **`minio-buckets-init`** создаёт public-read buckets: `forum-attachments`, `auction-images`, `marketplace-portfolio`, `chat-attachments`, `avatars`, `logto-avatars`.
 
 ```bash
 DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage

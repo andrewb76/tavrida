@@ -2,7 +2,7 @@ import { IsIn, IsInt, IsString, Max, MaxLength, Min, MinLength } from 'class-val
 import type { MediaDomain } from '@tavrida/object-storage';
 
 export class CreateUploadIntentDto {
-  @IsIn(['auction', 'forum', 'marketplace'])
+  @IsIn(['auction', 'forum', 'marketplace', 'chat'])
   domain!: MediaDomain;
 
   @IsString()
@@ -22,6 +22,6 @@ export class CreateUploadIntentDto {
 }
 
 export class MediaLimitsQuery {
-  @IsIn(['auction', 'forum', 'marketplace'])
+  @IsIn(['auction', 'forum', 'marketplace', 'chat'])
   domain!: MediaDomain;
 }

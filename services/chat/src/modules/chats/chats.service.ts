@@ -55,6 +55,11 @@ export type MessageReplyPreview = {
   deleted: boolean;
 };
 
+export type MessageAttachmentDto = {
+  mediaObjectId: string;
+  sortOrder: number;
+};
+
 export type MessagePublicDto = {
   id: string;
   chatId: string;
@@ -67,6 +72,7 @@ export type MessagePublicDto = {
   status: MessageDeliveryStatus | null;
   replyToMessageId: string | null;
   replyTo: MessageReplyPreview | null;
+  attachments: MessageAttachmentDto[];
 };
 
 @Injectable()
@@ -374,12 +380,19 @@ export class ChatsService {
         order: { createdAt: 'DESC' },
       });
       const peerUserId = await this.resolvePeerUserId(row.id, userId, row.kind, row.self);
-      const preview =
-        last == null
-          ? null
-          : last.deletedAt
-            ? 'Сообщение удалено'
-            : last.body.slice(0, 120);
+      let preview: string | null = null;
+      if (last) {
+        if (last.deletedAt) {
+          preview = 'Сообщение удалено';
+        } else if (last.body.trim()) {
+          preview = last.body.slice(0, 120);
+        } else {
+          const attCount = await this.attachments.count({
+            where: { messageId: last.id },
+          });
+          preview = attCount > 0 ? 'Вложение' : '';
+        }
+      }
       items.push({
         id: row.id,
         kind: row.kind,
@@ -441,8 +454,16 @@ export class ChatsService {
     });
     const otherReads = await this.otherMembersLastReadAt(chatId, userId);
     const replyMap = await this.loadReplyPreviews(rows);
+    const attachmentMap = await this.loadAttachments(rows.map((r) => r.id));
     return rows.map((msg) =>
-      this.toMessagePublic(msg, userId, chat.self, otherReads, replyMap),
+      this.toMessagePublic(
+        msg,
+        userId,
+        chat.self,
+        otherReads,
+        replyMap,
+        attachmentMap.get(msg.id) ?? [],
+      ),
     );
   }
 
@@ -455,7 +476,10 @@ export class ChatsService {
     replyToMessageId?: string | null;
   }): Promise<MessagePublicDto> {
     const body = input.body?.trim() ?? '';
-    if (!body) throw new BadRequestException('body is required');
+    const attachmentIds = [...new Set((input.attachmentIds ?? []).filter(Boolean))];
+    if (!body && !attachmentIds.length) {
+      throw new BadRequestException('body or attachmentIds required');
+    }
 
     const chat = await this.requireChatEntityForMember(input.chatId, input.authorId);
 
@@ -485,15 +509,17 @@ export class ChatsService {
       });
       await messagesRepo.save(message);
 
-      const attachmentIds = input.attachmentIds ?? [];
+      const attachmentRows: MessageAttachmentDto[] = [];
       for (let i = 0; i < attachmentIds.length; i += 1) {
+        const mediaObjectId = attachmentIds[i]!;
         await attachmentsRepo.save(
           attachmentsRepo.create({
             messageId: message.id,
-            mediaObjectId: attachmentIds[i]!,
+            mediaObjectId,
             sortOrder: i,
           }),
         );
+        attachmentRows.push({ mediaObjectId, sortOrder: i });
       }
 
       await membersRepo.update(
@@ -517,6 +543,7 @@ export class ChatsService {
         createdAt: message.createdAt,
         replyToMessageId: message.replyToMessageId,
         replyTo,
+        attachmentIds,
       });
 
       const otherReads = await this.otherMembersLastReadAt(
@@ -524,7 +551,14 @@ export class ChatsService {
         input.authorId,
         manager,
       );
-      return this.toMessagePublic(message, input.authorId, chat.self, otherReads, replyMap);
+      return this.toMessagePublic(
+        message,
+        input.authorId,
+        chat.self,
+        otherReads,
+        replyMap,
+        attachmentRows,
+      );
     });
 
     this.events.flush();
@@ -572,7 +606,14 @@ export class ChatsService {
         manager,
       );
       const replyMap = await this.loadReplyPreviews([msg], manager);
-      return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+      return this.toMessagePublic(
+        msg,
+        input.authorId,
+        chat.self,
+        otherReads,
+        replyMap,
+        await this.loadAttachmentsForMessage(msg.id, manager),
+      );
     });
     this.events.flush();
     return dto;
@@ -613,7 +654,14 @@ export class ChatsService {
         manager,
       );
       const replyMap = await this.loadReplyPreviews([msg], manager);
-      return this.toMessagePublic(msg, input.authorId, chat.self, otherReads, replyMap);
+      return this.toMessagePublic(
+        msg,
+        input.authorId,
+        chat.self,
+        otherReads,
+        replyMap,
+        await this.loadAttachmentsForMessage(msg.id, manager),
+      );
     });
     this.events.flush();
     return dto;
@@ -769,6 +817,7 @@ export class ChatsService {
     selfChat: boolean,
     otherMembersLastReadAt: Array<Date | null>,
     replyMap: Map<string, MessageReplyPreview> = new Map(),
+    attachments: MessageAttachmentDto[] = [],
   ): MessagePublicDto {
     const replyToMessageId = msg.replyToMessageId ?? null;
     return {
@@ -789,7 +838,37 @@ export class ChatsService {
       }),
       replyToMessageId,
       replyTo: replyToMessageId ? (replyMap.get(replyToMessageId) ?? null) : null,
+      attachments: msg.deletedAt ? [] : attachments,
     };
+  }
+
+  private async loadAttachments(
+    messageIds: string[],
+    manager?: EntityManager,
+  ): Promise<Map<string, MessageAttachmentDto[]>> {
+    const map = new Map<string, MessageAttachmentDto[]>();
+    if (!messageIds.length) return map;
+    const repo = manager
+      ? manager.getRepository(MessageAttachmentEntity)
+      : this.attachments;
+    const rows = await repo.find({
+      where: { messageId: In(messageIds) },
+      order: { sortOrder: 'ASC' },
+    });
+    for (const row of rows) {
+      const list = map.get(row.messageId) ?? [];
+      list.push({ mediaObjectId: row.mediaObjectId, sortOrder: row.sortOrder });
+      map.set(row.messageId, list);
+    }
+    return map;
+  }
+
+  private async loadAttachmentsForMessage(
+    messageId: string,
+    manager?: EntityManager,
+  ): Promise<MessageAttachmentDto[]> {
+    const map = await this.loadAttachments([messageId], manager);
+    return map.get(messageId) ?? [];
   }
 
   private async loadReplyPreviews(

@@ -67,6 +67,16 @@ export type MessageDto = {
     body: string;
     deleted: boolean;
   } | null;
+  attachments?: Array<
+    | { mediaObjectId: string; sortOrder: number }
+    | {
+        id: string;
+        url: string;
+        filename: string;
+        contentType: string;
+        sizeBytes: number;
+      }
+  >;
 };
 
 const DEFAULT_TIMEOUT_MS = 5000;

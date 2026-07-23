@@ -26,10 +26,17 @@ import {
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ForumClient } from '../forum/forum.client';
+import { MediaService } from '../media/media.service';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
-import { ChatClient, type ChatDto, type ChatKind, type ChatListItemDto } from './chat.client';
+import {
+  ChatClient,
+  type ChatDto,
+  type ChatKind,
+  type ChatListItemDto,
+  type MessageDto,
+} from './chat.client';
 
 const DM_FEATURE = 'chat.member.dm.enabled';
 const SELF_FEATURE = 'chat.member.self.enabled';
@@ -88,9 +95,9 @@ class InviteMembersDto {
 }
 
 class SendMessageDto {
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  body!: string;
+  body?: string;
 
   @IsOptional()
   @IsArray()
@@ -123,6 +130,7 @@ export class ChatsController {
     private readonly forum: ForumClient,
     private readonly users: UserProfileClient,
     private readonly scalarConfig: ScalarConfigClient,
+    private readonly media: MediaService,
   ) {}
 
   @Get()
@@ -311,16 +319,17 @@ export class ChatsController {
   }
 
   @Get(':chatId/messages')
-  messages(
+  async messages(
     @CurrentUser() user: AuthUser,
     @Param('chatId', ParseUUIDPipe) chatId: string,
     @Query('limit') limit?: string,
   ) {
-    return this.chat.listMessages(
+    const rows = await this.chat.listMessages(
       chatId,
       user.sub,
       limit ? Number(limit) : 50,
     );
+    return this.enrichMessages(rows);
   }
 
   @Post(':chatId/messages')
@@ -329,27 +338,42 @@ export class ChatsController {
     @Param('chatId', ParseUUIDPipe) chatId: string,
     @Body() body: SendMessageDto,
   ) {
+    const text = body.body?.trim() ?? '';
+    const attachmentIds = [...new Set(body.attachmentIds ?? [])];
+    if (!text && !attachmentIds.length) {
+      throw new BadRequestException('body or attachmentIds required');
+    }
+
     const chat = await this.chat.get(chatId, user.sub);
     await this.assertCanWrite(user.sub, chat.kind, chat.self);
 
-    if (body.attachmentIds?.length) {
+    if (attachmentIds.length) {
       await this.assertFeature(
         user.sub,
         ATTACHMENT_FEATURE,
         'Attachments are not available on your plan',
       );
+      const limits = await this.media.getLimits(user.sub, 'chat');
+      if (attachmentIds.length > limits.countMax) {
+        throw new BadRequestException(
+          `Максимум вложений: ${limits.countMax}`,
+        );
+      }
+      await this.media.assertChatAttachmentsOwned(user.sub, attachmentIds);
     }
 
-    const mentions = await this.resolveMentions(user.sub, body.body);
+    const mentions = text ? await this.resolveMentions(user.sub, text) : [];
 
-    return this.chat.sendMessage({
+    const msg = await this.chat.sendMessage({
       chatId,
       authorId: user.sub,
-      body: body.body,
+      body: text,
       mentions,
-      attachmentIds: body.attachmentIds,
+      attachmentIds,
       replyToMessageId: body.replyToMessageId,
     });
+    const [enriched] = await this.enrichMessages([msg]);
+    return enriched;
   }
 
   @Patch(':chatId/messages/:messageId')
@@ -362,7 +386,7 @@ export class ChatsController {
     await this.chat.get(chatId, user.sub);
     const mentions = await this.resolveMentions(user.sub, body.body);
     const editWindowMinutes = await this.chatEditWindowMinutes();
-    return this.chat.editMessage({
+    const msg = await this.chat.editMessage({
       chatId,
       messageId,
       authorId: user.sub,
@@ -370,6 +394,8 @@ export class ChatsController {
       mentions,
       editWindowMinutes,
     });
+    const [enriched] = await this.enrichMessages([msg]);
+    return enriched;
   }
 
   @Delete(':chatId/messages/:messageId')
@@ -380,12 +406,14 @@ export class ChatsController {
   ) {
     await this.chat.get(chatId, user.sub);
     const deleteWindowMinutes = await this.chatDeleteWindowMinutes();
-    return this.chat.deleteMessage({
+    const msg = await this.chat.deleteMessage({
       chatId,
       messageId,
       authorId: user.sub,
       deleteWindowMinutes,
     });
+    const [enriched] = await this.enrichMessages([msg]);
+    return enriched;
   }
 
   @Post(':chatId/read')
@@ -553,6 +581,47 @@ export class ChatsController {
       });
     }
     return mentions;
+  }
+
+  private async enrichMessages(rows: MessageDto[]): Promise<MessageDto[]> {
+    const ids = [
+      ...new Set(
+        rows.flatMap((m) =>
+          (m.attachments ?? [])
+            .map((a) =>
+              'mediaObjectId' in a && typeof a.mediaObjectId === 'string'
+                ? a.mediaObjectId
+                : 'id' in a && typeof a.id === 'string'
+                  ? a.id
+                  : null,
+            )
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ),
+    ];
+    const resolved = await this.media.resolveReadyAttachments(ids);
+    const byId = new Map(resolved.map((a) => [a.id, a]));
+    return rows.map((msg) => ({
+      ...msg,
+      attachments: (msg.attachments ?? [])
+        .map((a) => {
+          const id =
+            'mediaObjectId' in a && typeof a.mediaObjectId === 'string'
+              ? a.mediaObjectId
+              : 'id' in a && typeof a.id === 'string'
+                ? a.id
+                : null;
+          return id ? byId.get(id) : undefined;
+        })
+        .filter((a): a is NonNullable<typeof a> => Boolean(a))
+        .map((a) => ({
+          id: a.id,
+          url: a.url,
+          filename: a.filename,
+          contentType: a.contentType,
+          sizeBytes: a.sizeBytes,
+        })),
+    }));
   }
 
   private async enrichChatList(rows: ChatListItemDto[]) {

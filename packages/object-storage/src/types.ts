@@ -1,6 +1,8 @@
-export type MediaDomain = 'auction' | 'forum' | 'marketplace';
+export type MediaDomain = 'auction' | 'forum' | 'marketplace' | 'chat';
 
 export type MediaAttachment = {
+  /** Upload intent id — used as chat `attachmentIds` / `mediaObjectId`. */
+  id?: string;
   url: string;
   filename: string;
   contentType: string;
