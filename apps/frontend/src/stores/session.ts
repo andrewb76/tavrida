@@ -49,6 +49,10 @@ export const useSessionStore = defineStore('session', () => {
   const balanceCurrency = ref('RUB');
   const platformRoles = ref<PlatformRole[]>([]);
   const rolesLoading = ref(false);
+  /** JWT actor hard-locked (BFF `403 hard_locked`) — SPA trap to `/account-locked`. */
+  const isHardLocked = ref(false);
+  /** True after first `/me/roles` (or hard-lock) resolution for current session. */
+  const hardLockResolved = ref(false);
 
   /** Impersonation (ADR-018): real admin JWT + X-Act-As target. */
   const persisted = loadActAs();
@@ -109,6 +113,21 @@ export const useSessionStore = defineStore('session', () => {
     email.value = undefined;
     avatarUrl.value = undefined;
     username.value = undefined;
+    clearHardLockState();
+  }
+
+  function setHardLocked(locked: boolean) {
+    isHardLocked.value = locked;
+    if (locked) hardLockResolved.value = true;
+  }
+
+  function setHardLockResolved(resolved: boolean) {
+    hardLockResolved.value = resolved;
+  }
+
+  function clearHardLockState() {
+    isHardLocked.value = false;
+    hardLockResolved.value = false;
   }
 
   function setBalance(amount: number, currency = 'RUB') {
@@ -161,6 +180,7 @@ export const useSessionStore = defineStore('session', () => {
     devAuthenticated.value = false;
     isAuthenticated.value = false;
     platformRoles.value = [];
+    clearHardLockState();
   }
 
   return {
@@ -176,6 +196,8 @@ export const useSessionStore = defineStore('session', () => {
     balanceCurrency,
     platformRoles,
     rolesLoading,
+    isHardLocked,
+    hardLockResolved,
     isAdmin,
     isModerator,
     isImpersonating,
@@ -192,6 +214,9 @@ export const useSessionStore = defineStore('session', () => {
     setBalance,
     setPlatformRoles,
     setRolesLoading,
+    setHardLocked,
+    setHardLockResolved,
+    clearHardLockState,
     startImpersonation,
     stopImpersonation,
     signInDev,

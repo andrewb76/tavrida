@@ -5,6 +5,7 @@ Agent backlog (Tavrida Lot):
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
   ✔ Admin hard lock (вкл/выкл) отдельно от rating ban / Logto suspend @user-profile @bff @frontend @docs @done(26-07-23)
+  ✔ SPA `/account-locked` + route trap для hard-locked JWT actor @frontend @docs @done(26-07-24)
   ✔ Admin users card: enrichment + Actions menu + wallet history @bff @frontend @user-profile @forum @docs @done(26-07-23)
   ✔ Docs-review P0–P1: rating SoT honesty, ACL links, hard-lock×Act-As, Vanga phases @docs @done(26-07-23)
 

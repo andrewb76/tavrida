@@ -1,4 +1,5 @@
 import { bffAuthHeaders, requireBearerToken } from './apiAuth';
+import { applyHardLockFromResponse, readHardLockedDetail } from './hardLock';
 import { useSessionStore } from '@/stores/session';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
@@ -29,9 +30,10 @@ export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
   });
 
   if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { type?: string; detail?: string } | null;
-    if (res.status === 403 && err?.type === 'hard_locked') {
-      const hardLockError = new Error(err.detail ?? 'Аккаунт заблокирован администратором');
+    const err = (await res.json().catch(() => null)) as unknown;
+    if (applyHardLockFromResponse(res.status, err)) {
+      const detail = readHardLockedDetail(err) ?? 'Аккаунт заблокирован администратором';
+      const hardLockError = new Error(detail);
       (hardLockError as Error & { code?: string }).code = 'hard_locked';
       throw hardLockError;
     }
@@ -48,6 +50,7 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
 
   if (!session.isMember) {
     session.setPlatformRoles([]);
+    session.clearHardLockState();
     return [];
   }
 
@@ -62,6 +65,8 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
       .then((roles) => {
         const current = useSessionStore();
         if ((current.actAsUserId ?? current.userId) === identity) {
+          current.setHardLocked(false);
+          current.setHardLockResolved(true);
           current.setPlatformRoles(roles);
         }
         return roles;
@@ -71,19 +76,11 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
         const hardLocked =
           error instanceof Error && (error as Error & { code?: string }).code === 'hard_locked';
         if (hardLocked) {
-          const { toast } = await import('vue-sonner');
-          toast.error(error instanceof Error ? error.message : 'Аккаунт заблокирован');
-          current.clearProfile();
-          current.setPlatformRoles([]);
-          try {
-            const { useAuth } = await import('@/composables/useAuth');
-            await useAuth().signOut();
-          } catch {
-            window.location.assign('/');
-          }
+          // Session flag + redirect already applied in applyHardLockFromResponse.
           return [] as PlatformRole[];
         }
         if ((current.actAsUserId ?? current.userId) === identity) {
+          current.setHardLockResolved(true);
           current.setPlatformRoles(['member']);
         }
         return ['member'] as PlatformRole[];

@@ -104,8 +104,9 @@ apps/frontend/
 | `/marketplace` | MarketplaceListView | **member** | [W09](../11-ux-ui/wireframes/marketplace.md) |
 | `/marketplace/:id` | ServiceDetailView | **member** | W09 |
 | `/callback` | LogtoCallback | — | W01 |
+| `/account-locked` | HardLockedView | **member** (hard-locked actor) | [hard-lock.md](../05-microservices/user-profile/hard-lock.md) |
 
-Guards: `requireMember` (club content), `requireAuth`, `requirePlan('pro')` (UX-only hint + server enforce).
+Guards: `requireMember` (club content), `requireAuth`, `requirePlan('pro')` (UX-only hint + server enforce), **hard-lock trap** → `/account-locked`.
 
 > IA: [information-architecture](../11-ux-ui/information-architecture.md)
 

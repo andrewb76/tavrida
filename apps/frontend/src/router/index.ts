@@ -24,8 +24,25 @@ router.beforeEach(async (to) => {
     };
   }
 
+  // Resolve hard-lock once per session before club UI / trap page.
+  if (session.isMember && !session.hardLockResolved) {
+    await refreshPlatformRoles();
+  }
+
+  if (session.isHardLocked) {
+    if (to.meta.allowsHardLocked) return true;
+    return { name: 'account-locked' };
+  }
+
+  if (to.name === 'account-locked') {
+    return { name: 'member-home' };
+  }
+
   if (to.meta.requiresAdmin) {
     await refreshPlatformRoles();
+    if (session.isHardLocked) {
+      return { name: 'account-locked' };
+    }
     if (!session.isAdmin) {
       return { name: 'member-home' };
     }

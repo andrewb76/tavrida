@@ -8,6 +8,8 @@ declare module 'vue-router' {
     requiresMember?: boolean;
     requiresAdmin?: boolean;
     public?: boolean;
+    /** Allow navigation while JWT actor is hard-locked (only `/account-locked`). */
+    allowsHardLocked?: boolean;
   }
 }
 
@@ -195,6 +197,16 @@ const memberChildren: RouteRecordRaw[] = [
 ];
 
 export const routes: RouteRecordRaw[] = [
+  {
+    path: '/account-locked',
+    name: 'account-locked',
+    component: () => import('@/views/HardLockedView.vue'),
+    meta: {
+      title: 'Аккаунт заблокирован',
+      requiresMember: true,
+      allowsHardLocked: true,
+    },
+  },
   {
     path: '/',
     component: PublicLayout,
