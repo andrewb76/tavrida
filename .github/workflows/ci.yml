@@ -99,7 +99,7 @@ jobs:
 
       - name: Create badge
         if: ${{ !cancelled() && github.ref == 'refs/heads/master' }}
-        uses: emibcn/badge-action@08035948ff5f54556cbcfae9d8a8c7de92616797 # v2.0.3
+        uses: emibcn/badge-action@f9150fde070fcca0c4e832437611b44838fcd325 # v2.0.4
         with:
           label: Tests
           status: >-
