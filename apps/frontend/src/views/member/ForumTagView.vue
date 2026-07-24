@@ -56,11 +56,17 @@ watch(
   <section class="tag-page">
     <header class="tag-page__header">
       <p class="tag-page__crumb">
-        <RouterLink to="/forum">Форум</RouterLink>
+        <RouterLink to="/forum">
+          Форум
+        </RouterLink>
         · тег
       </p>
-      <h1 v-if="tag">#{{ tag.displayName }}</h1>
-      <h1 v-else>Тег</h1>
+      <h1 v-if="tag">
+        #{{ tag.displayName }}
+      </h1>
+      <h1 v-else>
+        Тег
+      </h1>
       <p
         v-if="tag?.description"
         class="tag-page__desc"

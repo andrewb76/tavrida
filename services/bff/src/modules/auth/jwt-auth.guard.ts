@@ -126,7 +126,7 @@ function joseFailureReason(error: unknown): string {
   }
   if (
     code === 'ERR_JWT_CLAIM_VALIDATION_FAILED' ||
-    /unexpected "aud"|audience|\"aud\"/i.test(message)
+    /unexpected "aud"|audience|"aud"/i.test(message)
   ) {
     return (
       'Access token audience mismatch. VITE_LOGTO_API_RESOURCE must equal LOGTO_AUDIENCE, ' +
