@@ -363,53 +363,53 @@ async function onDelete() {
           class="forum-comment__reply-form"
           @submit.prevent="submitReply"
         >
-        <label>
-          Ответ на комментарий
-          <textarea
-            v-model="replyBody"
-            rows="3"
-            required
-          />
-        </label>
-
-        <div class="forum-comment__attachments">
-          <button
-            type="button"
-            class="forum-comment__attachments-toggle"
-            @click="replyAttachmentsExpanded = !replyAttachmentsExpanded"
-          >
-            Вложения
-            <span
-              v-if="replyUpload.count.value > 0"
-            >📎 {{ replyUpload.count.value }}</span>
-            <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
-          </button>
-          <div v-if="replyAttachmentsExpanded">
-            <MediaUploader
-              :items="replyUpload.items.value"
-              :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
-              :can-add-more="replyUpload.canAddMore.value"
-              @select="replyUpload.addFiles($event)"
-              @remove="replyUpload.removeItem"
+          <label>
+            Ответ на комментарий
+            <textarea
+              v-model="replyBody"
+              rows="3"
+              required
             />
-          </div>
-        </div>
+          </label>
 
-        <p
-          v-if="postError"
-          class="forum-comment__error"
-        >
-          {{ postError }}
-        </p>
-        <UiButton
-          intent="primary"
-          size="sm"
-          type="submit"
-          :disabled="posting"
-        >
-          {{ posting ? 'Отправка…' : 'Отправить ответ' }}
-        </UiButton>
-      </form>
+          <div class="forum-comment__attachments">
+            <button
+              type="button"
+              class="forum-comment__attachments-toggle"
+              @click="replyAttachmentsExpanded = !replyAttachmentsExpanded"
+            >
+              Вложения
+              <span
+                v-if="replyUpload.count.value > 0"
+              >📎 {{ replyUpload.count.value }}</span>
+              <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
+            </button>
+            <div v-if="replyAttachmentsExpanded">
+              <MediaUploader
+                :items="replyUpload.items.value"
+                :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="replyUpload.canAddMore.value"
+                @select="replyUpload.addFiles($event)"
+                @remove="replyUpload.removeItem"
+              />
+            </div>
+          </div>
+
+          <p
+            v-if="postError"
+            class="forum-comment__error"
+          >
+            {{ postError }}
+          </p>
+          <UiButton
+            intent="primary"
+            size="sm"
+            type="submit"
+            :disabled="posting"
+          >
+            {{ posting ? 'Отправка…' : 'Отправить ответ' }}
+          </UiButton>
+        </form>
       </template>
     </article>
 

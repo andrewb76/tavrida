@@ -27,7 +27,7 @@ export function readHardLockedDetail(body: unknown): string | null {
 }
 
 /** Mark JWT actor as hard-locked. Router guard / watch send them to `/account-locked`. */
-export function markActorHardLocked(_detail?: string): void {
+export function markActorHardLocked(): void {
   const session = useSessionStore();
   session.setHardLocked(true);
   session.setPlatformRoles([]);
@@ -37,8 +37,7 @@ export function markActorHardLocked(_detail?: string): void {
 /** If response is hard-lock 403, apply SPA flag. Returns true when locked. */
 export function applyHardLockFromResponse(status: number, body: unknown): boolean {
   if (status !== 403) return false;
-  const detail = readHardLockedDetail(body);
-  if (!detail) return false;
-  markActorHardLocked(detail);
+  if (!readHardLockedDetail(body)) return false;
+  markActorHardLocked();
   return true;
 }

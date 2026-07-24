@@ -887,7 +887,9 @@ function messageParts(msg: ChatMessage): BodyPart[] {
                       >
                         {{ part.text }}
                       </RouterLink>
-                      <template v-else>{{ part.text }}</template>
+                      <template v-else>
+                        {{ part.text }}
+                      </template>
                     </template>
                     <span class="chat-bubble__meta">
                       <span
