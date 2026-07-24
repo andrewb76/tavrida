@@ -13,6 +13,8 @@ overrides:
   # GHSA-3jxr-9vmj-r5cp (DoS) — pin patched versions within each major line
   brace-expansion@<1.1.16: '1.1.16'
   'brace-expansion@>=2.0.0 <2.1.2': '2.1.2'
+  # GHSA-r28c-9q8g-f849 — sourceMappingURL path traversal
+  postcss: '>=8.5.18'
 
 allowBuilds:
   '@nestjs/core': true

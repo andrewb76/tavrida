@@ -15,6 +15,8 @@ pnpm exec turbo run lint --filter=@tavrida/frontend   # пример
 
 Не считать задачу готовой, если локальный lint пакета красный.
 
+CI audit / Actions SHA / deploy: см. [ci-hygiene.mdc](./ci-hygiene.mdc).
+
 ## TypeScript: неиспользуемое
 
 - Не оставляй неиспользуемые параметры/переменные — даже с префиксом `_` (`_detail`): в этом репо `@typescript-eslint/no-unused-vars` их **флажит как error**.

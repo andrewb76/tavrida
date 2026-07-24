@@ -1,0 +1,45 @@
+---
+description: CI hygiene — audit overrides, Action SHA pins, pre-push checks
+globs: "{.github/**,pnpm-workspace.yaml,pnpm-lock.yaml,package.json}"
+alwaysApply: false
+---
+
+# CI и зависимости
+
+Перед push/PR, если трогали deps, lockfile, workflows или frontend/services: локально прогони то, что упадёт в CI.
+
+```bash
+pnpm audit --audit-level=high
+pnpm exec turbo run lint --filter=@tavrida/<pkg>   # затронутые пакеты
+```
+
+`pnpm audit --audit-level=high` **exit ≠ 0** = красный CI (job Lint → Security audit).
+
+## Audit / transitive CVE
+
+1. Смотри advisory + patched versions (`pnpm audit`, GHSA).
+2. Чини через **`pnpm-workspace.yaml` → `overrides:`** (pnpm 11 **игнорирует** `package.json#pnpm.overrides`).
+3. Предпочитай pin **внутри major**, если уязвимы несколько линий:
+   - плохо: `brace-expansion: '>=1.1.16'` (утянет v5 на потребителей v1)
+   - хорошо: `brace-expansion@<1.1.16: '1.1.16'` + `'brace-expansion@>=2.0.0 <2.1.2': '2.1.2'`
+4. После правки: `pnpm install --no-frozen-lockfile` → снова `pnpm audit --audit-level=high`.
+5. Коммить **оба**: `pnpm-workspace.yaml` + `pnpm-lock.yaml`.
+
+## GitHub Actions `uses:`
+
+- Pin по **полному commit SHA** + комментарий с тегом (`# v2.0.4`).
+- **Перед коммитом** проверь, что SHA существует:
+
+```bash
+git ls-remote https://github.com/<owner>/<repo>.git 'refs/tags/vX.Y.Z'
+# SHA в выводе = то, что ставить в uses: owner/repo@<sha>
+```
+
+- Не копируй SHA из чужих репо/Dependabot-диффов наугад — битый SHA → `Unable to resolve action`.
+- После смены workflow: убедись, что job реально резолвит action (не только YAML валиден).
+
+## Deploy / Swarm (кратко)
+
+- App CD: workflow **Deploy dev** (`push` paths или `workflow_dispatch`), не путать с job Lint.
+- Локальный `deploy-dev.sh` нужен `docker/swarm/dev.env` + `DOCKER_CONTEXT=dev-swarm`.
+- После `stack deploy` проверь replicas (`1/1`) и `https://app.<DEV_DOMAIN>` / `/health` — «Done» скрипта ≠ healthy Traefik.
