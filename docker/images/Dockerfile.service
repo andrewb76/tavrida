@@ -12,7 +12,7 @@
 ARG SERVICE_PKG=@tavrida/bff
 ARG SERVICE_DIR=services/bff
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 ARG SERVICE_PKG
 ARG SERVICE_DIR
 
@@ -29,11 +29,13 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm exec turbo run build --filter=${SERVICE_PKG}...
 RUN pnpm deploy --filter=${SERVICE_PKG} --prod --legacy /deploy
 
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 ARG SERVICE_DIR
 
 WORKDIR /app
 COPY --from=build /deploy ./
+# Monorepo config (e.g. vanga.defaults.yaml for BFF)
+COPY --from=build /repo/config ./config
 
 ENV NODE_ENV=production
 

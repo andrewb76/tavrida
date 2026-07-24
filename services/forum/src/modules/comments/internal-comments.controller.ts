@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -67,6 +68,10 @@ class CreateCommentRequestDto extends CreateCommentDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 }
 
 class UpdateCommentDto {
@@ -103,6 +108,10 @@ class UpdateCommentRequestDto extends UpdateCommentDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  asModerator?: boolean;
 }
 
 @Controller('internal/v1/topics/:topicId/comments')
@@ -114,6 +123,7 @@ export class InternalCommentsController {
     @Param('topicId') topicId: string,
     @Query('viewerId') viewerId?: string,
     @Query('changeWindowMinutes') changeWindowMinutes?: string,
+    @Query('isAdmin') isAdmin?: string,
   ) {
     return this.comments.listByTopic(topicId, {
       userId: viewerId,
@@ -121,6 +131,7 @@ export class InternalCommentsController {
         changeWindowMinutes != null && changeWindowMinutes !== ''
           ? Number(changeWindowMinutes)
           : undefined,
+      isAdmin: isAdmin === '1' || isAdmin === 'true',
     });
   }
 
@@ -145,17 +156,32 @@ export class InternalCommentsController {
     });
   }
 
+  @Delete(':commentId')
+  softDelete(
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+    @Body() body: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.comments.softDelete({
+      topicId,
+      commentId,
+      actorId: body.actorId,
+      asModerator: body.asModerator,
+    });
+  }
+
   @Post(':commentId/promote-to-topic')
   promote(
     @Param('topicId') topicId: string,
     @Param('commentId') commentId: string,
-    @Body() body: { actorId: string; title?: string },
+    @Body() body: { actorId: string; title?: string; asModerator?: boolean },
   ) {
     return this.comments.promoteToTopic({
       topicId,
       commentId,
       actorId: body.actorId,
       title: body.title,
+      asModerator: body.asModerator,
     });
   }
 }

@@ -10,6 +10,7 @@ html:not([data-theme]) {
 
   --token-primary: #1b4d6e;
   --token-primary-hover: #153e58;
+  --token-primary-fg: #ffffff;
   --token-accent: #c4a35a;
   --token-bg: #fafaf8;
   --token-surface: #ffffff;
@@ -26,7 +27,9 @@ html:not([data-theme]) {
 
   --token-shadow-card: 0 1px 3px rgb(0 0 0 / 0.08);
 
-  --token-font-sans: 'Inter', system-ui, sans-serif;
+  --token-font-sans: 'Onest', system-ui, sans-serif;
+  --token-font-display: 'Unbounded', system-ui, sans-serif;
+  --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 html[data-theme='dark'] {
@@ -34,6 +37,7 @@ html[data-theme='dark'] {
 
   --token-primary: #5b9bd5;
   --token-primary-hover: #7ab3e0;
+  --token-primary-fg: #0b1f24;
   --token-accent: #d4b96a;
   --token-bg: #12141a;
   --token-surface: #1e2229;
@@ -50,5 +54,7 @@ html[data-theme='dark'] {
 
   --token-shadow-card: 0 1px 3px rgb(0 0 0 / 0.35);
 
-  --token-font-sans: 'Inter', system-ui, sans-serif;
+  --token-font-sans: 'Onest', system-ui, sans-serif;
+  --token-font-display: 'Unbounded', system-ui, sans-serif;
+  --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }

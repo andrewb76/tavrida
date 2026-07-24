@@ -4,6 +4,10 @@ Agent backlog (Tavrida Lot):
 
 Invites / BFF:
   ✔ OpenAPI fragment Vanga в docs/06-api/vanga-admin-api.md @vanga @docs @done(26-07-11)
+  ✔ Admin hard lock (вкл/выкл) отдельно от rating ban / Logto suspend @user-profile @bff @frontend @docs @done(26-07-23)
+  ✔ SPA `/account-locked` + route trap для hard-locked JWT actor @frontend @docs @done(26-07-24)
+  ✔ Admin users card: enrichment + Actions menu + wallet history @bff @frontend @user-profile @forum @docs @done(26-07-23)
+  ✔ Docs-review P0–P1: rating SoT honesty, ACL links, hard-lock×Act-As, Vanga phases @docs @done(26-07-23)
 
 Vanga (прогноз дохода):
   ☐ Checkpoint 0: founder review topic-index + vanga.defaults.yaml @vanga
@@ -21,6 +25,8 @@ plan-config:
   ✔ Swarm: plan-config-renew hourly → renew/run @plan-config @ops @done(26-07-16)
   ☐ Team review: tariff Seller/Buyer/Pro proposal @plan-config @docs
   ☐ После консенсуса — каскад docs + seed (basic → seller/buyer) @plan-config @docs
+  ☐ Post-MVP: три реестра (scalar · plan · user-prefs) — сервис + audit PLATFORM-REGISTRY + миграция DeliveryPreference/webhook prefs @plan-config @scalar @docs
+    см. ADR-020; MVP не трогаем
 
 Subscriptions (event intent):
   ✔ Rename auction-subscriptions → subscriptions + CRUD v1 + BFF @subscriptions @done(26-07-13)
@@ -36,6 +42,35 @@ Subscriptions (event intent):
   ☐ Novu ops: задокументировать onboarding Dashboard + API key + workflow tag-content (отложено) @notifications @docs
   ☐ Novu: настроить local (ключ + tag-content) после чеклиста @notifications
   ☐ После проверки local Novu — merge в infra.local.yml (как Keto) @notifications @ops
+
+Forum:
+  ✔ Topic drafts DRAFT/PUBLISHED (author-only, no unpublish) @forum @frontend @docs @done(26-07-21)
+  ✔ Staff mod: edit/delete topics+comments; promote staff-only @forum @bff @frontend @docs @done(26-07-23)
+  ✔ Category ACL allowlist (empty=all; else users+admin) @forum @bff @frontend @docs @done(26-07-23)
+  ✔ Access groups ACL (OR; drop user allowlist; /admin/access-groups) @forum @bff @frontend @docs @done(26-07-23)
+
+Chat:
+  ✔ requirements/analysis.md + registry keys + ADR-020 prefs backlog @chat @docs @done(26-07-22)
+  ✔ README MICROSERVICE-SPEC + chat-api + event-catalog + username spec @chat @docs @done(26-07-22)
+  ✔ Scaffold services/chat :3016 (entities, migration, internal ensure/list/messages) @chat @done(26-07-22)
+  ✔ pnpm install — @tavrida/chat in workspace, build+test ok @chat @ops @done(26-07-22)
+  ✔ BFF chats module (list/unread/self/direct/topic/messages + plan gates) @chat @bff @done(26-07-22)
+  ✔ GROUP spawn/invite/leave + plan gates + spawn UI @chat @bff @frontend @done(26-07-22)
+  ✔ RMQ TOPIC consumers (forum.topic_published / comment_created) @chat @forum @done(26-07-22)
+  ✔ plan/scalar seed+sync chat keys + admin UI sections @chat @plan-config @done(26-07-22)
+  ☐ Keto chat:{id}#member (optional hardening) @chat @bff
+  ✔ Frontend «Мои чаты» + TOPIC bottom sheet @chat @frontend @done(26-07-22)
+  ✔ DM displayTitle (peer name) + message DELIVERED/READ (+ FE SENDING) @chat @bff @frontend @docs @done(26-07-22)
+  ✔ Username UNIQUE + search API + chat @mention autocomplete @user-profile @chat @bff @frontend @docs @done(26-07-22)
+  ✔ Logto Console: username policy + Email/Username sign-up + Account Center Edit @ops @logto @done(26-07-22)
+  ☐ Verify: set/change username → webhook → user_profile.username; autocomplete search @user-profile @logto
+  ☐ Backfill: pnpm sync:logto-users on Swarm if stale usernames @user-profile @ops
+  ✔ user-profile: UNIQUE(lower(username)) + search for @mention @user-profile @chat @done(26-07-22)
+  ✔ Wave A Telegram-like: preview, reply, edit/delete, hide, denser UX @chat @bff @frontend @docs @done(26-07-23)
+  ✔ Wave B: WS live (message.new / read / typing) @chat @bff @frontend @docs @done(26-07-23)
+  ✔ Wave C: media attachments in chat @chat @media @frontend @docs @done(26-07-23)
+  ✔ Chat history: cursor + scalar pageSize + plan historyMax + scroll-up load @chat @bff @frontend @docs @done(26-07-23)
+  ✔ Chat UI: mobile-first Telegram-like (immersive room, long-press sheet, composer) @chat @frontend @done(26-07-23)
 
 Auction:
   ✔ Catalog list/get/create + seed + FE @auction @done(26-07-16)
@@ -75,16 +110,18 @@ Testing rollout:
 
 Dev Swarm (evatorg.su):
   ✔ Репо: CD только с dev + apex redirect + docs @ops @docs @done(26-07-18)
-  ☐ DNS A-записи *.evatorg.su → 193.142.148.175 @ops
-  ☐ Logto Cloud tenant «dev/server» + API resource api.evatorg.su @ops
-  ☐ GitHub Environment dev: DEV_DOMAIN=evatorg.su + VITE_LOGTO_* @ops
-  ☐ VPS /opt/tavrida на ветке dev + Sync secrets + первый Deploy @ops
-  ☐ Приёмка TLS / login / audience; защита ветки dev @ops
+  ✔ Logto OSS в stack-infra (auth./logto.) вместо Cloud @ops @done(26-07-19)
+  ☐ DNS A: auth + logto (+ остальные) → 193.142.148.175 @ops
+  ☐ Logto Console: SPA + API resource + M2M; GH env VITE_LOGTO_* @ops
+  ☐ Deploy с rebuild frontend + приёмка login/audience @ops
+  ☐ Защита ветки dev @ops
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)
   ✔ ops-hygiene.md — регулярная рутина infra/docs/cron @docs @done(26-07-16)
+  ✔ Cookie consent banner + /cookies (L-07) @frontend @docs @done(26-07-23)
   ☐ Visual Lab W03: выбрать направление A/B/C → tokens pilot @docs @frontend
+  ☐ L-07 текст утвердить юристом перед production @docs @legal
 
 Review remediation:
 

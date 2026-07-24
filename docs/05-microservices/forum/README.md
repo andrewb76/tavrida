@@ -8,10 +8,11 @@
 **Форум** — категории, топики, комментарии, реакции, **Markdown**, теги, справочник клуба.
 
 - Сущности: `topic`, `comment` ([ADR-005](../../03-architecture/adr/005-forum-terminology.md))
+- **Черновики тем:** [drafts.md](./drafts.md) — `DRAFT` / `PUBLISHED`, автор-only, без unpublish
 - **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
 - **Теги:** [tags.md](./tags.md)
 - Интеграция: rating (karma), billing (Pro-реакции), plan-config (лимиты)
-- Realtime: Redis → BFF WS `forum:{topicId}`
+- Realtime: Redis → BFF WS `forum:{topicId}`; **TOPIC side chat** — сервис [`chat`](../chat/README.md) (`kind=TOPIC`), UI W06 — [wireframes](../../11-ux-ui/wireframes/forum.md)
 
 ## 📖 Термины
 
@@ -29,8 +30,10 @@
 | Таблица | Описание |
 |---------|----------|
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
-| `topic` | Тема; `votePlusCount`, `voteMinusCount` |
-| `comment` | Комментарий; `promotedTopicId`; vote counters |
+| `category_access_group` | Группы доступа ACL: пусто = всем; иначе OR по группам + admin ([category-acl.md](./category-acl.md)) |
+| `access_group` / `access_group_member` | Группы и состав для ACL |
+| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; `deletedAt` (soft-delete staff); vote counters |
+| `comment` | Комментарий; `promotedTopicId`; `deletedAt`; vote counters |
 | `comment_closure` | Closure table для дерева |
 | `reaction` | emoji-реакции (`emojiKey`) |
 | `content_vote` | +/- : `userId`+`contentId` PK, `value` ±1, `createdAt` |
@@ -59,14 +62,19 @@
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/forum/categories` | Дерево |
-| GET/POST | `/forum/topics` | Список / создание |
-| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote` при auth) / edit window |
+| GET | `/forum/categories` | Дерево с ACL (optional JWT); admin видит `accessGroupIds` |
+| GET/PUT | `/admin/forum/categories/{id}/access-groups` | Привязка групп (admin) · [category-acl.md](./category-acl.md) |
+| CRUD | `/admin/forum/access-groups` (+ `/members`) | Группы доступа и состав |
+| GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
+| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
+| DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
-| PUT | `/forum/topics/{id}/tags` | Заменить теги (labels → Tag/ContentTag; ответ `tagItems`) |
-| GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth |
-| POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + перенос subtree (автор comment/topic) |
+| PUT | `/forum/topics/{id}/tags` | Заменить теги (автор **или** staff) |
+| GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth; удалённые — placeholder |
+| PATCH | `/forum/topics/{id}/comments/{commentId}` | Edit (автор в окне **или** staff) |
+| DELETE | `/forum/topics/{id}/comments/{commentId}` | Soft-delete комментария (**только** staff) |
+| POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + subtree (**только** admin/moderator) |
 | POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |
 | POST | `/forum/votes/clear` | Снять голос |
 | GET/POST | `/forum/reactions` | Список / upsert emoji (`+1`, `-1`, `heart`, `surprised`, `thinking`) |
@@ -118,7 +126,7 @@
 | produce | `tag.content_tagged` | Новый `content_tag`; запись атомарна с outbox |
 | produce | `forum.content_reported` | Report submitted |
 | produce | `forum.comment_promoted_to_topic` | Moderator promote |
-| consume | `rating.user_banned` | Block write |
+| consume | `rating.user_banned` | Block write (**planned**; rating service docs-only) |
 
 WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 
@@ -128,7 +136,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 |--------|----------|
 | plan-config | limits, features |
 | billing | платные реакции |
-| rating | karma, check-ban |
+| rating | karma / check-ban (**planned**; сейчас karma в user-profile) |
 | notifications | replies, digest |
 | user-profile | author display |
 | MinIO | `forum-attachments` |
@@ -149,7 +157,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 | `REDIS_URL` | да | WS fan-out |
 | `PLAN_CONFIG_URL` | да | Limits |
 | `BILLING_URL` | да | Pro reactions |
-| `RATING_URL` | да | check-ban, karma |
+| `RATING_URL` | нет (planned) | check-ban, karma — после выделения `services/rating` |
 | `MINIO_*` | да | forum-attachments |
 
 ## 📎 Связанные разделы

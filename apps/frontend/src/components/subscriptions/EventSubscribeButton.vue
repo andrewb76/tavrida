@@ -88,14 +88,14 @@ watch(
       size="icon"
       type="button"
       :disabled="loading || busy"
-      :aria-label="subscribed ? 'Отписаться от тега' : 'Подписаться на тег'"
+      :aria-label="subscribed ? 'Отписаться' : 'Подписаться'"
       :title="subscribed ? 'Отписаться' : 'Подписаться'"
       :aria-pressed="subscribed"
       @click="toggle"
     >
       <UiIcon
         name="notifications"
-        :size="14"
+        :size="18"
       />
     </UiButton>
     <UiButton
@@ -129,15 +129,7 @@ watch(
   align-items: center;
 }
 
-.event-subscribe--compact :deep(button) {
-  height: 1.5rem;
-  width: 1.5rem;
-  color: inherit;
-  opacity: 0.55;
-}
-
 .event-subscribe--compact :deep(button[aria-pressed='true']) {
-  opacity: 1;
   color: var(--color-primary, #2563eb);
 }
 

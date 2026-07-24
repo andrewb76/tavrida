@@ -3,14 +3,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ContentTagEntity } from '../../entities/content-tag.entity';
 import { TagEntity } from '../../entities/tag.entity';
 import { TopicEntity } from '../../entities/topic.entity';
-import { ForumEventsPublisher } from '../events/forum-events.publisher';
+import { ForumEventsModule } from '../events/forum-events.module';
 import { InternalTagsController } from './internal-tags.controller';
 import { TagsService } from './tags.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TagEntity, ContentTagEntity, TopicEntity])],
+  imports: [
+    TypeOrmModule.forFeature([TagEntity, ContentTagEntity, TopicEntity]),
+    ForumEventsModule,
+  ],
   controllers: [InternalTagsController],
-  providers: [TagsService, ForumEventsPublisher],
+  providers: [TagsService],
   exports: [TagsService],
 })
 export class TagsModule {}

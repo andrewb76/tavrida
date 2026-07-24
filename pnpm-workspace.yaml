@@ -10,6 +10,9 @@ overrides:
   vite: '>=6.4.3'
   file-type: '>=21.3.2'
   uuid: '>=11.1.1'
+  # GHSA-3jxr-9vmj-r5cp (DoS) — pin patched versions within each major line
+  brace-expansion@<1.1.16: '1.1.16'
+  'brace-expansion@>=2.0.0 <2.1.2': '2.1.2'
 
 allowBuilds:
   '@nestjs/core': true

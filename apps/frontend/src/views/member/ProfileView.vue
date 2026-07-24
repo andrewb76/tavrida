@@ -10,10 +10,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
-import { isLogtoConfigured } from '@/config/logto';
+import { isLogtoConfigured, logtoAccountProfileUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile } from '@/services/profile';
+import { openDirectChat } from '@/services/chats';
 import { useSessionStore } from '@/stores/session';
 
 const route = useRoute();
@@ -28,6 +29,11 @@ const avatarPreviewUrl = ref<string | null>(null);
 const avatarPreviewLabel = ref('');
 const isMe = computed(() => route.name === 'profile-me');
 const userId = computed(() => route.params.userId as string | undefined);
+const logtoProfileUrl = computed(() =>
+  isMe.value && isLogtoConfigured() && !session.isImpersonating
+    ? logtoAccountProfileUrl(`${window.location.origin}/profile/me`)
+    : null,
+);
 
 const loading = ref(false);
 const lastCreated = ref<CreatedInvite | null>(null);
@@ -131,6 +137,17 @@ async function loadDisplayedProfile() {
 onMounted(() => {
   void refreshProfile();
   void refreshHistory();
+
+  const showSuccess = typeof route.query.show_success === 'string' ? route.query.show_success : null;
+  if (showSuccess && isMe.value) {
+    toast.success(
+      showSuccess === 'true' || showSuccess === 'profile'
+        ? 'Профиль обновлён'
+        : 'Настройки аккаунта обновлены',
+    );
+    void router.replace({ name: 'profile-me', query: {} });
+    void refreshProfile();
+  }
 });
 
 watch(
@@ -180,6 +197,22 @@ async function create() {
     toast.error(e instanceof Error ? e.message : 'Ошибка');
   } finally {
     loading.value = false;
+  }
+}
+
+const writing = ref(false);
+
+async function writeMessage() {
+  const id = publicProfile.value?.userId ?? userId.value;
+  if (!id || writing.value) return;
+  writing.value = true;
+  try {
+    const chat = await openDirectChat(id);
+    await router.push({ name: 'chat-room', params: { chatId: chat.id } });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось открыть чат');
+  } finally {
+    writing.value = false;
   }
 }
 
@@ -239,6 +272,17 @@ async function copyInviteLink() {
           </p>
           <p class="mt-2 text-xs text-text-muted">
             Участник клуба
+          </p>
+          <p
+            v-if="logtoProfileUrl"
+            class="mt-3"
+          >
+            <a
+              :href="logtoProfileUrl"
+              class="inline-flex items-center text-sm font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Изменить аватар и имя
+            </a>
           </p>
         </div>
       </section>
@@ -383,14 +427,25 @@ async function copyInviteLink() {
               <p class="profile-public-card__note-hint">
                 Личная заметка видна только вам
               </p>
-              <UiButton
-                intent="secondary"
-                size="sm"
-                class="profile-public-card__note-btn"
-                @click="noteModalOpen = true"
-              >
-                {{ hasPrivateNote ? 'Открыть заметку' : 'Добавить заметку' }}
-              </UiButton>
+              <div class="flex flex-wrap gap-2">
+                <UiButton
+                  intent="primary"
+                  size="sm"
+                  type="button"
+                  :disabled="writing"
+                  @click="writeMessage"
+                >
+                  Написать
+                </UiButton>
+                <UiButton
+                  intent="secondary"
+                  size="sm"
+                  class="profile-public-card__note-btn"
+                  @click="noteModalOpen = true"
+                >
+                  {{ hasPrivateNote ? 'Открыть заметку' : 'Добавить заметку' }}
+                </UiButton>
+              </div>
             </div>
           </div>
         </section>

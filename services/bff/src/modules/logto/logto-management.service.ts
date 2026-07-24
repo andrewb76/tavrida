@@ -41,6 +41,7 @@ type LogtoUserRow = {
   name: string | null;
   avatar: string | null;
   createdAt: number;
+  isSuspended: boolean;
 };
 
 @Injectable()
@@ -122,8 +123,9 @@ export class LogtoManagementService {
     }
 
     const endpoint = this.config.get<string>('LOGTO_ENDPOINT')!.replace(/\/$/, '');
-    const clientId = this.config.get<string>('LOGTO_M2M_APP_ID')!;
-    const clientSecret = this.config.get<string>('LOGTO_M2M_APP_SECRET')!;
+    // Pasted Console values often gain trailing whitespace or `/`.
+    const clientId = this.config.get<string>('LOGTO_M2M_APP_ID')!.trim().replace(/\/+$/, '');
+    const clientSecret = this.config.get<string>('LOGTO_M2M_APP_SECRET')!.trim();
     const resource = this.m2mResource();
 
     const params = new URLSearchParams({
@@ -142,9 +144,12 @@ export class LogtoManagementService {
 
     if (!res.ok) {
       const detail = await res.text();
+      const hint = detail.includes('invalid_client')
+        ? ` Check LOGTO_M2M_APP_ID (${clientId}) + LOGTO_M2M_APP_SECRET match the M2M app on ${endpoint} (Console → Applications), then sync-secrets + restart BFF.`
+        : '';
       throw new ServiceUnavailableException({
         type: 'upstream-error',
-        detail: `Logto M2M token failed: ${res.status} ${detail}`,
+        detail: `Logto M2M token failed: ${res.status} ${detail}.${hint}`,
       });
     }
 
@@ -209,6 +214,7 @@ export class LogtoManagementService {
       name?: string | null;
       avatar?: string | null;
       createdAt?: number;
+      isSuspended?: boolean;
     };
 
     return {
@@ -218,6 +224,7 @@ export class LogtoManagementService {
       name: json.name ?? null,
       avatar: json.avatar ?? null,
       createdAt: json.createdAt ?? 0,
+      isSuspended: Boolean(json.isSuspended),
     };
   }
 }

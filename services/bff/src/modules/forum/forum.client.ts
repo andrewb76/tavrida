@@ -16,8 +16,73 @@ export class ForumClient {
     return url.replace(/\/$/, '');
   }
 
-  listCategories() {
-    return this.request<{ data: unknown[] }>('GET', '/internal/v1/categories');
+  listCategories(opts?: {
+    viewerId?: string;
+    isAdmin?: boolean;
+    includeAccessGroups?: boolean;
+  }) {
+    const params = new URLSearchParams();
+    if (opts?.viewerId) params.set('viewerId', opts.viewerId);
+    if (opts?.isAdmin) params.set('isAdmin', '1');
+    if (opts?.includeAccessGroups) params.set('includeAccessGroups', '1');
+    const q = params.size ? `?${params}` : '';
+    return this.request<{ data: unknown[] }>('GET', `/internal/v1/categories${q}`);
+  }
+
+  listAccessGroups() {
+    return this.request<{ data: unknown[] }>('GET', '/internal/v1/access-groups');
+  }
+
+  membershipsByUsers(userIds: string[]) {
+    return this.request<{
+      data: Record<string, Array<{ id: string; name: string }>>;
+    }>('POST', '/internal/v1/access-groups/memberships/by-users', { userIds });
+  }
+
+  createAccessGroup(input: { name: string; description?: string }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/access-groups', input);
+  }
+
+  updateAccessGroup(groupId: string, input: { name?: string; description?: string }) {
+    return this.request<Record<string, unknown>>(
+      'PATCH',
+      `/internal/v1/access-groups/${groupId}`,
+      input,
+    );
+  }
+
+  deleteAccessGroup(groupId: string) {
+    return this.request<{ ok: boolean }>('DELETE', `/internal/v1/access-groups/${groupId}`);
+  }
+
+  getAccessGroupMembers(groupId: string) {
+    return this.request<{ groupId: string; userIds: string[] }>(
+      'GET',
+      `/internal/v1/access-groups/${groupId}/members`,
+    );
+  }
+
+  setAccessGroupMembers(groupId: string, userIds: string[]) {
+    return this.request<{ groupId: string; userIds: string[] }>(
+      'PUT',
+      `/internal/v1/access-groups/${groupId}/members`,
+      { userIds },
+    );
+  }
+
+  getCategoryAccessGroups(categoryId: string) {
+    return this.request<{ categoryId: string; groupIds: string[] }>(
+      'GET',
+      `/internal/v1/categories/${categoryId}/access-groups`,
+    );
+  }
+
+  setCategoryAccessGroups(categoryId: string, groupIds: string[]) {
+    return this.request<{ categoryId: string; groupIds: string[] }>(
+      'PUT',
+      `/internal/v1/categories/${categoryId}/access-groups`,
+      { groupIds },
+    );
   }
 
   createCategory(input: {
@@ -51,20 +116,35 @@ export class ForumClient {
     return this.request<{ ok: boolean }>('DELETE', `/internal/v1/categories/${categoryId}`);
   }
 
-  listTopics(query: { categoryId?: string; limit?: number }) {
+  listTopics(query: {
+    categoryId?: string;
+    limit?: number;
+    status?: 'DRAFT' | 'PUBLISHED';
+    authorId?: string;
+    viewerId?: string;
+    isAdmin?: boolean;
+  }) {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);
     if (query.limit != null) params.set('limit', String(query.limit));
+    if (query.status) params.set('status', query.status);
+    if (query.authorId) params.set('authorId', query.authorId);
+    if (query.viewerId) params.set('viewerId', query.viewerId);
+    if (query.isAdmin) params.set('isAdmin', '1');
     const suffix = params.size ? `?${params.toString()}` : '';
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
   }
 
-  getTopic(topicId: string, viewer?: { userId?: string; changeWindowMinutes?: number }) {
+  getTopic(
+    topicId: string,
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
+  ) {
     const params = new URLSearchParams();
     if (viewer?.userId) params.set('viewerId', viewer.userId);
     if (viewer?.changeWindowMinutes != null) {
       params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
     }
+    if (viewer?.isAdmin) params.set('isAdmin', '1');
     const q = params.size ? `?${params}` : '';
     return this.request<Record<string, unknown>>('GET', `/internal/v1/topics/${topicId}${q}`);
   }
@@ -74,6 +154,7 @@ export class ForumClient {
     authorId: string;
     title: string;
     body: string;
+    status?: 'DRAFT' | 'PUBLISHED';
     attachments?: Array<{
       url: string;
       filename: string;
@@ -82,6 +163,7 @@ export class ForumClient {
     }>;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    isAdmin?: boolean;
   }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/topics', input);
   }
@@ -92,6 +174,7 @@ export class ForumClient {
       authorId: string;
       title?: string;
       body?: string;
+      status?: 'DRAFT' | 'PUBLISHED';
       attachments?: Array<{
         url: string;
         filename: string;
@@ -101,20 +184,26 @@ export class ForumClient {
       editWindowMinutes: number;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      asModerator?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>('PATCH', `/internal/v1/topics/${topicId}`, input);
   }
 
+  deleteTopic(topicId: string, input: { actorId: string; asModerator?: boolean }) {
+    return this.request<{ ok: boolean }>('DELETE', `/internal/v1/topics/${topicId}`, input);
+  }
+
   listComments(
     topicId: string,
-    viewer?: { userId?: string; changeWindowMinutes?: number },
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
   ) {
     const params = new URLSearchParams();
     if (viewer?.userId) params.set('viewerId', viewer.userId);
     if (viewer?.changeWindowMinutes != null) {
       params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
     }
+    if (viewer?.isAdmin) params.set('isAdmin', '1');
     const q = params.size ? `?${params}` : '';
     return this.request<{ data: unknown[] }>(
       'GET',
@@ -136,6 +225,7 @@ export class ForumClient {
       }>;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      isAdmin?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>(
@@ -160,6 +250,7 @@ export class ForumClient {
       editWindowMinutes: number;
       maxAttachmentCount?: number;
       maxAttachmentSizeBytes?: number;
+      asModerator?: boolean;
     },
   ) {
     return this.request<Record<string, unknown>>(
@@ -169,10 +260,22 @@ export class ForumClient {
     );
   }
 
+  deleteComment(
+    topicId: string,
+    commentId: string,
+    input: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.request<{ ok: boolean }>(
+      'DELETE',
+      `/internal/v1/topics/${topicId}/comments/${commentId}`,
+      input,
+    );
+  }
+
   promoteCommentToTopic(
     topicId: string,
     commentId: string,
-    input: { actorId: string; title?: string },
+    input: { actorId: string; title?: string; asModerator?: boolean },
   ) {
     return this.request<Record<string, unknown>>(
       'POST',
@@ -181,7 +284,10 @@ export class ForumClient {
     );
   }
 
-  updateTopicTags(topicId: string, input: { authorId: string; tags: string[] }) {
+  updateTopicTags(
+    topicId: string,
+    input: { authorId: string; tags: string[]; asModerator?: boolean },
+  ) {
     return this.request<Record<string, unknown>>(
       'PUT',
       `/internal/v1/topics/${topicId}/tags`,

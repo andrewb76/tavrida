@@ -5,6 +5,7 @@ const route = useRoute();
 
 const tabs = [
   { name: 'admin-users', to: '/admin/users', label: 'Пользователи' },
+  { name: 'admin-access-groups', to: '/admin/access-groups', label: 'Группы доступа' },
   { name: 'admin-scalar-config', to: '/admin/scalar-config', label: 'Конфиг' },
   { name: 'admin-plan-config', to: '/admin/plan-config', label: 'Тарифы' },
   { name: 'admin-vanga', to: '/admin/vanga', label: 'Ванга' },

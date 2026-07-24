@@ -44,6 +44,9 @@ secrets:
   bff_database_url:
     external: true
     name: tavrida_dev_bff_database_url
+  chat_database_url:
+    external: true
+    name: tavrida_dev_chat_database_url
   logto_m2m_app_secret:
     external: true
     name: tavrida_dev_logto_m2m_app_secret
@@ -121,9 +124,9 @@ services:
       - |
         echo "plan-config-renew: starting (interval 3600s)"
         while true; do
-          echo "plan-config-renew: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
+          echo "plan-config-renew: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
           curl -sf -X POST \
-            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            -H "Authorization: Bearer $$(cat /run/secrets/internal_service_token)" \
             http://plan-config:3002/internal/v1/subscription/renew/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
@@ -146,9 +149,9 @@ services:
       - |
         echo "auction-close: starting (interval 3600s)"
         while true; do
-          echo "auction-close: $(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
+          echo "auction-close: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
           curl -sf -X POST \
-            -H "Authorization: Bearer $(cat /run/secrets/internal_service_token)" \
+            -H "Authorization: Bearer $$(cat /run/secrets/internal_service_token)" \
             http://auction:3003/internal/v1/auctions/close/run \
             && echo " ok" || echo " fail (will retry next hour)"
           sleep 3600
@@ -321,6 +324,26 @@ services:
     deploy:
       <<: *nest-deploy
 
+  chat:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-chat:${GIT_SHA}
+    secrets:
+      - internal_service_token
+      - rabbitmq_url
+      - chat_database_url
+    environment:
+      <<: *nest-env
+      CHAT_PORT: '3016'
+      DATABASE_URL_FILE: /run/secrets/chat_database_url
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
@@ -343,6 +366,7 @@ services:
       NOTIFICATIONS_URL: http://notifications:3010
       PERIODS_URL: http://periods:3014
       MARKETPLACE_URL: http://marketplace:3011
+      CHAT_URL: http://chat:3016
       KETO_READ_URL: ${KETO_READ_URL}
       KETO_WRITE_URL: ${KETO_WRITE_URL}
       LOGTO_ENDPOINT: ${LOGTO_ENDPOINT}
@@ -358,6 +382,8 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY_FILE: /run/secrets/minio_secret_key
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
+      # Browser presigned PUT must use public HTTPS (not http://minio:9000)
+      MINIO_PRESIGN_ENDPOINT: https://s3.${DEV_DOMAIN}
       VANGA_DEFAULTS_PATH: /app/config/vanga.defaults.yaml
     networks:
       - tavrida_net
@@ -390,6 +416,5 @@ services:
         - traefik.http.routers.frontend.tls.certresolver=le
         - traefik.http.services.frontend.loadbalancer.server.port=80
 
-networks:
-  tavrida_net:
-    external: true
+# Network `tavrida_net` is created by stack-infra.dev.yml (same stack deploy -c … -c …).
+# Do not mark it external here — merge would override infra and require a pre-existing network.

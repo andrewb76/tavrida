@@ -8,12 +8,14 @@ import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   createComment,
+  deleteComment,
   forumAuthorLabel,
   promoteCommentToTopic,
   updateComment,
   type CommentTreeNode,
   type ForumComment,
 } from '@/services/forum';
+import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { computed, ref } from 'vue';
@@ -32,8 +34,32 @@ const props = defineProps<{
 const emit = defineEmits<{
   created: [ForumComment];
   updated: [ForumComment];
+  deleted: [string];
   promoted: [{ commentId: string; promotedTopicId: string; movedCommentCount: number }];
 }>();
+
+const session = useSessionStore();
+
+const isDeleted = computed(() => Boolean(props.node.deletedAt));
+
+const canEdit = computed(() => {
+  if (!props.currentUserId || isDeleted.value) return false;
+  if (session.isModerator) return true;
+  if (props.node.authorId !== props.currentUserId) return false;
+  return canEditForumContent(props.node.createdAt, props.editWindowMinutes);
+});
+
+const canPromote = computed(() => {
+  if (!props.currentUserId || props.node.promotedTopicId || isDeleted.value) return false;
+  return session.isModerator;
+});
+
+const canDelete = computed(() => {
+  if (!props.currentUserId || isDeleted.value) return false;
+  return session.isModerator;
+});
+
+const deleting = ref(false);
 
 function onVoteUpdated(result: {
   plusCount: number;
@@ -63,18 +89,6 @@ const postError = ref<string | null>(null);
 const promoting = ref(false);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
-
-const canEdit = computed(() => {
-  if (!props.currentUserId || props.node.authorId !== props.currentUserId) return false;
-  return canEditForumContent(props.node.createdAt, props.editWindowMinutes);
-});
-
-const canPromote = computed(() => {
-  if (!props.currentUserId || props.node.promotedTopicId) return false;
-  return (
-    props.node.authorId === props.currentUserId || props.topicAuthorId === props.currentUserId
-  );
-});
 
 function startEdit() {
   editBody.value = props.node.body;
@@ -150,6 +164,28 @@ async function onPromote() {
     promoting.value = false;
   }
 }
+
+async function onDelete() {
+  if (!canDelete.value || deleting.value) return;
+  if (!window.confirm('Удалить комментарий?')) return;
+  deleting.value = true;
+  try {
+    await deleteComment(props.topicId, props.node.id);
+    emit('updated', {
+      ...props.node,
+      body: 'Комментарий удалён',
+      attachments: [],
+      deletedAt: new Date().toISOString(),
+      canChangeVote: false,
+    });
+    emit('deleted', props.node.id);
+    toast.success('Комментарий удалён');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось удалить');
+  } finally {
+    deleting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -176,6 +212,7 @@ async function onPromote() {
           aria-label="Действия с комментарием"
         >
           <UiButton
+            v-if="!isDeleted"
             intent="ghost"
             size="icon"
             type="button"
@@ -217,6 +254,21 @@ async function onPromote() {
               :size="18"
             />
           </UiButton>
+          <UiButton
+            v-if="canDelete"
+            intent="ghost"
+            size="icon"
+            type="button"
+            aria-label="Удалить"
+            title="Удалить"
+            :disabled="deleting"
+            @click="onDelete"
+          >
+            <UiIcon
+              name="trash"
+              :size="18"
+            />
+          </UiButton>
           <RouterLink
             v-else-if="node.promotedTopicId"
             :to="{ name: 'forum-topic', params: { id: node.promotedTopicId } }"
@@ -232,126 +284,133 @@ async function onPromote() {
         </div>
       </header>
 
-      <form
-        v-if="editing"
-        class="forum-comment__edit-form"
-        @submit.prevent="saveEdit"
-      >
-        <label>
-          Редактирование комментария
-          <textarea
-            v-model="editBody"
-            rows="4"
-            required
-          />
-        </label>
-        <p
-          v-if="editError"
-          class="forum-comment__error"
-        >
-          {{ editError }}
+      <template v-if="isDeleted">
+        <p class="forum-comment__deleted">
+          Комментарий удалён
         </p>
-        <div class="forum-comment__edit-actions">
+      </template>
+      <template v-else>
+        <form
+          v-if="editing"
+          class="forum-comment__edit-form"
+          @submit.prevent="saveEdit"
+        >
+          <label>
+            Редактирование комментария
+            <textarea
+              v-model="editBody"
+              rows="4"
+              required
+            />
+          </label>
+          <p
+            v-if="editError"
+            class="forum-comment__error"
+          >
+            {{ editError }}
+          </p>
+          <div class="forum-comment__edit-actions">
+            <UiButton
+              intent="primary"
+              size="sm"
+              type="submit"
+              :disabled="savingEdit"
+            >
+              {{ savingEdit ? 'Сохранение…' : 'Сохранить' }}
+            </UiButton>
+            <UiButton
+              intent="secondary"
+              size="sm"
+              type="button"
+              :disabled="savingEdit"
+              @click="cancelEdit"
+            >
+              Отмена
+            </UiButton>
+          </div>
+        </form>
+        <MarkdownBody
+          v-else
+          :body="node.body"
+        />
+        <AttachmentList
+          v-if="node.attachments?.length"
+          :attachments="node.attachments"
+          variant="forum"
+        />
+
+        <div class="forum-comment__toolbar">
+          <ForumVoteBar
+            content-type="comment"
+            :content-id="node.id"
+            :plus-count="node.votePlusCount ?? 0"
+            :minus-count="node.voteMinusCount ?? 0"
+            :my-vote="node.myVote ?? null"
+            :can-change="node.canChangeVote ?? true"
+            :disabled="!currentUserId || node.authorId === currentUserId"
+            @updated="onVoteUpdated"
+          />
+          <ForumReactionBar
+            content-type="comment"
+            :content-id="node.id"
+            :current-user-id="currentUserId"
+            :disabled="!currentUserId"
+          />
+        </div>
+
+        <form
+          v-if="showReply"
+          class="forum-comment__reply-form"
+          @submit.prevent="submitReply"
+        >
+          <label>
+            Ответ на комментарий
+            <textarea
+              v-model="replyBody"
+              rows="3"
+              required
+            />
+          </label>
+
+          <div class="forum-comment__attachments">
+            <button
+              type="button"
+              class="forum-comment__attachments-toggle"
+              @click="replyAttachmentsExpanded = !replyAttachmentsExpanded"
+            >
+              Вложения
+              <span
+                v-if="replyUpload.count.value > 0"
+              >📎 {{ replyUpload.count.value }}</span>
+              <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
+            </button>
+            <div v-if="replyAttachmentsExpanded">
+              <MediaUploader
+                :items="replyUpload.items.value"
+                :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="replyUpload.canAddMore.value"
+                @select="replyUpload.addFiles($event)"
+                @remove="replyUpload.removeItem"
+              />
+            </div>
+          </div>
+
+          <p
+            v-if="postError"
+            class="forum-comment__error"
+          >
+            {{ postError }}
+          </p>
           <UiButton
             intent="primary"
             size="sm"
             type="submit"
-            :disabled="savingEdit"
+            :disabled="posting"
           >
-            {{ savingEdit ? 'Сохранение…' : 'Сохранить' }}
+            {{ posting ? 'Отправка…' : 'Отправить ответ' }}
           </UiButton>
-          <UiButton
-            intent="secondary"
-            size="sm"
-            type="button"
-            :disabled="savingEdit"
-            @click="cancelEdit"
-          >
-            Отмена
-          </UiButton>
-        </div>
-      </form>
-      <MarkdownBody
-        v-else
-        :body="node.body"
-      />
-      <AttachmentList
-        v-if="node.attachments?.length"
-        :attachments="node.attachments"
-        variant="forum"
-      />
-
-      <div class="forum-comment__toolbar">
-        <ForumVoteBar
-          content-type="comment"
-          :content-id="node.id"
-          :plus-count="node.votePlusCount ?? 0"
-          :minus-count="node.voteMinusCount ?? 0"
-          :my-vote="node.myVote ?? null"
-          :can-change="node.canChangeVote ?? true"
-          :disabled="!currentUserId || node.authorId === currentUserId"
-          @updated="onVoteUpdated"
-        />
-        <ForumReactionBar
-          content-type="comment"
-          :content-id="node.id"
-          :current-user-id="currentUserId"
-          :disabled="!currentUserId"
-        />
-      </div>
-
-      <form
-        v-if="showReply"
-        class="forum-comment__reply-form"
-        @submit.prevent="submitReply"
-      >
-        <label>
-          Ответ на комментарий
-          <textarea
-            v-model="replyBody"
-            rows="3"
-            required
-          />
-        </label>
-
-        <div class="forum-comment__attachments">
-          <button
-            type="button"
-            class="forum-comment__attachments-toggle"
-            @click="replyAttachmentsExpanded = !replyAttachmentsExpanded"
-          >
-            Вложения
-            <span
-              v-if="replyUpload.count.value > 0"
-            >📎 {{ replyUpload.count.value }}</span>
-            <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
-          </button>
-          <div v-if="replyAttachmentsExpanded">
-            <MediaUploader
-              :items="replyUpload.items.value"
-              :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
-              :can-add-more="replyUpload.canAddMore.value"
-              @select="replyUpload.addFiles($event)"
-              @remove="replyUpload.removeItem"
-            />
-          </div>
-        </div>
-
-        <p
-          v-if="postError"
-          class="forum-comment__error"
-        >
-          {{ postError }}
-        </p>
-        <UiButton
-          intent="primary"
-          size="sm"
-          type="submit"
-          :disabled="posting"
-        >
-          {{ posting ? 'Отправка…' : 'Отправить ответ' }}
-        </UiButton>
-      </form>
+        </form>
+      </template>
     </article>
 
     <ul
@@ -369,6 +428,7 @@ async function onPromote() {
         :current-user-id="currentUserId"
         @created="emit('created', $event)"
         @updated="emit('updated', $event)"
+        @deleted="emit('deleted', $event)"
         @promoted="emit('promoted', $event)"
       />
     </ul>
@@ -491,5 +551,12 @@ async function onPromote() {
 .forum-comment__error {
   color: #b42318;
   margin: 0;
+}
+
+.forum-comment__deleted {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #666);
+  font-style: italic;
 }
 </style>

@@ -6,6 +6,7 @@
 @theme inline {
   --color-primary: var(--token-primary);
   --color-primary-hover: var(--token-primary-hover);
+  --color-primary-fg: var(--token-primary-fg);
   --color-accent: var(--token-accent);
   --color-bg: var(--token-bg);
   --color-surface: var(--token-surface);
@@ -21,6 +22,7 @@
   --radius-lg: var(--token-radius-lg);
 
   --font-sans: var(--token-font-sans);
+  --font-display: var(--token-font-display);
 
   --shadow-card: var(--token-shadow-card);
 }

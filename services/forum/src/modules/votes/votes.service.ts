@@ -239,6 +239,12 @@ export class VotesService {
       if (!row) {
         throw new NotFoundException({ type: 'not-found', detail: `Topic ${contentId} not found` });
       }
+      if (row.status !== 'PUBLISHED') {
+        throw new BadRequestException({
+          type: 'validation-error',
+          detail: 'Нельзя голосовать за черновик',
+        });
+      }
       return row;
     }
     const row = await this.comments.findOne({ where: { id: contentId } });

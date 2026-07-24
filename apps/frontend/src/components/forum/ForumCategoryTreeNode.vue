@@ -12,6 +12,7 @@ defineProps<{
 const emit = defineEmits<{
   edit: [node: CategoryNode];
   addChild: [parent: CategoryNode];
+  access: [node: CategoryNode];
   delete: [node: CategoryNode];
 }>();
 </script>
@@ -29,6 +30,11 @@ const emit = defineEmits<{
         >
           <strong>{{ node.title }}</strong>
           <span class="forum-category-node__slug">/{{ node.slug }}</span>
+          <span
+            v-if="node.restricted"
+            class="forum-category-node__badge"
+            title="Ограниченный доступ"
+          >доступ</span>
         </RouterLink>
         <p
           v-if="node.description"
@@ -58,6 +64,13 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
+          class="forum-category-node__btn"
+          @click="emit('access', node)"
+        >
+          Доступ
+        </button>
+        <button
+          type="button"
           class="forum-category-node__btn forum-category-node__btn--danger"
           @click="emit('delete', node)"
         >
@@ -78,6 +91,7 @@ const emit = defineEmits<{
         :is-admin="isAdmin"
         @edit="emit('edit', $event)"
         @add-child="emit('addChild', $event)"
+        @access="emit('access', $event)"
         @delete="emit('delete', $event)"
       />
     </ul>
@@ -123,6 +137,17 @@ const emit = defineEmits<{
 
 .forum-category-node__slug {
   font-size: 0.85rem;
+  color: var(--color-text-muted, #666);
+}
+
+.forum-category-node__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: var(--color-border, #e5e7eb);
   color: var(--color-text-muted, #666);
 }
 

@@ -61,6 +61,32 @@ curl -s "http://localhost:4466/relation-tuples/check?namespace=TavridaLot&object
 
 В `.env.local` должны быть `KETO_READ_URL` / `KETO_WRITE_URL` (см. `.env.example`).
 
+### Dev Swarm (VPS)
+
+Keto **не** слушает localhost — только overlay `tavrida-dev_tavrida_net`. Скрипт сам уходит в Docker network, если localhost недоступен:
+
+```bash
+# на VPS (/opt/tavrida), без DOCKER_CONTEXT:
+pnpm grant:admin 30iamlztu7ik
+
+# или явно:
+DOCKER_SWARM_NETWORK=tavrida-dev_tavrida_net pnpm grant:admin 30iamlztu7ik
+```
+
+Вручную (из BFF на overlay-сети — хост до `10.0.1.*` не ходит):
+
+```bash
+BFF=$(docker ps -q -f name=tavrida-dev_bff)
+
+docker exec "$BFF" node -e 'fetch("http://keto:4467/admin/relation-tuples",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({namespace:"TavridaLot",object:"platform:tavrida-lot",relation:"admin",subject_id:"user:30iamlztu7ik"})}).then(async r=>{const t=await r.text();if(!r.ok)throw new Error(r.status+" "+t);console.log(t||"ok")})'
+```
+
+Проверка:
+
+```bash
+docker exec "$BFF" node -e 'fetch("http://keto:4466/relation-tuples/check?namespace=TavridaLot&object=platform:tavrida-lot&relation=admin&subject_id=user:30iamlztu7ik").then(r=>r.json()).then(console.log)'
+```
+
 ---
 
 ## Как BFF использует admin

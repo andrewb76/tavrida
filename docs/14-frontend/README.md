@@ -8,7 +8,7 @@
 
 Единственное публичное клиентское приложение Tavrida Lot: аукционы, форум,
 профиль, баланс, подписки и маркет услуг. Реализовано как **Vue 3 SPA** и
-общается с backend через BFF REST. WebSocket/realtime остаётся target.
+общается с backend через BFF REST + WebSocket (`/ws/v1`, chat live).
 
 - Каталог и страница лота, ставки в реальном времени
 - Форум: темы, комментарии, реакции, чат *(Pro)*
@@ -27,7 +27,7 @@
 | State (клиентский) | **Pinia** | сессия, UI-состояние, черновики |
 | State (серверный) | direct services + Pinia stores | TanStack Query — target, не runtime layer |
 | HTTP-клиент | тонкие service wrappers над native `fetch` | JWT + `Idempotency-Key` + базовый URL |
-| Realtime | planned | WS client/channel registry пока отсутствуют |
+| Realtime | `useWs()` / `useWsChannel` | chat channels live; auction/forum later |
 | Auth | **Logto Vue SDK** (`@logto/vue`) | OIDC PKCE, silent refresh |
 | Стили | **Tailwind CSS v4** + CSS variables | mobile-first, [stack-decisions](./stack-decisions.md) |
 | UI-компоненты | local components + **`@tavrida/ui`** | Reka UI — target |
@@ -86,7 +86,7 @@ apps/frontend/
 
 | Path | View | Auth | Wireframe |
 |------|------|------|-----------|
-| `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) |
+| `/` | LandingView (visitor) / HomeView (member) | visitor / member | [W01](../11-ux-ui/wireframes/home-auth.md) — visitor: full-bleed hero + pillars + join |
 | `/about` | AboutView | public | W01 |
 | `/join` | JoinView | invite link / код → Logto | W11 |
 | `/invite` | redirect → `/join` | legacy URL | W11 |
@@ -104,8 +104,9 @@ apps/frontend/
 | `/marketplace` | MarketplaceListView | **member** | [W09](../11-ux-ui/wireframes/marketplace.md) |
 | `/marketplace/:id` | ServiceDetailView | **member** | W09 |
 | `/callback` | LogtoCallback | — | W01 |
+| `/account-locked` | HardLockedView | **member** (hard-locked actor) | [hard-lock.md](../05-microservices/user-profile/hard-lock.md) |
 
-Guards: `requireMember` (club content), `requireAuth`, `requirePlan('pro')` (UX-only hint + server enforce).
+Guards: `requireMember` (club content), `requireAuth`, `requirePlan('pro')` (UX-only hint + server enforce), **hard-lock trap** → `/account-locked`.
 
 > IA: [information-architecture](../11-ux-ui/information-architecture.md)
 
@@ -226,8 +227,10 @@ pnpm --filter @tavrida/frontend lint
 - [x] Reka UI primitives (Modal) + AppShell / layouts
 - [x] REST mock adapter + fixtures (W02)
 - [x] Routes + guards по [screen-tree](../11-ux-ui/screen-tree.md)
-- [ ] `useWs()` + реестр каналов
+- [x] `useWs()` + реестр каналов (chat Wave B)
+- [ ] auction/forum WS channels
 - [x] Logto Cloud (`@logto/vue`, invite flow, guards) — [logto-setup.md](./logto-setup.md)
+- [x] Cookie consent banner L-07 — [cookie-consent.md](./cookie-consent.md)
 - [ ] Logto self-host + BFF JWT validation
 - [ ] d3 viz: `ActivityHeatmap` (W07)
 - [ ] Vitest + Playwright конфиги
@@ -235,6 +238,7 @@ pnpm --filter @tavrida/frontend lint
 ## 🔗 Связанные разделы
 
 - [platform-for-users](../01-goal/platform-for-users.md) — продукт для людей
+- [cookie-consent.md](./cookie-consent.md) — баннер и политика cookie (L-07)
 - [11-ux-ui](../11-ux-ui/README.md) — wireframes, компоненты, дизайн
 - [bff](../05-microservices/bff/README.md) — API/WS, к которому подключается фронт
 - [06-api](../06-api/README.md) — контракт REST, ошибки, идемпотентность

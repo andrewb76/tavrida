@@ -21,6 +21,27 @@ const html = computed(() => renderForumMarkdown(props.body));
 </template>
 
 <style scoped>
+/* Tailwind Typography defaults to light-gray body text; bind to theme tokens. */
+.markdown-body {
+  --tw-prose-body: var(--color-text);
+  --tw-prose-headings: var(--color-text);
+  --tw-prose-lead: var(--color-text-muted);
+  --tw-prose-links: var(--color-primary);
+  --tw-prose-bold: var(--color-text);
+  --tw-prose-counters: var(--color-text-muted);
+  --tw-prose-bullets: var(--color-text-muted);
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-quotes: var(--color-text-muted);
+  --tw-prose-quote-borders: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --tw-prose-captions: var(--color-text-muted);
+  --tw-prose-code: var(--color-text);
+  --tw-prose-pre-code: var(--color-text);
+  --tw-prose-pre-bg: var(--color-surface);
+  --tw-prose-th-borders: var(--color-border);
+  --tw-prose-td-borders: var(--color-border);
+  color: var(--color-text);
+}
+
 .markdown-body :deep(p) {
   margin: 0.5rem 0;
 }
@@ -45,6 +66,10 @@ const html = computed(() => renderForumMarkdown(props.body));
   color: var(--color-text-muted, #666);
 }
 
+:global(html[data-theme='dark']) .markdown-body :deep(blockquote) {
+  color: color-mix(in srgb, var(--color-text) 82%, var(--color-text-muted));
+}
+
 .markdown-body :deep(code) {
   border-radius: 0.25rem;
   background: color-mix(in srgb, var(--color-text, #111) 6%, transparent);
@@ -56,7 +81,7 @@ const html = computed(() => renderForumMarkdown(props.body));
   overflow-x: auto;
   border-radius: 0.5rem;
   border: 1px solid var(--color-border, #ddd);
-  background: var(--color-bg, #f8fafc);
+  background: var(--color-surface, #f8fafc);
   padding: 0.75rem;
 }
 

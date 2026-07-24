@@ -4,9 +4,11 @@ import { onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import {
   deleteScalarKey,
+  fetchChatSettings,
   fetchClubSettings,
   fetchForumSettings,
   fetchScalarRegistry,
+  saveChatSettings,
   saveClubSettings,
   saveForumSettings,
   type ClubSettings,
@@ -17,6 +19,7 @@ import { useClubAccessStore } from '@/stores/clubAccess';
 const loading = ref(true);
 const saving = ref(false);
 const savingForum = ref(false);
+const savingChat = ref(false);
 const deletingKey = ref<string | null>(null);
 const error = ref('');
 const registry = ref<ScalarRegistryEntry[]>([]);
@@ -34,6 +37,20 @@ const forumForm = ref({
   voteChangeWindowMinutes: 3,
 });
 
+const chatForm = ref({
+  spawnCopyHistoryMax: 100,
+  editWindowMinutes: 15,
+  deleteOwnWindowMinutes: 60,
+  lengthHardMax: 10000,
+  pageSize: 50,
+  authorJoinOnPublish: true,
+  joinOnComment: true,
+  selfAutoCreate: true,
+  markReadOnOpen: true,
+  defaultFilter: 'ALL' as 'ALL' | 'DIRECT' | 'GROUP' | 'TOPIC',
+  leaveKeepsHistory: true,
+});
+
 function applySettings(data: ClubSettings) {
   form.value.inviteOnly = data['registration.inviteOnly'] ?? true;
   form.value.validityDays = data['invite.validityDays'] ?? 14;
@@ -47,14 +64,27 @@ async function load() {
   loading.value = true;
   error.value = '';
   try {
-    const [club, forum, rows] = await Promise.all([
+    const [club, forum, chat, rows] = await Promise.all([
       fetchClubSettings(),
       fetchForumSettings(),
+      fetchChatSettings(),
       fetchScalarRegistry(),
     ]);
     applySettings(club);
     forumForm.value.editWindowMinutes = forum['edit.windowMinutes'] ?? 10;
     forumForm.value.voteChangeWindowMinutes = forum['vote.changeWindowMinutes'] ?? 3;
+    chatForm.value.spawnCopyHistoryMax = chat['spawn.copyHistoryMax'] ?? 100;
+    chatForm.value.editWindowMinutes = chat['message.editWindowMinutes'] ?? 15;
+    chatForm.value.deleteOwnWindowMinutes = chat['message.deleteOwnWindowMinutes'] ?? 60;
+    chatForm.value.lengthHardMax = chat['message.lengthHardMax'] ?? 10000;
+    chatForm.value.pageSize = chat['message.pageSize'] ?? 50;
+    chatForm.value.authorJoinOnPublish = chat['topic.authorJoinOnPublish'] ?? true;
+    chatForm.value.joinOnComment = chat['topic.joinOnComment'] ?? true;
+    chatForm.value.selfAutoCreate = chat['dm.selfAutoCreate'] ?? true;
+    chatForm.value.markReadOnOpen = chat['unread.markReadOnOpen'] ?? true;
+    chatForm.value.defaultFilter =
+      (chat['list.defaultFilter'] as typeof chatForm.value.defaultFilter) ?? 'ALL';
+    chatForm.value.leaveKeepsHistory = chat['group.leaveKeepsHistory'] ?? true;
     registry.value = rows;
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить scalar-config';
@@ -132,6 +162,45 @@ async function saveForum() {
     toast.error(error.value);
   } finally {
     savingForum.value = false;
+  }
+}
+
+async function saveChat() {
+  savingChat.value = true;
+  error.value = '';
+  try {
+    const updated = await saveChatSettings({
+      'spawn.copyHistoryMax': Number(chatForm.value.spawnCopyHistoryMax),
+      'message.editWindowMinutes': Number(chatForm.value.editWindowMinutes),
+      'message.deleteOwnWindowMinutes': Number(chatForm.value.deleteOwnWindowMinutes),
+      'message.lengthHardMax': Number(chatForm.value.lengthHardMax),
+      'message.pageSize': Number(chatForm.value.pageSize),
+      'topic.authorJoinOnPublish': chatForm.value.authorJoinOnPublish,
+      'topic.joinOnComment': chatForm.value.joinOnComment,
+      'dm.selfAutoCreate': chatForm.value.selfAutoCreate,
+      'unread.markReadOnOpen': chatForm.value.markReadOnOpen,
+      'list.defaultFilter': chatForm.value.defaultFilter,
+      'group.leaveKeepsHistory': chatForm.value.leaveKeepsHistory,
+    });
+    chatForm.value.spawnCopyHistoryMax = updated['spawn.copyHistoryMax'] ?? 100;
+    chatForm.value.editWindowMinutes = updated['message.editWindowMinutes'] ?? 15;
+    chatForm.value.deleteOwnWindowMinutes = updated['message.deleteOwnWindowMinutes'] ?? 60;
+    chatForm.value.lengthHardMax = updated['message.lengthHardMax'] ?? 10000;
+    chatForm.value.pageSize = updated['message.pageSize'] ?? 50;
+    chatForm.value.authorJoinOnPublish = updated['topic.authorJoinOnPublish'] ?? true;
+    chatForm.value.joinOnComment = updated['topic.joinOnComment'] ?? true;
+    chatForm.value.selfAutoCreate = updated['dm.selfAutoCreate'] ?? true;
+    chatForm.value.markReadOnOpen = updated['unread.markReadOnOpen'] ?? true;
+    chatForm.value.defaultFilter =
+      (updated['list.defaultFilter'] as typeof chatForm.value.defaultFilter) ?? 'ALL';
+    chatForm.value.leaveKeepsHistory = updated['group.leaveKeepsHistory'] ?? true;
+    registry.value = await fetchScalarRegistry();
+    toast.success('Настройки чата сохранены');
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Ошибка сохранения чата';
+    toast.error(error.value);
+  } finally {
+    savingChat.value = false;
   }
 }
 
@@ -296,6 +365,129 @@ onMounted(() => {
           :disabled="savingForum"
         >
           {{ savingForum ? 'Сохранение…' : 'Сохранить форум' }}
+        </UiButton>
+      </form>
+    </section>
+
+    <section class="space-y-4">
+      <h3 class="font-medium">
+        Чаты
+      </h3>
+      <p class="text-sm text-text-muted">
+        Ключи <code class="text-xs">chat.*</code> — sync при старте BFF. Тарифные флаги и лимиты —
+        во вкладке <strong>Чаты</strong> в plan-config (в т.ч.
+        <code class="text-xs">forum.author.13topic.chatEnabled</code> на вкладке Форум).
+      </p>
+
+      <form
+        v-if="!loading"
+        class="max-w-lg space-y-4"
+        @submit.prevent="saveChat"
+      >
+        <label class="block text-sm">
+          <span class="text-text-muted">Spawn: max копируемой истории</span>
+          <input
+            v-model.number="chatForm.spawnCopyHistoryMax"
+            type="number"
+            min="0"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Окно правки сообщения (мин)</span>
+          <input
+            v-model.number="chatForm.editWindowMinutes"
+            type="number"
+            min="-1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Окно удаления своего сообщения (мин)</span>
+          <input
+            v-model.number="chatForm.deleteOwnWindowMinutes"
+            type="number"
+            min="-1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Жёсткий max длины сообщения</span>
+          <input
+            v-model.number="chatForm.lengthHardMax"
+            type="number"
+            min="1"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Размер страницы истории (подгрузка)</span>
+          <input
+            v-model.number="chatForm.pageSize"
+            type="number"
+            min="1"
+            max="100"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+        </label>
+        <label class="block text-sm">
+          <span class="text-text-muted">Фильтр списка по умолчанию</span>
+          <select
+            v-model="chatForm.defaultFilter"
+            class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+          >
+            <option value="ALL">ALL</option>
+            <option value="DIRECT">DIRECT</option>
+            <option value="GROUP">GROUP</option>
+            <option value="TOPIC">TOPIC</option>
+          </select>
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            v-model="chatForm.authorJoinOnPublish"
+            type="checkbox"
+            class="size-4 rounded border-border"
+          >
+          Автор темы → TOPIC при publish
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            v-model="chatForm.joinOnComment"
+            type="checkbox"
+            class="size-4 rounded border-border"
+          >
+          Join TOPIC при комментарии
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            v-model="chatForm.selfAutoCreate"
+            type="checkbox"
+            class="size-4 rounded border-border"
+          >
+          Автосоздание заметок (self-DM)
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            v-model="chatForm.markReadOnOpen"
+            type="checkbox"
+            class="size-4 rounded border-border"
+          >
+          Mark read при открытии
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            v-model="chatForm.leaveKeepsHistory"
+            type="checkbox"
+            class="size-4 rounded border-border"
+          >
+          История остаётся после leave
+        </label>
+        <UiButton
+          type="submit"
+          intent="primary"
+          :disabled="savingChat"
+        >
+          {{ savingChat ? 'Сохранение…' : 'Сохранить чат' }}
         </UiButton>
       </form>
     </section>

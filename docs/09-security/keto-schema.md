@@ -157,7 +157,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 | Edit own comment | `comment:{id}#owner@user:{id}` | 403 |
 | Edit auction (seller) | `auction:{id}#owner@user:{id}` | 403 |
 | Add expert appraisal | `platform:tavrida-lot#expert@user:{id}` + not `auction:{id}#owner` | 403 |
-| Place bid | `platform:tavrida-lot#member@user:{id}` + plan-config limits + rating ban | 403/402 |
+| Place bid | `platform:tavrida-lot#member@user:{id}` + plan-config limits (+ rating ban **planned**) | 403/402 |
 | Create auction | `platform:tavrida-lot#member@user:{id}` + plan-config limits | 403 |
 
 > **Moderator + аукционы:** может просматривать жалобы на лоты, скрывать/восстанавливать лот, блокировать ставки пользователя на конкретном лоте. Не может менять баланс, тарифы, назначать admin. *(уточняется)*
@@ -169,7 +169,7 @@ category:{categoryId}#moderator@platform:tavrida-lot#moderator
 | Проверка | Где |
 |----------|-----|
 | `forum.postsPerDay`, `auction.activeAuctions` | plan-config `limits/check` |
-| Рейтинговый бан | rating `check-ban` |
+| Рейтинговый бан | rating `check-ban` (**docs-only**; runtime не enforce) |
 | Pro-фичи | plan-config `features/can-use` |
 | Достаточно баланса | billing |
 

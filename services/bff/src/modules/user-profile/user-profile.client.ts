@@ -28,6 +28,24 @@ export type ResolvedInvite = {
   code: string;
 };
 
+export type AdminCardUserStats = {
+  totalRating: number;
+  karma: number;
+  referralKarma: number;
+  referralRating: number;
+  effectiveKarma: number;
+  effectiveRating: number;
+  verifiedSales: number;
+  pendingSales: number;
+  feedbackCoverage: number | null;
+  banUntil: string | null;
+  isLimited: boolean;
+  invitesIssued: number;
+  invitesThisMonth: number;
+  referralL1: number;
+  referralL2: number;
+};
+
 @Injectable()
 export class UserProfileClient {
   constructor(private readonly config: ConfigService) {}
@@ -82,11 +100,17 @@ export class UserProfileClient {
     }>('POST', '/internal/v1/invites/claim', body);
   }
 
-  async listUsers(params: { offset?: number; limit?: number; q?: string }) {
+  async listUsers(params: {
+    offset?: number;
+    limit?: number;
+    q?: string;
+    includeDeleted?: boolean;
+  }) {
     const qs = new URLSearchParams();
     if (params.offset != null) qs.set('offset', String(params.offset));
     if (params.limit != null) qs.set('limit', String(params.limit));
     if (params.q) qs.set('q', params.q);
+    if (params.includeDeleted) qs.set('includeDeleted', 'true');
     const suffix = qs.size ? `?${qs.toString()}` : '';
     return this.request<{
       data: Array<{
@@ -97,6 +121,9 @@ export class UserProfileClient {
         avatarUrl: string | null;
         primaryPhone: string | null;
         isSuspended: boolean;
+        isHardLocked: boolean;
+        hardLockedAt: string | null;
+        hardLockedBy: string | null;
         inviterId: string | null;
         invitationAcceptedAt: string | null;
         deletedAt: string | null;
@@ -106,6 +133,16 @@ export class UserProfileClient {
       }>;
       pagination: { offset: number; limit: number; total: number };
     }>('GET', `/internal/v1/users${suffix}`);
+  }
+
+  async getAdminCardStats(userIds: string[]): Promise<Record<string, AdminCardUserStats>> {
+    if (!userIds.length) return {};
+    const res = await this.request<{ data: Record<string, AdminCardUserStats> }>(
+      'POST',
+      '/internal/v1/users/admin-card-stats',
+      { ids: userIds },
+    );
+    return res.data ?? {};
   }
 
   async syncFromLogto(body: {
@@ -131,6 +168,51 @@ export class UserProfileClient {
     return this.request<{ userId: string; ensured: boolean }>('POST', '/internal/v1/users/ensure', {
       userId,
     });
+  }
+
+  async isHardLocked(userId: string) {
+    return this.request<{ userId: string; isHardLocked: boolean }>(
+      'GET',
+      `/internal/v1/users/${encodeURIComponent(userId)}/hard-lock`,
+    );
+  }
+
+  async setHardLock(userId: string, locked: boolean, actorId: string) {
+    return this.request<{
+      userId: string;
+      isHardLocked: boolean;
+      hardLockedAt: string | null;
+      hardLockedBy: string | null;
+    }>('PATCH', `/internal/v1/users/${encodeURIComponent(userId)}/hard-lock`, {
+      locked,
+      actorId,
+    });
+  }
+
+  async searchUsers(params: { q: string; limit?: number }) {
+    const qs = new URLSearchParams({ q: params.q });
+    if (params.limit != null) qs.set('limit', String(params.limit));
+    return this.request<{
+      data: Array<{
+        userId: string;
+        displayName: string | null;
+        username: string | null;
+        avatarUrl: string | null;
+        isSuspended: boolean;
+        memberSince: string;
+      }>;
+    }>('GET', `/internal/v1/users/search?${qs}`);
+  }
+
+  async getByUsername(username: string) {
+    return this.request<{
+      userId: string;
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+      isSuspended: boolean;
+      memberSince: string;
+    }>('GET', `/internal/v1/users/by-username/${encodeURIComponent(username)}`);
   }
 
   async lookupByIds(userIds: string[]) {
@@ -255,14 +337,22 @@ export class UserProfileClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.baseUrl()}${path}`, {
-      method,
-      headers: internalServiceHeaders(
-        this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
-        body ? { 'Content-Type': 'application/json' } : {},
-      ),
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl()}${path}`, {
+        method,
+        headers: internalServiceHeaders(
+          this.config.get<string>('INTERNAL_SERVICE_TOKEN'),
+          body ? { 'Content-Type': 'application/json' } : {},
+        ),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      throw new ServiceUnavailableException({
+        type: 'upstream_unavailable',
+        detail: `user-profile ${method} ${path}: unavailable`,
+      });
+    }
 
     const raw = await res.text();
     const payload = parseJsonBody(raw);

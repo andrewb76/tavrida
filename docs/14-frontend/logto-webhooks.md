@@ -21,7 +21,7 @@ Logto — source of truth для идентичности (имя, email, ава
 | `userId` | `id` / JWT `sub` |
 | `displayName` | `name` → fallback `username` |
 | `email` | `primaryEmail` |
-| `username` | `username` |
+| `username` | `username` (**SoT Logto**, club @handle — [username.md](../05-microservices/user-profile/requirements/username.md)) |
 | `avatarUrl` | `avatar` |
 | `primaryPhone` | `primaryPhone` |
 | `isSuspended` | `isSuspended` |

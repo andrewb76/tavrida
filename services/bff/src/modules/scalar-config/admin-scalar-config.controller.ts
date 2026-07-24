@@ -4,7 +4,7 @@ import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ClubSettingsReader } from './club-settings.reader';
-import type { ClubSettings, ForumSettings } from './scalar-config.client';
+import type { ChatSettings, ClubSettings, ForumSettings } from './scalar-config.client';
 import { ScalarConfigClient } from './scalar-config.client';
 import { ForumSettingsReader } from './forum-settings.reader';
 
@@ -48,6 +48,57 @@ class PatchForumSettingsBodyDto {
   @IsNumber()
   @Min(0)
   'vote.karmaMinusWeight'?: number;
+}
+
+class PatchChatSettingsBodyDto {
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  'spawn.copyHistoryMax'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-1)
+  'message.editWindowMinutes'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-1)
+  'message.deleteOwnWindowMinutes'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  'message.lengthHardMax'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  'message.pageSize'?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  'topic.authorJoinOnPublish'?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  'topic.joinOnComment'?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  'dm.selfAutoCreate'?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  'unread.markReadOnOpen'?: boolean;
+
+  @IsOptional()
+  @IsIn(['ALL', 'DIRECT', 'GROUP', 'TOPIC'])
+  'list.defaultFilter'?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  'group.leaveKeepsHistory'?: boolean;
 }
 
 @Controller('admin/scalar-config')
@@ -96,5 +147,17 @@ export class AdminScalarConfigController {
   patchForum(@CurrentUser() user: AuthUser, @Body() body: PatchForumSettingsBodyDto) {
     this.forumSettings.clearCache();
     return this.scalarConfig.patchForumSettings(body as ForumSettings, user.sub);
+  }
+
+  @Get('chat')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  getChat() {
+    return this.scalarConfig.getChatSettings();
+  }
+
+  @Patch('chat')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  patchChat(@CurrentUser() user: AuthUser, @Body() body: PatchChatSettingsBodyDto) {
+    return this.scalarConfig.patchChatSettings(body as ChatSettings, user.sub);
   }
 }

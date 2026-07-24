@@ -3,8 +3,11 @@ import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue'
 import {
   createCategory,
   deleteCategory,
+  listAccessGroups,
   listCategories,
+  setCategoryAccessGroups,
   updateCategory,
+  type AccessGroup,
   type CategoryFormInput,
   type CategoryNode,
 } from '@/services/forum';
@@ -17,6 +20,7 @@ const session = useSessionStore();
 const isAdmin = computed(() => session.isAdmin);
 
 const tree = ref<CategoryNode[]>([]);
+const allGroups = ref<AccessGroup[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const saving = ref(false);
@@ -35,11 +39,24 @@ type FormState = {
 const form = ref<FormState | null>(null);
 const showForm = computed(() => form.value != null);
 
+type AccessState = {
+  categoryId: string;
+  title: string;
+  selectedIds: Set<string>;
+};
+
+const access = ref<AccessState | null>(null);
+const accessError = ref<string | null>(null);
+const accessSaving = ref(false);
+
 async function loadTree() {
   loading.value = true;
   error.value = null;
   try {
     tree.value = await listCategories();
+    if (isAdmin.value) {
+      allGroups.value = await listAccessGroups();
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
@@ -189,6 +206,55 @@ async function removeCategory(node: CategoryNode) {
     saving.value = false;
   }
 }
+
+async function openAccess(node: CategoryNode) {
+  form.value = null;
+  accessError.value = null;
+  if (!allGroups.value.length) {
+    try {
+      allGroups.value = await listAccessGroups();
+    } catch (e) {
+      accessError.value = e instanceof Error ? e.message : 'Не удалось загрузить группы';
+    }
+  }
+  access.value = {
+    categoryId: node.id,
+    title: node.title,
+    selectedIds: new Set(node.accessGroupIds ?? []),
+  };
+}
+
+function closeAccess() {
+  access.value = null;
+  accessError.value = null;
+}
+
+function toggleGroup(groupId: string) {
+  if (!access.value) return;
+  const next = new Set(access.value.selectedIds);
+  if (next.has(groupId)) next.delete(groupId);
+  else next.add(groupId);
+  access.value.selectedIds = next;
+}
+
+function isSelected(groupId: string) {
+  return access.value?.selectedIds.has(groupId) ?? false;
+}
+
+async function saveAccess() {
+  if (!access.value) return;
+  accessSaving.value = true;
+  accessError.value = null;
+  try {
+    await setCategoryAccessGroups(access.value.categoryId, [...access.value.selectedIds]);
+    closeAccess();
+    await loadTree();
+  } catch (e) {
+    accessError.value = e instanceof Error ? e.message : 'Не удалось сохранить доступ';
+  } finally {
+    accessSaving.value = false;
+  }
+}
 </script>
 
 <template>
@@ -219,8 +285,79 @@ async function removeCategory(node: CategoryNode) {
       v-if="isAdmin"
       class="forum-categories__admin-hint"
     >
-      Режим администратора: можно добавлять, редактировать и удалять разделы.
+      Режим администратора: доступ через
+      <RouterLink to="/admin/access-groups">
+        группы доступа
+      </RouterLink>
+      (нет групп = всем; иначе OR по выбранным + админы).
     </p>
+
+    <div
+      v-if="access"
+      class="forum-categories__form-panel"
+    >
+      <h2>Доступ: {{ access.title }}</h2>
+      <p class="forum-categories__lead">
+        Выберите группы. Пустой выбор — раздел виден всем.
+      </p>
+      <p
+        v-if="allGroups.length === 0"
+        class="forum-categories__lead"
+      >
+        Групп пока нет —
+        <RouterLink to="/admin/access-groups">
+          создайте на странице групп доступа
+        </RouterLink>.
+      </p>
+      <ul
+        v-else
+        class="forum-categories__group-list"
+      >
+        <li
+          v-for="g in allGroups"
+          :key="g.id"
+        >
+          <label class="forum-categories__group-item">
+            <input
+              type="checkbox"
+              :checked="isSelected(g.id)"
+              @change="toggleGroup(g.id)"
+            >
+            <span>
+              <strong>{{ g.name }}</strong>
+              <span
+                v-if="g.description"
+                class="forum-categories__group-desc"
+              > — {{ g.description }}</span>
+            </span>
+          </label>
+        </li>
+      </ul>
+      <p
+        v-if="accessError"
+        class="forum-categories__error"
+      >
+        {{ accessError }}
+      </p>
+      <div class="forum-categories__form-actions">
+        <UiButton
+          intent="primary"
+          type="button"
+          :disabled="accessSaving"
+          @click="saveAccess"
+        >
+          {{ accessSaving ? 'Сохранение…' : 'Сохранить доступ' }}
+        </UiButton>
+        <UiButton
+          intent="secondary"
+          type="button"
+          :disabled="accessSaving"
+          @click="closeAccess"
+        >
+          Отмена
+        </UiButton>
+      </div>
+    </div>
 
     <div
       v-if="showForm"
@@ -326,6 +463,7 @@ async function removeCategory(node: CategoryNode) {
         :is-admin="isAdmin"
         @edit="openEdit"
         @add-child="openCreateChild"
+        @access="openAccess"
         @delete="removeCategory"
       />
     </ul>
@@ -368,6 +506,10 @@ async function removeCategory(node: CategoryNode) {
   font-size: 0.9rem;
 }
 
+.forum-categories__admin-hint a {
+  color: var(--color-primary, #2563eb);
+}
+
 .forum-categories__form-panel {
   padding: 1rem;
   border: 1px solid var(--color-border, #ddd);
@@ -386,6 +528,26 @@ async function removeCategory(node: CategoryNode) {
   gap: 0.35rem;
 }
 
+.forum-categories__group-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.forum-categories__group-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.forum-categories__group-desc {
+  font-weight: 400;
+  color: var(--color-text-muted, #666);
+}
+
 .forum-categories__form input,
 .forum-categories__form textarea {
   width: 100%;
@@ -395,6 +557,7 @@ async function removeCategory(node: CategoryNode) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .forum-categories__status,
@@ -409,9 +572,8 @@ async function removeCategory(node: CategoryNode) {
 .forum-categories__tree {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1rem;
   border: 1px solid var(--color-border, #ddd);
   border-radius: 8px;
-  padding: 0 1rem;
 }
 </style>

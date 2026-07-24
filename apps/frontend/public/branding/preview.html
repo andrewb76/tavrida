@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Таврида Лот — варианты логотипа</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0b1f24;
+        --patina: #1f7a6e;
+        --chalk: #f2f4f3;
+        --sand: #c9b89a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: var(--chalk);
+        color: var(--ink);
+        line-height: 1.5;
+      }
+      header {
+        padding: 2rem 1.5rem 1rem;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: Unbounded, system-ui, sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+      p {
+        margin: 0;
+        opacity: 0.75;
+        font-size: 0.9rem;
+      }
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 1.5rem 3rem;
+        display: grid;
+        gap: 1rem;
+      }
+      .card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(11, 31, 36, 0.08);
+      }
+      .card-head {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        background: rgba(11, 31, 36, 0.04);
+      }
+      .card-head code {
+        font-weight: 500;
+        font-size: 0.75rem;
+      }
+      .card-note {
+        padding: 0 1rem 0.75rem;
+        font-size: 0.75rem;
+        color: rgba(11, 31, 36, 0.55);
+        background: rgba(11, 31, 36, 0.04);
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 640px) {
+        .swatches {
+          grid-template-columns: 1fr;
+        }
+      }
+      .swatch {
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        min-height: 120px;
+        overflow: hidden;
+      }
+      .swatch-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.55;
+      }
+      .swatch.light {
+        background: var(--chalk);
+        color: var(--ink);
+      }
+      .swatch.ink {
+        background: var(--ink);
+        color: var(--chalk);
+      }
+      .swatch img {
+        max-width: 100%;
+        height: auto;
+        max-height: 72px;
+        pointer-events: none;
+      }
+      .swatch.stacked img {
+        max-height: 140px;
+      }
+      .swatch.mark img {
+        max-height: 64px;
+        width: 64px;
+      }
+      .swatch code {
+        font-size: 0.65rem;
+        opacity: 0.65;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Логотип Таврида Лот</h1>
+      <p>
+        Слева — версия для фона <strong>chalk</strong>, справа — для <strong>ink</strong>.
+        У текста тонкий контур (<code>paint-order: stroke fill</code>) для читаемости на обоих фонах.
+        Принят в работе: <strong>полный цвет — горизонтальный lockup</strong>.
+        В SPA — компонент <code>BrandLogo.vue</code> (те же SVG).
+      </p>
+    </header>
+    <main id="grid"></main>
+    <script>
+      /** @type {Array<{label: string, note?: string, light: string, dark: string, stacked?: boolean, mark?: boolean}>} */
+      const variants = [
+        {
+          label: 'Полный цвет — горизонтальный lockup (принят)',
+          light: 'logo-full-color.svg',
+          dark: 'logo-full-color-dark.svg',
+        },
+        {
+          label: 'Вертикальная композиция',
+          light: 'logo-stacked-light.svg',
+          dark: 'logo-stacked.svg',
+          stacked: true,
+        },
+        {
+          label: 'Монограмма',
+          light: 'tavrida-mark-light.svg',
+          dark: 'tavrida-mark.svg',
+          mark: true,
+        },
+        {
+          label: 'Компактное слово',
+          light: 'logo-wordmark-compact.svg',
+          dark: 'logo-wordmark-compact-dark.svg',
+        },
+        {
+          label: 'Моно ink',
+          note: 'Только для светлого фона (chalk / surface).',
+          light: 'logo-mono-ink.svg',
+          dark: 'logo-mono-ink.svg',
+        },
+        {
+          label: 'Моно chalk',
+          note: 'Только для тёмного фона (ink / hero).',
+          light: 'logo-mono-chalk.svg',
+          dark: 'logo-mono-chalk.svg',
+        },
+        {
+          label: 'Моно patina',
+          note: 'Акцентный одноцвет; на chalk и ink читается за счёт контраста patina.',
+          light: 'logo-mono-patina.svg',
+          dark: 'logo-mono-patina.svg',
+        },
+      ];
+
+      function logoImg(file, alt) {
+        return `<img src="${file}" alt="${alt}" loading="lazy" />`;
+      }
+
+      const grid = document.getElementById('grid');
+      for (const v of variants) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        const note = v.note ? `<p class="card-note">${v.note}</p>` : '';
+        card.innerHTML = `
+          <div class="card-head">${v.label}</div>
+          ${note}
+          <div class="swatches">
+            <div class="swatch light ${v.stacked ? 'stacked' : ''} ${v.mark ? 'mark' : ''}">
+              <span class="swatch-label">chalk</span>
+              ${logoImg(v.light, v.label + ' на chalk')}
+              <code>${v.light}</code>
+            </div>
+            <div class="swatch ink ${v.stacked ? 'stacked' : ''} ${v.mark ? 'mark' : ''}">
+              <span class="swatch-label">ink</span>
+              ${logoImg(v.dark, v.label + ' на ink')}
+              <code>${v.dark}</code>
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      }
+    </script>
+  </body>
+</html>

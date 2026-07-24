@@ -18,5 +18,5 @@ export const mockBalance = 1250;
 
 export const mockForumTopics = [
   { id: 't1', title: 'Чёрный слой на монете — чистить?', comments: 12 },
-  { id: 't2', title: 'Как хранить находки у моря', comments: 5 },
+  { id: 't2', title: 'Как хранить вещи у моря', comments: 5 },
 ];

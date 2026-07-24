@@ -35,7 +35,7 @@ async function bootstrap() {
 
   const port = Number(process.env.BFF_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
-  Logger.log(`bff listening on :${port}/api/v1 (auth=${authMode})`, 'Bootstrap');
+  Logger.log(`bff listening on :${port}/api/v1 + /ws/v1 (auth=${authMode})`, 'Bootstrap');
 }
 
 void bootstrap();

@@ -5,10 +5,10 @@ import {
   HeadBucketCommand,
   HeadObjectCommand,
   PutBucketPolicyCommand,
+  PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
 import {
   bucketForDomain,
   buildObjectKey,
@@ -16,25 +16,43 @@ import {
   type MediaDomain,
 } from '@tavrida/object-storage';
 
-const PUBLIC_BUCKETS: MediaDomain[] = ['auction', 'forum', 'marketplace'];
+const PUBLIC_BUCKETS: MediaDomain[] = ['auction', 'forum', 'marketplace', 'chat'];
 
 @Injectable()
 export class MediaStorageService implements OnModuleInit {
   private readonly logger = new Logger(MediaStorageService.name);
+  /** Internal MinIO (Swarm DNS / localhost) — server-side Head/PutBucket. */
   private client!: S3Client;
+  /** Browser-facing endpoint for presigned PUT (must be HTTPS in production). */
+  private presignClient!: S3Client;
 
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
+    const credentials = {
+      accessKeyId: this.config.get<string>('MINIO_ACCESS_KEY') ?? 'minioadmin',
+      secretAccessKey: this.config.get<string>('MINIO_SECRET_KEY') ?? 'minioadmin',
+    };
+    const region = this.config.get<string>('MINIO_REGION') ?? 'us-east-1';
+
     this.client = new S3Client({
-      region: this.config.get<string>('MINIO_REGION') ?? 'us-east-1',
-      endpoint: this.endpoint(),
+      region,
+      endpoint: this.internalEndpoint(),
       forcePathStyle: true,
-      credentials: {
-        accessKeyId: this.config.get<string>('MINIO_ACCESS_KEY') ?? 'minioadmin',
-        secretAccessKey: this.config.get<string>('MINIO_SECRET_KEY') ?? 'minioadmin',
-      },
+      credentials,
     });
+
+    const presignEndpoint = this.presignEndpoint();
+    this.presignClient = new S3Client({
+      region,
+      endpoint: presignEndpoint,
+      forcePathStyle: true,
+      credentials,
+    });
+
+    if (presignEndpoint !== this.internalEndpoint()) {
+      this.logger.log(`MinIO presign endpoint (browser): ${presignEndpoint}`);
+    }
 
     if (process.env.NODE_ENV === 'production') return;
 
@@ -76,7 +94,9 @@ export class MediaStorageService implements OnModuleInit {
       ContentType: input.contentType,
       ContentLength: input.sizeBytes,
     });
-    return getSignedUrl(this.client, command, { expiresIn: input.expiresInSec ?? 900 });
+    return getSignedUrl(this.presignClient, command, {
+      expiresIn: input.expiresInSec ?? 900,
+    });
   }
 
   async headObject(domain: MediaDomain, objectKey: string) {
@@ -88,11 +108,71 @@ export class MediaStorageService implements OnModuleInit {
     );
   }
 
-  private endpoint(): string {
+  /** Endpoint for S3 API from inside the cluster (or local docker). */
+  private internalEndpoint(): string {
+    const explicit = this.config.get<string>('MINIO_URL')?.trim();
+    if (explicit?.startsWith('http')) return explicit.replace(/\/$/, '');
+
     const host = this.config.get<string>('MINIO_ENDPOINT') ?? 'localhost';
+    if (host.startsWith('http://') || host.startsWith('https://')) {
+      return host.replace(/\/$/, '');
+    }
     const port = this.config.get<string>('MINIO_PORT') ?? '9000';
     const ssl = this.config.get<string>('MINIO_USE_SSL') === 'true';
-    return `${ssl ? 'https' : 'http'}://${host}:${port}`;
+    const omitPort = (ssl && port === '443') || (!ssl && port === '80');
+    return omitPort
+      ? `${ssl ? 'https' : 'http'}://${host}`
+      : `${ssl ? 'https' : 'http'}://${host}:${port}`;
+  }
+
+  /**
+   * Endpoint embedded in browser presigned URLs.
+   * Always prefer an explicit public origin so HTTPS apps never get http://minio:9000.
+   */
+  private presignEndpoint(): string {
+    const explicit = this.config.get<string>('MINIO_PRESIGN_ENDPOINT')?.trim();
+    if (explicit) return explicit.replace(/\/$/, '');
+
+    const publicBase = (
+      this.config.get<string>('MEDIA_PUBLIC_BASE_URL')?.trim() ||
+      this.config.get<string>('MINIO_URL')?.trim() ||
+      ''
+    ).replace(/\/$/, '');
+
+    if (publicBase && this.isBrowserReachableOrigin(publicBase)) {
+      return publicBase;
+    }
+
+    // If MEDIA_PUBLIC_BASE_URL is set to a non-internal URL (incl. http://localhost for local),
+    // still prefer it over Swarm-internal minio DNS when they differ.
+    const internal = this.internalEndpoint();
+    if (publicBase && publicBase !== internal && !this.isInternalOnlyHost(publicBase)) {
+      return publicBase;
+    }
+
+    return internal;
+  }
+
+  private isInternalOnlyHost(url: string): boolean {
+    try {
+      const host = new URL(url).hostname.toLowerCase();
+      return host === 'minio' || host.endsWith('.tavrida_net');
+    } catch {
+      return false;
+    }
+  }
+
+  private isBrowserReachableOrigin(url: string): boolean {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
+      const host = u.hostname.toLowerCase();
+      if (host === 'localhost' || host === '127.0.0.1' || host === 'minio') return false;
+      if (!host.includes('.')) return false;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private async ensurePublicBucket(bucket: string) {

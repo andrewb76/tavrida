@@ -1,12 +1,25 @@
 ---
-description: ESLint и стиль Vue/Nest — держать CI lint без предупреждений
-globs: **/*.{ts,vue}
+description: ESLint и стиль Vue/Nest — CI lint без error/warning на затронутых пакетах
+globs: **/*.{ts,vue,js,mjs}
 alwaysApply: false
 ---
 
 # Lint и форматирование
 
-Перед завершением задачи с кодом: **`pnpm lint`** (или `pnpm lint:fix` для Vue).
+Перед завершением задачи с правками TS/Vue (и перед push/PR): прогони lint по затронутому пакету и **исправь все error**. Warnings из `vue/*` (indent, newline, attributes) тоже чини — `pnpm lint:fix` или точечный `eslint --fix`.
+
+```bash
+pnpm exec turbo run lint --filter=@tavrida/frontend   # пример
+# или из apps/frontend: pnpm exec eslint src --fix
+```
+
+Не считать задачу готовой, если локальный lint пакета красный.
+
+## TypeScript: неиспользуемое
+
+- Не оставляй неиспользуемые параметры/переменные — даже с префиксом `_` (`_detail`): в этом репо `@typescript-eslint/no-unused-vars` их **флажит как error**.
+- Не нужно — **убери** из сигнатуры; если API требует слот — реально используй или рефактори вызов.
+- Не глуши через `eslint-disable` без явной причины в комментарии.
 
 ## NestJS bootstrap (`**/main.ts`)
 
@@ -22,7 +35,8 @@ Logger.log(`billing listening on :${port}`, 'Bootstrap');
 ## Vue SFC
 
 - **2+ атрибута** на теге → каждый с новой строки (`vue/max-attributes-per-line`).
-- Текст в однострочных тегах (`<h1>`, `<p>`) → переносы до/после содержимого.
+- Текст в однострочных тегах (`<h1>`, `<p>`, `<template>…</template>`) → переносы до/после содержимого (`vue/singleline-html-element-content-newline`).
+- Отступы HTML в `.vue` — как требует `vue/html-indent` (после правок шаблона — `--fix`).
 - Void-элементы (`<input>`, `<img>`) — **без** self-closing (`<input>` не `<input/>`).
 
 Автоисправление: `pnpm lint:fix` (frontend + ui).

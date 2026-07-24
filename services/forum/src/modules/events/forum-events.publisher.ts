@@ -58,4 +58,50 @@ export class ForumEventsPublisher implements OnModuleInit, OnModuleDestroy {
       });
     }
   }
+
+  async enqueueTopicPublished(
+    manager: EntityManager,
+    input: {
+      topicId: string;
+      authorId: string;
+      categoryId: string;
+      publishedAt: Date;
+    },
+  ): Promise<void> {
+    await enqueueDomainEvent(manager, {
+      eventType: 'forum.topic_published',
+      producer: 'forum',
+      correlationId: input.topicId,
+      payload: {
+        topicId: input.topicId,
+        authorId: input.authorId,
+        categoryId: input.categoryId,
+        publishedAt: input.publishedAt.toISOString(),
+      },
+    });
+  }
+
+  async enqueueCommentCreated(
+    manager: EntityManager,
+    input: {
+      commentId: string;
+      topicId: string;
+      authorId: string;
+      parentId: string | null;
+      createdAt: Date;
+    },
+  ): Promise<void> {
+    await enqueueDomainEvent(manager, {
+      eventType: 'forum.comment_created',
+      producer: 'forum',
+      correlationId: input.topicId,
+      payload: {
+        commentId: input.commentId,
+        topicId: input.topicId,
+        authorId: input.authorId,
+        parentId: input.parentId,
+        createdAt: input.createdAt.toISOString(),
+      },
+    });
+  }
 }

@@ -77,10 +77,18 @@ Scripts: `tools/k6/` (**TODO**, этап T6).
 
 ```bash
 pnpm lint
-pnpm test
+pnpm test          # node:test → spec + JUnit в */test-results/junit.xml
 pnpm exec turbo run build --filter=@tavrida/frontend
 pnpm docs:build # PR only
 ```
+
+**Отчёты в GitHub:** job `Test` публикует JUnit через
+[`EnricoMi/publish-unit-test-result-action`](https://github.com/EnricoMi/publish-unit-test-result-action)
+(check **Test Results** + комментарий в PR) и артефакт `junit-test-results`.
+На push в `master` из JSON-выхода action собирается SVG-бейдж
+(`emibcn/badge-action`) и публикуется в ветку `badges` —
+см. [README.md](../../README.md) и [github-actions.md](../04-deployment/github-actions.md).
+Локально: `scripts/node-test.mjs` (обёртка над `node --test`).
 
 Целевой PR graph: parallel `static`, `unit`, `integration`, `contract`,
 `frontend-smoke`, `build`; deploy только после required CI.

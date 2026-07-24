@@ -16,7 +16,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src",
     "pretest": "pnpm run build && tsc -p tsconfig.test.json",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node ../../scripts/node-test.mjs \"dist/**/*.test.js\""
   },
   "devDependencies": {
     "@tavrida/tsconfig": "workspace:*",

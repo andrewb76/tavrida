@@ -7,7 +7,7 @@
     "build": "tsc --build",
     "lint": "eslint src",
     "pretest": "pnpm run build",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node ../../scripts/node-test.mjs \"dist/**/*.test.js\"",
     "typeorm": "typeorm-ts-node-commonjs"
   },
   "dependencies": {

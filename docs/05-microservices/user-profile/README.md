@@ -32,10 +32,12 @@
 | `invitationAcceptedAt` | timestamptz nullable | Когда зафиксирован реферал (не gate UI) |
 | `displayName` | varchar nullable | Имя из Logto (`name` / `username`) |
 | `email` | varchar nullable | `primaryEmail` (sync webhook) |
-| `username` | varchar nullable | Logto username |
+| `username` | varchar nullable | Club handle — см. [requirements/username.md](./requirements/username.md) |
 | `avatarUrl` | varchar nullable | Logto `avatar` (URL) |
 | `primaryPhone` | varchar nullable | Logto phone |
-| `isSuspended` | boolean | Logto suspension |
+| `isSuspended` | boolean | Logto suspension (зеркало webhook) |
+| `isHardLocked` | boolean | Admin hard lock — [hard-lock.md](./hard-lock.md) |
+| `hardLockedAt` / `hardLockedBy` | timestamptz / varchar | Когда / кто включил hard lock |
 | `deletedAt` | timestamptz nullable | Soft delete (`User.Deleted`) |
 | `logtoSyncedAt` | timestamptz nullable | Последний webhook/backfill |
 | `bio` | text nullable | — (ручной override, позже) |
@@ -110,6 +112,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 | POST | `/internal/v1/users/sync-logto` | Upsert из Logto webhook/backfill |
 | POST | `/internal/v1/users/ensure` | Пустой профиль (lazy) |
 | POST | `/internal/v1/users/lookup` | Batch lookup профилей |
+| POST | `/internal/v1/users/admin-card-stats` | Batch: rating + invites + referral L1/L2 (admin cards) |
 | GET | `/internal/v1/users/{userId}` | Профиль для BFF |
 | GET | `/internal/v1/users/{userId}/public` | Публичная проекция |
 | POST | `/internal/v1/users/{userId}/mark-deleted` | Soft delete |
@@ -171,6 +174,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 ## 📎 Связанные разделы
 
+- [requirements/username.md](./requirements/username.md) — unique handle для @mention (chat)
 - [club-access.md](../../01-goal/club-access.md)
 - [bff/invites-api.md](../bff/invites-api.md)
 - [karma-and-rating.md](../../01-goal/karma-and-rating.md)

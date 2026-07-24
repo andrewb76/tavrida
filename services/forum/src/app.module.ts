@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OutboxMessageEntity } from '@tavrida/outbox';
 import { resolve } from 'node:path';
+import { AccessGroupMemberEntity } from './entities/access-group-member.entity';
+import { AccessGroupEntity } from './entities/access-group.entity';
+import { CategoryAccessGroupEntity } from './entities/category-access-group.entity';
 import { CategoryEntity } from './entities/category.entity';
 import { CommentClosureEntity } from './entities/comment-closure.entity';
 import { CommentEntity } from './entities/comment.entity';
@@ -11,6 +14,7 @@ import { ContentVoteEntity } from './entities/content-vote.entity';
 import { ReactionEntity } from './entities/reaction.entity';
 import { TagEntity } from './entities/tag.entity';
 import { TopicEntity } from './entities/topic.entity';
+import { AccessGroupsModule } from './modules/access-groups/access-groups.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { HealthController } from './modules/health/health.controller';
@@ -43,6 +47,9 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
       schema: 'forum',
       entities: [
         CategoryEntity,
+        AccessGroupEntity,
+        AccessGroupMemberEntity,
+        CategoryAccessGroupEntity,
         TopicEntity,
         CommentEntity,
         CommentClosureEntity,
@@ -57,6 +64,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
       migrationsRun: process.env.NODE_ENV === 'production',
       synchronize: process.env.NODE_ENV !== 'production',
     }),
+    AccessGroupsModule,
     CategoriesModule,
     TopicsModule,
     CommentsModule,

@@ -1,6 +1,6 @@
 # ⚙️ GitHub Actions
 
-> **Статус:** spec ready · **Версия:** 0.2  
+> **Статус:** spec ready · **Версия:** 0.3  
 > **Статический сайт:** `@tavrida/docs-site` (VitePress) · **Источник:** `docs/`
 
 ## 🎯 Обзор
@@ -10,8 +10,8 @@
 | ---------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------- |
 | **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master`             | lint, test, turbo build                |
 | **Docs Pages**         | `[.github/workflows/docs-pages.yml](../../.github/workflows/docs-pages.yml)`             | push `master`, manual          | Публикация на **GitHub Pages**         |
-| **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → Swarm `evatorg.su`     |
-| **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` |
+| **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → ensure Swarm secrets → stack deploy |
+| **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` (rotate / force) |
 | **Prune GHCR**         | `[.github/workflows/prune-ghcr-dev.yml](../../.github/workflows/prune-ghcr-dev.yml)`     | weekly + manual                | Удаление старых `tavrida-*` в GHCR     |
 
 
@@ -113,13 +113,13 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 | `ACME_EMAIL`               | `andrewb@bk.ru`                                        |
 | `TAVRIDA_REPO_ROOT`        | `/opt/tavrida`                                         |
 | `GHCR_OWNER`               | `andrewb76` (опц., иначе `repository_owner`)           |
-| `LOGTO_ENDPOINT`           | tenant «dev/server» `https://….logto.app`              |
-| `LOGTO_JWKS_URL`           | `{endpoint}/oidc/jwks`                                 |
+| `LOGTO_ENDPOINT`           | `https://auth.evatorg.su` (Logto OSS)                   |
+| `LOGTO_JWKS_URL`           | `https://auth.evatorg.su/oidc/jwks`                     |
 | `LOGTO_AUDIENCE`           | `https://api.evatorg.su`                               |
-| `LOGTO_M2M_APP_ID`         | M2M app id                                             |
-| `LOGTO_M2M_RESOURCE`       | `https://<tenant>.logto.app/api`                       |
+| `LOGTO_M2M_APP_ID`         | M2M app id (из `https://logto.evatorg.su`)             |
+| `LOGTO_M2M_RESOURCE`       | `https://default.logto.app/api` (OSS, не Cloud URL)    |
 | `FRONTEND_ORIGIN`          | `https://app.evatorg.su`                               |
-| `VITE_LOGTO_ENDPOINT`      | тот же endpoint (build frontend)                       |
+| `VITE_LOGTO_ENDPOINT`      | `https://auth.evatorg.su`                              |
 | `VITE_LOGTO_APP_ID`        | SPA app id                                             |
 | `VITE_LOGTO_API_RESOURCE`  | `https://api.evatorg.su` (= `LOGTO_AUDIENCE`)          |
 
@@ -216,6 +216,12 @@ ssh -i ./tavrida-dev-swarm deploy@193.142.148.175 'docker info --format "{{.Swar
 
 GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = private key.
 
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| `Host key verification failed` / `docker.example.com` dial-stdio | `known_hosts` пуст или устарел | Перезапустить Deploy; `ci-docker-context.sh` fail-fast + probe `ssh` |
+| `Permission denied (publickey)` после keyscan ok | Неверный secret / ключ не в `authorized_keys`, либо (старый баг) `IdentitiesOnly` без `IdentityFile` | Проверить `ssh -i ./tavrida-dev-swarm deploy@HOST`; перезаписать `DEV_SWARM_SSH_KEY` base64 |
+| `error in libcrypto` / `ssh-add` | Multiline PEM в secret | Перезаписать `DEV_SWARM_SSH_KEY` как **base64 одной строкой** |
+
 Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/config/…` — путь должен существовать **на VPS**. Swarm configs (`traefik.dev.yml`, `keto.yml`) читаются с runner при `stack deploy`.
 
 ### Порядок первого деплоя
@@ -245,6 +251,26 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 Подробнее: [docker/swarm/README.dev.md](../../docker/swarm/README.dev.md).
 
+## 🧪 Test results badge
+
+По [Publish Test Results](https://github.com/marketplace/actions/publish-test-results)
+(«Create a badge from test results»):
+
+1. Job `test` пишет JUnit (`scripts/node-test.mjs` → `**/test-results/junit.xml`).
+2. `EnricoMi/publish-unit-test-result-action` → check + `steps.test-results.outputs.json`.
+3. На **push `master`**: цвет/текст бейджа из `conclusion` + `formatted.stats` → `badge.svg`.
+4. SVG пушится в orphan-ветку **`badges`** (`peaceiris/actions-gh-pages`), без отдельного `GIST_TOKEN`.
+
+В [README.md](../../README.md):
+
+```markdown
+![Tests](https://raw.githubusercontent.com/andrewb76/tavrida/badges/badge.svg)
+```
+
+Первый бейдж появится после успешного CI на `master`. До этого raw-URL может отдавать 404.
+
+Опционально (как в marketplace): Gist + secret `GIST_TOKEN` + `andymckay/append-gist-action`.
+
 ## 📋 Roadmap pipelines
 
 
@@ -253,7 +279,8 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 | Lint + docs build                   | ✅ workflow                                                 |
 | Actions on Node 24 (`checkout@v5`…) | ✅ workflows                                                |
 | GitHub Pages                        | ✅ workflow                                                 |
-| `pnpm test` в CI                    | ✅ в `ci.yml`                                               |
+| `pnpm test` в CI                    | ✅ в `ci.yml` (+ JUnit check **Test Results**)              |
+| Test results badge (`badges` branch)| ✅ SVG после push `master` → [README](../../README.md)       |
 | Docker matrix → GHCR + Swarm deploy | ✅ `deploy-dev.yml`                                         |
 | Sync secrets → Swarm                | ✅ `sync-secrets-dev.yml`                                   |
 | Prune old GHCR images               | ✅ `prune-ghcr-dev.yml`                                     |
@@ -271,4 +298,4 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.2-spec
+**Автор:** команда разработки · **Версия:** 0.3-spec

@@ -19,10 +19,13 @@ volumes:
   minio_data:
   traefik_letsencrypt:
 
+# Swarm configs are immutable (content cannot be updated — only Labels).
+# When changing file contents, bump the key suffix (v2 → v3) so deploy creates
+# a new config object; old ones can be removed with: docker config ls / rm
 configs:
-  traefik_static:
+  traefik_static_v5:
     file: ../config/traefik/traefik.dev.yml
-  keto_config:
+  keto_config_v3:
     file: ../config/keto/keto.yml
 
 secrets:
@@ -41,11 +44,14 @@ services:
     image: traefik:v3.7
     command:
       - --configFile=/etc/traefik/traefik.yml
+      # Compose interpolates these; static yaml ${VAR} is often left literal in Traefik.
+      - --providers.swarm.network=${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
     environment:
       ACME_EMAIL: ${ACME_EMAIL}
       TRAEFIK_SWARM_NETWORK: ${TRAEFIK_SWARM_NETWORK:-tavrida-dev_tavrida_net}
     configs:
-      - source: traefik_static
+      - source: traefik_static_v5
         target: /etc/traefik/traefik.yml
     ports:
       - target: 80
@@ -61,6 +67,10 @@ services:
       - ${TAVRIDA_REPO_ROOT}/docker/config/traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - tavrida_net
+    # Host IPv6 is unreachable; Go/Traefik ACME can hang on v6 before falling back to v4.
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
     deploy:
       placement:
         constraints:
@@ -71,6 +81,8 @@ services:
         - traefik.http.routers.traefik.entrypoints=websecure
         - traefik.http.routers.traefik.tls.certresolver=le
         - traefik.http.routers.traefik.service=api@internal
+        # Dummy port required when service=api@internal (Swarm provider)
+        - traefik.http.services.traefik-noop.loadbalancer.server.port=8080
         # Apex / www → app.<DEV_DOMAIN> (evatorg.su → app.evatorg.su)
         - traefik.http.middlewares.apex-to-app.redirectregex.regex=^https://[^/]+(.*)
         - traefik.http.middlewares.apex-to-app.redirectregex.replacement=https://app.${DEV_DOMAIN}$$1
@@ -171,11 +183,44 @@ services:
         - traefik.http.routers.minio-api.rule=Host(`s3.${DEV_DOMAIN}`)
         - traefik.http.routers.minio-api.entrypoints=websecure
         - traefik.http.routers.minio-api.tls.certresolver=le
+        - traefik.http.routers.minio-api.service=minio-api
         - traefik.http.services.minio-api.loadbalancer.server.port=9000
         - traefik.http.routers.minio-console.rule=Host(`minio.${DEV_DOMAIN}`)
         - traefik.http.routers.minio-console.entrypoints=websecure
         - traefik.http.routers.minio-console.tls.certresolver=le
+        - traefik.http.routers.minio-console.service=minio-console
         - traefik.http.services.minio-console.loadbalancer.server.port=9001
+
+  # Public-read MinIO buckets (media uploads + Logto avatars).
+  # BFF skips ensurePublicBucket when NODE_ENV=production — this job is required on Swarm.
+  minio-buckets-init:
+    image: minio/mc:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    secrets:
+      - minio_root_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export MINIO_ROOT_PASSWORD=$$(cat /run/secrets/minio_root_password)
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" 2>/dev/null; do
+          echo "waiting for minio..."
+          sleep 3
+        done
+        for b in forum-attachments auction-images marketplace-portfolio chat-attachments avatars logto-avatars; do
+          mc mb "local/$$b" --ignore-existing
+          mc anonymous set download "local/$$b"
+          echo "minio bucket ok: $$b"
+        done
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 15
 
   imgproxy:
     image: darthsim/imgproxy:latest
@@ -196,10 +241,158 @@ services:
         - traefik.http.routers.imgproxy.tls.certresolver=le
         - traefik.http.services.imgproxy.loadbalancer.server.port=8080
 
+  # Ensure Postgres schema exists (init scripts only run on empty volume).
+  keto-schema-init:
+    image: postgres:17-alpine
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        until pg_isready -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do sleep 2; done
+        psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+        echo "keto schema ok"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 20
+
+  # Logto OSS needs its own database (same Postgres instance).
+  logto-db-init:
+    image: postgres:17-alpine
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        until pg_isready -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do sleep 2; done
+        exists="$$(psql -h postgres -U ${POSTGRES_USER} -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname='logto'")"
+        if [ "$$exists" != "1" ]; then
+          psql -h postgres -U ${POSTGRES_USER} -d postgres -c 'CREATE DATABASE logto;'
+        fi
+        echo "logto database ok"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 20
+
+  # Self-hosted Logto (OIDC + Admin Console) — replaces Cloud tenant for Swarm dev.
+  logto:
+    image: svhd/logto:1.41.0
+    secrets:
+      - postgres_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export DB_URL="postgres://${POSTGRES_USER}:$$(cat /run/secrets/postgres_password)@postgres:5432/logto"
+        npm run cli db seed -- --swe
+        exec npm start
+    environment:
+      TRUST_PROXY_HEADER: 'true'
+      ENDPOINT: https://auth.${DEV_DOMAIN}
+      ADMIN_ENDPOINT: https://logto.${DEV_DOMAIN}
+      PORT: '3001'
+      ADMIN_PORT: '3002'
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 30
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.logto.rule=Host(`auth.${DEV_DOMAIN}`)
+        - traefik.http.routers.logto.entrypoints=websecure
+        - traefik.http.routers.logto.tls.certresolver=le
+        - traefik.http.routers.logto.service=logto
+        - traefik.http.services.logto.loadbalancer.server.port=3001
+        - traefik.http.routers.logto-admin.rule=Host(`logto.${DEV_DOMAIN}`)
+        - traefik.http.routers.logto-admin.entrypoints=websecure
+        - traefik.http.routers.logto-admin.tls.certresolver=le
+        - traefik.http.routers.logto-admin.service=logto-admin
+        - traefik.http.services.logto-admin.loadbalancer.server.port=3002
+
+  # Upsert Logto systems.storageProvider using the same Swarm secret as MinIO
+  # (tavrida_dev_minio_root_password). No manual password paste into setup scripts.
+  # After rotating MinIO password: sync-secrets → force this service + logto.
+  logto-storage-init:
+    image: postgres:17-alpine
+    environment:
+      DEV_DOMAIN: ${DEV_DOMAIN}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      LOGTO_STORAGE_BUCKET: ${LOGTO_STORAGE_BUCKET:-logto-avatars}
+      LOGTO_STORAGE_INTERNAL_ENDPOINT: ${LOGTO_STORAGE_INTERNAL_ENDPOINT:-http://minio:9000}
+      # Do NOT nest ${DEV_DOMAIN} inside ${VAR:-…} — Compose closes on the inner `}` and leaves a stray `}`.
+      LOGTO_STORAGE_PUBLIC_URL: ${LOGTO_STORAGE_PUBLIC_URL:-}
+      POSTGRES_USER: ${POSTGRES_USER}
+    secrets:
+      - postgres_password
+      - minio_root_password
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        export PGPASSWORD="$$(cat /run/secrets/postgres_password)"
+        MINIO_PASS="$$(cat /run/secrets/minio_root_password)"
+        PUBLIC_URL="$$LOGTO_STORAGE_PUBLIC_URL"
+        if [ -z "$$PUBLIC_URL" ]; then
+          PUBLIC_URL="https://s3.$${DEV_DOMAIN}/logto-avatars"
+        fi
+        # Strip accidental trailing } from broken Compose nested defaults
+        PUBLIC_URL="$$(printf '%s' "$$PUBLIC_URL" | sed 's/}$$//')"
+        json_escape() {
+          printf '%s' "$$1" | awk 'BEGIN{ORS=""}{gsub(/\\/,"\\\\");gsub(/"/,"\\\"");gsub(/\t/,"\\t");gsub(/\r/,"\\r");gsub(/\n/,"\\n");print}'
+        }
+        until pg_isready -h postgres -U "$$POSTGRES_USER" -d logto; do
+          echo "waiting for logto db..."
+          sleep 3
+        done
+        until psql -h postgres -U "$$POSTGRES_USER" -d logto -Atc "SELECT to_regclass('public.systems')" | grep -q systems; do
+          echo "waiting for logto systems table..."
+          sleep 5
+        done
+        USER_ESC="$$(json_escape "$$MINIO_ROOT_USER")"
+        PASS_ESC="$$(json_escape "$$MINIO_PASS")"
+        PUBLIC_ESC="$$(json_escape "$$PUBLIC_URL")"
+        ENDPOINT_ESC="$$(json_escape "$$LOGTO_STORAGE_INTERNAL_ENDPOINT")"
+        BUCKET_ESC="$$(json_escape "$$LOGTO_STORAGE_BUCKET")"
+        JSON="{\"provider\":\"S3Storage\",\"endpoint\":\"$$ENDPOINT_ESC\",\"region\":\"us-east-1\",\"bucket\":\"$$BUCKET_ESC\",\"accessKeyId\":\"$$USER_ESC\",\"accessSecretKey\":\"$$PASS_ESC\",\"forcePathStyle\":true,\"publicUrl\":\"$$PUBLIC_ESC\"}"
+        # psql -c does not expand :'var' — pass JSON via base64 instead
+        B64="$$(printf '%s' "$$JSON" | base64 | tr -d '\n')"
+        psql -h postgres -U "$$POSTGRES_USER" -d logto -v ON_ERROR_STOP=1 -c \
+          "INSERT INTO systems (key, value) VALUES ('storageProvider', convert_from(decode('$${B64}', 'base64'), 'UTF8')::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
+        echo "logto storageProvider ok publicUrl=$$PUBLIC_URL"
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 30
+
   keto-migrate:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config
+      - source: keto_config_v3
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
@@ -207,14 +400,16 @@ services:
     networks:
       - tavrida_net
     deploy:
-      restart_policy:
-        condition: none
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 20
 
   keto:
     image: oryd/keto:v0.14.0
     configs:
-      - source: keto_config
+      - source: keto_config_v3
         target: /home/ory/keto.yml
     volumes:
       - ${TAVRIDA_REPO_ROOT}/docker/config/keto/namespaces.ts:/home/ory/namespaces.ts:ro
@@ -223,3 +418,6 @@ services:
       - tavrida_net
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s

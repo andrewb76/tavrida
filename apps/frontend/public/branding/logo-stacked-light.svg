@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" fill="none" role="img" aria-label="&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;">
+  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090; — stacked light</title>
+  <g transform="translate(78 8)">
+    <circle cx="32" cy="32" r="28" stroke="#1F7A6E" stroke-width="3" fill="#F2F4F3"/>
+    <path d="M6 38 C14 30, 22 28, 32 30 C42 32, 50 34, 58 36" stroke="#C9B89A" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M8 42 C18 36, 26 34, 32 35.5 C38 37, 46 39, 56 42" stroke="#C47A3A" stroke-width="1.5" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="32" cy="22" r="4" fill="#1F7A6E"/>
+  </g>
+  <text x="110" y="108" text-anchor="middle" fill="#0B1F24" font-family="'Unbounded', system-ui, sans-serif" font-size="24" font-weight="600" letter-spacing="-0.3" paint-order="stroke fill" stroke="#F2F4F3" stroke-width="2.5" stroke-linejoin="round">&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072;</text>
+  <text x="110" y="138" text-anchor="middle" fill="#1F7A6E" font-family="'Unbounded', system-ui, sans-serif" font-size="24" font-weight="600" letter-spacing="0.1" paint-order="stroke fill" stroke="#F2F4F3" stroke-width="2.5" stroke-linejoin="round">&#1051;&#1086;&#1090;</text>
+</svg>

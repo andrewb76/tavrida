@@ -11,6 +11,8 @@ Docker Swarm на VPS `193.142.148.175`: **инфраструктура** из p
 | `evatorg.su` / `www.evatorg.su` | 301 → `app.evatorg.su` |
 | `app.evatorg.su` | Vue frontend |
 | `api.evatorg.su` | BFF (`/api/v1`) |
+| `auth.evatorg.su` | Logto OSS (OIDC) |
+| `logto.evatorg.su` | Logto Admin Console |
 | `s3.evatorg.su` | MinIO S3 API |
 | `minio.evatorg.su` | MinIO Console |
 | `img.evatorg.su` | imgproxy |
@@ -29,7 +31,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 | `dev.secrets.env.example` | Секреты → `dev.secrets.env` (**только на ноутбуке**, gitignore) |
 | `secrets-manifest.dev` | Список ключей → Swarm secret `tavrida_dev_*` |
 | `sync-secrets-dev.sh` | Push секретов в Swarm через `DOCKER_CONTEXT` |
-| `deploy-dev.sh` | `docker stack deploy` (оба stack-файла) |
+| `deploy-dev.sh` | `docker stack deploy` (оба stack-файла); retry при `update out of sequence` |
 | `build-images.sh` | Сборка образов `ghcr.io/<owner>/tavrida-*` (+ `VITE_LOGTO_*`) |
 | `prune-ghcr-dev.sh` | Удаление старых версий в GHCR (keep N + `:dev`) |
 | `ci-write-dev-env.sh` | Сборка `dev.env` из env (CI) |
@@ -47,7 +49,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 
 | Вариант | Плюсы | Минусы |
 |---------|-------|--------|
-| **Swarm secrets + sync с ноутбука** | Просто, без Infisical; секреты не на диске VPS | Ротация = `--force` + redeploy; `DATABASE_URL` пока ещё в spec сервиса при deploy |
+| **Swarm secrets + sync с ноутбука** | Просто, без Infisical; секреты не на диске VPS | Ротация = `--force` (rebind через `*__next`) + желателен redeploy |
 | **Infisical в отдельном stack** | Центральный UI, аудит, ротация | Ещё один сервис; нужен доступ/backup |
 | **Infisical в том же stack** | Один `stack deploy` | Больше blast radius; обновление платформы трогает хранилище секретов |
 
@@ -93,6 +95,8 @@ export GHCR_OWNER=andrewb76 GIT_SHA=$(git rev-parse --short HEAD) DEV_DOMAIN=eva
 ./docker/swarm/build-images.sh --push
 
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
+# ротация уже существующих (stack запущен): --force — через временный *__next + rebind
+# DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh --force
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
 ```
 
@@ -122,29 +126,93 @@ KEEP_LAST=10 ./docker/swarm/prune-ghcr-dev.sh
 
 Или Actions → **Prune GHCR (dev images)**.
 
-## Logto Cloud (tenant «dev/server»)
+## Logto OSS (в Swarm)
 
-Отдельный tenant от local. В `dev.env` / GitHub Environment:
+Сервисы `logto-db-init` + `logto` в `stack-infra.dev.yml` (`svhd/logto:1.41.0`).
 
-- BFF: `LOGTO_ENDPOINT`, `LOGTO_JWKS_URL`, `LOGTO_AUDIENCE=https://api.evatorg.su`
-- Frontend build: `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_API_RESOURCE=https://api.evatorg.su`
+| URL | Назначение |
+|-----|------------|
+| `https://auth.${DEV_DOMAIN}` | OIDC / sign-in (`ENDPOINT`) |
+| `https://logto.${DEV_DOMAIN}` | Admin Console (`ADMIN_ENDPOINT`) |
 
-Redirect URIs в консоли Logto:
+Env в `dev.env` / GitHub Environment:
+
+- BFF: `LOGTO_ENDPOINT=https://auth.…`, `LOGTO_JWKS_URL=…/oidc/jwks`, `LOGTO_AUDIENCE=https://api.…`
+- M2M resource (**OSS**): `LOGTO_M2M_RESOURCE=https://default.logto.app/api` — не cloud tenant URL
+- Frontend build: `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_API_RESOURCE=https://api.…`
+
+После первого deploy откройте Admin Console и создайте SPA + API resource + M2M (см. [dev-evatorg.md](../../docs/04-deployment/dev-evatorg.md)). Затем **Deploy с build** frontend.
+
+Redirect URIs в консоли:
 
 - `https://app.evatorg.su/callback`
 - `https://app.evatorg.su`
 
 API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_API_RESOURCE`.
 
-## Keto
+### Logto avatar storage (MinIO)
 
-`docker/config/keto/keto.yml` использует DSN с паролем postgres — для dev в `dev.secrets.env` задайте **`POSTGRES_PASSWORD=postgres`** (тот же, что sync в Swarm). После первого входа:
+Сервис **`minio-buckets-init`** создаёт public-read buckets: `forum-attachments`, `auction-images`, `marketplace-portfolio`, `chat-attachments`, `avatars`, `logto-avatars`.
 
 ```bash
-pnpm grant:admin <logto_sub>
+DOCKER_CONTEXT=dev-swarm pnpm setup:logto-storage
 ```
 
-(с машины, где доступен Keto write API, или через Portainer exec.)
+См. [logto-setup.md](../../docs/14-frontend/logto-setup.md#avatar-upload-minio-storage).
+
+Local laptop по-прежнему может использовать `docker/compose/logto.local.yml` отдельно от Swarm.
+## Swarm configs (immutable)
+
+Docker Swarm **не обновляет** содержимое `configs:` — только Labels. При правке
+`docker/config/traefik/traefik.dev.yml` или `keto.yml` нужно **поднять суффикс**
+ключа в `stack-infra.dev.yml` (`traefik_static_v2` → `v3`, …), иначе:
+
+`failed to update config … only updates to Labels are allowed`
+
+После успешного deploy старые объекты можно убрать:
+
+```bash
+docker config ls
+docker config rm tavrida-dev_traefik_static   # если больше не в use
+```
+
+`docker/config/keto/keto.yml` DSN: `postgres://postgres:postgres@postgres:5432/…search_path=keto`.
+В `dev.secrets.env` / GitHub Secret **`POSTGRES_PASSWORD` должен быть `postgres`**, иначе migrate/serve не подключатся.
+
+Schema `keto` создаётся init-скриптом Postgres (только на пустом volume) и сервисом **`keto-schema-init`** в stack. Затем **`keto-migrate`**, затем **`keto` serve** (restart on-failure, пока migrate не пройдёт).
+
+Ручной ремонт на VPS:
+
+```bash
+PG=$(docker ps -q -f name=tavrida-dev_postgres)
+docker exec -e PGPASSWORD=postgres "$PG" \
+  psql -U postgres -d tavrida_lot -c 'CREATE SCHEMA IF NOT EXISTS keto;'
+
+docker run --rm --network tavrida-dev_tavrida_net \
+  -v /opt/tavrida/docker/config/keto:/home/ory:ro \
+  -w /home/ory oryd/keto:v0.14.0 migrate up -y -c keto.yml
+
+docker service update --force tavrida-dev_keto
+```
+
+Ручной hotfix namespaces (если `Unknown namespace "TavridaLot"` — старый Swarm config без списка namespaces):
+
+```bash
+# на VPS: новый immutable config (после git pull с keto.yml list-формата)
+CFG=keto_config_v3_$(date +%s)
+docker config create "$CFG" /opt/tavrida/docker/config/keto/keto.yml
+
+# узнать текущий config name
+docker service inspect tavrida-dev_keto --format '{{json .Spec.TaskTemplate.ContainerSpec.Configs}}'
+
+# проще — полный infra redeploy после push, либо:
+docker service update \
+  --config-rm tavrida-dev_keto_config_v2 \
+  --config-add source="$CFG",target=/home/ory/keto.yml \
+  tavrida-dev_keto
+```
+
+(Имена `tavrida-dev_keto_config_v2` смотри в `docker config ls | grep keto`.)
 
 ## Обновление релиза
 
