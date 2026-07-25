@@ -325,9 +325,11 @@ function onBackdrop(e: MouseEvent) {
             @submit.prevent="send"
           >
             <textarea
+              id="topic-chat-sheet-body"
               v-model="body"
               rows="2"
               class="min-h-11 flex-1 resize-none rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+              aria-label="Сообщение"
               placeholder="Сообщение…"
               @keydown.enter.exact.prevent="send"
             />

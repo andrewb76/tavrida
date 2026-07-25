@@ -8,7 +8,7 @@
 
 | Workflow               | Файл                                                                                     | Триггер                        | Назначение                             |
 | ---------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------- |
-| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master`             | lint, test, turbo build, **SonarQube Scan** (если vars заданы) |
+| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master` / `dev`     | lint, test, turbo build, **SonarQube Scan** (если vars заданы) |
 | **Docs Pages**         | `[.github/workflows/docs-pages.yml](../../.github/workflows/docs-pages.yml)`             | push `master`, manual          | Публикация на **GitHub Pages**         |
 | **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → ensure Swarm secrets → stack deploy |
 | **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` (rotate / force) |
@@ -118,11 +118,25 @@ Job **пропускается**, пока не заданы Variables. Посл
 | Variable | `SONAR_HOST_URL` | опц.; default `https://sonarcloud.io`; для Server — URL инстанса |
 | Secret | `SONAR_TOKEN` | analysis token из Sonar |
 
-### 3. Проверка
+### 3. Ветки и Quality Gate
 
-PR или push в `master` → job **SonarQube Scan** → отчёт в Sonar UI / check на PR.
+- **PR** → анализ pull request (decoration на GitHub).
+- **push `master`** → main branch.
+- **push `dev`** → long-lived branch `dev` (regex на SonarCloud: `(branch|release)-.*|dev`).
+- Project gate **Tavrida**: ratings A на New Code, duplication ≤ 5%, **без** порога coverage (пока нет lcov в CI).
 
+Настроить gate + long-lived `dev` (один раз, нужен `SONAR_TOKEN`):
 
+```bash
+node scripts/sonar-configure-tavrida.mjs
+```
+
+Смотреть PR: `https://sonarcloud.io/dashboard?id=<projectKey>&pullRequest=<n>`  
+Ветка `dev`: `https://sonarcloud.io/dashboard?id=<projectKey>&branch=dev`
+
+### 4. Проверка
+
+PR или push в `master` / `dev` → job **SonarQube Scan** → отчёт в Sonar UI / check на PR.
 
 ## 🔐 Dev Swarm: Environment `dev`
 

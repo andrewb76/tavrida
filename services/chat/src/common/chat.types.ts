@@ -16,7 +16,7 @@ export type MessageDeliveryStatus = 'DELIVERED' | 'READ';
 
 /** Canonical DIRECT pair key: sorted opaque Logto subs joined by `:`. */
 export function directPairKey(userA: string, userB: string): string {
-  return [userA, userB].sort().join(':');
+  return [userA, userB].sort((a, b) => a.localeCompare(b)).join(':');
 }
 
 export function directSelfKey(userId: string): string {

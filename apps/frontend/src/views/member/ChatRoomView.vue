@@ -1032,9 +1032,11 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           @submit.prevent="send"
         >
           <input
+            id="chat-room-attach"
             ref="attachInput"
             type="file"
             class="sr-only"
+            aria-label="Прикрепить файл"
             :accept="upload.limits.value?.accept ?? 'image/*,.pdf'"
             multiple
             @change="onAttachPick"
