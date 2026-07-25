@@ -8,7 +8,7 @@
 
 | Workflow               | Файл                                                                                     | Триггер                        | Назначение                             |
 | ---------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------- |
-| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master`             | lint, test, turbo build                |
+| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master`             | lint, test, turbo build, **SonarQube Scan** (если vars заданы) |
 | **Docs Pages**         | `[.github/workflows/docs-pages.yml](../../.github/workflows/docs-pages.yml)`             | push `master`, manual          | Публикация на **GitHub Pages**         |
 | **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → ensure Swarm secrets → stack deploy |
 | **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` (rotate / force) |
@@ -95,6 +95,32 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 
 
 > `gh` не обязателен — достаточно UI в Settings.
+
+## 📡 SonarQube Scan (CI)
+
+Job **SonarQube Scan** в [`ci.yml`](../../.github/workflows/ci.yml) — `SonarSource/sonarqube-scan-action@v8.2.1` (pin SHA).  
+Scope: [`sonar-project.properties`](../../sonar-project.properties) (`apps` / `services` / `packages`).
+
+Job **пропускается**, пока не заданы Variables. После настройки SonarCloud/Server:
+
+### 1. Проект
+
+1. Создать проект на [SonarCloud](https://sonarcloud.io/) (или SonarQube Server).
+2. Привязать GitHub repo `andrewb76/tavrida` (для PR decoration — GitHub App SonarCloud).
+3. Скопировать **organization key** и **project key**.
+
+### 2. GitHub (уровень репозитория, не Environment `dev`)
+
+| Kind | Name | Пример |
+|------|------|--------|
+| Variable | `SONAR_ORGANIZATION` | ключ org в SonarCloud |
+| Variable | `SONAR_PROJECT_KEY` | ключ проекта |
+| Variable | `SONAR_HOST_URL` | опц.; default `https://sonarcloud.io`; для Server — URL инстанса |
+| Secret | `SONAR_TOKEN` | analysis token из Sonar |
+
+### 3. Проверка
+
+PR или push в `master` → job **SonarQube Scan** → отчёт в Sonar UI / check на PR.
 
 
 
