@@ -169,14 +169,13 @@ jobs:
     name: SonarQube Scan
     runs-on: ubuntu-latest
     # Enable: repo Variables SONAR_ORGANIZATION + SONAR_PROJECT_KEY, secret SONAR_TOKEN
-    # Dependabot PRs do not receive repository secrets → empty token → "Not authorized".
-    # Skip unless SONAR_TOKEN is present (or add the same secret under Dependabot secrets).
+    # Dependabot PRs only get secrets from Settings → Secrets → Dependabot (not repo secrets).
+    # Skip when token is missing → avoids "Not authorized" / ALM binding ERROR.
     if: >-
       ${{
         vars.SONAR_ORGANIZATION != '' &&
         vars.SONAR_PROJECT_KEY != '' &&
-        secrets.SONAR_TOKEN != '' &&
-        github.actor != 'dependabot[bot]'
+        secrets.SONAR_TOKEN != ''
       }}
     needs: [lint]
     steps:

@@ -118,7 +118,7 @@ Job **пропускается**, пока не заданы Variables. Посл
 | Variable | `SONAR_HOST_URL` | опц.; default `https://sonarcloud.io`; для Server — URL инстанса |
 | Secret | `SONAR_TOKEN` | analysis token из Sonar |
 
-> **Dependabot:** у PR от `dependabot[bot]` **нет** доступа к repository secrets → Sonar падает с `Not authorized` / `project binding: ERROR`. Job Sonar для Dependabot **пропускается**. Если сканы на Dependabot нужны — продублируй `SONAR_TOKEN` в Settings → Secrets → **Dependabot**.
+> **Dependabot:** у PR от `dependabot[bot]` нет доступа к обычным repository secrets. Продублируй `SONAR_TOKEN` в Settings → Secrets → **Dependabot**. Job Sonar запускается только если `secrets.SONAR_TOKEN` не пустой (иначе был бы `Not authorized` / ALM binding ERROR).
 
 ### 3. Ветки и Quality Gate
 
