@@ -169,7 +169,15 @@ jobs:
     name: SonarQube Scan
     runs-on: ubuntu-latest
     # Enable: repo Variables SONAR_ORGANIZATION + SONAR_PROJECT_KEY, secret SONAR_TOKEN
-    if: ${{ vars.SONAR_ORGANIZATION != '' && vars.SONAR_PROJECT_KEY != '' }}
+    # Dependabot PRs do not receive repository secrets → empty token → "Not authorized".
+    # Skip unless SONAR_TOKEN is present (or add the same secret under Dependabot secrets).
+    if: >-
+      ${{
+        vars.SONAR_ORGANIZATION != '' &&
+        vars.SONAR_PROJECT_KEY != '' &&
+        secrets.SONAR_TOKEN != '' &&
+        github.actor != 'dependabot[bot]'
+      }}
     needs: [lint]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
