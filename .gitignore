@@ -37,3 +37,6 @@ coverage/
 dist-test/
 test-results/
 **/test-results/
+
+# Local SonarCloud token (never commit)
+.sonarcloud-token
