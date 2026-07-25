@@ -29,6 +29,7 @@ const props = defineProps<{
   depth: number;
   editWindowMinutes: number;
   currentUserId?: string | null;
+  reactionEpoch?: number;
 }>();
 
 const emit = defineEmits<{
@@ -355,6 +356,7 @@ async function onDelete() {
             :content-id="node.id"
             :current-user-id="currentUserId"
             :disabled="!currentUserId"
+            :refresh-epoch="reactionEpoch"
           />
         </div>
 
@@ -426,6 +428,7 @@ async function onDelete() {
         :depth="depth + 1"
         :edit-window-minutes="editWindowMinutes"
         :current-user-id="currentUserId"
+        :reaction-epoch="reactionEpoch"
         @created="emit('created', $event)"
         @updated="emit('updated', $event)"
         @deleted="emit('deleted', $event)"

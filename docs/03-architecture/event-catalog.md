@@ -364,9 +364,20 @@ BFF транслирует события в WebSocket с **другими им�
   "topicId": "uuid",
   "authorId": "logto-sub",
   "parentId": "uuid|null",
-  "createdAt": "ISO8601"
+  "body": "markdown",
+  "attachments": [],
+  "createdAt": "ISO8601",
+  "updatedAt": "ISO8601"
 }
 ```
+
+### `forum.reaction_changed`
+
+| | |
+|---|---|
+| **Producer** | forum |
+| **Consumers** | BFF/WS (`reaction.added` on `forum:{topicId}`) |
+| **Payload** | `{ topicId, contentId, contentType: 'topic' \| 'comment', userId, emojiKey: string\|null, cleared: boolean }` |
 
 ### `forum.content_reported`
 
@@ -384,7 +395,7 @@ BFF транслирует события в WebSocket с **другими им�
 |---|---|
 | **Producer** | forum |
 | **Consumers** | notifications (опционально: подписчики ветки), BFF/WS (обновление UI) |
-| **Payload** | `{ sourceTopicId, sourceCommentId, newTopicId, moderatorId, directChildCommentIds[] }` |
+| **Payload** | `{ sourceTopicId, sourceCommentId, newTopicId, moderatorId, movedCommentCount }` |
 
 Модератор выделяет комментарий в равноправный топик: дети комментария переезжают под новый топик, у исходного комментария — ссылка на новый. См. [forum/requirements](../05-microservices/forum/requirements/README.md).
 

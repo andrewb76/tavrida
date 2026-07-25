@@ -26,14 +26,16 @@ import {
 } from '@/services/forum';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
+import { useWs } from '@/composables/useWs';
 import { toast } from 'vue-sonner';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const ws = useWs();
 const topicId = computed(() => route.params.id as string);
 
 const topic = ref<TopicDetail | null>(null);
@@ -41,6 +43,8 @@ const forumMeta = ref<ForumMeta | null>(null);
 const comments = ref<ForumComment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+/** Bumps when WS reaction events arrive — ForumReactionBar refreshes. */
+const reactionEpoch = ref(0);
 
 const editingTopic = ref(false);
 const topicTitleDraft = ref('');
@@ -79,6 +83,69 @@ const isDraft = computed(() => topic.value?.status === 'DRAFT');
 const publishing = ref(false);
 
 let loadGeneration = 0;
+let wsUnsub: (() => void) | null = null;
+
+function unbindWs() {
+  wsUnsub?.();
+  wsUnsub = null;
+}
+
+function applyForumWsEvent(ev: { event: string; payload: Record<string, unknown> }) {
+  const p = ev.payload;
+  if (ev.event === 'message.new') {
+    const id = String(p.commentId ?? '');
+    if (!id || comments.value.some((c) => c.id === id)) return;
+    if (p.authorId === session.userId) return;
+    comments.value = [
+      ...comments.value,
+      {
+        id,
+        topicId: String(p.topicId ?? topicId.value),
+        authorId: String(p.authorId ?? ''),
+        author: (p.author as ForumComment['author']) ?? {
+          userId: String(p.authorId ?? ''),
+          displayName: null,
+          username: null,
+          avatarUrl: null,
+        },
+        parentId: (p.parentId as string | null) ?? null,
+        body: String(p.body ?? ''),
+        attachments: (p.attachments as ForumComment['attachments']) ?? [],
+        promotedTopicId: null,
+        votePlusCount: Number(p.votePlusCount ?? 0),
+        voteMinusCount: Number(p.voteMinusCount ?? 0),
+        score: Number(p.score ?? 0),
+        myVote: null,
+        canChangeVote: true,
+        createdAt: String(p.createdAt ?? new Date().toISOString()),
+        updatedAt: String(p.updatedAt ?? p.createdAt ?? new Date().toISOString()),
+      },
+    ];
+    return;
+  }
+
+  if (ev.event === 'topic.promoted') {
+    void onCommentPromoted();
+    return;
+  }
+
+  if (ev.event === 'reaction.added') {
+    reactionEpoch.value += 1;
+  }
+}
+
+function bindWs(id: string) {
+  unbindWs();
+  if (!session.isMember || !id) return;
+  void ws
+    .subscribe(`forum:${id}`, (ev) => applyForumWsEvent(ev))
+    .then((fn) => {
+      wsUnsub = fn;
+    })
+    .catch(() => {
+      /* REST-only fallback */
+    });
+}
 
 async function load(id: string) {
   const generation = ++loadGeneration;
@@ -88,6 +155,7 @@ async function load(id: string) {
   comments.value = [];
   editingTopic.value = false;
   postError.value = null;
+  unbindWs();
   try {
     const [topicRow, commentRows, meta] = await Promise.all([
       getTopic(id),
@@ -98,6 +166,7 @@ async function load(id: string) {
     topic.value = topicRow;
     comments.value = commentRows;
     forumMeta.value = meta;
+    bindWs(id);
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
@@ -107,6 +176,10 @@ async function load(id: string) {
 }
 
 watch(topicId, (id) => void load(id), { immediate: true });
+
+onBeforeUnmount(() => {
+  unbindWs();
+});
 
 function startTopicEdit() {
   if (!topic.value) return;
@@ -458,6 +531,7 @@ async function submitTopicComment() {
             :content-id="topic.id"
             :current-user-id="session.userId"
             :disabled="!session.userId"
+            :refresh-epoch="reactionEpoch"
           />
         </div>
       </article>
@@ -481,6 +555,7 @@ async function submitTopicComment() {
             :depth="0"
             :edit-window-minutes="forumMeta?.editWindowMinutes ?? 0"
             :current-user-id="session.userId"
+            :reaction-epoch="reactionEpoch"
             @created="onCommentCreated"
             @updated="onCommentUpdated"
             @deleted="onCommentDeleted"

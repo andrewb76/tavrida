@@ -94,7 +94,7 @@ Admin users card enrichment: [admin-users-card.md](./admin-users-card.md) (`GET`
 |---------|------------|--------|
 | `auction:{id}` | `bid.placed`, `auction.ended` | Redis ← `auction.bid_placed`, `auction.completed` |
 | `user:{id}` | `notification.new`, `balance.updated` | Redis ← notifications, `billing.charge_completed` |
-| `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | Redis ← forum / RMQ |
+| `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | RMQ `bff.forum-ws` ← forum outbox |
 
 > WS имена ≠ RMQ `eventType` — [event-catalog § WS mapping](../../03-architecture/event-catalog.md#-realtime-ws-mapping)
 

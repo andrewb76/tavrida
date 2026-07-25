@@ -179,7 +179,10 @@ export class CommentsService {
         topicId: comment.topicId,
         authorId: comment.authorId,
         parentId: comment.parentId,
+        body: comment.body,
+        attachments: comment.attachments ?? [],
         createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
       });
 
       return {
@@ -439,6 +442,14 @@ export class CommentsService {
         authorId: newTopic.authorId,
         categoryId: newTopic.categoryId,
         publishedAt: newTopic.publishedAt ?? new Date(),
+      });
+
+      await this.events.enqueueCommentPromotedToTopic(manager, {
+        sourceTopicId: sourceTopic.id,
+        sourceCommentId: comment.id,
+        newTopicId: newTopic.id,
+        moderatorId: input.actorId,
+        movedCommentCount: moveIds.length,
       });
 
       return {

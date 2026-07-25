@@ -10,6 +10,7 @@ import type { IncomingMessage, Server } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatClient } from '../chats/chat.client';
+import { ForumClient } from '../forum/forum.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 
 type ClientMsg =
@@ -33,6 +34,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly httpAdapterHost: HttpAdapterHost,
     private readonly jwt: JwtAuthGuard,
     private readonly chat: ChatClient,
+    private readonly forum: ForumClient,
     private readonly scalarConfig: ScalarConfigClient,
   ) {}
 
@@ -134,7 +136,11 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
       await this.handleTyping(socket, state, msg.channel, msg.requestId);
       return;
     }
-    this.send(socket, { type: 'error', detail: 'unknown type', requestId: (msg as { requestId?: string }).requestId ?? null });
+    this.send(socket, {
+      type: 'error',
+      detail: 'unknown type',
+      requestId: (msg as { requestId?: string }).requestId ?? null,
+    });
   }
 
   private async subscribe(
@@ -144,7 +150,8 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     requestId?: string,
   ): Promise<void> {
     const chatId = parseChatChannel(channel);
-    if (!chatId) {
+    const topicId = parseForumChannel(channel);
+    if (!chatId && !topicId) {
       this.send(socket, {
         type: 'error',
         requestId: requestId ?? null,
@@ -154,7 +161,11 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     }
 
     try {
-      await this.chat.get(chatId, state.userId);
+      if (chatId) {
+        await this.chat.get(chatId, state.userId);
+      } else if (topicId) {
+        await this.forum.getTopic(topicId, { userId: state.userId });
+      }
     } catch {
       this.send(socket, {
         type: 'error',
@@ -253,5 +264,10 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
 
 function parseChatChannel(channel: string): string | null {
   const match = /^chat:([0-9a-f-]{36})$/i.exec(channel.trim());
+  return match?.[1] ?? null;
+}
+
+function parseForumChannel(channel: string): string | null {
+  const match = /^forum:([0-9a-f-]{36})$/i.exec(channel.trim());
   return match?.[1] ?? null;
 }

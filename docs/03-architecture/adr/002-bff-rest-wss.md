@@ -32,7 +32,7 @@
 |---------|---------|----------|
 | `auction:{id}` | `bid.placed`, `auction.ended` | auction (Redis pub/sub или RabbitMQ fanout) |
 | `user:{id}` | `notification.new`, `balance.updated` | notifications, billing |
-| `forum:{topicId}` | `message.new`, `reaction.added` | forum |
+| `forum:{topicId}` | `message.new`, `reaction.added` | forum (RMQ → BFF relay; Redis adapter — multi-node later) |
 
 - BFF — **единственный** WS endpoint для клиента; сервисы не открывают WS наружу
 

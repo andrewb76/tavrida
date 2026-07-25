@@ -48,6 +48,7 @@ Forum:
   ✔ Staff mod: edit/delete topics+comments; promote staff-only @forum @bff @frontend @docs @done(26-07-23)
   ✔ Category ACL allowlist (empty=all; else users+admin) @forum @bff @frontend @docs @done(26-07-23)
   ✔ Access groups ACL (OR; drop user allowlist; /admin/access-groups) @forum @bff @frontend @docs @done(26-07-23)
+  ✔ Forum topic WS live (comments / reactions / promote) @forum @bff @frontend @docs @done(26-07-25)
 
 Chat:
   ✔ requirements/analysis.md + registry keys + ADR-020 prefs backlog @chat @docs @done(26-07-22)

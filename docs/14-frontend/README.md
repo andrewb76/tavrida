@@ -228,7 +228,8 @@ pnpm --filter @tavrida/frontend lint
 - [x] REST mock adapter + fixtures (W02)
 - [x] Routes + guards по [screen-tree](../11-ux-ui/screen-tree.md)
 - [x] `useWs()` + реестр каналов (chat Wave B)
-- [ ] auction/forum WS channels
+- [x] auction/forum WS channels — **forum** `forum:{topicId}` live ✅ 26-07-25; auction still backlog
+
 - [x] Logto Cloud (`@logto/vue`, invite flow, guards) — [logto-setup.md](./logto-setup.md)
 - [x] Cookie consent banner L-07 — [cookie-consent.md](./cookie-consent.md)
 - [ ] Logto self-host + BFF JWT validation

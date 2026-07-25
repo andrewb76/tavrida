@@ -23,5 +23,6 @@ import { ForumController } from './forum.controller';
   ],
   controllers: [ForumController, AdminForumController],
   providers: [ForumClient, ForumAuthorsService, ForumScalarBootstrapService, AdminGuard],
+  exports: [ForumClient],
 })
 export class ForumModule {}

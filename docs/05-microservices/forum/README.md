@@ -12,7 +12,7 @@
 - **Knowledge base:** политики категорий ([knowledge-base.md](./knowledge-base.md))
 - **Теги:** [tags.md](./tags.md)
 - Интеграция: rating (karma), billing (Pro-реакции), plan-config (лимиты)
-- Realtime: Redis → BFF WS `forum:{topicId}`; **TOPIC side chat** — сервис [`chat`](../chat/README.md) (`kind=TOPIC`), UI W06 — [wireframes](../../11-ux-ui/wireframes/forum.md)
+- Realtime: RMQ outbox → BFF `ForumWsRelayConsumer` → WS `forum:{topicId}` (как chat); **TOPIC side chat** — сервис [`chat`](../chat/README.md) (`kind=TOPIC`), UI W06 — [wireframes](../../11-ux-ui/wireframes/forum.md)
 
 ## 📖 Термины
 
@@ -126,9 +126,10 @@
 | produce | `tag.content_tagged` | Новый `content_tag`; запись атомарна с outbox |
 | produce | `forum.content_reported` | Report submitted |
 | produce | `forum.comment_promoted_to_topic` | Moderator promote |
+| produce | `forum.reaction_changed` | Reaction upsert / clear |
 | consume | `rating.user_banned` | Block write (**planned**; rating service docs-only) |
 
-WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
+WS (via BFF, queue `bff.forum-ws`): `message.new` ← `forum.comment_created`, `reaction.added` ← `forum.reaction_changed`, `topic.promoted` ← `forum.comment_promoted_to_topic`.
 
 ## 🔗 Взаимодействие
 
@@ -153,8 +154,7 @@ WS (via BFF): `message.new`, `reaction.added`, `topic.promoted`.
 | Переменная | Обяз. | Описание |
 |------------|-------|----------|
 | `DATABASE_URL` | да | schema `forum` |
-| `RABBITMQ_URL` | да | Events |
-| `REDIS_URL` | да | WS fan-out |
+| `RABBITMQ_URL` | да | Events + WS fan-out (outbox) |
 | `PLAN_CONFIG_URL` | да | Limits |
 | `BILLING_URL` | да | Pro reactions |
 | `RATING_URL` | нет (planned) | check-ban, karma — после выделения `services/rating` |
