@@ -142,8 +142,9 @@ jobs:
           VITE_LOGTO_APP_ID: ${{ vars.VITE_LOGTO_APP_ID }}
           VITE_LOGTO_API_RESOURCE: ${{ vars.VITE_LOGTO_API_RESOURCE }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN || vars.SENTRY_DSN }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN || vars.SENTRY_DSN }}
-          VITE_SENTRY_ENVIRONMENT: dev
+          # Prefer dedicated browser DSN; fall back to Nest/Hawk SENTRY_DSN (same Integration for MVP).
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || vars.VITE_SENTRY_DSN || secrets.SENTRY_DSN || vars.SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ vars.VITE_SENTRY_ENVIRONMENT || 'dev' }}
         run: ./docker/swarm/build-images.sh --push
 
       - name: Start SSH agent

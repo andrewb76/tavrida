@@ -38,5 +38,14 @@ export function initSentryVue(app: App, router: Router): boolean {
   });
 
   console.info(`[sentry] enabled for frontend → ${host} env=${environment}`);
+
+  if (typeof window !== 'undefined') {
+    (window as Window & { __tavridaSentrySmoke?: () => string }).__tavridaSentrySmoke = () => {
+      const eventId = Sentry.captureException(new Error('tavrida sentry smoke'));
+      void Sentry.flush(2000);
+      return eventId;
+    };
+  }
+
   return true;
 }

@@ -43,11 +43,11 @@ Build-time (Vite / Docker):
 
 | Variable | Описание |
 |----------|----------|
-| `VITE_SENTRY_DSN` | Browser DSN (публичный ключ; в бандле) |
+| `VITE_SENTRY_DSN` | Browser DSN (публичный ключ; в бандле). В CI: secret/var `VITE_SENTRY_DSN` или fallback на `SENTRY_DSN` |
 | `VITE_SENTRY_ENVIRONMENT` | default `dev` на Swarm build |
 | `VITE_SENTRY_RELEASE` | = `GIT_SHA` |
 
-CI: `VITE_SENTRY_DSN` берётся из secret `SENTRY_DSN` (один проект Hawk на FE+BE для MVP; позже — два Integration DSN).
+CI: `VITE_SENTRY_DSN` ← `secrets/vars.VITE_SENTRY_DSN` иначе `SENTRY_DSN` (один Hawk Integration на FE+BE для MVP; позже — два DSN).
 
 ## 🔐 Dev Swarm / GitHub
 
@@ -69,7 +69,8 @@ Hawk envelope принимает наш DSN (`POST …/api/0/envelope/` → 200)
 
 # 2) Local FE — в консоли браузера:
 #    [sentry] enabled for frontend → k1.hawk.so
-#    затем: throw new Error('sentry smoke')
+#    затем: __tavridaSentrySmoke()
+#    (не throw — консольный throw часто не ловится SDK)
 #    Network: POST https://k1.hawk.so/api/0/envelope/ → 200
 
 # 3) Swarm Nest:
