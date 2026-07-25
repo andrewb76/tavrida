@@ -85,31 +85,40 @@ export class BillingClient {
     });
 
     if (!res.ok) {
-      let payload: Record<string, unknown> = {};
-      try {
-        payload = (await res.json()) as Record<string, unknown>;
-      } catch {
-        /* ignore */
-      }
-
-      const detail =
-        (typeof payload.detail === 'string' ? payload.detail : undefined) ??
-        (typeof payload.message === 'string'
-          ? payload.message
-          : Array.isArray(payload.message)
-            ? payload.message.join(', ')
-            : res.statusText);
-
-      const errBody = {
-        type: typeof payload.type === 'string' ? payload.type : 'upstream-error',
-        detail: `billing ${method} ${path}: ${detail}`,
-      };
-
-      if (res.status === 404) throw new NotFoundException(errBody);
-      if (res.status >= 500) throw new ServiceUnavailableException(errBody);
-      throw new HttpException(errBody, res.status);
+      throwBillingHttpError(res, method, path, await readErrorPayload(res));
     }
 
     return (await res.json()) as T;
   }
+}
+
+async function readErrorPayload(res: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function errorPayloadDetail(payload: Record<string, unknown>, statusText: string): string {
+  if (typeof payload.detail === 'string') return payload.detail;
+  if (typeof payload.message === 'string') return payload.message;
+  if (Array.isArray(payload.message)) return payload.message.join(', ');
+  return statusText;
+}
+
+function throwBillingHttpError(
+  res: Response,
+  method: string,
+  path: string,
+  payload: Record<string, unknown>,
+): never {
+  const errBody = {
+    type: typeof payload.type === 'string' ? payload.type : 'upstream-error',
+    detail: `billing ${method} ${path}: ${errorPayloadDetail(payload, res.statusText)}`,
+  };
+
+  if (res.status === 404) throw new NotFoundException(errBody);
+  if (res.status >= 500) throw new ServiceUnavailableException(errBody);
+  throw new HttpException(errBody, res.status);
 }

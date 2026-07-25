@@ -133,11 +133,12 @@ design-tokens, IA, wireframes W01–W10 (W09 marketplace — v1.1), [14-frontend
 - [x] Код переименован; deprecated docs redirect-stubs retained intentionally for old links
 - [ ] Свести реализованные admin screens в отдельный admin-ui spec
 
-### P4 — post-MVP (ADR proposed)
+### P4 — post-MVP (ADR proposed / deferred)
 
 - [ ] ADR-008 OpenSearch — принять или отложить
 - [ ] ADR-009 E2EE deal chat
 - [ ] ADR-010 JWT на Traefik — принять для prod
+- [ ] **ADR-020** три реестра: сервис `user-prefs` + audit PLATFORM-REGISTRY + миграция DeliveryPreference / webhook user defaults ([ADR-020](../03-architecture/adr/020-three-config-registries.md))
 
 ---
 
@@ -165,4 +166,4 @@ design-tokens, IA, wireframes W01–W10 (W09 marketplace — v1.1), [14-frontend
 
 ---
 
-**Автор:** команда разработки · **Последнее обновление:** 2026-07-09
+**Автор:** команда разработки · **Последнее обновление:** 2026-07-22

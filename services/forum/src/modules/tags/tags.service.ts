@@ -60,14 +60,22 @@ export class TagsService {
     }
     const links = await this.contentTags.find({
       where: { tagId: row.id, contentType: 'topic' },
-      take: 50,
+      take: 80,
       order: { createdAt: 'DESC' },
     });
+    const ids = links.map((l) => l.contentId);
+    const published = ids.length
+      ? await this.topics.find({
+          where: { id: In(ids), status: 'PUBLISHED' },
+          select: ['id'],
+        })
+      : [];
+    const publishedSet = new Set(published.map((t) => t.id));
     return {
       ...this.toItem(row),
       description: row.description,
       usageCount: row.usageCount,
-      topicIds: links.map((l) => l.contentId),
+      topicIds: ids.filter((id) => publishedSet.has(id)).slice(0, 50),
     };
   }
 
@@ -135,7 +143,10 @@ export class TagsService {
     topicId: string;
     addedBy: string;
     labels: string[];
+    /** When false, skip `tag.content_tagged` (draft topics). Default true. */
+    emitEvents?: boolean;
   }): Promise<{ tagItems: TagItem[]; slugs: string[]; addedTagIds: string[] }> {
+    const emitEvents = input.emitEvents !== false;
     const result = await this.dataSource.transaction(async (manager) => {
       const tags = manager.getRepository(TagEntity);
       const contentTags = manager.getRepository(ContentTagEntity);
@@ -172,11 +183,13 @@ export class TagsService {
       const slugs = wanted.map((tag) => tag.slug);
       await topics.update({ id: input.topicId }, { tags: slugs });
       const addedTagIds = toAdd.map((tag) => tag.id);
-      await this.events.enqueueTagContentTagged(manager, {
-        tagIds: addedTagIds,
-        topicId: input.topicId,
-        actorId: input.addedBy,
-      });
+      if (emitEvents) {
+        await this.events.enqueueTagContentTagged(manager, {
+          tagIds: addedTagIds,
+          topicId: input.topicId,
+          actorId: input.addedBy,
+        });
+      }
 
       return {
         tagItems: wanted.map((tag) => this.toItem(tag)),
@@ -184,8 +197,25 @@ export class TagsService {
         addedTagIds,
       };
     });
-    if (result.addedTagIds.length) this.events.flush();
+    if (emitEvents && result.addedTagIds.length) this.events.flush();
     return result;
+  }
+
+  /** After draft → publish: fan-out current tags once. */
+  async emitExistingTopicTags(input: { topicId: string; actorId: string }) {
+    const links = await this.dataSource.getRepository(ContentTagEntity).find({
+      where: { contentType: 'topic', contentId: input.topicId },
+    });
+    const tagIds = links.map((link) => link.tagId);
+    if (!tagIds.length) return;
+    await this.dataSource.transaction(async (manager) => {
+      await this.events.enqueueTagContentTagged(manager, {
+        tagIds,
+        topicId: input.topicId,
+        actorId: input.actorId,
+      });
+    });
+    this.events.flush();
   }
 
   /** One-shot: jsonb labels absent from content_tag → formalize. */
@@ -198,6 +228,7 @@ export class TagsService {
       topicId: topic.id,
       addedBy: topic.authorId,
       labels: legacy,
+      emitEvents: topic.status === 'PUBLISHED',
     });
     return tagItems;
   }

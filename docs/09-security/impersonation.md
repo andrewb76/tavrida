@@ -41,7 +41,8 @@ sequenceDiagram
 
 ## 🖥️ UI
 
-- Кнопка **«Подключиться»** в [Admin → Users](/admin/users)
+- Кнопка **«Подключиться»** в меню **«Действия»** на [Admin → Users](/admin/users)
+- Неактивна для **себя** и для пользователей с ролью **admin** (подсказка под кнопкой)
 - Баннер сверху (только в режиме): `Админ {actor} · как {target}` + **Выйти**
 - Стиль: компактная полоса, высокий контраст (напр. warning / amber), `z-index` выше header
 - `/profile/me` показывает effective target; Logto-данные администратора в этом режиме не отображаются
@@ -52,10 +53,12 @@ sequenceDiagram
 - Нельзя `X-Act-As` на другого admin
 - Нельзя выдать себе права target через подделку заголовка без admin JWT
 - При logout админа — сброс act-as в SPA
+- **Hard lock** проверяется на JWT **actor** до Act-As — см. [hard-lock.md](../05-microservices/user-profile/hard-lock.md). Заблокированный admin не ходит в API; admin **может** Act-As на hard-locked target.
 
 ## 🔗 Связанные
 
 - [security README](./README.md)
 - [bootstrap-admin](./bootstrap-admin.md)
+- [hard-lock](../05-microservices/user-profile/hard-lock.md)
 - [BFF](../05-microservices/bff/README.md)
 - [WORK-PLAN-NEXT](../00-meta/WORK-PLAN-NEXT.md)

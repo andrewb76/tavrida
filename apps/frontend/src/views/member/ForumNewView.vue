@@ -42,7 +42,7 @@ onMounted(async () => {
   }
 });
 
-async function submit() {
+async function submit(status: 'DRAFT' | 'PUBLISHED') {
   if (!categoryId.value || !title.value.trim() || !body.value.trim()) return;
   saving.value = true;
   error.value = null;
@@ -51,9 +51,14 @@ async function submit() {
       categoryId: categoryId.value,
       title: title.value.trim(),
       body: body.value.trim(),
+      status,
       attachments: attachmentUpload.readyAttachments.value,
     });
-    await router.push(`/forum/topics/${topic.id}`);
+    if (status === 'DRAFT') {
+      await router.push({ path: '/forum', query: { status: 'DRAFT' } });
+    } else {
+      await router.push(`/forum/topics/${topic.id}`);
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось создать тему';
   } finally {
@@ -76,7 +81,7 @@ async function submit() {
     <form
       v-else
       class="forum-new__form"
-      @submit.prevent="submit"
+      @submit.prevent="submit('PUBLISHED')"
     >
       <label>
         Категория
@@ -156,22 +161,37 @@ async function submit() {
         {{ error }}
       </p>
 
-      <UiButton
-        intent="primary"
-        type="submit"
-        :disabled="saving"
-      >
-        {{ saving ? 'Создание…' : 'Опубликовать' }}
-      </UiButton>
+      <div class="forum-new__actions">
+        <UiButton
+          intent="secondary"
+          type="button"
+          :disabled="saving"
+          @click="submit('DRAFT')"
+        >
+          {{ saving ? 'Сохранение…' : 'Сохранить черновик' }}
+        </UiButton>
+        <UiButton
+          intent="primary"
+          type="submit"
+          :disabled="saving"
+        >
+          {{ saving ? 'Публикация…' : 'Опубликовать' }}
+        </UiButton>
+      </div>
     </form>
   </section>
 </template>
 
 <style scoped>
-.forum-new__form {
+.forum-new {
   display: grid;
   gap: 1rem;
   max-width: 40rem;
+}
+
+.forum-new__form {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .forum-new__form label {
@@ -186,9 +206,9 @@ async function submit() {
 }
 
 .forum-new__attachments {
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 8px;
-  padding: 0.75rem;
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .forum-new__attachments-toggle {
@@ -202,11 +222,17 @@ async function submit() {
   font: inherit;
 }
 
-.forum-new__attachments-count {
-  font-size: 0.9rem;
+.forum-new__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .forum-new__error {
   color: #b42318;
+}
+
+.forum-new__status {
+  color: var(--color-text-muted, #666);
 }
 </style>

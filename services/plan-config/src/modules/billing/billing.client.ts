@@ -41,32 +41,36 @@ export class BillingClient {
     });
 
     if (!res.ok) {
-      let payload: Record<string, unknown> = {};
-      try {
-        payload = (await res.json()) as Record<string, unknown>;
-      } catch {
-        /* ignore */
-      }
-
-      const detail =
-        (typeof payload.detail === 'string' ? payload.detail : undefined) ??
-        (typeof payload.message === 'string'
-          ? payload.message
-          : Array.isArray(payload.message)
-            ? payload.message.join(', ')
-            : res.statusText);
-
-      const errBody = {
-        type: typeof payload.type === 'string' ? payload.type : 'billing-error',
-        detail: `billing charge: ${detail}`,
-        balance: typeof payload.balance === 'number' ? payload.balance : undefined,
-        required: typeof payload.required === 'number' ? payload.required : undefined,
-      };
-
-      if (res.status >= 500) throw new ServiceUnavailableException(errBody);
-      throw new HttpException(errBody, res.status);
+      throwPlanConfigBillingError(res, await readBillingErrorPayload(res));
     }
 
     return (await res.json()) as ChargeResult;
   }
+}
+
+async function readBillingErrorPayload(res: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function billingErrorDetail(payload: Record<string, unknown>, statusText: string): string {
+  if (typeof payload.detail === 'string') return payload.detail;
+  if (typeof payload.message === 'string') return payload.message;
+  if (Array.isArray(payload.message)) return payload.message.join(', ');
+  return statusText;
+}
+
+function throwPlanConfigBillingError(res: Response, payload: Record<string, unknown>): never {
+  const errBody = {
+    type: typeof payload.type === 'string' ? payload.type : 'billing-error',
+    detail: `billing charge: ${billingErrorDetail(payload, res.statusText)}`,
+    balance: typeof payload.balance === 'number' ? payload.balance : undefined,
+    required: typeof payload.required === 'number' ? payload.required : undefined,
+  };
+
+  if (res.status >= 500) throw new ServiceUnavailableException(errBody);
+  throw new HttpException(errBody, res.status);
 }

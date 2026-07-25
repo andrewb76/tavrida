@@ -29,7 +29,7 @@ export function encodeImgproxyPlainSource(url: string): string {
   for (const byte of bytes) {
     binary += String.fromCharCode(byte);
   }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 }
 
 /** Rewrites a stored public media URL to an origin reachable by imgproxy (e.g. docker MinIO). */
@@ -45,21 +45,42 @@ export function rewriteMediaUrlForProxyFetch(
     const publicBase = new URL(normalizePublicBaseUrl(publicBaseUrl));
     const fetchBase = new URL(normalizePublicBaseUrl(fetchBaseUrl));
 
-    const publicPath = publicBase.pathname.replace(/\/+$/, '');
+    const publicPath = trimTrailingSlashes(publicBase.pathname);
     let relativePath = source.pathname;
     if (publicPath && relativePath.startsWith(publicPath)) {
       relativePath = relativePath.slice(publicPath.length);
     }
 
-    const fetchPath = fetchBase.pathname.replace(/\/+$/, '');
+    const fetchPath = trimTrailingSlashes(fetchBase.pathname);
     source.protocol = fetchBase.protocol;
     source.host = fetchBase.host;
-    source.pathname = `${fetchPath}${relativePath}`.replace(/\/{2,}/g, '/') || '/';
+    source.pathname = collapseDuplicateSlashes(`${fetchPath}${relativePath}`) || '/';
 
     return source.toString();
   } catch {
     return null;
   }
+}
+
+function trimTrailingSlashes(path: string): string {
+  let end = path.length;
+  while (end > 0 && path.charCodeAt(end - 1) === 47 /* / */) end -= 1;
+  return path.slice(0, end);
+}
+
+function collapseDuplicateSlashes(path: string): string {
+  let out = '';
+  let prevSlash = false;
+  for (const ch of path) {
+    if (ch === '/') {
+      if (prevSlash) continue;
+      prevSlash = true;
+    } else {
+      prevSlash = false;
+    }
+    out += ch;
+  }
+  return out;
 }
 
 function buildResizeSegment(resize?: ImageProxyResize): string | null {

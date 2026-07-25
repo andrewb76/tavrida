@@ -11,6 +11,8 @@
 | Документ | Описание |
 |----------|----------|
 | [docs-guidelines.md](./docs-guidelines.md) | Правила форматирования, шаблоны |
+| [docs-review.md](./docs-review.md) | Процесс ревью docs (коллизии → код → план гармонии) |
+| [DOCS-REVIEW-LOG](../00-meta/DOCS-REVIEW-LOG.md) | Журнал прогонов ревью |
 | [ops-hygiene.md](./ops-hygiene.md) | Регулярная рутина: infra, docs, cron, monorepo |
 | [Deployment](../04-deployment/README.md) | Swarm, runbooks |
 | [Observability](../07-observability/README.md) | SLO, Grafana |

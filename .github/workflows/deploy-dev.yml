@@ -33,8 +33,8 @@ permissions:
   contents: read
   packages: write
 
-env:
-  DOCKER_CONTEXT: dev-swarm
+# Do NOT set DOCKER_CONTEXT globally — build/login on the runner must use the
+# default context. Remote Swarm context is created later and only used for deploy.
 
 jobs:
   deploy:
@@ -44,9 +44,20 @@ jobs:
     steps:
       # On push: exact SHA. On manual run: always tip of `dev` (UI often defaults to master,
       # whose stack files still have compose `name:` rejected by `docker stack deploy`).
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event_name == 'push' && github.sha || 'dev' }}
+
+      - name: Show checkout revision
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "short=$(git rev-parse --short HEAD)"
+          git log -1 --oneline
+          # Guard: broken intermediate commit referenced keto_config without _v2
+          if grep -n 'source: keto_config$' docker/swarm/stack-infra.dev.yml; then
+            echo "::error::stack-infra still references keto_config (need keto_config_v2). Do not Re-run an old job — Run workflow from latest dev."
+            exit 1
+          fi
 
       - name: Resolve image tag
         id: tag
@@ -101,11 +112,17 @@ jobs:
           VITE_LOGTO_ENDPOINT: ${{ vars.VITE_LOGTO_ENDPOINT }}
           VITE_LOGTO_APP_ID: ${{ vars.VITE_LOGTO_APP_ID }}
           VITE_LOGTO_API_RESOURCE: ${{ vars.VITE_LOGTO_API_RESOURCE }}
+          GRAFANA_CLOUD_PROMETHEUS_URL: ${{ vars.GRAFANA_CLOUD_PROMETHEUS_URL }}
+          GRAFANA_CLOUD_PROMETHEUS_USERNAME: ${{ vars.GRAFANA_CLOUD_PROMETHEUS_USERNAME }}
+          GRAFANA_CLOUD_LOKI_URL: ${{ vars.GRAFANA_CLOUD_LOKI_URL }}
+          GRAFANA_CLOUD_LOKI_USERNAME: ${{ vars.GRAFANA_CLOUD_LOKI_USERNAME }}
+          GRAFANA_CLOUD_OTLP_ENDPOINT: ${{ vars.GRAFANA_CLOUD_OTLP_ENDPOINT }}
+          GRAFANA_CLOUD_OTLP_INSTANCE_ID: ${{ vars.GRAFANA_CLOUD_OTLP_INSTANCE_ID }}
         run: ./docker/swarm/ci-write-dev-env.sh
 
       - name: Log in to GHCR
         if: ${{ steps.envcheck.outputs.ready == 'true' && (github.event_name == 'push' || inputs.skip_build != true) }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -113,7 +130,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: ${{ steps.envcheck.outputs.ready == 'true' && (github.event_name == 'push' || inputs.skip_build != true) }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Build and push images
         if: ${{ steps.envcheck.outputs.ready == 'true' && (github.event_name == 'push' || inputs.skip_build != true) }}
@@ -124,6 +141,9 @@ jobs:
           VITE_LOGTO_ENDPOINT: ${{ vars.VITE_LOGTO_ENDPOINT }}
           VITE_LOGTO_APP_ID: ${{ vars.VITE_LOGTO_APP_ID }}
           VITE_LOGTO_API_RESOURCE: ${{ vars.VITE_LOGTO_API_RESOURCE }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: dev
         run: ./docker/swarm/build-images.sh --push
 
       - name: Start SSH agent
@@ -137,13 +157,41 @@ jobs:
         env:
           DEV_SWARM_SSH_HOST: ${{ vars.DEV_SWARM_SSH_HOST }}
           DEV_SWARM_SSH_USER: ${{ vars.DEV_SWARM_SSH_USER }}
+          DEV_SWARM_CONTEXT: dev-swarm
         run: ./docker/swarm/ci-docker-context.sh
+
+      - name: Ensure Swarm secrets (create missing)
+        if: steps.envcheck.outputs.ready == 'true'
+        env:
+          DOCKER_CONTEXT: dev-swarm
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          LOGTO_M2M_APP_SECRET: ${{ secrets.LOGTO_M2M_APP_SECRET }}
+          INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          GRAFANA_CLOUD_TOKEN: ${{ secrets.GRAFANA_CLOUD_TOKEN }}
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+            echo "RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}"
+            echo "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
+            echo "LOGTO_M2M_APP_SECRET=${LOGTO_M2M_APP_SECRET}"
+            echo "INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}"
+            echo "SENTRY_DSN=${SENTRY_DSN}"
+            echo "GRAFANA_CLOUD_TOKEN=${GRAFANA_CLOUD_TOKEN}"
+          } > docker/swarm/dev.secrets.env
+          DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
 
       - name: Registry auth on context (for --with-registry-auth)
         if: steps.envcheck.outputs.ready == 'true'
+        env:
+          DOCKER_CONTEXT: dev-swarm
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker --context "$DOCKER_CONTEXT" login ghcr.io \
-            -u "${{ github.actor }}" --password-stdin
+          echo "$GHCR_TOKEN" | docker --context "$DOCKER_CONTEXT" login ghcr.io \
+            -u "$GHCR_USER" --password-stdin
 
       - name: Stack deploy
         if: steps.envcheck.outputs.ready == 'true'

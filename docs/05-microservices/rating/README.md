@@ -1,15 +1,22 @@
 # ⭐ Сервис: rating
 
-> **Статус:** spec ready · **Версия:** 0.2 · **Schema:** `rating`
+> **Статус:** draft (spec ready) · **Версия:** 0.2 · **Schema:** `rating` (planned)  
+> **Реализация:** **docs-only** — каталога `services/rating` с `package.json` **нет**.  
+> **Runtime SoT сейчас:** агрегаты и reputation log живут в **`user-profile`** (`user_rating`, `reputation_change_log`). Этот документ — **целевая** архитектура после выделения сервиса.
 
 ## 🎯 Назначение
 
 **Рейтинг, карма и реферальный вклад** пользователей Tavrida Lot — агрегаты, формула голоса, бонусы, штрафы, баны и **дерево инвайтов** (N уровней).
 
-- Source of truth для `totalRating`, `karma`, `referralKarma`, `referralRating`, `verifiedSales`, `pendingSales`
+| Слой | Что правда сегодня |
+|------|-------------------|
+| **Runtime** | `user-profile` RatingsService / admin-card-stats; **нет** `banUntil` / `isLimited` / `check-ban` |
+| **Target** | Этот сервис (`schema rating`) + downstream `check-ban` в auction/forum |
+
+- Source of truth (**после миграции**): `totalRating`, `karma`, `referralKarma`, `referralRating`, `verifiedSales`, `pendingSales`
 - Формула с учётом авторитета голосующего и контекста (auction / forum / marketplace)
 - **Referral tree:** effective karma/rating inviter от invitees до `rating.referral.maxDepth`
-- Штрафы за неоценённые сделки; бан → блокировка в auction/forum
+- Штрафы за неоценённые сделки; бан → блокировка в auction/forum (**planned**; сейчас не enforce)
 - Параметры формул — из `scalar-config`; лимиты pending и инвайтов — из plan-config
 
 > **Канонический продуктовый справочник:** [karma-and-rating.md](../../01-goal/karma-and-rating.md)
@@ -121,7 +128,7 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | Method | Path | Caller | Описание |
 |--------|------|--------|----------|
 | POST | `/rating/bonuses/apply` | deal-feedback | EARLY / PHOTO / BOTH |
-| POST | `/rating/check-ban` | auction, forum, BFF | `{ banned, until? }` |
+| POST | `/rating/check-ban` | auction, forum, BFF | `{ banned, until? }` · **planned** — не вызывается из runtime |
 | POST | `/rating/votes/apply` | feedback, forum | Применить голос после submit |
 | POST | `/rating/referral/recompute` | user-profile, CRON | Пересчёт referral для inviter chain |
 | POST | `/rating/penalties/evaluate` | CRON | Пересчёт штрафов |
@@ -198,13 +205,13 @@ function calculateVoteValue(voterId: string, context: 'auction' | 'forum' | 'mar
 | deal-feedback | bonuses/apply, votes |
 | forum | karma от реакций |
 | user-profile | invitation edges, consume `rating.updated` → cache |
-| auction, forum | check-ban перед mutate |
+| auction, forum | check-ban перед mutate (**planned**) |
 
 ## 🔒 Безопасность
 
 - Public GET — любой authenticated/guest (публичные поля)
 - Internal mutate — service token only
-- Ban enforcement — downstream вызывает check-ban; rating не блокирует HTTP напрямую
+- Ban enforcement — downstream вызывает check-ban; rating не блокирует HTTP напрямую (**пока нет runtime**)
 
 ## ⚙️ Окружение
 

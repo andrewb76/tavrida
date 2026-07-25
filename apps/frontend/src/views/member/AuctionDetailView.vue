@@ -527,13 +527,15 @@ async function confirmBid() {
 .lot-page__gallery-main {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 120px;
+  max-height: 280px;
 }
 
 .lot-page__gallery-img {
   width: 100%;
-  max-height: 320px;
-  object-fit: cover;
+  max-height: 280px;
+  height: auto;
+  object-fit: contain;
 }
 
 .lot-page__gallery-placeholder {

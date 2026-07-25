@@ -136,6 +136,7 @@ Idempotency-Key: {uuid}
 | `auction:{id}` | `bid.placed`, `auction.ended` | `auction.bid_placed`, `auction.completed` |
 | `user:{id}` | `notification.new`, `balance.updated` | `notification.sent`, `billing.charge_completed` |
 | `forum:{topicId}` | `message.new`, `reaction.added`, `topic.promoted` | см. [event-catalog § WS mapping](../03-architecture/event-catalog.md#-realtime-ws-mapping) |
+| `chat:{chatId}` | `message.new`, `message.edited`, `message.deleted`, `member.joined`, `member.left`, `typing` | `chat.message_created`, … — [chat-api](./chat-api.md) |
 
 > WS `event` ≠ RMQ `eventType` 1:1 — см. mapping table в event-catalog.
 
@@ -152,6 +153,7 @@ Idempotency-Key: {uuid}
 | `/profile/:userId/rating/log` | get | user-profile |
 | `/deal-feedback/*` | pending, submit, status | deal-feedback |
 | `/subscriptions` | CRUD + delivery prefs | subscriptions |
+| `/chats` | list, messages, DIRECT/GROUP/TOPIC, unread | chat — [OpenAPI fragment](./chat-api.md) |
 | `/periods` | historical reference (read) | periods |
 | `/admin/periods` | categories + periods CRUD | periods |
 | `/marketplace` | listings + portfolio + orders | marketplace |
@@ -160,7 +162,7 @@ Idempotency-Key: {uuid}
 | `/admin/scalar-config` | registry/domain CRUD | scalar-config |
 | `/admin/plan-config` | plans/variables CRUD | plan-config |
 
-> OpenAPI fragments: [invites-api.md](./invites-api.md), [vanga-admin-api.md](./vanga-admin-api.md). Full `openapi.yaml` — TODO (генерация из NestJS decorators).
+> OpenAPI fragments: [invites-api.md](./invites-api.md), [vanga-admin-api.md](./vanga-admin-api.md), [chat-api.md](./chat-api.md). Full `openapi.yaml` — TODO (генерация из NestJS decorators).
 
 ## 🔗 Связанные разделы
 

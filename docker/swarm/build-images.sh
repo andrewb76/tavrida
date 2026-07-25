@@ -39,6 +39,7 @@ declare -A SERVICES=(
   [marketplace]="@tavrida/marketplace|services/marketplace"
   [deal-feedback]="@tavrida/deal-feedback|services/deal-feedback"
   [notifications]="@tavrida/notifications|services/notifications"
+  [chat]="@tavrida/chat|services/chat"
 )
 
 build_service() {
@@ -67,6 +68,7 @@ frontend_image="${REGISTRY}/${OWNER}/tavrida-frontend:${TAG}"
 echo "==> Building ${frontend_image}" >&2
 docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_API_BASE_URL=https://api.${DEV_DOMAIN}/api/v1" \
+  --build-arg "VITE_WS_URL=wss://api.${DEV_DOMAIN}/ws/v1" \
   --build-arg "VITE_IMAGE_PROXY_URL=https://img.${DEV_DOMAIN}" \
   --build-arg "VITE_IMAGE_PROXY_FETCH_BASE_URL=http://minio:9000" \
   --build-arg "VITE_MEDIA_PUBLIC_BASE_URL=https://s3.${DEV_DOMAIN}" \
@@ -74,6 +76,9 @@ docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_LOGTO_ENDPOINT=${VITE_LOGTO_ENDPOINT:-}" \
   --build-arg "VITE_LOGTO_APP_ID=${VITE_LOGTO_APP_ID:-}" \
   --build-arg "VITE_LOGTO_API_RESOURCE=${VITE_LOGTO_API_RESOURCE:-https://api.${DEV_DOMAIN}}" \
+  --build-arg "VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-${SENTRY_DSN:-}}" \
+  --build-arg "VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT:-dev}" \
+  --build-arg "VITE_SENTRY_RELEASE=${GIT_SHA}" \
   -t "${frontend_image}" \
   "${ROOT}"
 if $PUSH; then

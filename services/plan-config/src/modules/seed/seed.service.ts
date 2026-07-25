@@ -95,55 +95,73 @@ export class SeedService implements OnModuleInit {
     let updated = 0;
 
     for (const variable of SEED_PLAN_VARIABLES) {
-      const existing = await this.variables.findOne({ where: { key: variable.key } });
-      if (existing) {
-        if (existing.name !== variable.name || existing.description !== variable.description) {
-          existing.name = variable.name;
-          existing.description = variable.description;
-          await this.variables.save(existing);
-          updated += 1;
-        }
-        continue;
-      }
-
-      await this.variables.save(
-        this.variables.create({
-          key: variable.key,
-          service: variable.service,
-          name: variable.name,
-          description: variable.description,
-          valueType: variable.valueType,
-          minValue: null,
-          defaultValue: null,
-          maxValue: null,
-          syncStatus: 'active',
-        }),
-      );
-
-      const row = SEED_PLAN_VARIABLE_TIERS.find((item) => item.variableKey === variable.key);
-      if (row) {
-        for (const planId of ['free', 'basic', 'pro'] as const) {
-          const values = row[planId];
-          await this.tiers.save(
-            this.tiers.create({
-              planId,
-              variableKey: variable.key,
-              limitValue: values.limitValue ?? null,
-              isFeatureEnabled: values.isFeatureEnabled ?? false,
-              enumValues: values.enumValues ?? null,
-              priceAmount:
-                values.priceAmount != null ? values.priceAmount.toFixed(2) : null,
-              isEnabled: values.isEnabled ?? true,
-            }),
-          );
-        }
-      }
-
-      added += 1;
+      const syncResult = await this.syncCatalogVariable(variable);
+      if (syncResult === 'updated') updated += 1;
+      if (syncResult === 'added') added += 1;
     }
 
     if (added > 0 || updated > 0) {
       this.logger.log(`Plan variable catalog sync: +${added} new, ~${updated} labels updated`);
+    }
+  }
+
+  private async syncCatalogVariable(
+    variable: (typeof SEED_PLAN_VARIABLES)[number],
+  ): Promise<'updated' | 'added' | 'unchanged'> {
+    const existing = await this.variables.findOne({ where: { key: variable.key } });
+    if (existing) {
+      return (await this.updateExistingCatalogVariable(existing, variable)) ? 'updated' : 'unchanged';
+    }
+
+    await this.createCatalogVariable(variable);
+    return 'added';
+  }
+
+  private async updateExistingCatalogVariable(
+    existing: PlanVariableEntity,
+    variable: (typeof SEED_PLAN_VARIABLES)[number],
+  ): Promise<boolean> {
+    if (existing.name === variable.name && existing.description === variable.description) {
+      return false;
+    }
+
+    existing.name = variable.name;
+    existing.description = variable.description;
+    await this.variables.save(existing);
+    return true;
+  }
+
+  private async createCatalogVariable(variable: (typeof SEED_PLAN_VARIABLES)[number]): Promise<void> {
+    await this.variables.save(
+      this.variables.create({
+        key: variable.key,
+        service: variable.service,
+        name: variable.name,
+        description: variable.description,
+        valueType: variable.valueType,
+        minValue: null,
+        defaultValue: null,
+        maxValue: null,
+        syncStatus: 'active',
+      }),
+    );
+
+    const row = SEED_PLAN_VARIABLE_TIERS.find((item) => item.variableKey === variable.key);
+    if (!row) return;
+
+    for (const planId of ['free', 'basic', 'pro'] as const) {
+      const values = row[planId];
+      await this.tiers.save(
+        this.tiers.create({
+          planId,
+          variableKey: variable.key,
+          limitValue: values.limitValue ?? null,
+          isFeatureEnabled: values.isFeatureEnabled ?? false,
+          enumValues: values.enumValues ?? null,
+          priceAmount: values.priceAmount != null ? values.priceAmount.toFixed(2) : null,
+          isEnabled: values.isEnabled ?? true,
+        }),
+      );
     }
   }
 

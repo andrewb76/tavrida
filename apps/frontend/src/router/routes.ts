@@ -8,6 +8,8 @@ declare module 'vue-router' {
     requiresMember?: boolean;
     requiresAdmin?: boolean;
     public?: boolean;
+    /** Allow navigation while JWT actor is hard-locked (only `/account-locked`). */
+    allowsHardLocked?: boolean;
   }
 }
 
@@ -95,6 +97,18 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Подписки', requiresMember: true },
   },
   {
+    path: 'chats',
+    name: 'chats',
+    component: () => import('@/views/member/ChatListView.vue'),
+    meta: { title: 'Чаты', requiresMember: true },
+  },
+  {
+    path: 'chats/:chatId',
+    name: 'chat-room',
+    component: () => import('@/views/member/ChatRoomView.vue'),
+    meta: { title: 'Чат', requiresMember: true },
+  },
+  {
     path: 'plans',
     name: 'plans',
     component: () => import('@/views/member/PlansView.vue'),
@@ -137,6 +151,18 @@ const memberChildren: RouteRecordRaw[] = [
         meta: { title: 'Пользователи', requiresMember: true, requiresAdmin: true },
       },
       {
+        path: 'users/:userId/wallet',
+        name: 'admin-user-wallet',
+        component: () => import('@/views/admin/AdminUserWalletView.vue'),
+        meta: { title: 'История кошелька', requiresMember: true, requiresAdmin: true },
+      },
+      {
+        path: 'access-groups',
+        name: 'admin-access-groups',
+        component: () => import('@/views/admin/AdminAccessGroupsView.vue'),
+        meta: { title: 'Группы доступа', requiresMember: true, requiresAdmin: true },
+      },
+      {
         path: 'scalar-config',
         name: 'admin-scalar-config',
         component: () => import('@/views/admin/AdminScalarConfigView.vue'),
@@ -172,6 +198,16 @@ const memberChildren: RouteRecordRaw[] = [
 
 export const routes: RouteRecordRaw[] = [
   {
+    path: '/account-locked',
+    name: 'account-locked',
+    component: () => import('@/views/HardLockedView.vue'),
+    meta: {
+      title: 'Аккаунт заблокирован',
+      requiresMember: true,
+      allowsHardLocked: true,
+    },
+  },
+  {
     path: '/',
     component: PublicLayout,
     meta: { public: true },
@@ -180,13 +216,19 @@ export const routes: RouteRecordRaw[] = [
         path: '',
         name: 'landing',
         component: () => import('@/views/public/LandingView.vue'),
-        meta: { title: 'Tavrida Lot', public: true },
+        meta: { title: 'Таврида Лот', public: true },
       },
       {
         path: 'about',
         name: 'about',
         component: () => import('@/views/public/AboutView.vue'),
         meta: { title: 'О клубе', public: true },
+      },
+      {
+        path: 'cookies',
+        name: 'cookies',
+        component: () => import('@/views/public/CookiePolicyView.vue'),
+        meta: { title: 'Политика cookie', public: true },
       },
       {
         path: 'join',

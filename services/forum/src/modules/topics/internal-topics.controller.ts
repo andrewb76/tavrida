@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -49,6 +51,10 @@ class CreateTopicDto {
   body!: string;
 
   @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
@@ -62,6 +68,23 @@ class ListTopicsQuery {
 
   @IsOptional()
   limit?: number;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  authorId?: string;
+
+  @IsOptional()
+  @IsString()
+  viewerId?: string;
+
+  @IsOptional()
+  @IsString()
+  isAdmin?: string;
 }
 
 class CreateTopicRequestDto extends CreateTopicDto {
@@ -80,6 +103,10 @@ class CreateTopicRequestDto extends CreateTopicDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 }
 
 class UpdateTopicDto {
@@ -94,6 +121,10 @@ class UpdateTopicDto {
   @MinLength(1)
   @MaxLength(10000)
   body?: string;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
 
   @IsOptional()
   @IsArray()
@@ -122,6 +153,10 @@ class UpdateTopicRequestDto extends UpdateTopicDto {
   @IsInt()
   @Min(1)
   maxAttachmentSizeBytes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  asModerator?: boolean;
 }
 
 @Controller('internal/v1/topics')
@@ -130,7 +165,14 @@ export class InternalTopicsController {
 
   @Get()
   list(@Query() query: ListTopicsQuery) {
-    return this.topics.list(query);
+    return this.topics.list({
+      categoryId: query.categoryId,
+      limit: query.limit,
+      status: query.status,
+      authorId: query.authorId,
+      viewerId: query.viewerId,
+      isAdmin: query.isAdmin === '1' || query.isAdmin === 'true',
+    });
   }
 
   @Get(':id')
@@ -138,6 +180,7 @@ export class InternalTopicsController {
     @Param('id') id: string,
     @Query('viewerId') viewerId?: string,
     @Query('changeWindowMinutes') changeWindowMinutes?: string,
+    @Query('isAdmin') isAdmin?: string,
   ) {
     return this.topics.getById(id, {
       userId: viewerId,
@@ -145,6 +188,7 @@ export class InternalTopicsController {
         changeWindowMinutes != null && changeWindowMinutes !== ''
           ? Number(changeWindowMinutes)
           : undefined,
+      isAdmin: isAdmin === '1' || isAdmin === 'true',
     });
   }
 
@@ -158,11 +202,28 @@ export class InternalTopicsController {
     return this.topics.update({ topicId: id, ...body });
   }
 
+  @Delete(':id')
+  softDelete(
+    @Param('id') id: string,
+    @Body() body: { actorId: string; asModerator?: boolean },
+  ) {
+    return this.topics.softDelete({
+      topicId: id,
+      actorId: body.actorId,
+      asModerator: body.asModerator,
+    });
+  }
+
   @Put(':id/tags')
   updateTags(
     @Param('id') id: string,
-    @Body() body: { authorId: string; tags: string[] },
+    @Body() body: { authorId: string; tags: string[]; asModerator?: boolean },
   ) {
-    return this.topics.updateTags({ topicId: id, authorId: body.authorId, tags: body.tags });
+    return this.topics.updateTags({
+      topicId: id,
+      authorId: body.authorId,
+      tags: body.tags,
+      asModerator: body.asModerator,
+    });
   }
 }

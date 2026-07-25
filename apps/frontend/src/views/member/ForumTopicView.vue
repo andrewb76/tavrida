@@ -7,11 +7,13 @@ import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumTopicTags from '@/components/forum/ForumTopicTags.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
+import TopicChatSheet from '@/components/chat/TopicChatSheet.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   buildCommentTree,
   createComment,
+  deleteTopic,
   fetchForumMeta,
   forumAuthorLabel,
   getTopic,
@@ -24,12 +26,16 @@ import {
 } from '@/services/forum';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
-import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
+import { useWs } from '@/composables/useWs';
+import { toast } from 'vue-sonner';
 
 const route = useRoute();
+const router = useRouter();
 const session = useSessionStore();
+const ws = useWs();
 const topicId = computed(() => route.params.id as string);
 
 const topic = ref<TopicDetail | null>(null);
@@ -37,6 +43,8 @@ const forumMeta = ref<ForumMeta | null>(null);
 const comments = ref<ForumComment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+/** Bumps when WS reaction events arrive — ForumReactionBar refreshes. */
+const reactionEpoch = ref(0);
 
 const editingTopic = ref(false);
 const topicTitleDraft = ref('');
@@ -48,17 +56,96 @@ const commentTree = computed(() => buildCommentTree(comments.value));
 
 const commentBody = ref('');
 const posting = ref(false);
+const topicChatOpen = ref(false);
 const postError = ref<string | null>(null);
 const commentAttachmentsExpanded = ref(false);
 const commentUpload = useMediaUpload('forum');
 
 const canEditTopic = computed(() => {
   if (!topic.value || !session.userId || !forumMeta.value) return false;
+  if (session.isModerator) return true;
   if (topic.value.authorId !== session.userId) return false;
-  return canEditForumContent(topic.value.createdAt, forumMeta.value.editWindowMinutes);
+  if (topic.value.status === 'DRAFT') return true;
+  return canEditForumContent(
+    topic.value.publishedAt ?? topic.value.createdAt,
+    forumMeta.value.editWindowMinutes,
+  );
 });
 
+const canDeleteTopic = computed(() => {
+  if (!topic.value || !session.userId) return false;
+  return session.isModerator;
+});
+
+const deletingTopic = ref(false);
+
+const isDraft = computed(() => topic.value?.status === 'DRAFT');
+const publishing = ref(false);
+
 let loadGeneration = 0;
+let wsUnsub: (() => void) | null = null;
+
+function unbindWs() {
+  wsUnsub?.();
+  wsUnsub = null;
+}
+
+function applyForumWsEvent(ev: { event: string; payload: Record<string, unknown> }) {
+  const p = ev.payload;
+  if (ev.event === 'message.new') {
+    const id = String(p.commentId ?? '');
+    if (!id || comments.value.some((c) => c.id === id)) return;
+    if (p.authorId === session.userId) return;
+    comments.value = [
+      ...comments.value,
+      {
+        id,
+        topicId: String(p.topicId ?? topicId.value),
+        authorId: String(p.authorId ?? ''),
+        author: (p.author as ForumComment['author']) ?? {
+          userId: String(p.authorId ?? ''),
+          displayName: null,
+          username: null,
+          avatarUrl: null,
+        },
+        parentId: (p.parentId as string | null) ?? null,
+        body: String(p.body ?? ''),
+        attachments: (p.attachments as ForumComment['attachments']) ?? [],
+        promotedTopicId: null,
+        votePlusCount: Number(p.votePlusCount ?? 0),
+        voteMinusCount: Number(p.voteMinusCount ?? 0),
+        score: Number(p.score ?? 0),
+        myVote: null,
+        canChangeVote: true,
+        createdAt: String(p.createdAt ?? new Date().toISOString()),
+        updatedAt: String(p.updatedAt ?? p.createdAt ?? new Date().toISOString()),
+      },
+    ];
+    return;
+  }
+
+  if (ev.event === 'topic.promoted') {
+    void onCommentPromoted();
+    return;
+  }
+
+  if (ev.event === 'reaction.added') {
+    reactionEpoch.value += 1;
+  }
+}
+
+function bindWs(id: string) {
+  unbindWs();
+  if (!session.isMember || !id) return;
+  void ws
+    .subscribe(`forum:${id}`, (ev) => applyForumWsEvent(ev))
+    .then((fn) => {
+      wsUnsub = fn;
+    })
+    .catch(() => {
+      /* REST-only fallback */
+    });
+}
 
 async function load(id: string) {
   const generation = ++loadGeneration;
@@ -68,6 +155,7 @@ async function load(id: string) {
   comments.value = [];
   editingTopic.value = false;
   postError.value = null;
+  unbindWs();
   try {
     const [topicRow, commentRows, meta] = await Promise.all([
       getTopic(id),
@@ -78,6 +166,7 @@ async function load(id: string) {
     topic.value = topicRow;
     comments.value = commentRows;
     forumMeta.value = meta;
+    bindWs(id);
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
@@ -87,6 +176,10 @@ async function load(id: string) {
 }
 
 watch(topicId, (id) => void load(id), { immediate: true });
+
+onBeforeUnmount(() => {
+  unbindWs();
+});
 
 function startTopicEdit() {
   if (!topic.value) return;
@@ -118,12 +211,54 @@ async function saveTopicEdit() {
   }
 }
 
+async function publishDraft() {
+  if (!topic.value || !isDraft.value || publishing.value) return;
+  publishing.value = true;
+  topicEditError.value = null;
+  try {
+    topic.value = await updateTopic(topicId.value, { status: 'PUBLISHED' });
+  } catch (e) {
+    topicEditError.value = e instanceof Error ? e.message : 'Не удалось опубликовать';
+  } finally {
+    publishing.value = false;
+  }
+}
+
+async function onDeleteTopic() {
+  if (!canDeleteTopic.value || deletingTopic.value) return;
+  if (!window.confirm('Удалить тему? Она исчезнет из списков.')) return;
+  deletingTopic.value = true;
+  try {
+    await deleteTopic(topicId.value);
+    toast.success('Тема удалена');
+    await router.push({ name: 'forum' });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось удалить тему');
+  } finally {
+    deletingTopic.value = false;
+  }
+}
+
 function onCommentCreated(created: ForumComment) {
   comments.value = [...comments.value, created];
 }
 
 function onCommentUpdated(updated: ForumComment) {
   comments.value = comments.value.map((row) => (row.id === updated.id ? updated : row));
+}
+
+function onCommentDeleted(commentId: string) {
+  comments.value = comments.value.map((row) =>
+    row.id === commentId
+      ? {
+          ...row,
+          body: 'Комментарий удалён',
+          attachments: [],
+          deletedAt: row.deletedAt ?? new Date().toISOString(),
+          canChangeVote: false,
+        }
+      : row,
+  );
 }
 
 async function onCommentPromoted() {
@@ -220,13 +355,28 @@ async function submitTopicComment() {
             aria-label="Действия с темой"
           >
             <EventSubscribeButton
-              v-if="session.isMember"
+              v-if="session.isMember && !isDraft"
               source-domain="forum"
               target-type="FORUM_TOPIC"
               :target-id="topic.id"
+              compact
             />
             <UiButton
-              v-if="session.isMember"
+              v-if="session.isMember && !isDraft"
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Чат темы"
+              title="Чат темы"
+              @click="topicChatOpen = true"
+            >
+              <UiIcon
+                name="chat"
+                :size="18"
+              />
+            </UiButton>
+            <UiButton
+              v-if="session.isMember && !isDraft"
               intent="ghost"
               size="icon"
               type="button"
@@ -253,8 +403,46 @@ async function submitTopicComment() {
                 :size="18"
               />
             </UiButton>
+            <UiButton
+              v-if="canDeleteTopic && !editingTopic"
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Удалить тему"
+              title="Удалить тему"
+              :disabled="deletingTopic"
+              @click="onDeleteTopic"
+            >
+              <UiIcon
+                name="trash"
+                :size="18"
+              />
+            </UiButton>
+            <UiButton
+              v-if="isDraft && canEditTopic && !editingTopic"
+              intent="primary"
+              size="sm"
+              type="button"
+              :disabled="publishing"
+              @click="publishDraft"
+            >
+              {{ publishing ? 'Публикация…' : 'Опубликовать' }}
+            </UiButton>
           </div>
         </header>
+
+        <p
+          v-if="isDraft"
+          class="forum-topic__draft-banner"
+        >
+          Черновик — виден только вам. Комментарии и голоса недоступны, пока не опубликуете.
+        </p>
+        <p
+          v-if="topicEditError && !editingTopic"
+          class="forum-topic__error"
+        >
+          {{ topicEditError }}
+        </p>
 
         <template v-if="editingTopic">
           <label class="forum-topic__edit-field">
@@ -303,7 +491,13 @@ async function submitTopicComment() {
           </div>
         </template>
         <template v-else>
-          <h1>{{ topic.title }}</h1>
+          <h1>
+            <span
+              v-if="isDraft"
+              class="forum-topic__draft-badge"
+            >Черновик</span>
+            {{ topic.title }}
+          </h1>
           <MarkdownBody :body="topic.body" />
         </template>
         <AttachmentList
@@ -315,10 +509,13 @@ async function submitTopicComment() {
           :topic-id="topic.id"
           :tags="topic.tags ?? []"
           :tag-items="topic.tagItems"
-          :can-edit="Boolean(session.userId && topic.authorId === session.userId)"
+          :can-edit="Boolean(session.userId && (topic.authorId === session.userId || session.isModerator))"
           @updated="onTopicTagsUpdated"
         />
-        <div class="forum-topic__toolbar">
+        <div
+          v-if="!isDraft"
+          class="forum-topic__toolbar"
+        >
           <ForumVoteBar
             content-type="topic"
             :content-id="topic.id"
@@ -334,11 +531,15 @@ async function submitTopicComment() {
             :content-id="topic.id"
             :current-user-id="session.userId"
             :disabled="!session.userId"
+            :refresh-epoch="reactionEpoch"
           />
         </div>
       </article>
 
-      <section class="forum-topic__comments">
+      <section
+        v-if="!isDraft"
+        class="forum-topic__comments"
+      >
         <h2>Комментарии ({{ comments.length }})</h2>
 
         <ul
@@ -354,8 +555,10 @@ async function submitTopicComment() {
             :depth="0"
             :edit-window-minutes="forumMeta?.editWindowMinutes ?? 0"
             :current-user-id="session.userId"
+            :reaction-epoch="reactionEpoch"
             @created="onCommentCreated"
             @updated="onCommentUpdated"
+            @deleted="onCommentDeleted"
             @promoted="onCommentPromoted"
           />
         </ul>
@@ -419,6 +622,13 @@ async function submitTopicComment() {
         </form>
       </section>
     </template>
+
+    <TopicChatSheet
+      v-if="topic"
+      v-model:open="topicChatOpen"
+      :forum-topic-id="topic.id"
+      :topic-title="topic.title"
+    />
   </section>
 </template>
 
@@ -486,6 +696,32 @@ async function submitTopicComment() {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.forum-topic__head h1,
+.forum-topic__comments h2 {
+  color: var(--color-text, #111);
+}
+
+.forum-topic__draft-badge {
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-warning, #b8860b);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #b8860b) 40%, transparent);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+.forum-topic__draft-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-warning, #b8860b) 12%, transparent);
+  color: var(--color-text, #111);
+  font-size: 0.875rem;
 }
 
 .forum-topic__author-name {

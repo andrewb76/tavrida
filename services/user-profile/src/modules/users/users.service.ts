@@ -3,6 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 
+/** Soft-hide from @mention autocomplete (Logto may still own the handle). */
+const RESERVED_USERNAMES = new Set([
+  'admin',
+  'mod',
+  'moderator',
+  'support',
+  'system',
+  'root',
+  'tavrida',
+  'null',
+  'undefined',
+]);
+
 export type LogtoUserSyncInput = {
   userId: string;
   name?: string | null;
@@ -29,6 +42,9 @@ export class UsersService {
       avatarUrl: row.avatarUrl,
       primaryPhone: row.primaryPhone,
       isSuspended: row.isSuspended,
+      isHardLocked: row.isHardLocked,
+      hardLockedAt: row.hardLockedAt?.toISOString() ?? null,
+      hardLockedBy: row.hardLockedBy,
       inviterId: row.inviterId,
       invitationAcceptedAt: row.invitationAcceptedAt?.toISOString() ?? null,
       deletedAt: row.deletedAt?.toISOString() ?? null,
@@ -45,6 +61,7 @@ export class UsersService {
       username: row.username,
       avatarUrl: row.avatarUrl,
       isSuspended: row.isSuspended,
+      isHardLocked: row.isHardLocked,
       memberSince: row.createdAt.toISOString(),
     };
   }
@@ -77,6 +94,59 @@ export class UsersService {
       data: rows.map((row) => this.toDto(row)),
       pagination: { offset, limit, total },
     };
+  }
+
+  /**
+   * @mention autocomplete: only users with a username, prefix match, soft-hide reserved.
+   */
+  async searchByUsername(input: { q: string; limit?: number }) {
+    const raw = input.q.trim().replace(/^@/, '');
+    const limit = Math.min(Math.max(input.limit ?? 10, 1), 20);
+    if (raw.length < 1) {
+      return { data: [] as Array<ReturnType<UsersService['toPublicDto']>> };
+    }
+
+    const qb = this.profiles
+      .createQueryBuilder('profile')
+      .where('profile.deletedAt IS NULL')
+      .andWhere('profile.username IS NOT NULL')
+      .andWhere('profile.isSuspended = false')
+      .andWhere('profile.isHardLocked = false')
+      .andWhere('lower(profile.username) LIKE lower(:prefix)', {
+        prefix: `${raw}%`,
+      })
+      .orderBy('profile.username', 'ASC')
+      .take(limit * 2);
+
+    const rows = await qb.getMany();
+    const data = rows
+      .filter((row) => {
+        const u = row.username?.toLowerCase();
+        return u != null && !RESERVED_USERNAMES.has(u);
+      })
+      .slice(0, limit)
+      .map((row) => this.toPublicDto(row));
+
+    return { data };
+  }
+
+  async getByUsername(username: string) {
+    const needle = username.trim().replace(/^@/, '');
+    if (!needle) {
+      throw new NotFoundException({ type: 'not-found', detail: 'Username required' });
+    }
+    const row = await this.profiles
+      .createQueryBuilder('profile')
+      .where('profile.deletedAt IS NULL')
+      .andWhere('lower(profile.username) = lower(:username)', { username: needle })
+      .getOne();
+    if (!row) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `User @${needle} not found`,
+      });
+    }
+    return this.toPublicDto(row);
   }
 
   async getById(userId: string) {
@@ -119,6 +189,9 @@ export class UsersService {
         avatarUrl: null,
         primaryPhone: null,
         isSuspended: false,
+        isHardLocked: false,
+        hardLockedAt: null,
+        hardLockedBy: null,
         deletedAt: null,
         logtoSyncedAt: null,
       });
@@ -131,6 +204,41 @@ export class UsersService {
       ensured: true,
       createdAt: row.createdAt.toISOString(),
     };
+  }
+
+  async setHardLock(input: {
+    userId: string;
+    locked: boolean;
+    actorId: string;
+  }) {
+    const row = await this.profiles.findOne({ where: { userId: input.userId } });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `User ${input.userId} not found`,
+      });
+    }
+
+    if (input.locked) {
+      row.isHardLocked = true;
+      row.hardLockedAt = new Date();
+      row.hardLockedBy = input.actorId.trim() || null;
+    } else {
+      row.isHardLocked = false;
+      row.hardLockedAt = null;
+      row.hardLockedBy = null;
+    }
+
+    await this.profiles.save(row);
+    return this.toDto(row);
+  }
+
+  async isHardLocked(userId: string): Promise<{ userId: string; isHardLocked: boolean }> {
+    const row = await this.profiles.findOne({
+      where: { userId },
+      select: ['userId', 'isHardLocked'],
+    });
+    return { userId, isHardLocked: Boolean(row?.isHardLocked) };
   }
 
   async syncFromLogto(input: LogtoUserSyncInput) {
@@ -147,6 +255,9 @@ export class UsersService {
         avatarUrl: input.avatar ?? null,
         primaryPhone: input.primaryPhone ?? null,
         isSuspended: input.isSuspended ?? false,
+        isHardLocked: false,
+        hardLockedAt: null,
+        hardLockedBy: null,
         inviterId: null,
         invitationAcceptedAt: null,
         deletedAt: null,

@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
   Logger,
   Param,
@@ -34,6 +36,7 @@ import {
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
+import { KetoService } from '../keto/keto.service';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { UserProfileClient } from '../user-profile/user-profile.client';
@@ -76,6 +79,10 @@ class CreateTopicDto {
   @MinLength(1)
   @MaxLength(10000)
   body!: string;
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
 
   @IsOptional()
   @IsArray()
@@ -149,6 +156,10 @@ class UpdateTopicDto {
   body?: string;
 
   @IsOptional()
+  @IsIn(['DRAFT', 'PUBLISHED'])
+  status?: 'DRAFT' | 'PUBLISHED';
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
@@ -195,7 +206,16 @@ export class ForumController {
     private readonly mediaStorage: MediaStorageService,
     private readonly forumSettings: ForumSettingsReader,
     private readonly profiles: UserProfileClient,
+    private readonly keto: KetoService,
   ) {}
+
+  private async requireForumStaff(userId: string): Promise<true> {
+    if (await this.keto.isForumStaff(userId)) return true;
+    throw new ForbiddenException({
+      type: 'forbidden',
+      detail: 'Нужна роль администратора или модератора',
+    });
+  }
 
   private validateForumMedia(
     userId: string,
@@ -238,8 +258,15 @@ export class ForumController {
   }
 
   @Get('categories')
-  listCategories() {
-    return this.forum.listCategories();
+  @UseGuards(OptionalJwtAuthGuard)
+  async listCategories(@Req() req: Request & { user?: AuthUser }) {
+    const userId = req.user?.sub;
+    const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
+    return this.forum.listCategories({
+      viewerId: userId,
+      isAdmin,
+      includeAccessGroups: isAdmin,
+    });
   }
 
   @Get('tags')
@@ -253,10 +280,29 @@ export class ForumController {
   }
 
   @Get('topics')
-  async listTopics(@Query('categoryId') categoryId?: string, @Query('limit') limit?: string) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async listTopics(
+    @Req() req: Request & { user?: AuthUser },
+    @Query('categoryId') categoryId?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
+    const wantDrafts = status === 'DRAFT';
+    if (wantDrafts && !req.user?.sub) {
+      throw new BadRequestException({
+        type: 'unauthorized',
+        detail: 'Для списка черновиков нужна авторизация',
+      });
+    }
+    const userId = req.user?.sub;
+    const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
     const res = await this.forum.listTopics({
       categoryId,
       limit: limit ? Number(limit) : undefined,
+      status: wantDrafts ? 'DRAFT' : 'PUBLISHED',
+      authorId: wantDrafts ? req.user!.sub : undefined,
+      viewerId: userId,
+      isAdmin,
     });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data };
@@ -266,9 +312,12 @@ export class ForumController {
   @UseGuards(OptionalJwtAuthGuard)
   async getTopic(@Param('id') id: string, @Req() req: Request & { user?: AuthUser }) {
     const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    const userId = req.user?.sub;
+    const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
     const topic = await this.forum.getTopic(id, {
-      userId: req.user?.sub,
+      userId,
       changeWindowMinutes,
+      isAdmin,
     });
     return this.authors.enrichOne(topic as { authorId: string });
   }
@@ -278,12 +327,14 @@ export class ForumController {
   async createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    const isAdmin = await this.keto.isPlatformAdmin(user.sub);
     return this.authors.enrichOne(
       await this.forum.createTopic({
         ...body,
         authorId: user.sub,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        isAdmin,
       }) as { authorId: string },
     );
   }
@@ -300,6 +351,7 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    const asModerator = await this.keto.isForumStaff(user.sub);
     return this.authors.enrichOne(
       await this.forum.updateTopic(topicId, {
         ...body,
@@ -307,17 +359,31 @@ export class ForumController {
         editWindowMinutes,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        asModerator,
       }) as { authorId: string },
     );
+  }
+
+  @Delete('topics/:id')
+  @UseGuards(JwtAuthGuard)
+  async deleteTopic(@CurrentUser() user: AuthUser, @Param('id') topicId: string) {
+    await this.requireForumStaff(user.sub);
+    return this.forum.deleteTopic(topicId, {
+      actorId: user.sub,
+      asModerator: true,
+    });
   }
 
   @Get('topics/:id/comments')
   @UseGuards(OptionalJwtAuthGuard)
   async listComments(@Param('id') topicId: string, @Req() req: Request & { user?: AuthUser }) {
     const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
+    const userId = req.user?.sub;
+    const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
     const res = await this.forum.listComments(topicId, {
-      userId: req.user?.sub,
+      userId,
       changeWindowMinutes,
+      isAdmin,
     });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data };
@@ -332,12 +398,14 @@ export class ForumController {
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    const isAdmin = await this.keto.isPlatformAdmin(user.sub);
     return this.authors.enrichOne(
       await this.forum.createComment(topicId, {
         ...body,
         authorId: user.sub,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        isAdmin,
       }) as { authorId: string },
     );
   }
@@ -355,6 +423,7 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
+    const asModerator = await this.keto.isForumStaff(user.sub);
     return this.authors.enrichOne(
       await this.forum.updateComment(topicId, commentId, {
         ...body,
@@ -362,21 +431,38 @@ export class ForumController {
         editWindowMinutes,
         maxAttachmentCount: limits.countMax,
         maxAttachmentSizeBytes: limits.sizeMaxBytes,
+        asModerator,
       }) as { authorId: string },
     );
   }
 
+  @Delete('topics/:topicId/comments/:commentId')
+  @UseGuards(JwtAuthGuard)
+  async deleteComment(
+    @CurrentUser() user: AuthUser,
+    @Param('topicId') topicId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    await this.requireForumStaff(user.sub);
+    return this.forum.deleteComment(topicId, commentId, {
+      actorId: user.sub,
+      asModerator: true,
+    });
+  }
+
   @Post('topics/:topicId/comments/:commentId/promote-to-topic')
   @UseGuards(JwtAuthGuard)
-  promoteComment(
+  async promoteComment(
     @CurrentUser() user: AuthUser,
     @Param('topicId') topicId: string,
     @Param('commentId') commentId: string,
     @Body() body: PromoteCommentDto,
   ) {
+    await this.requireForumStaff(user.sub);
     return this.forum.promoteCommentToTopic(topicId, commentId, {
       actorId: user.sub,
       title: body.title,
+      asModerator: true,
     });
   }
 
@@ -387,9 +473,11 @@ export class ForumController {
     @Param('id') topicId: string,
     @Body() body: UpdateTopicTagsDto,
   ) {
+    const asModerator = await this.keto.isForumStaff(user.sub);
     const updated = (await this.forum.updateTopicTags(topicId, {
       authorId: user.sub,
       tags: body.tags,
+      asModerator,
     })) as {
       authorId: string;
       addedTagIds?: string[];

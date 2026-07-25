@@ -12,6 +12,6 @@ import { MediaStorageService } from './media-storage.service';
   imports: [AuthModule, PlanConfigModule, TypeOrmModule.forFeature([MediaUploadIntentEntity])],
   controllers: [MediaController],
   providers: [MediaService, MediaStorageService, MediaLimitsService],
-  exports: [MediaLimitsService, MediaStorageService],
+  exports: [MediaLimitsService, MediaStorageService, MediaService],
 })
 export class MediaModule {}

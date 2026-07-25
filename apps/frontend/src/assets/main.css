@@ -3,6 +3,9 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+/* Ensure CVA classes from @tavrida/ui are generated (not only app views). */
+@source '../../../../packages/ui/src/**/*.{vue,ts}';
+
 html[data-theme='light'],
 html:not([data-theme]) {
   --app-background:
@@ -35,6 +38,10 @@ html[data-theme='dark'] {
 
   #app {
     @apply min-h-dvh;
+  }
+
+  .font-display {
+    font-family: var(--token-font-display, 'Unbounded', system-ui, sans-serif);
   }
 }
 

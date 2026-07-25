@@ -78,7 +78,7 @@ Per-user overrides и Redis cache пока не реализованы.
 ## 🚧 Planned
 
 - Redis cache и TTL policy.
-- Per-user overrides.
+- Per-user **admin** overrides (не путать с member **user-prefs** — [ADR-020](../../03-architecture/adr/020-three-config-registries.md)).
 - Sync-манифесты остальных domain-сервисов помимо живых owners.
 
 ## 💳 Plan config

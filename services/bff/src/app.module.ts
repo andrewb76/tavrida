@@ -24,6 +24,8 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { PeriodsModule } from './modules/periods/periods.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { DealFeedbackModule } from './modules/deal-feedback/deal-feedback.module';
+import { ChatsModule } from './modules/chats/chats.module';
+import { WsModule } from './modules/ws/ws.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -70,6 +72,8 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
     PeriodsModule,
     MarketplaceModule,
     DealFeedbackModule,
+    ChatsModule,
+    WsModule,
     MediaModule,
     LogtoWebhooksModule,
   ],

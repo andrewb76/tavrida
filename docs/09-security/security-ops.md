@@ -58,8 +58,10 @@ Inject: Swarm secrets → file or env at runtime. **Never** bake secrets in Dock
 ## 🔍 Dependency security
 
 - `pnpm audit` in CI (`--audit-level=high`; requires pnpm 11+ since npm retired legacy audit endpoints, Apr 2026)
+- Transitive CVE → `overrides` in **`pnpm-workspace.yaml`** (not `package.json#pnpm`), prefer same-major pins; then refresh lockfile
 - Pin major versions in monorepo
 - SaaS: Logto, Novu, Grafana — vendor trust boundary
+- Agent checklist: [`.cursor/rules/ci-hygiene.mdc`](../../.cursor/rules/ci-hygiene.mdc)
 
 ## 🔗 Связанные разделы
 

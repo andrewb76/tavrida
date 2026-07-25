@@ -8,6 +8,7 @@ export {
   type ForumVoteValue,
 } from './forum-vote-window.js';
 export { forumVoteKarmaContribution, forumVoteKarmaDelta } from './forum-vote-karma.js';
+export type { ForumVoteSign } from './forum-vote-karma.js';
 export {
   createDomainEvent,
   dealFeedbackRatingDelta,

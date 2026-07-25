@@ -4,7 +4,7 @@
 
 ## Область
 
-Единый контур загрузки файлов для **аукциона** (фото лотов), **форума** (вложения) и **marketplace** (портфолио услуг). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
+Единый контур загрузки файлов для **аукциона** (фото лотов), **форума** (вложения), **marketplace** (портфолио услуг) и **чата** (вложения сообщений). Клиент не обращается к MinIO напрямую за credentials — только за presigned URL от BFF.
 
 ## Бакеты
 
@@ -13,8 +13,32 @@
 | `auction` | `auction-images` | public |
 | `forum` | `forum-attachments` | public |
 | `marketplace` | `marketplace-portfolio` | public |
+| `chat` | `chat-attachments` | public |
 
-Публичный URL: `{MEDIA_PUBLIC_BASE_URL}/{bucket}/users/{userId}/{uploadId}/{filename}`
+На Swarm бакеты создаёт **`minio-buckets-init`** (`forum-attachments`, `auction-images`, `marketplace-portfolio`, `chat-attachments`, `avatars`, `logto-avatars`). BFF в `NODE_ENV=production` **не** вызывает `ensurePublicBucket`.
+
+Если Docker Hub недоступен на VPS и init не подтянул `minio/mc`:
+
+```bash
+# с VPS (образ BFF уже локальный; скрипт копируется в /app контейнера):
+cd /opt/tavrida && git pull
+BFF=$(docker ps -q -f name=tavrida-dev_bff) ./scripts/ensure-minio-buckets-via-bff.sh
+```
+
+Вручную:
+
+```bash
+docker cp scripts/ensure-minio-buckets.cjs "$BFF:/app/ensure-minio-buckets.cjs"
+docker exec -w /app "$BFF" node ensure-minio-buckets.cjs
+docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
+```
+
+| `MEDIA_PUBLIC_BASE_URL` | Публичный origin MinIO (`https://s3.evatorg.su`) — и для `publicUrl`, и для **presigned PUT** (браузер) |
+| `MINIO_ENDPOINT` / `MINIO_PORT` | Внутренний доступ BFF → MinIO (`minio:9000` в Swarm) |
+| `MINIO_PRESIGN_ENDPOINT` | Опционально: явный origin для подписи PUT, если отличается от `MEDIA_PUBLIC_BASE_URL` |
+
+На HTTPS-сайте presigned URL **нельзя** отдавать как `http://minio:9000/…` (Mixed Content). BFF подписывает PUT через `MEDIA_PUBLIC_BASE_URL`, а HeadObject/bucket-init — через внутренний endpoint.
+
 
 ## Лимиты (plan-config)
 
@@ -23,12 +47,13 @@
 | auction | `auction.seller.image.countMax`, `auction.seller.image.sizeMaxMb` |
 | forum | `forum.author.attachment.countMax`, `forum.author.attachment.sizeMaxMb` |
 | marketplace | `marketplace.seller.portfolio.itemMax`, `marketplace.seller.portfolio.image.sizeMaxMb` |
+| chat | `chat.member.attachment.countMax`, `chat.member.attachment.sizeMaxMb` |
 
 ## API (BFF `/api/v1/media`)
 
 | Method | Path | Auth | Описание |
 |--------|------|------|----------|
-| GET | `/limits?domain=auction\|forum\|marketplace` | JWT | Лимиты тарифа |
+| GET | `/limits?domain=auction\|forum\|marketplace\|chat` | JWT | Лимиты тарифа |
 | POST | `/upload-intents` | JWT | Создать сессию + presigned PUT |
 | POST | `/upload-intents/:id/confirm` | JWT | Подтвердить после PUT |
 | DELETE | `/upload-intents/:id` | JWT | Отменить pending |
@@ -64,6 +89,7 @@
 - **Auction:** `images: string[]` — только URL после confirm.
 - **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
 - **Marketplace:** `portfolio_item.imageUrl` — URL после confirm (`domain=marketplace`).
+- **Chat:** `attachmentIds: uuid[]` = upload intent ids; BFF enrich → `attachments: MediaAttachment[]` на сообщениях.
 
 ## Image proxy (imgproxy)
 

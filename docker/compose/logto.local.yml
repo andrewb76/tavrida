@@ -12,6 +12,7 @@
 #   VITE_LOGTO_ENDPOINT=http://localhost:3301
 #   VITE_LOGTO_APP_ID=<from console>
 #
+# Required: LOGTO_PG_PASSWORD in the environment (or a .env next to this file).
 # Start: docker compose -f docker/compose/logto.local.yml up -d
 # Stop:  docker compose -f docker/compose/logto.local.yml down
 
@@ -20,7 +21,7 @@ services:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: p0stgr3s
+      POSTGRES_PASSWORD: ${LOGTO_PG_PASSWORD}
       POSTGRES_DB: logto
     volumes:
       - logto_pg_data:/var/lib/postgresql/data
@@ -41,7 +42,7 @@ services:
       - '3302:3002'
     environment:
       TRUST_PROXY_HEADER: '1'
-      DB_URL: postgres://postgres:p0stgr3s@logto-postgres:5432/logto
+      DB_URL: postgres://postgres:${LOGTO_PG_PASSWORD}@logto-postgres:5432/logto
       ENDPOINT: http://localhost:3301
       ADMIN_ENDPOINT: http://localhost:3302
 

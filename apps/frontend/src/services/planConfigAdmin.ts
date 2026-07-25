@@ -33,9 +33,13 @@ export const PLAN_CONFIG_TIER_IDS = PLAN_IDS;
 export const SERVICE_TAB_LABELS: Record<string, string> = {
   auction: 'Аукцион',
   forum: 'Форум',
+  chat: 'Чаты',
   club: 'Клуб',
   bff: 'Клуб',
+  subscriptions: 'Подписки',
+  marketplace: 'Маркет',
   referralRewards: 'Рефералы',
+  'referral-rewards': 'Рефералы',
   'user-profile': 'Профиль',
 };
 

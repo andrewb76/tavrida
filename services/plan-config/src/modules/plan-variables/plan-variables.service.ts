@@ -126,27 +126,34 @@ export class PlanVariablesService {
     }
 
     for (const [planId, values] of Object.entries(tierValues)) {
-      const existing = await this.tiers.findOne({ where: { planId, variableKey } });
-      if (!existing) {
-        throw new NotFoundException({
-          type: 'plan_variable_tier_not_found',
-          detail: `${planId}/${variableKey}`,
-        });
-      }
-
-      if (values.limitValue !== undefined) existing.limitValue = values.limitValue;
-      if (values.isFeatureEnabled !== undefined) existing.isFeatureEnabled = values.isFeatureEnabled;
-      if (values.enumValues !== undefined) existing.enumValues = values.enumValues;
-      if (values.priceAmount !== undefined) {
-        existing.priceAmount =
-          values.priceAmount == null ? null : Math.max(0, values.priceAmount).toFixed(2);
-      }
-      if (values.isEnabled !== undefined) existing.isEnabled = values.isEnabled;
-
-      await this.tiers.save(existing);
+      await this.patchMatrixTier(planId, variableKey, values);
     }
 
     return { key: variableKey, updated: true };
+  }
+
+  private async patchMatrixTier(planId: string, variableKey: string, values: TierValuesInput) {
+    const existing = await this.tiers.findOne({ where: { planId, variableKey } });
+    if (!existing) {
+      throw new NotFoundException({
+        type: 'plan_variable_tier_not_found',
+        detail: `${planId}/${variableKey}`,
+      });
+    }
+
+    this.applyTierPatch(existing, values);
+    await this.tiers.save(existing);
+  }
+
+  private applyTierPatch(existing: PlanVariableTierEntity, values: TierValuesInput): void {
+    if (values.limitValue !== undefined) existing.limitValue = values.limitValue;
+    if (values.isFeatureEnabled !== undefined) existing.isFeatureEnabled = values.isFeatureEnabled;
+    if (values.enumValues !== undefined) existing.enumValues = values.enumValues;
+    if (values.priceAmount !== undefined) {
+      existing.priceAmount =
+        values.priceAmount == null ? null : Math.max(0, values.priceAmount).toFixed(2);
+    }
+    if (values.isEnabled !== undefined) existing.isEnabled = values.isEnabled;
   }
 
   async resolvePrice(planId: string, variableKey: string) {
@@ -156,7 +163,7 @@ export class PlanVariablesService {
     }
 
     const tier = await this.tiers.findOne({ where: { planId, variableKey } });
-    if (!tier || !tier.isEnabled) {
+    if (!tier?.isEnabled) {
       throw new ForbiddenException({
         type: 'price_not_available',
         detail: `Price ${variableKey} is not available for plan ${planId}`,

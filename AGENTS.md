@@ -3,7 +3,8 @@
 Monorepo: auction/forum platform for finds (Crimea focus). **Docs-first phase** — implementation is scaffold only.
 
 **Start here:** [docs/00-meta/PROJECT-CONTEXT.md](docs/00-meta/PROJECT-CONTEXT.md)  
-**Per-task docs index (read first):** [docs/00-meta/AGENT-DOCS-INDEX.md](docs/00-meta/AGENT-DOCS-INDEX.md)
+**Per-task docs index (read first):** [docs/00-meta/AGENT-DOCS-INDEX.md](docs/00-meta/AGENT-DOCS-INDEX.md)  
+**Docs review process:** [docs/13-maintenance/docs-review.md](docs/13-maintenance/docs-review.md) (trigger: «ревью документации»)
 
 Full documentation: [docs/README.md](docs/README.md)  
 **Published docs:** [https://andrewb76.github.io/tavrida/](https://andrewb76.github.io/tavrida/)
@@ -36,7 +37,8 @@ max-alice/
 │   ├── forum/                 port 3009
 │   ├── notifications/         port 3010
 │   ├── marketplace/           port 3011
-│   └── periods/               port 3014
+│   ├── periods/               port 3014
+│   └── chat/                  port 3016
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── docker/
 └── docs/
@@ -44,7 +46,7 @@ max-alice/
 
 **Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
-**Docs-only services** (`rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace.
+**Docs-only services** (`rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace. Chat: [docs/05-microservices/chat/](docs/05-microservices/chat/README.md).
 
 ## Commands
 

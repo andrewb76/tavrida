@@ -51,7 +51,7 @@ export class OrdersService {
 
   async create(input: { listingId: string; customerId: string; note?: string }) {
     const listing = await this.listings.findOne({ where: { id: input.listingId } });
-    if (!listing || listing.status !== 'ACTIVE') {
+    if (listing?.status !== 'ACTIVE') {
       throw new BadRequestException('Listing is not available for order');
     }
     if (listing.providerId === input.customerId) {

@@ -16,6 +16,8 @@ const props = defineProps<{
   contentType: 'topic' | 'comment';
   currentUserId?: string | null;
   disabled?: boolean;
+  /** Increment to force-refresh buckets (e.g. after WS `reaction.added`). */
+  refreshEpoch?: number;
 }>();
 
 const buckets = ref<ForumReactionBucket[]>([]);
@@ -42,7 +44,7 @@ async function refresh() {
 
 onMounted(refresh);
 watch(
-  () => [props.contentId, props.contentType, props.currentUserId] as const,
+  () => [props.contentId, props.contentType, props.currentUserId, props.refreshEpoch] as const,
   () => {
     void refresh();
   },

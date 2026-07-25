@@ -31,6 +31,7 @@ PACKAGES=(
   tavrida-forum
   tavrida-periods
   tavrida-marketplace
+  tavrida-chat
   tavrida-frontend
 )
 

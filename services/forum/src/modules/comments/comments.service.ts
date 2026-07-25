@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -9,6 +9,8 @@ import { validateForumContent } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
+import { ForumEventsPublisher } from '../events/forum-events.publisher';
+import { CategoriesService } from '../categories/categories.service';
 import { VotesService } from '../votes/votes.service';
 
 @Injectable()
@@ -20,19 +22,29 @@ export class CommentsService {
     private readonly closures: Repository<CommentClosureEntity>,
     @InjectRepository(TopicEntity)
     private readonly topics: Repository<TopicEntity>,
+    private readonly categoryAcl: CategoriesService,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly votes: VotesService,
+    private readonly events: ForumEventsPublisher,
   ) {}
 
   async listByTopic(
     topicId: string,
-    viewer?: { userId?: string; changeWindowMinutes?: number },
+    viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
   ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
-    if (!topic) {
+    if (
+      !topic ||
+      topic.deletedAt ||
+      (topic.status === 'DRAFT' && topic.authorId !== viewer?.userId)
+    ) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
     }
+    await this.categoryAcl.assertAccessible(topic.categoryId, {
+      viewerId: viewer?.userId,
+      isAdmin: viewer?.isAdmin,
+    });
 
     const rows = await this.comments.find({
       where: { topicId },
@@ -56,19 +68,21 @@ export class CommentsService {
           mine?.createdAt ?? null,
           changeWindowMinutes,
         );
+        const deleted = Boolean(row.deletedAt);
         return {
           id: row.id,
           topicId: row.topicId,
           authorId: row.authorId,
           parentId: row.parentId,
-          body: row.body,
-          attachments: row.attachments ?? [],
+          body: deleted ? 'Комментарий удалён' : row.body,
+          attachments: deleted ? [] : row.attachments ?? [],
           promotedTopicId: row.promotedTopicId,
+          deletedAt: row.deletedAt?.toISOString() ?? null,
           votePlusCount: vote.plusCount,
           voteMinusCount: vote.minusCount,
           score: vote.score,
           myVote: vote.myVote,
-          canChangeVote: vote.canChange,
+          canChangeVote: deleted ? false : vote.canChange,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
         };
@@ -84,11 +98,22 @@ export class CommentsService {
     attachments?: MediaAttachment[];
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    isAdmin?: boolean;
   }) {
     const topic = await this.topics.findOne({ where: { id: input.topicId } });
-    if (!topic) {
+    if (!topic || topic.deletedAt) {
       throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
     }
+    if (topic.status !== 'PUBLISHED') {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'Черновик нельзя комментировать — сначала опубликуйте тему',
+      });
+    }
+    await this.categoryAcl.assertAccessible(topic.categoryId, {
+      viewerId: input.authorId,
+      isAdmin: input.isAdmin,
+    });
 
     if (input.parentId) {
       const parent = await this.comments.findOne({
@@ -149,6 +174,17 @@ export class CommentsService {
         }
       }
 
+      await this.events.enqueueCommentCreated(manager, {
+        commentId: comment.id,
+        topicId: comment.topicId,
+        authorId: comment.authorId,
+        parentId: comment.parentId,
+        body: comment.body,
+        attachments: comment.attachments ?? [],
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      });
+
       return {
         id: comment.id,
         topicId: comment.topicId,
@@ -165,6 +201,9 @@ export class CommentsService {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
       };
+    }).then((created) => {
+      this.events.flush();
+      return created;
     });
   }
 
@@ -177,11 +216,12 @@ export class CommentsService {
     editWindowMinutes: number;
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
+    asModerator?: boolean;
   }) {
     const comment = await this.comments.findOne({
       where: { id: input.commentId, topicId: input.topicId },
     });
-    if (!comment) {
+    if (!comment || comment.deletedAt) {
       throw new NotFoundException({
         type: 'not-found',
         detail: `Comment ${input.commentId} not found in topic`,
@@ -193,6 +233,7 @@ export class CommentsService {
       editorId: input.authorId,
       createdAt: comment.createdAt,
       editWindowMinutes: input.editWindowMinutes,
+      asModerator: input.asModerator,
     });
 
     const nextBody = input.body?.trim();
@@ -227,6 +268,7 @@ export class CommentsService {
       body: comment.body,
       attachments: comment.attachments ?? [],
       promotedTopicId: comment.promotedTopicId,
+      deletedAt: null,
       votePlusCount: comment.votePlusCount ?? 0,
       voteMinusCount: comment.voteMinusCount ?? 0,
       score: (comment.votePlusCount ?? 0) - (comment.voteMinusCount ?? 0),
@@ -234,6 +276,36 @@ export class CommentsService {
       canChangeVote: true,
       createdAt: comment.createdAt.toISOString(),
       updatedAt: comment.updatedAt.toISOString(),
+    };
+  }
+
+  async softDelete(input: {
+    topicId: string;
+    commentId: string;
+    actorId: string;
+    asModerator?: boolean;
+  }) {
+    if (!input.asModerator) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Удалять комментарии могут только администратор и модератор',
+      });
+    }
+    const comment = await this.comments.findOne({
+      where: { id: input.commentId, topicId: input.topicId },
+    });
+    if (!comment || comment.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${input.commentId} not found in topic`,
+      });
+    }
+    comment.deletedAt = new Date();
+    await this.comments.save(comment);
+    return {
+      ok: true,
+      commentId: comment.id,
+      deletedAt: comment.deletedAt.toISOString(),
     };
   }
 
@@ -247,43 +319,12 @@ export class CommentsService {
     commentId: string;
     actorId: string;
     title?: string;
+    asModerator?: boolean;
   }) {
-    const sourceTopic = await this.topics.findOne({ where: { id: input.topicId } });
-    if (!sourceTopic) {
-      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
-    }
+    this.assertModeratorAction(input.asModerator, 'Выделить комментарий в тему могут только администратор и модератор');
 
-    const comment = await this.comments.findOne({
-      where: { id: input.commentId, topicId: input.topicId },
-    });
-    if (!comment) {
-      throw new NotFoundException({
-        type: 'not-found',
-        detail: `Comment ${input.commentId} not found in topic`,
-      });
-    }
-
-    if (comment.promotedTopicId) {
-      throw new BadRequestException({
-        type: 'conflict',
-        detail: 'Комментарий уже выделен в тему',
-        promotedTopicId: comment.promotedTopicId,
-      });
-    }
-
-    if (comment.authorId !== input.actorId && sourceTopic.authorId !== input.actorId) {
-      throw new BadRequestException({
-        type: 'forbidden',
-        detail: 'Выделить в тему может автор комментария или темы',
-      });
-    }
-
-    const firstLine = comment.body.trim().split('\n')[0]?.trim() ?? '';
-    const title = (
-      input.title?.trim() ||
-      firstLine.replace(/^#+\s*/, '').slice(0, 120) ||
-      'Тема из комментария'
-    ).slice(0, 256);
+    const { sourceTopic, comment } = await this.loadPromoteSource(input.topicId, input.commentId);
+    const title = this.resolvePromoteTitle(comment.body, input.title);
 
     return this.dataSource.transaction(async (manager) => {
       const newTopic = manager.create(TopicEntity, {
@@ -295,72 +336,30 @@ export class CommentsService {
         attachments: comment.attachments ?? [],
         isPinned: false,
         tags: [],
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
       });
       await manager.save(newTopic);
 
-      const descendantRows = await manager.find(CommentClosureEntity, {
-        where: { ancestorId: comment.id },
-      });
-      const depthFromMarker = new Map(
-        descendantRows
-          .filter((row) => row.depth > 0)
-          .map((row) => [row.descendantId, row.depth] as const),
-      );
-      const moveIds = [...depthFromMarker.keys()];
-
-      if (moveIds.length) {
-        const moved = await manager.find(CommentEntity, {
-          where: { id: In(moveIds) },
-        });
-
-        for (const row of moved) {
-          row.topicId = newTopic.id;
-          if (row.parentId === comment.id || !moveIds.includes(row.parentId ?? '')) {
-            row.parentId = null;
-          }
-        }
-        await manager.save(moved);
-
-        await manager
-          .createQueryBuilder()
-          .delete()
-          .from(CommentClosureEntity)
-          .where('descendant_id IN (:...ids)', { ids: moveIds })
-          .execute();
-
-        for (const row of moved) {
-          await manager.save(
-            manager.create(CommentClosureEntity, {
-              ancestorId: row.id,
-              descendantId: row.id,
-              depth: 0,
-            }),
-          );
-        }
-
-        // Parents before children — reuse distances from the old marker tree.
-        moved.sort(
-          (a, b) => (depthFromMarker.get(a.id) ?? 0) - (depthFromMarker.get(b.id) ?? 0),
-        );
-        for (const row of moved) {
-          if (!row.parentId) continue;
-          const parentAncestors = await manager.find(CommentClosureEntity, {
-            where: { descendantId: row.parentId },
-          });
-          for (const ancestor of parentAncestors) {
-            await manager.save(
-              manager.create(CommentClosureEntity, {
-                ancestorId: ancestor.ancestorId,
-                descendantId: row.id,
-                depth: ancestor.depth + 1,
-              }),
-            );
-          }
-        }
-      }
+      const moveIds = await this.movePromotedSubtree(manager, comment, newTopic.id);
 
       comment.promotedTopicId = newTopic.id;
       await manager.save(comment);
+
+      await this.events.enqueueTopicPublished(manager, {
+        topicId: newTopic.id,
+        authorId: newTopic.authorId,
+        categoryId: newTopic.categoryId,
+        publishedAt: newTopic.publishedAt ?? new Date(),
+      });
+
+      await this.events.enqueueCommentPromotedToTopic(manager, {
+        sourceTopicId: sourceTopic.id,
+        sourceCommentId: comment.id,
+        newTopicId: newTopic.id,
+        moderatorId: input.actorId,
+        movedCommentCount: moveIds.length,
+      });
 
       return {
         commentId: comment.id,
@@ -369,7 +368,119 @@ export class CommentsService {
         title: newTopic.title,
         movedCommentCount: moveIds.length,
       };
+    }).then((result) => {
+      this.events.flush();
+      return result;
     });
+  }
+
+  private assertModeratorAction(asModerator: boolean | undefined, detail: string): void {
+    if (!asModerator) {
+      throw new ForbiddenException({ type: 'forbidden', detail });
+    }
+  }
+
+  private async loadPromoteSource(topicId: string, commentId: string) {
+    const sourceTopic = await this.topics.findOne({ where: { id: topicId } });
+    if (!sourceTopic || sourceTopic.deletedAt) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${topicId} not found` });
+    }
+
+    const comment = await this.comments.findOne({
+      where: { id: commentId, topicId },
+    });
+    if (!comment || comment.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${commentId} not found in topic`,
+      });
+    }
+
+    if (comment.promotedTopicId) {
+      throw new BadRequestException({
+        type: 'conflict',
+        detail: 'Комментарий уже выделен в тему',
+        promotedTopicId: comment.promotedTopicId,
+      });
+    }
+
+    return { sourceTopic, comment };
+  }
+
+  private resolvePromoteTitle(commentBody: string, requestedTitle?: string): string {
+    const firstLine = commentBody.trim().split('\n')[0]?.trim() ?? '';
+    return (
+      requestedTitle?.trim() ||
+      firstLine.replace(/^#+\s*/, '').slice(0, 120) ||
+      'Тема из комментария'
+    ).slice(0, 256);
+  }
+
+  private async movePromotedSubtree(
+    manager: DataSource['manager'],
+    comment: CommentEntity,
+    newTopicId: string,
+  ): Promise<string[]> {
+    const descendantRows = await manager.find(CommentClosureEntity, {
+      where: { ancestorId: comment.id },
+    });
+    const depthFromMarker = new Map(
+      descendantRows
+        .filter((row) => row.depth > 0)
+        .map((row) => [row.descendantId, row.depth] as const),
+    );
+    const moveIds = [...depthFromMarker.keys()];
+    if (!moveIds.length) return moveIds;
+
+    const moved = await manager.find(CommentEntity, {
+      where: { id: In(moveIds) },
+    });
+
+    for (const row of moved) {
+      row.topicId = newTopicId;
+      if (row.parentId === comment.id || !moveIds.includes(row.parentId ?? '')) {
+        row.parentId = null;
+      }
+    }
+    await manager.save(moved);
+
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(CommentClosureEntity)
+      .where('descendant_id IN (:...ids)', { ids: moveIds })
+      .execute();
+
+    for (const row of moved) {
+      await manager.save(
+        manager.create(CommentClosureEntity, {
+          ancestorId: row.id,
+          descendantId: row.id,
+          depth: 0,
+        }),
+      );
+    }
+
+    moved.sort(
+      (a, b) => (depthFromMarker.get(a.id) ?? 0) - (depthFromMarker.get(b.id) ?? 0),
+    );
+    for (const row of moved) {
+      if (!row.parentId) continue;
+      const parentAncestors = await manager.find(CommentClosureEntity, {
+        where: { descendantId: row.parentId },
+      });
+      for (const ancestor of parentAncestors) {
+        await manager.save(
+          manager.create(CommentClosureEntity, {
+            ancestorId: ancestor.ancestorId,
+            descendantId: row.id,
+            depth: ancestor.depth + 1,
+          }),
+        );
+      }
+    }
+
+    return moveIds;
   }
 
   private mediaPublicBaseUrl() {

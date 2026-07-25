@@ -23,6 +23,17 @@ export class KetoService {
     return this.hasPlatformRelation(userId, 'admin');
   }
 
+  /** Platform admin or platform moderator (forum staff). Bootstrap env counts as admin. */
+  async isForumStaff(userId: string): Promise<boolean> {
+    if (await this.isPlatformAdmin(userId)) return true;
+    if (await this.hasPlatformRelation(userId, 'moderator')) return true;
+    const unlimited = (this.config.get<string>('CLUB_INVITES_UNLIMITED_ISSUER_IDS') ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+    return unlimited.includes(userId);
+  }
+
   async getPlatformRoles(userId: string): Promise<PlatformRole[]> {
     const roles: PlatformRole[] = ['member'];
 

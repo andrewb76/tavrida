@@ -1,0 +1,19 @@
+---
+description: >-
+  Ревью документации / docs review / ревизия docs — следовать docs-review.md
+  (фазы, findings, сверка с кодом, план гармонии). Правила эволюционируют с docs.
+alwaysApply: true
+---
+
+# Ревью документации
+
+Когда пользователь просит **ревью / ревизию документации** (или *docs review*):
+
+1. Открой и следуй **целиком** [docs/13-maintenance/docs-review.md](docs/13-maintenance/docs-review.md) — фазы **0→5** обязательны; фаза **6** (code review) — только если явно попросили.
+2. Стиль правок docs — [docs/13-maintenance/docs-guidelines.md](docs/13-maintenance/docs-guidelines.md).
+3. Ответ строго в **формате артефакта** из docs-review (§ «Обязательный формат ответа»).
+4. Не начинай массовые правки, пока пользователь не подтвердил **план гармонии** (кроме явного «сразу исправь»).
+5. После прогона: строка в [docs/00-meta/DOCS-REVIEW-LOG.md](docs/00-meta/DOCS-REVIEW-LOG.md); устойчивые пункты — DOCS-ROADMAP / AGENT-TODO.
+6. Если процесс или guidelines оказались недостаточны — предложи правку **самих правил** (bump версии docs-review).
+
+Обычные фичи **не** запускают полный docs-review: для них достаточно [docs-workflow](docs-workflow.mdc).

@@ -19,6 +19,7 @@ export type ForumComment = {
     sizeBytes: number;
   }>;
   promotedTopicId: string | null;
+  deletedAt?: string | null;
   votePlusCount?: number;
   voteMinusCount?: number;
   score?: number;

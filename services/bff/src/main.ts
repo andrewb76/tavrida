@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import './config/hydrate-secrets';
+import { attachSentryToNestApp, initSentryNode } from '@tavrida/sentry';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -17,9 +18,11 @@ function parseCorsOrigins(): string[] | boolean {
 }
 
 async function bootstrap() {
+  initSentryNode({ service: 'bff' });
   await ensureDatabaseSchema();
 
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  attachSentryToNestApp(app);
   assertInternalAuthConfigured(process.env);
   const config = app.get(ConfigService);
   const authMode = resolveAuthMode({
@@ -35,7 +38,7 @@ async function bootstrap() {
 
   const port = Number(process.env.BFF_PORT ?? process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port);
-  Logger.log(`bff listening on :${port}/api/v1 (auth=${authMode})`, 'Bootstrap');
+  Logger.log(`bff listening on :${port}/api/v1 + /ws/v1 (auth=${authMode})`, 'Bootstrap');
 }
 
 void bootstrap();

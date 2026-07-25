@@ -8,7 +8,7 @@
     "build": "tsc --build",
     "lint": "eslint src",
     "pretest": "tsc -p tsconfig.test.json",
-    "test": "node --test dist-test/**/*.test.js"
+    "test": "node ../../scripts/node-test.mjs \"dist-test/**/*.test.js\""
   },
   "devDependencies": {
     "@tavrida/tsconfig": "workspace:*",

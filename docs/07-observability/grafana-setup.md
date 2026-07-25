@@ -1,26 +1,99 @@
 # 📈 Grafana Cloud
 
-> **Статус:** spec ready · **Версия:** 0.2
+> **Статус:** in progress · **Версия:** 0.3  
+> **Среда:** dev Swarm (`evatorg.su`) → Grafana Cloud Free (SaaS)
 
 ## 🎯 Стек observability
 
-| Сигнал | Backend | Agent |
-|--------|---------|-------|
-| Metrics | Grafana Mimir (Cloud) | Alloy / OTel Prometheus exporter |
-| Logs | Grafana Loki | Alloy → JSON stdout |
-| Traces | Grafana Tempo | OpenTelemetry SDK → OTLP |
-| Errors | Sentry | `@sentry/node`, `@sentry/vue` |
+| Сигнал | Backend | Agent на Swarm |
+|--------|---------|----------------|
+| Metrics | Grafana Mimir (Cloud) | Alloy `prometheus.exporter.cadvisor` → remote_write |
+| Logs | Grafana Loki | Alloy `loki.source.docker` (stdout контейнеров) |
+| Traces | Grafana Tempo | Alloy OTLP `:4317`/`:4318` → OTLP/HTTP gateway |
+| Errors | Sentry | отдельно, см. [sentry-setup.md](./sentry-setup.md) |
 
-Env: `OTEL_EXPORTER_OTLP_ENDPOINT` — см. [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md).
+NestJS OTel SDK (`@tavrida/otel`) — **ещё не подключён**; Alloy уже слушает OTLP на overlay-сети (`http://alloy:4318`). Пока трейсы появятся после bootstrap SDK.
 
-## 🚀 Bootstrap
+Labels: `env=dev`, `cluster=tavrida-dev`.
 
-1. Создать stack в [Grafana Cloud](https://grafana.com/) (free tier для dev).
-2. Получить endpoints: Prometheus remote write, Loki push, Tempo OTLP.
-3. Deploy **Grafana Alloy** как sidecar или stack-tools service.
-4. NestJS: `@opentelemetry/sdk-node` + auto-instrumentation HTTP/pg/amqp.
+## 🚀 Bootstrap (dev) — чеклист
 
-## 📊 Базовые дашборды
+### 1. Stack в Grafana Cloud (вы)
+
+1. Зайти на [grafana.com](https://grafana.com/) → создать / выбрать **Free** stack (регион ближе к VPS, напр. EU).
+2. **Access Policy** (Administration → Users and access → Cloud access policies):
+   - Name: `tavrida-dev-alloy`
+   - Realms: ваш stack
+   - Scopes: `metrics:write`, `logs:write`, `traces:write`
+   - Создать **token** → сохранить (один раз).
+3. Скопировать endpoints (Connections / My Account → stack details):
+
+| Поле | Откуда в UI | Куда кладём |
+|------|-------------|-------------|
+| Prometheus remote write URL | Prometheus → Details | `GRAFANA_CLOUD_PROMETHEUS_URL` |
+| Prometheus Username (instance id) | то же | `GRAFANA_CLOUD_PROMETHEUS_USERNAME` |
+| Loki push URL | Loki → Details | `GRAFANA_CLOUD_LOKI_URL` |
+| Loki Username | то же | `GRAFANA_CLOUD_LOKI_USERNAME` |
+| OTLP gateway URL | OpenTelemetry / Tempo | `GRAFANA_CLOUD_OTLP_ENDPOINT` (обычно `…/otlp`) |
+| OTLP Instance ID | то же (часто = Prometheus username) | `GRAFANA_CLOUD_OTLP_INSTANCE_ID` |
+| Access Policy token | шаг 2 | `GRAFANA_CLOUD_TOKEN` (**secret**) |
+
+### 2. GitHub Environment `dev`
+
+**Variables:**
+
+```
+GRAFANA_CLOUD_PROMETHEUS_URL=https://prometheus-prod-XX-….grafana.net/api/prom/push
+GRAFANA_CLOUD_PROMETHEUS_USERNAME=<prometheus instance id>
+GRAFANA_CLOUD_LOKI_URL=https://logs-prod-XX.grafana.net/loki/api/v1/push
+GRAFANA_CLOUD_LOKI_USERNAME=<loki instance id>
+GRAFANA_CLOUD_OTLP_ENDPOINT=https://otlp-gateway-prod-XX.grafana.net/otlp
+GRAFANA_CLOUD_OTLP_INSTANCE_ID=<instance id>
+```
+
+**Secret:** `GRAFANA_CLOUD_TOKEN=<access policy token>`
+
+Локально (ноутбук): те же ключи в `docker/swarm/dev.env` + `GRAFANA_CLOUD_TOKEN` в `dev.secrets.env`.
+
+### 3. Sync + deploy
+
+```bash
+# с ноутбука
+DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh   # создаст tavrida_dev_grafana_cloud_token
+DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh         # подтянет stack-tools, если PROMETHEUS_URL задан
+```
+
+Или Actions → **Sync secrets (dev)** (`redeploy=true`) / обычный **Deploy dev**.
+
+Пустой `GRAFANA_CLOUD_PROMETHEUS_URL` → Alloy **не** деплоится (остальной stack без изменений).
+
+### 4. Проверка
+
+```bash
+DOCKER_CONTEXT=dev-swarm docker service ps tavrida-dev_alloy
+DOCKER_CONTEXT=dev-swarm docker service logs --tail 80 tavrida-dev_alloy
+```
+
+В Grafana Cloud Explore:
+
+- **Loki:** `{env="dev"}` или `{swarm_service="tavrida-dev_bff"}`
+- **Prometheus:** `container_memory_usage_bytes{env="dev"}`
+- **Tempo:** после OTel в сервисах — поиск по `service.name`
+
+Опционально: Connections → **Docker** integration → Install dashboards.
+
+## 📦 Файлы в репо
+
+| Путь | Назначение |
+|------|------------|
+| `docker/config/alloy/config.alloy` | River-конфиг Alloy |
+| `docker/swarm/stack-tools.dev.yml` | сервис `alloy` (cAdvisor + Docker logs + OTLP) |
+| `docker/swarm/deploy-dev.sh` | добавляет tools compose, если URL задан |
+| `docker/swarm/secrets-manifest.dev` | `GRAFANA_CLOUD_TOKEN` → `tavrida_dev_grafana_cloud_token` |
+
+При правке `config.alloy` bump Swarm config: `alloy_config_v1` → `v2` в `stack-tools.dev.yml` (configs immutable).
+
+## 📊 Базовые дашборды (цель)
 
 | Dashboard | Панели |
 |-----------|--------|
@@ -30,6 +103,8 @@ Env: `OTEL_EXPORTER_OTLP_ENDPOINT` — см. [PLATFORM-SECRETS](../02-infrastruc
 | **Billing** | charge success/fail, 402 count |
 | **RabbitMQ** | queue depth, consumer lag, DLQ size |
 | **PostgreSQL** | connections per schema, slow queries |
+
+На этапе Alloy: контейнерные метрики + логи. App-метрики `tavrida_lot_*` — после OTel SDK.
 
 ## 🔔 Алерты (минимум prod)
 
@@ -41,14 +116,15 @@ Env: `OTEL_EXPORTER_OTLP_ENDPOINT` — см. [PLATFORM-SECRETS](../02-infrastruc
 | DiskPostgres | volume > 85% | warning |
 | ServiceDown | `/health/ready` fail 3× | critical |
 
-Notification channel: Telegram/email — вне repo (Grafana contact points).
+Notification channel: Telegram/email — contact points в Grafana Cloud (вне repo).
 
 ## 🏷️ Labels (обязательные)
 
 ```
-service=billing
+service=<name>          # app metrics / OTel
 env=prod|dev|local
 deployment_version=<git-sha>
+cluster=tavrida-dev     # Swarm cluster id (Alloy)
 ```
 
 ## 🔗 Связанные разделы
@@ -56,7 +132,10 @@ deployment_version=<git-sha>
 - [logging-metrics.md](./logging-metrics.md)
 - [slo.md](./slo.md)
 - [sentry-setup.md](./sentry-setup.md)
+- [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md)
+- [github-actions.md](../04-deployment/github-actions.md)
+- [README.dev.md](../../docker/swarm/README.dev.md)
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.2-spec
+**Автор:** команда разработки · **Версия:** 0.3

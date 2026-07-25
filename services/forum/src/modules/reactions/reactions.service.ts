@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { ForumContentType } from '../../entities/reaction.entity';
 import { ReactionEntity } from '../../entities/reaction.entity';
+import { CommentEntity } from '../../entities/comment.entity';
+import { TopicEntity } from '../../entities/topic.entity';
+import { ForumEventsPublisher } from '../events/forum-events.publisher';
 
 const FREE_EMOJI_KEYS = new Set(['+1', '-1', 'heart', 'surprised', 'thinking']);
 
@@ -11,6 +14,12 @@ export class ReactionsService {
   constructor(
     @InjectRepository(ReactionEntity)
     private readonly reactions: Repository<ReactionEntity>,
+    @InjectRepository(CommentEntity)
+    private readonly comments: Repository<CommentEntity>,
+    @InjectRepository(TopicEntity)
+    private readonly topics: Repository<TopicEntity>,
+    private readonly dataSource: DataSource,
+    private readonly events: ForumEventsPublisher,
   ) {}
 
   async list(contentId: string, contentType: ForumContentType) {
@@ -52,32 +61,58 @@ export class ReactionsService {
       };
     }
 
-    const existing = await this.reactions.findOne({
-      where: {
+    const topicId = await this.resolveTopicId(input.contentId, input.contentType);
+
+    const result = await this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(ReactionEntity);
+      const existing = await repo.findOne({
+        where: {
+          contentId: input.contentId,
+          contentType: input.contentType,
+          userId: input.userId,
+        },
+      });
+
+      let emojiKey: string | null = input.emojiKey;
+      let cleared = false;
+      let updated = false;
+
+      if (existing) {
+        if (existing.emojiKey === input.emojiKey) {
+          await repo.remove(existing);
+          emojiKey = null;
+          cleared = true;
+          updated = false;
+        } else {
+          existing.emojiKey = input.emojiKey;
+          await repo.save(existing);
+          updated = true;
+        }
+      } else {
+        const row = repo.create({
+          contentId: input.contentId,
+          contentType: input.contentType,
+          userId: input.userId,
+          emojiKey: input.emojiKey,
+        });
+        await repo.save(row);
+      }
+
+      await this.events.enqueueReactionChanged(manager, {
+        topicId,
         contentId: input.contentId,
         contentType: input.contentType,
         userId: input.userId,
-      },
+        emojiKey,
+        cleared,
+      });
+
+      if (cleared) return { emojiKey: null, cleared: true, updated: false };
+      return { reactionId: input.contentId, emojiKey: input.emojiKey, updated };
     });
 
-    if (existing) {
-      if (existing.emojiKey === input.emojiKey) {
-        await this.reactions.remove(existing);
-        return { emojiKey: null, cleared: true, updated: false };
-      }
-      existing.emojiKey = input.emojiKey;
-      await this.reactions.save(existing);
-      return { reactionId: existing.contentId, emojiKey: existing.emojiKey, updated: true };
-    }
-
-    const row = this.reactions.create({
-      contentId: input.contentId,
-      contentType: input.contentType,
-      userId: input.userId,
-      emojiKey: input.emojiKey,
-    });
-    await this.reactions.save(row);
-    return { reactionId: row.contentId, emojiKey: row.emojiKey, updated: false };
+    this.events.flush();
+    return result;
   }
 
   async clear(input: {
@@ -85,15 +120,57 @@ export class ReactionsService {
     contentType: ForumContentType;
     userId: string;
   }) {
-    const existing = await this.reactions.findOne({
-      where: {
+    const topicId = await this.resolveTopicId(input.contentId, input.contentType);
+
+    const result = await this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(ReactionEntity);
+      const existing = await repo.findOne({
+        where: {
+          contentId: input.contentId,
+          contentType: input.contentType,
+          userId: input.userId,
+        },
+      });
+      if (!existing) return { cleared: false };
+
+      await repo.remove(existing);
+      await this.events.enqueueReactionChanged(manager, {
+        topicId,
         contentId: input.contentId,
         contentType: input.contentType,
         userId: input.userId,
-      },
+        emojiKey: null,
+        cleared: true,
+      });
+      return { cleared: true };
     });
-    if (!existing) return { cleared: false };
-    await this.reactions.remove(existing);
-    return { cleared: true };
+
+    if (result.cleared) this.events.flush();
+    return result;
+  }
+
+  private async resolveTopicId(
+    contentId: string,
+    contentType: ForumContentType,
+  ): Promise<string> {
+    if (contentType === 'topic') {
+      const topic = await this.topics.findOne({ where: { id: contentId } });
+      if (!topic || topic.deletedAt) {
+        throw new NotFoundException({
+          type: 'not-found',
+          detail: `Topic ${contentId} not found`,
+        });
+      }
+      return topic.id;
+    }
+
+    const comment = await this.comments.findOne({ where: { id: contentId } });
+    if (!comment || comment.deletedAt) {
+      throw new NotFoundException({
+        type: 'not-found',
+        detail: `Comment ${contentId} not found`,
+      });
+    }
+    return comment.topicId;
   }
 }

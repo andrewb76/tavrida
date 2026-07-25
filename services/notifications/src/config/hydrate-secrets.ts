@@ -16,4 +16,5 @@ hydrateSecretEnv([
   'REDIS_URL',
   'RABBITMQ_URL',
   'INTERNAL_SERVICE_TOKEN',
+  'SENTRY_DSN',
 ]);

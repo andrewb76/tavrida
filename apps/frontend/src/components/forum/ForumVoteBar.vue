@@ -4,12 +4,14 @@ import { UiIcon } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
+type ForumVoteSign = 1 | -1 | null;
+
 const props = defineProps<{
   contentId: string;
   contentType: 'topic' | 'comment';
   plusCount: number;
   minusCount: number;
-  myVote: 1 | -1 | null;
+  myVote: ForumVoteSign;
   canChange: boolean;
   /** Hide controls when viewing own content */
   disabled?: boolean;
@@ -21,7 +23,7 @@ const emit = defineEmits<{
       plusCount: number;
       minusCount: number;
       score: number;
-      myVote: 1 | -1 | null;
+      myVote: ForumVoteSign;
       canChange: boolean;
     },
   ];

@@ -39,6 +39,7 @@
 | `marketplace`           | marketplace           | `service_listing`, `portfolio_item`, `service_order`, `outbox_message`, `outbox_message`          | Маркет услуг       |
 | `notifications`         | notifications         | `notification_log`, `subscriber`                              | Audit уведомлений  |
 | `periods`               | periods               | categories / periods                                          | Исторические периоды |
+| `chat`                  | chat                  | `chat`, `chat_member`, `message`, `message_attachment`, `outbox_message` | Приватные чаты |
 | `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
 
 > **Retired schemas:** `financial_policy` → `plan_config`, `settings` → `scalar_config`. Canonical schemas перечислены выше.

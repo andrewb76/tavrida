@@ -80,6 +80,7 @@ export async function syncLogtoProfile(logto: LogtoClient, session: SessionStore
     name,
     email,
     avatarUrl,
+    username,
   });
 
   await pushIdentityToProfile({ name, username, email, avatarUrl });

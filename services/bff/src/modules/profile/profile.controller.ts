@@ -83,6 +83,13 @@ export class ProfileController {
     });
   }
 
+  @Get('by-username/:username')
+  async getByUsername(@Param('username') username: string) {
+    const profile = await this.profiles.getByUsername(username);
+    const rating = await this.profiles.getRatingStats(profile.userId);
+    return { ...profile, rating };
+  }
+
   @Get(':userId/rating/log')
   async getRatingLog(
     @Param('userId') userId: string,

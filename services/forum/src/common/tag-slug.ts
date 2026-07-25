@@ -49,8 +49,9 @@ export function slugifyTag(raw: string, fallbackId?: string): string {
   }
   out = out
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
     .slice(0, 48);
   if (out.length > 0) return out;
-  return `t-${(fallbackId ?? 'x').replace(/-/g, '').slice(0, 8)}`;
+  return `t-${(fallbackId ?? 'x').replaceAll('-', '').slice(0, 8)}`;
 }

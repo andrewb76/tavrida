@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;">
+  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072;&#32;&#1051;&#1086;&#1090;&#32;&#8212;&#32;&#1084;&#1086;&#1085;&#1086;&#1075;&#1088;&#1072;&#1084;&#1084;&#1072;&#32;&#1090;&#1077;&#1084;&#1085;&#1072;&#1103;</title>
+  <circle cx="32" cy="32" r="27" stroke="#1F7A6E" stroke-width="3" fill="#16333A"/>
+  <path d="M8 38 C16 30, 24 28, 32 30 C40 32, 48 34, 56 36" stroke="#C9B89A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M10 42 C18 36, 26 34, 32 35.5 C38 37, 46 39, 54 42" stroke="#C47A3A" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <circle cx="32" cy="24" r="4" fill="#3D9B8E"/>
+</svg>

@@ -10,13 +10,17 @@ import {
 import { UiButton } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { useSessionStore } from '@/stores/session';
 
 const route = useRoute();
+const session = useSessionStore();
 
 const topics = ref<TopicSummary[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const draftsOnly = computed(() => route.query.status === 'DRAFT');
 
 const categoryId = computed(() => {
   const raw = route.query.categoryId;
@@ -38,17 +42,26 @@ const activeCategory = computed(() => {
 
 let loadGeneration = 0;
 
-async function load(selectedCategoryId: string | undefined) {
+async function load(selectedCategoryId: string | undefined, drafts: boolean) {
   const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
   topics.value = [];
   try {
     const [topicList, categoryTree] = await Promise.all([
-      listTopics(selectedCategoryId),
+      listTopics({
+        categoryId: selectedCategoryId,
+        status: drafts ? 'DRAFT' : undefined,
+      }),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
     ]);
-    if (generation !== loadGeneration || selectedCategoryId !== categoryId.value) return;
+    if (
+      generation !== loadGeneration ||
+      selectedCategoryId !== categoryId.value ||
+      drafts !== draftsOnly.value
+    ) {
+      return;
+    }
     topics.value = topicList;
     if (!categories.value.length) categories.value = categoryTree;
   } catch (e) {
@@ -59,10 +72,14 @@ async function load(selectedCategoryId: string | undefined) {
   }
 }
 
-watch(categoryId, (id) => void load(id), { immediate: true });
+watch(
+  [categoryId, draftsOnly],
+  ([id, drafts]) => void load(id, drafts),
+  { immediate: true },
+);
 
 function clearCategoryFilter() {
-  return { path: '/forum' };
+  return draftsOnly.value ? { path: '/forum', query: { status: 'DRAFT' } } : { path: '/forum' };
 }
 
 function authorOf(topic: TopicSummary) {
@@ -81,9 +98,14 @@ function authorOf(topic: TopicSummary) {
   <section class="forum-list">
     <header class="forum-list__header">
       <div>
-        <h1>Форум</h1>
+        <h1>{{ draftsOnly ? 'Мои черновики' : 'Форум' }}</h1>
         <p class="forum-list__lead">
-          Обсуждения клуба — темы и комментарии.
+          <template v-if="draftsOnly">
+            Черновики видны только вам. Опубликуйте тему, когда будете готовы.
+          </template>
+          <template v-else>
+            Обсуждения клуба — темы и комментарии.
+          </template>
         </p>
         <p
           v-if="activeCategory"
@@ -100,6 +122,20 @@ function authorOf(topic: TopicSummary) {
         </p>
       </div>
       <div class="forum-list__actions">
+        <RouterLink
+          v-if="!draftsOnly && session.isMember"
+          :to="{ path: '/forum', query: { status: 'DRAFT' } }"
+          class="forum-list__categories-link"
+        >
+          Мои черновики →
+        </RouterLink>
+        <RouterLink
+          v-if="draftsOnly"
+          to="/forum"
+          class="forum-list__categories-link"
+        >
+          ← К форуму
+        </RouterLink>
         <RouterLink
           to="/forum/categories"
           class="forum-list__categories-link"
@@ -132,6 +168,9 @@ function authorOf(topic: TopicSummary) {
     >
       <template v-if="activeCategory">
         В этом разделе пока нет тем.
+      </template>
+      <template v-else-if="draftsOnly">
+        Черновиков нет — сохраните тему как черновик при создании.
       </template>
       <template v-else>
         Пока нет тем — создайте первую.
@@ -166,6 +205,10 @@ function authorOf(topic: TopicSummary) {
         >
           <div class="forum-list__title-row">
             <strong>{{ topic.title }}</strong>
+            <span
+              v-if="topic.status === 'DRAFT'"
+              class="forum-list__draft"
+            >Черновик</span>
             <span
               v-if="topic.isPinned"
               class="forum-list__pin"
@@ -317,5 +360,15 @@ function authorOf(topic: TopicSummary) {
 
 .forum-list__pin {
   flex: none;
+}
+
+.forum-list__draft {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-warning, #b8860b);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #b8860b) 40%, transparent);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
 }
 </style>

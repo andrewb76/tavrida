@@ -30,9 +30,27 @@ export class SubscriptionFanoutService {
     contentId: string;
     excludeUserIds?: string[];
   }): Promise<FanoutResult> {
+    const batches = await this.matchTagBatches(input.tagIds);
+    const matchedUserIds = collectMatchedUserIds(batches, input.excludeUserIds ?? []);
+    const eligibleUserIds = await this.filterPushEligible(matchedUserIds);
+    const notified = await this.triggerTagContentNotifications(input, eligibleUserIds);
+
+    const result = toFanoutResult(matchedUserIds.length, notified);
+    if (matchedUserIds.length) {
+      this.logger.log(
+        `tag.content_tagged topic=${input.topicId} tags=${input.tagIds.length} ` +
+          `matched=${matchedUserIds.length} eligible=${eligibleUserIds.length} ` +
+          `notified=${notified} skipped=${result.skipped}`,
+      );
+    }
+
+    return result;
+  }
+
+  private async matchTagBatches(tagIds: string[]): Promise<string[][]> {
     const batches: string[][] = [];
 
-    for (const tagId of input.tagIds) {
+    for (const tagId of tagIds) {
       try {
         const { userIds } = await this.subscriptions.match('tag.content_tagged', { tagId });
         batches.push(userIds);
@@ -45,7 +63,10 @@ export class SubscriptionFanoutService {
       }
     }
 
-    const matchedUserIds = collectMatchedUserIds(batches, input.excludeUserIds ?? []);
+    return batches;
+  }
+
+  private async filterPushEligible(matchedUserIds: string[]): Promise<string[]> {
     const eligibleUserIds: string[] = [];
 
     for (const userId of matchedUserIds) {
@@ -61,7 +82,6 @@ export class SubscriptionFanoutService {
         }
         eligibleUserIds.push(userId);
       } catch (error) {
-        // Fail-open if prefs unavailable (default push = on).
         this.logger.debug(
           `delivery prefs for ${userId}: ${error instanceof Error ? error.message : error}`,
         );
@@ -69,6 +89,18 @@ export class SubscriptionFanoutService {
       }
     }
 
+    return eligibleUserIds;
+  }
+
+  private async triggerTagContentNotifications(
+    input: {
+      topicId: string;
+      contentType: 'topic' | 'comment';
+      contentId: string;
+      tagIds: string[];
+    },
+    eligibleUserIds: string[],
+  ): Promise<number> {
     let notified = 0;
     for (const userId of eligibleUserIds) {
       const ok = await this.notifications.trigger({
@@ -84,16 +116,6 @@ export class SubscriptionFanoutService {
       });
       if (ok) notified += 1;
     }
-
-    const result = toFanoutResult(matchedUserIds.length, notified);
-    if (matchedUserIds.length) {
-      this.logger.log(
-        `tag.content_tagged topic=${input.topicId} tags=${input.tagIds.length} ` +
-          `matched=${matchedUserIds.length} eligible=${eligibleUserIds.length} ` +
-          `notified=${notified} skipped=${result.skipped}`,
-      );
-    }
-
-    return result;
+    return notified;
   }
 }

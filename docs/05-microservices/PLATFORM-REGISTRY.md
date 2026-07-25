@@ -1,16 +1,17 @@
 # 📒 Реестр переменных платформы
 
-> **Статус:** draft · **Версия:** 0.3  
+> **Статус:** draft · **Версия:** 0.4 · **Обновлено:** 2026-07-22  
 > **Каталог проектирования** — все настраиваемые параметры Tavrida Lot для PM, docs и domain-сервисов.
 
-Два реестра (см. [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md), [registry-keys.md](../13-maintenance/registry-keys.md)):
+Два реестра в MVP ([ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md)); целевая модель — **три** ([ADR-020](../03-architecture/adr/020-three-config-registries.md), реализация post-MVP). Правила ключей: [registry-keys.md](../13-maintenance/registry-keys.md).
 
 | Реестр | Сервис | Schema | Значений на ключ | Кто меняет |
 |--------|--------|--------|------------------|------------|
-| ⚙️ **Scalar config** | `scalar-config` | `scalar_config` | 1 (global или per-user) | Admin |
+| ⚙️ **Scalar config** | `scalar-config` | `scalar_config` | 1 (global; per-user = admin override) | Admin |
 | 💳 **Plan config** | `plan-config` | `plan_config` | 3 (Free / Basic / Pro) | Admin (значения); **ключи** — sync от domain |
+| 👤 **User prefs** *(post-MVP)* | `user-prefs` (TBD) | TBD | 1 per `(userId, key)` | **Member** (под plan-gate) |
 
-**Правило:** при добавлении переменной — строка **здесь** + секция 💳/⚙️ в README сервиса + **sync при старте** владельца.
+**Правило:** при добавлении переменной — строка **здесь** + секция 💳/⚙️ (и позже 👤) в README сервиса + **sync при старте** владельца. Кандидаты в prefs до сервиса `user-prefs` — помечать в описании / domain-таблице.
 
 ### Жизненный цикл ключа (оба реестра)
 
@@ -87,6 +88,29 @@ Default `rating.contextWeights`:
 | `forum.reaction.karmaWeights` | object | см. [forum](./forum/requirements/README.md) | global | Вес emoji-реакций для кармы |
 | `forum.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
 | `forum.tags.bannedSlugs` | string[] | `[]` | global | Запрещённые slug тегов |
+
+### chat
+
+> Решения: [chat/requirements/analysis.md](./chat/requirements/analysis.md)
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `chat.spawn.copyHistoryMax` | number | `100` | global | Max N сообщений при копировании истории spawn |
+| `chat.message.editWindowMinutes` | number | `15` | global | Окно правки своего сообщения (`0` / `-1`) |
+| `chat.message.deleteOwnWindowMinutes` | number | `60` | global | Окно удаления своего сообщения |
+| `chat.message.lengthHardMax` | number | `10000` | global | Абсолютный max длины сообщения |
+| `chat.message.pageSize` | number | `50` | global | Размер страницы истории (подгрузка вверх; hard max 100) |
+| `chat.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
+| `chat.moderation.bannedWordsList` | string[] | `[]` | global | Список запрещённых слов |
+| `chat.history.retentionDays` | number | `0` | global | Авто-purge (`0` = выкл) |
+| `chat.unread.markReadOnOpen` | boolean | `true` | global | Отмечать прочитанным при открытии |
+| `chat.realtime.typingTtlSeconds` | number | `5` | global | TTL typing indicator |
+| `chat.media.presignTtlSeconds` | number | `900` | global | TTL presign вложений |
+| `chat.topic.authorJoinOnPublish` | boolean | `true` | global | Автор темы → TOPIC-room при publish |
+| `chat.topic.joinOnComment` | boolean | `true` | global | Join TOPIC при первом comment |
+| `chat.dm.selfAutoCreate` | boolean | `true` | global | Автосоздание self-DM |
+| `chat.list.defaultFilter` | enum | `ALL` | global | `ALL` \| `DIRECT` \| `GROUP` \| `TOPIC` |
+| `chat.group.leaveKeepsHistory` | boolean | `true` | global | История для оставшихся после leave |
 
 ### auction
 
@@ -227,6 +251,31 @@ Default `rating.contextWeights`:
 | `forum.reaction.brain.unitPrice` | price | 100 | 100 | 100 | Реакция 🧠 |
 
 > `forum.reaction.pin` — только модератор, бесплатно ([roles](../01-goal/roles.md)).
+
+### chat
+
+> Решения: [chat/requirements/analysis.md](./chat/requirements/analysis.md). TOPIC side chat — gate **`forum.author.13topic.chatEnabled`** (выше), не дублировать.
+
+| Ключ | Тип | Free | Basic | Pro | Описание |
+|------|-----|------|-------|-----|----------|
+| `chat.member.dm.enabled` | feature | false | true | true | DIRECT с другим пользователем |
+| `chat.member.self.enabled` | feature | true | true | true | Self-DM (заметки); включается в любом тарифе |
+| `chat.member.group.enabled` | feature | false | true | true | GROUP + spawn из DM |
+| `chat.member.group.inviteEnabled` | feature | false | true | true | Инвайт в GROUP |
+| `chat.member.attachment.enabled` | feature | false | true | true | Вложения в сообщениях |
+| `chat.member.mention.enabled` | feature | false | true | true | `@username` rich-link (без notify) |
+| `chat.member.search.listEnabled` | feature | true | true | true | Фильтр/поиск в «Мои чаты» |
+| `chat.member.notify.messagePushEnabled` | feature | false | false | false | Stub до Novu-chat |
+| `chat.member.notify.messageEmailDigestEnabled` | feature | false | false | false | Stub до Novu-chat |
+| `chat.member.group.membershipMax` | limit | 0 | 10 | ∞ | В скольких GROUP состоять |
+| `chat.member.group.memberMax` | limit | 0 | 20 | 100 | Макс. участников GROUP (owner) |
+| `chat.member.group.createDailyMax` | limit | 0 | 3 | 20 | Новых GROUP / сутки |
+| `chat.member.spawn.copyHistoryMax` | limit | 0 | 50 | 100 | Max N ≤ scalar `chat.spawn.copyHistoryMax` |
+| `chat.member.message.dailyMax` | limit | 0 | 200 | ∞ | Сообщений в сутки |
+| `chat.member.message.lengthMax` | limit | 500 | 2000 | 5000 | Длина сообщения |
+| `chat.member.attachment.countMax` | limit | 0 | 3 | 10 | Файлов на сообщение |
+| `chat.member.attachment.sizeMaxMb` | limit | 0 | 5 | 20 | Размер файла (MB) |
+| `chat.member.message.historyMax` | limit | 100 | 500 | ∞ | Макс. сообщений истории, до которых можно доскроллить (подгрузки) |
 
 ### rating
 

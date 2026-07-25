@@ -1,8 +1,9 @@
 import { bffAuthHeaders } from './apiAuth';
 
-export type MediaDomain = 'auction' | 'forum' | 'marketplace';
+export type MediaDomain = 'auction' | 'forum' | 'marketplace' | 'chat';
 
 export type MediaAttachment = {
+  id?: string;
   url: string;
   filename: string;
   contentType: string;
@@ -93,6 +94,7 @@ export async function uploadFile(domain: MediaDomain, file: File): Promise<Media
 
   const confirmed = await confirmUploadIntent(intent.uploadId);
   return {
+    id: confirmed.uploadId,
     url: confirmed.publicUrl,
     filename: confirmed.filename,
     contentType: confirmed.contentType,

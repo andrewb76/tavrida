@@ -16,9 +16,10 @@
 | Sort | recent, active, pinned | Query param |
 | List | Pin, title, excerpt, meta | Cursor «Ещё» |
 | FAB | Новая тема | Limit `postsPerDay` counter |
-| Limits UI | Posts remaining | On create |
+| Drafts | «Мои черновики» | `GET /forum/topics?status=DRAFT` ([drafts.md](../../05-microservices/forum/drafts.md)) |
+| Limits UI | Posts remaining | On create (published only) |
 
-**States:** empty category · loading · error.
+**States:** empty category · loading · error · empty drafts.
 
 **API:** `GET /forum/topics`, `GET /forum/categories`
 
@@ -72,9 +73,11 @@ ForumTopicListPage:
 | Pro chat | Split panel (desktop) | `forum.topicChatEnabled` |
 | Mod actions | Pin, hide, promote | [moderator-mapping](../../09-security/moderator-mapping.md) |
 
-**States:** locked topic · deleted · report submitted.
+**States:** locked topic · deleted · report submitted · **draft** (бейдж; без комментариев; «Опубликовать»).
 
-**API / WS:** `GET/POST comments`, WS `forum:{topicId}` (`message.new`, `reaction.added`, `topic.promoted`).
+**API / WS:** `GET/POST comments`, PATCH publish, WS `forum:{topicId}` (`message.new`, `reaction.added`, `topic.promoted`).
+
+Черновики: [drafts.md](../../05-microservices/forum/drafts.md).
 
 ### ASCII
 

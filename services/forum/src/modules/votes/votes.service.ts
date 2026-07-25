@@ -12,11 +12,13 @@ import { ContentVoteEntity } from '../../entities/content-vote.entity';
 import type { ForumContentType } from '../../entities/reaction.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 
+export type VoteSign = 1 | -1 | null;
+
 export type VoteSummary = {
   plusCount: number;
   minusCount: number;
   score: number;
-  myVote: 1 | -1 | null;
+  myVote: VoteSign;
   canChange: boolean;
 };
 
@@ -35,7 +37,7 @@ export class VotesService {
   summarize(
     plusCount: number,
     minusCount: number,
-    myVote: 1 | -1 | null,
+    myVote: VoteSign,
     firstVotedAt: Date | null,
     changeWindowMinutes: number,
   ): VoteSummary {
@@ -238,6 +240,12 @@ export class VotesService {
       const row = await this.topics.findOne({ where: { id: contentId } });
       if (!row) {
         throw new NotFoundException({ type: 'not-found', detail: `Topic ${contentId} not found` });
+      }
+      if (row.status !== 'PUBLISHED') {
+        throw new BadRequestException({
+          type: 'validation-error',
+          detail: 'Нельзя голосовать за черновик',
+        });
       }
       return row;
     }

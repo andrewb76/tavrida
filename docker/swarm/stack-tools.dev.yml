@@ -1,0 +1,68 @@
+# Dev Swarm — observability agents (Grafana Alloy → Grafana Cloud)
+#
+# Included by deploy-dev.sh only when GRAFANA_CLOUD_PROMETHEUS_URL is set in dev.env.
+# Same stack name as infra/platform (tavrida-dev) so Alloy joins tavrida_net.
+#
+# Secrets: tavrida_dev_grafana_cloud_token (Access Policy token: metrics/logs/traces:write)
+# Config:  Swarm config alloy_config_v* (bump suffix when editing docker/config/alloy/)
+
+networks:
+  tavrida_net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  alloy_data:
+
+configs:
+  alloy_config_v1:
+    file: ../config/alloy/config.alloy
+
+secrets:
+  grafana_cloud_token:
+    external: true
+    name: tavrida_dev_grafana_cloud_token
+
+services:
+  alloy:
+    image: grafana/alloy:v1.9.2
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=experimental
+    configs:
+      - source: alloy_config_v1
+        target: /etc/alloy/config.alloy
+    secrets:
+      - source: grafana_cloud_token
+        target: grafana_cloud_token
+    environment:
+      GRAFANA_CLOUD_PROMETHEUS_URL: ${GRAFANA_CLOUD_PROMETHEUS_URL}
+      GRAFANA_CLOUD_PROMETHEUS_USERNAME: ${GRAFANA_CLOUD_PROMETHEUS_USERNAME}
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL}
+      GRAFANA_CLOUD_LOKI_USERNAME: ${GRAFANA_CLOUD_LOKI_USERNAME}
+      GRAFANA_CLOUD_OTLP_ENDPOINT: ${GRAFANA_CLOUD_OTLP_ENDPOINT}
+      GRAFANA_CLOUD_OTLP_INSTANCE_ID: ${GRAFANA_CLOUD_OTLP_INSTANCE_ID}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+    networks:
+      - tavrida_net
+    # docker.sock + cAdvisor need root (or docker group); keep simple on single-node Swarm
+    user: "0"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M

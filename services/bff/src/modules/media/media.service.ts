@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import type { MediaDomain } from '@tavrida/object-storage';
 import { MediaUploadIntentEntity } from './media-upload-intent.entity';
 import { MediaLimitsService } from './media-limits.service';
@@ -136,6 +136,77 @@ export class MediaService {
       await this.intents.save(row);
     }
     return { uploadId: row.id, cancelled: true };
+  }
+
+  /**
+   * Resolve ready upload intents to public attachment DTOs (chat message enrich / WS).
+   * Unknown or non-ready ids are skipped.
+   */
+  async resolveReadyAttachments(
+    ids: string[],
+  ): Promise<
+    Array<{
+      id: string;
+      url: string;
+      filename: string;
+      contentType: string;
+      sizeBytes: number;
+    }>
+  > {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (!unique.length) return [];
+    const rows = await this.intents.find({
+      where: { id: In(unique), status: 'ready' },
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const out: Array<{
+      id: string;
+      url: string;
+      filename: string;
+      contentType: string;
+      sizeBytes: number;
+    }> = [];
+    for (const id of unique) {
+      const row = byId.get(id);
+      if (!row) continue;
+      out.push({
+        id: row.id,
+        url: row.publicUrl,
+        filename: row.filename,
+        contentType: row.contentType,
+        sizeBytes: row.sizeBytes,
+      });
+    }
+    return out;
+  }
+
+  /** Validate chat attachment ids owned by user, ready, domain=chat. */
+  async assertChatAttachmentsOwned(userId: string, ids: string[]): Promise<void> {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (!unique.length) return;
+    const rows = await this.intents.find({
+      where: { id: In(unique), userId },
+    });
+    if (rows.length !== unique.length) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'Одно или несколько вложений не найдены',
+      });
+    }
+    for (const row of rows) {
+      if (row.domain !== 'chat') {
+        throw new BadRequestException({
+          type: 'validation',
+          detail: 'Вложение должно быть загружено в домен chat',
+        });
+      }
+      if (row.status !== 'ready') {
+        throw new BadRequestException({
+          type: 'validation',
+          detail: `Вложение ещё не подтверждено: ${row.filename}`,
+        });
+      }
+    }
   }
 
   private async findOwnedIntent(userId: string, uploadId: string) {

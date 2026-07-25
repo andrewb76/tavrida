@@ -45,12 +45,14 @@
 | `DB_NAME` | нет | scaffold | `tavrida_lot` | Имя базы |
 | `REDIS_URL` | **да** | bff, notifications, scalar-config, auction | `redis://localhost:6379` | Кэш, pub/sub WS relay |
 | `RABBITMQ_URL` | **да** | billing, auction, feedback, rating, forum, marketplace, notifications | `amqp://guest:guest@localhost:5672` | Async events ([event-catalog](../03-architecture/event-catalog.md)) |
-| `MINIO_ENDPOINT` | нет | auction, forum, user-profile, feedback, marketplace | `localhost` | S3-compatible endpoint |
+| `MINIO_ENDPOINT` | нет | auction, forum, user-profile, feedback, marketplace, **bff** | `localhost` | S3 host (internal) |
 | `MINIO_PORT` | нет | ↑ | `9000` | Порт MinIO |
-| `MINIO_USE_SSL` | нет | ↑ | `false` | TLS к MinIO |
+| `MINIO_USE_SSL` | нет | ↑ | `false` | TLS к MinIO (internal) |
 | `MINIO_ACCESS_KEY` | **да** | ↑ | `minioadmin` | Access key |
 | `MINIO_SECRET_KEY` | **да** | ↑ | `minioadmin` | Secret key |
-| `MINIO_URL` | нет | marketplace (legacy alias) | `http://localhost:9000` | Полный URL; предпочтительно `MINIO_ENDPOINT` + ключи |
+| `MINIO_URL` | нет | marketplace / bff (legacy) | `http://localhost:9000` | Полный internal URL |
+| `MEDIA_PUBLIC_BASE_URL` | нет | **bff**, forum, … | `http://localhost:9000` | Публичный origin (`https://s3…`); BFF подписывает browser PUT с ним |
+| `MINIO_PRESIGN_ENDPOINT` | нет | **bff** | — | Опционально: origin для presigned PUT, если ≠ `MEDIA_PUBLIC_BASE_URL` |
 | `LOGTO_ENDPOINT` | нет | bff, frontend | `https://logto.example.com` | OIDC issuer / Logto tenant URL |
 | `LOGTO_JWKS_URL` | нет | bff | `{LOGTO_ENDPOINT}/oidc/jwks` | JWKS для валидации JWT |
 | `LOGTO_AUDIENCE` | нет | bff | `https://api.tavrida-lot.localhost` | Expected `aud` в JWT |
@@ -66,9 +68,16 @@
 | `NOVU_API_KEY` | **да** | notifications | — | Secret Novu CE / Cloud ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); local ≈ `NOVU_SECRET_KEY` из `docker/compose/novu.local.env` |
 | `NOVU_API_URL` | нет | notifications | `http://localhost:3020` | Self-host API ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); Cloud был `https://api.novu.co` |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox (из Dashboard) |
-| `SENTRY_DSN` | **да** | все NestJS, опц. | — | Backend error tracking |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector |
+| `SENTRY_DSN` | **да** | все NestJS, frontend build | — | Hawk/Sentry DSN ([sentry-setup](../07-observability/sentry-setup.md)); Swarm `tavrida_dev_sentry_dsn` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector; на Swarm → `http://alloy:4318` |
 | `OTEL_SERVICE_NAME` | нет | каждый сервис | имя сервиса | Идентификатор в трейсах |
+| `GRAFANA_CLOUD_PROMETHEUS_URL` | нет | Alloy (dev) | — | Mimir remote_write URL ([grafana-setup](../07-observability/grafana-setup.md)) |
+| `GRAFANA_CLOUD_PROMETHEUS_USERNAME` | нет | Alloy | — | Prometheus instance id |
+| `GRAFANA_CLOUD_LOKI_URL` | нет | Alloy | — | Loki push URL |
+| `GRAFANA_CLOUD_LOKI_USERNAME` | нет | Alloy | — | Loki instance id |
+| `GRAFANA_CLOUD_OTLP_ENDPOINT` | нет | Alloy | — | Tempo OTLP gateway (`…/otlp`) |
+| `GRAFANA_CLOUD_OTLP_INSTANCE_ID` | нет | Alloy | — | OTLP basic-auth username |
+| `GRAFANA_CLOUD_TOKEN` | **да** (для Alloy) | Alloy | — | Access Policy token → Swarm `tavrida_dev_grafana_cloud_token` |
 
 ---
 
@@ -99,6 +108,7 @@
 | `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer ко всем domain-service `/internal/v1/*`; local без токена разрешён |
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
 | `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
+| `CHAT_URL` | нет | `http://localhost:3016` | Upstream chat (DIRECT/GROUP/TOPIC) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
 | `KETO_NAMESPACE` | нет | `TavridaLot` | Keto namespace |
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
@@ -231,6 +241,19 @@
 |------------|--------|--------|---------|
 | `PORT` / `PERIODS_PORT` | нет | — | `3014` |
 | `DATABASE_URL` | **да** | `periods` | PostgreSQL |
+
+---
+
+## 💬 chat — порт 3016
+
+| Переменная | Секрет | Schema | Описание |
+|------------|--------|--------|----------|
+| `PORT` / `CHAT_PORT` | нет | — | `3016` |
+| `DATABASE_URL` | **да** | `chat` | PostgreSQL |
+| `RABBITMQ_URL` | нет* | — | produce/consume events (later) |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer `/internal/v1/*` |
+
+> Spec: [chat/README.md](../05-microservices/chat/README.md)
 
 ---
 

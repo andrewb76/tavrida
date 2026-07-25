@@ -7,7 +7,7 @@
     "build": "tsc --build",
     "lint": "eslint src",
     "pretest": "pnpm run build",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node ../../scripts/node-test.mjs \"dist/**/*.test.js\"",
     "typeorm": "typeorm-ts-node-commonjs"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@tavrida/internal-auth": "workspace:*",
     "@tavrida/object-storage": "workspace:*",
     "@tavrida/outbox": "workspace:*",
+    "@tavrida/sentry": "workspace:*",
     "amqplib": "^0.10.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

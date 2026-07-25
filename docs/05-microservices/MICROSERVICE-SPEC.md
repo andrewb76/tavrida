@@ -137,10 +137,12 @@ services/{service-name}/
 
 | Критерий | scalar-config | plan-config |
 |----------|----------|------------------|
-| Значений на ключ | 1 (или per-user) | N (по числу тарифов) |
+| Значений на ключ | 1 (или per-user admin override) | N (по числу тарифов) |
 | Влияет на цену/лимит | ❌ | ✅ |
 | Примеры | формулы, списки слов, TTL | postsPerDay, promotionEnabled |
 | Кто меняет | admin | admin |
+
+> **Post-MVP:** третий реестр **user-prefs** (персональные опции member под plan-gate) — [ADR-020](../../03-architecture/adr/020-three-config-registries.md). До реализации: помечать кандидатов в README; временные domain-таблицы допустимы. Секция 👤 в шаблоне — после появления сервиса.
 
 ---
 

@@ -12,7 +12,7 @@
 ARG SERVICE_PKG=@tavrida/bff
 ARG SERVICE_DIR=services/bff
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 ARG SERVICE_PKG
 ARG SERVICE_DIR
 
@@ -25,15 +25,22 @@ COPY tools ./tools
 COPY services ./services
 COPY config ./config
 
-RUN pnpm install --frozen-lockfile
-RUN pnpm exec turbo run build --filter=${SERVICE_PKG}...
-RUN pnpm deploy --filter=${SERVICE_PKG} --prod --legacy /deploy
+RUN pnpm install --frozen-lockfile --ignore-scripts \
+  && pnpm rebuild esbuild @nestjs/core core-js \
+  && pnpm exec turbo run build --filter=${SERVICE_PKG}... \
+  && pnpm deploy --filter=${SERVICE_PKG} --prod --legacy /deploy
 
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 ARG SERVICE_DIR
 
+# Non-root runtime (Sonar docker:S6471)
+RUN addgroup -S tavrida && adduser -S -G tavrida tavrida
+USER tavrida
+
 WORKDIR /app
-COPY --from=build /deploy ./
+COPY --from=build --chown=tavrida:tavrida /deploy ./
+# Monorepo config (e.g. vanga.defaults.yaml for BFF)
+COPY --from=build --chown=tavrida:tavrida /repo/config ./config
 
 ENV NODE_ENV=production
 

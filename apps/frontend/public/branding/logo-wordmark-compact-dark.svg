@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 48" fill="none" role="img" aria-label="&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090;">
+  <title>&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; &#1051;&#1086;&#1090; — compact dark</title>
+  <text
+    x="0"
+    y="34"
+    font-family="'Unbounded', system-ui, sans-serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="-0.3"
+    paint-order="stroke fill"
+    stroke="#0B1F24"
+    stroke-width="3"
+    stroke-linejoin="round"
+  >
+    <tspan fill="#F2F4F3">&#1058;&#1072;&#1074;&#1088;&#1080;&#1076;&#1072; </tspan>
+    <tspan fill="#C9B89A">&#1051;&#1086;&#1090;</tspan>
+  </text>
+</svg>

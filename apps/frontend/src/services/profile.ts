@@ -44,12 +44,18 @@ async function profileFetch(path: string, init?: RequestInit) {
 
   if (!res.ok) {
     let detail = 'Запрос не удался';
+    let body: unknown = null;
     try {
-      const body = (await res.json()) as { detail?: string; message?: string | string[] };
-      if (typeof body.detail === 'string') detail = body.detail;
-      else if (typeof body.message === 'string') detail = body.message;
+      body = await res.json();
+      const parsed = body as { detail?: string; message?: string | string[] };
+      if (typeof parsed.detail === 'string') detail = parsed.detail;
+      else if (typeof parsed.message === 'string') detail = parsed.message;
     } catch {
       /* ignore */
+    }
+    const { applyHardLockFromResponse } = await import('./hardLock');
+    if (applyHardLockFromResponse(res.status, body)) {
+      throw new Error(detail);
     }
     throw new Error(detail);
   }

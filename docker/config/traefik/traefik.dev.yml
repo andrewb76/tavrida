@@ -11,6 +11,9 @@ api:
 entryPoints:
   web:
     address: ':80'
+    # Logto (and similar) need X-Forwarded-Proto behind TLS termination.
+    forwardedHeaders:
+      insecure: true
     http:
       redirections:
         entryPoint:
@@ -19,11 +22,15 @@ entryPoints:
           permanent: true
   websecure:
     address: ':443'
+    forwardedHeaders:
+      insecure: true
 
 certificatesResolvers:
   le:
     acme:
-      email: '${ACME_EMAIL}'
+      # Do NOT set email here — file values override CLI in Traefik v3.
+      # Email comes only from stack command:
+      #   --certificatesresolvers.le.acme.email=${ACME_EMAIL}
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
@@ -32,7 +39,9 @@ providers:
   swarm:
     endpoint: 'unix:///var/run/docker.sock'
     exposedByDefault: false
-    network: '${TRAEFIK_SWARM_NETWORK}'
+    # Overridden at runtime by --providers.swarm.network=… (compose interpolates).
+    # Do not use ${TRAEFIK_SWARM_NETWORK} here — Traefik often leaves it literal.
+    network: tavrida-dev_tavrida_net
     watch: true
   file:
     directory: /etc/traefik/dynamic

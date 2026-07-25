@@ -48,6 +48,7 @@ brandbook (значения, роли)
 |-----------------------|-------------|
 | `--token-primary` | `--token-patina` |
 | `--token-primary-hover` | `--token-patina-deep` |
+| `--token-primary-fg` | text on primary (`#fff` light / ink dark) |
 | `--token-accent` | `--token-copper` |
 | `--token-bg` | `--token-chalk` |
 | `--token-surface` | `--token-foam` |

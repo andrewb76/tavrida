@@ -36,7 +36,7 @@
 | 10 | [Данные](./10-data/README.md) | Schema per service, ownership |
 | 11 | [UX/UI](./11-ux-ui/README.md) | Wireframes, [screen tree](./11-ux-ui/screen-tree.md), IA |
 | 12 | [Процесс разработки](./12-dev-process/README.md) | Git, code review, релизы |
-| 13 | [Сопровождение](./13-maintenance/README.md) | Guidelines, changelog |
+| 13 | [Сопровождение](./13-maintenance/README.md) | Guidelines, ревью docs, changelog |
 | 14 | [Фронтенд](./14-frontend/README.md) | SPA: стек, API-слой, auth, сборка |
 
 ## 🏗️ Ключевые документы (фундамент)

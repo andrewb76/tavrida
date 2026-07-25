@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import type { Request } from 'express';
 import { ActAsService, ACT_AS_HEADER } from './act-as.service';
 import { resolveAuthMode } from './auth-config';
 import type { AuthUser } from './current-user.decorator';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,6 +20,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly config: ConfigService,
     private readonly actAs: ActAsService,
+    private readonly profiles: UserProfileClient,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,12 +31,14 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = header.slice('Bearer '.length).trim();
-    const actor = await this.verifyToken(token);
+    const actor = await this.verifyAccessToken(token);
+    await this.assertNotHardLocked(actor.sub);
     request.user = await this.actAs.apply(actor, request.headers[ACT_AS_HEADER]);
     return true;
   }
 
-  private async verifyToken(token: string): Promise<AuthUser> {
+  /** Public for WebSocket handshake (`?token=`). Does not apply Act-As. */
+  async verifyAccessToken(token: string): Promise<AuthUser> {
     const jwksUrl = this.config.get<string>('LOGTO_JWKS_URL');
     const audience = this.config.get<string>('LOGTO_AUDIENCE');
     const endpoint = this.config.get<string>('LOGTO_ENDPOINT');
@@ -71,6 +76,22 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
+  /** Used by WS after `verifyAccessToken`. Fail-open if user-profile is down. */
+  async assertNotHardLocked(userId: string): Promise<void> {
+    try {
+      const status = await this.profiles.isHardLocked(userId);
+      if (status.isHardLocked) {
+        throw new ForbiddenException({
+          type: 'hard_locked',
+          detail: 'Аккаунт заблокирован администратором',
+        });
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenException) throw error;
+      /* upstream unavailable — do not lock everyone out */
+    }
+  }
+
   private payloadToUser(result: Awaited<ReturnType<typeof jwtVerify>>): AuthUser {
     const sub = result.payload.sub;
     if (typeof sub !== 'string') {
@@ -105,7 +126,7 @@ function joseFailureReason(error: unknown): string {
   }
   if (
     code === 'ERR_JWT_CLAIM_VALIDATION_FAILED' ||
-    /unexpected "aud"|audience|\"aud\"/i.test(message)
+    /unexpected "aud"|audience|"aud"/i.test(message)
   ) {
     return (
       'Access token audience mismatch. VITE_LOGTO_API_RESOURCE must equal LOGTO_AUDIENCE, ' +

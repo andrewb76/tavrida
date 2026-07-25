@@ -35,6 +35,16 @@ export class UserProfileEntity {
   @Column('boolean', { name: 'is_suspended', default: false })
   isSuspended!: boolean;
 
+  /** Platform admin hard lock — not overwritten by Logto sync. */
+  @Column('boolean', { name: 'is_hard_locked', default: false })
+  isHardLocked!: boolean;
+
+  @Column('timestamptz', { name: 'hard_locked_at', nullable: true })
+  hardLockedAt!: Date | null;
+
+  @Column('varchar', { name: 'hard_locked_by', length: 128, nullable: true })
+  hardLockedBy!: string | null;
+
   @Column('timestamptz', { name: 'deleted_at', nullable: true })
   deletedAt!: Date | null;
 

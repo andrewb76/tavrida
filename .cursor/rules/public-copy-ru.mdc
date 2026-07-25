@@ -1,0 +1,39 @@
+---
+description: Публичные тексты и бренд — только русский язык
+globs: apps/frontend/**/*.{vue,html,svg,ts},apps/frontend/public/**/*
+alwaysApply: true
+---
+
+# Публичный копирайт — русский язык
+
+Всё, что видит пользователь **до входа** и на **публичных экранах** SPA, пишем **на русском**.
+
+## Обязательно по-русски
+
+- Логотип и словесная марка: **Таврида Лот** (два слова, кириллица)
+- Заголовки страниц (`document.title`, `<title>`)
+- Landing, «О клубе», join/invite, footer, навигация public layout
+- SVG-логотипы: `<text>`, `aria-label`, `<title>`
+- Кнопки и подписи на auth-экранах (Logto — через Console / `setup-logto-branding`, если есть UI-тексты)
+
+## Единый бренд в коде
+
+Импорт из `@/config/brand`:
+
+```typescript
+import { BRAND_NAME } from '@/config/brand';
+```
+
+Не дублировать строку «Tavrida Lot» / «Таврида Лот» в шаблонах.
+
+## Исключения (латиница допустима)
+
+- Имена пакетов `@tavrida/*`, директории репо, env, API, Keto namespace
+- Техническая документация для разработчиков (`docs/`, ADR)
+- Устоявшиеся термины в UI, если нет русского аналога без потери смысла (например OAuth в админке)
+
+## При добавлении UI
+
+1. Новый public route → `meta.title` на русском
+2. Новый ассет логотипа → кириллица, палитра из [brandbook.md](../../docs/11-ux-ui/brandbook.md) §4
+3. PR с английским текстом на landing/about/header — исправить до merge

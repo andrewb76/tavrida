@@ -40,9 +40,11 @@ const PENDING_INVITER_KEY = 'tavrida.invite.pendingInviter';
 const PENDING_INVITE_CODE_ID_KEY = 'tavrida.invite.pendingInviteCodeId';
 
 function randomPart(length: number): string {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
   let out = '';
   for (let i = 0; i < length; i++) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    out += CODE_ALPHABET[bytes[i]! % CODE_ALPHABET.length];
   }
   return out;
 }

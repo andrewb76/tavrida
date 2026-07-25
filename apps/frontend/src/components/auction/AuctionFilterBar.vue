@@ -104,6 +104,7 @@ function applyProFilters() {
           :value="search"
           type="search"
           placeholder="Поиск по лотам…"
+          aria-label="Поиск по лотам"
           :disabled="loading"
           @input="emit('update:search', ($event.target as HTMLInputElement).value)"
           @keydown.enter.prevent="emit('searchSubmit')"
@@ -112,6 +113,7 @@ function applyProFilters() {
 
       <select
         class="auction-filters__select"
+        aria-label="Категория"
         :value="categoryId ?? ''"
         :disabled="loading"
         @change="onCategoryChange"
@@ -154,6 +156,7 @@ function applyProFilters() {
 
       <select
         class="auction-filters__select"
+        aria-label="Сортировка"
         :value="sort"
         :disabled="loading || (sort === 'RELEVANCE' && !search.trim())"
         @change="onSortChange"

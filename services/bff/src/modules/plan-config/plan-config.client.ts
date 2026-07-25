@@ -226,31 +226,40 @@ export class PlanConfigClient {
     }
 
     if (!res.ok) {
-      let payload: Record<string, unknown> = {};
-      try {
-        payload = (await res.json()) as Record<string, unknown>;
-      } catch {
-        /* ignore */
-      }
-
-      const detail =
-        (typeof payload.detail === 'string' ? payload.detail : undefined) ??
-        (typeof payload.message === 'string'
-          ? payload.message
-          : Array.isArray(payload.message)
-            ? payload.message.join(', ')
-            : res.statusText);
-
-      const errBody = {
-        type: typeof payload.type === 'string' ? payload.type : 'upstream-error',
-        detail: `plan-config ${method} ${path}: ${detail}`,
-      };
-
-      if (res.status === 404) throw new NotFoundException(errBody);
-      if (res.status >= 500) throw new ServiceUnavailableException(errBody);
-      throw new HttpException(errBody, res.status);
+      throwPlanConfigHttpError(res, method, path, await readPlanConfigErrorPayload(res));
     }
 
     return (await res.json()) as T;
   }
+}
+
+async function readPlanConfigErrorPayload(res: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function planConfigErrorDetail(payload: Record<string, unknown>, statusText: string): string {
+  if (typeof payload.detail === 'string') return payload.detail;
+  if (typeof payload.message === 'string') return payload.message;
+  if (Array.isArray(payload.message)) return payload.message.join(', ');
+  return statusText;
+}
+
+function throwPlanConfigHttpError(
+  res: Response,
+  method: string,
+  path: string,
+  payload: Record<string, unknown>,
+): never {
+  const errBody = {
+    type: typeof payload.type === 'string' ? payload.type : 'upstream-error',
+    detail: `plan-config ${method} ${path}: ${planConfigErrorDetail(payload, res.statusText)}`,
+  };
+
+  if (res.status === 404) throw new NotFoundException(errBody);
+  if (res.status >= 500) throw new ServiceUnavailableException(errBody);
+  throw new HttpException(errBody, res.status);
 }
