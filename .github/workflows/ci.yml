@@ -168,24 +168,32 @@ jobs:
   sonar:
     name: SonarQube Scan
     runs-on: ubuntu-latest
-    # Enable: repo Variables SONAR_ORGANIZATION + SONAR_PROJECT_KEY, secret SONAR_TOKEN
-    # Dependabot PRs only get secrets from Settings → Secrets → Dependabot (not repo secrets).
-    # Skip when token is missing → avoids "Not authorized" / ALM binding ERROR.
-    if: >-
-      ${{
-        vars.SONAR_ORGANIZATION != '' &&
-        vars.SONAR_PROJECT_KEY != '' &&
-        secrets.SONAR_TOKEN != ''
-      }}
+    # Enable: repo Variables SONAR_ORGANIZATION + SONAR_PROJECT_KEY (+ secret SONAR_TOKEN)
+    # Note: `secrets` is NOT allowed in job-level `if` (Invalid workflow / Unrecognized named-value).
+    # Empty token is handled in a step below (Dependabot needs SONAR_TOKEN under Dependabot secrets).
+    if: ${{ vars.SONAR_ORGANIZATION != '' && vars.SONAR_PROJECT_KEY != '' }}
     needs: [lint]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
+      - name: Check SONAR_TOKEN
+        id: sonar_token
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "${SONAR_TOKEN}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::SONAR_TOKEN empty — skip scan (repo secret or Dependabot secret)."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # PR decoration: action reads GITHUB_EVENT. Push to master/dev → branch analysis
       # (dev is long-lived via sonar.branch.longLivedBranches.regex on SonarCloud).
       - name: Official SonarQube Scan
+        if: ${{ steps.sonar_token.outputs.skip != 'true' }}
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
