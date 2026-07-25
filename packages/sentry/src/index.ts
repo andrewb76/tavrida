@@ -20,7 +20,11 @@ function sampleRate(): number {
  */
 export function initSentryNode(options: InitSentryNodeOptions): boolean {
   const dsn = process.env.SENTRY_DSN?.trim();
-  if (!dsn || !/^https?:\/\//i.test(dsn)) return false;
+  if (!dsn || !/^https?:\/\//i.test(dsn)) {
+    // eslint-disable-next-line no-console -- bootstrap diagnostics before Nest Logger
+    console.warn(`[sentry] disabled for ${options.service}: SENTRY_DSN missing or invalid`);
+    return false;
+  }
 
   const environment =
     process.env.SENTRY_ENVIRONMENT?.trim() ||
@@ -31,16 +35,30 @@ export function initSentryNode(options: InitSentryNodeOptions): boolean {
     process.env.GIT_SHA?.trim() ||
     undefined;
 
+  let host = 'unknown';
+  try {
+    host = new URL(dsn).hostname;
+  } catch {
+    /* ignore */
+  }
+
   Sentry.init({
     dsn,
     environment,
     release,
     serverName: options.service,
     tracesSampleRate: sampleRate(),
+    debug: process.env.SENTRY_DEBUG === '1' || process.env.SENTRY_DEBUG === 'true',
     initialScope: {
       tags: { service: options.service },
     },
   });
+
+  // eslint-disable-next-line no-console -- bootstrap diagnostics before Nest Logger
+  console.log(
+    `[sentry] enabled for ${options.service} → ${host} env=${environment}` +
+      (release ? ` release=${release}` : ''),
+  );
 
   return true;
 }

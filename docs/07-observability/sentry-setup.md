@@ -1,6 +1,6 @@
 # 🐛 Sentry SDK → Hawk.so (Sentry-compatible DSN)
 
-> **Статус:** in progress · **Версия:** 0.3  
+> **Статус:** in progress · **Версия:** 0.4  
 > **Backend:** DSN `k1.hawk.so` через официальный `@sentry/node`  
 > **Frontend:** `@sentry/vue` + тот же / отдельный browser DSN
 
@@ -51,20 +51,42 @@ CI: `VITE_SENTRY_DSN` берётся из secret `SENTRY_DSN` (один прое
 
 ## 🔐 Dev Swarm / GitHub
 
-1. Environment `dev` → Secret **`SENTRY_DSN`** = Hawk Integration DSN.
-2. **Sync secrets (dev)** или Deploy (ensure secrets) → `tavrida_dev_sentry_dsn`.
-3. Redeploy с rebuild frontend (`skip_build=false`), чтобы вшить `VITE_SENTRY_DSN`.
+1. Environment `dev` → **`SENTRY_DSN`** = Hawk Integration DSN  
+   (предпочтительно **Secret**; Variable тоже подхватится через `secrets || vars` в Deploy/Sync).
+2. **Sync secrets (dev)** → Swarm `tavrida_dev_sentry_dsn`.
+3. **Deploy** с rebuild frontend (`skip_build=false`), чтобы вшить `VITE_SENTRY_DSN` в бандл.
 
 Локально: `.env.local` / `docker/swarm/dev.secrets.env` (не коммитить).
 
 ## ✅ Проверка
 
+Hawk envelope принимает наш DSN (`POST …/api/0/envelope/` → 200). Если в UI пусто — обычно DSN не дошёл до runtime/бандла.
+
 ```bash
-# backend — unhandled throw / 500 после attach
-# frontend — в консоли: throw new Error('sentry smoke')
+# 1) Local BE — в логе старта должно быть:
+#    [sentry] enabled for bff → k1.hawk.so env=…
+#    иначе: [sentry] disabled … SENTRY_DSN missing
+
+# 2) Local FE — в консоли браузера:
+#    [sentry] enabled for frontend → k1.hawk.so
+#    затем: throw new Error('sentry smoke')
+#    Network: POST https://k1.hawk.so/api/0/envelope/ → 200
+
+# 3) Swarm Nest:
+#    docker service logs tavrida-dev_bff | grep '\[sentry\]'
+#    secret: docker secret ls | grep sentry
 ```
 
-Событие должно появиться в [Hawk](https://hawk.so/) (гараж проекта). Допустима небольшая задержка.
+Событие в [Hawk](https://hawk.so/) (гараж). Допустима небольшая задержка.
+
+### Частые ошибки
+
+| Симптом | Причина |
+|---------|---------|
+| `[sentry] disabled` | нет `SENTRY_DSN` / не hydrate из `SENTRY_DSN_FILE` |
+| FE без `[sentry] enabled` | образ собран без `VITE_SENTRY_DSN` → redeploy **с build** |
+| Deploy sync падает на sentry | пустой Secret **и** Variable в env `dev` |
+| DSN только в Variables | раньше Deploy читал только `secrets.*` — теперь `secrets \|\| vars` |
 
 ## 🔗 Связанные разделы
 
@@ -75,4 +97,4 @@ CI: `VITE_SENTRY_DSN` берётся из secret `SENTRY_DSN` (один прое
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.3
+**Автор:** команда разработки · **Версия:** 0.4

@@ -7,13 +7,23 @@ import type { Router } from 'vue-router';
  */
 export function initSentryVue(app: App, router: Router): boolean {
   const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
-  if (!dsn) return false;
+  if (!dsn) {
+    console.warn('[sentry] disabled for frontend: VITE_SENTRY_DSN missing (build-time)');
+    return false;
+  }
 
   const environment =
     import.meta.env.VITE_SENTRY_ENVIRONMENT?.trim() ||
     import.meta.env.MODE ||
     'development';
   const release = import.meta.env.VITE_SENTRY_RELEASE?.trim() || undefined;
+
+  let host = 'unknown';
+  try {
+    host = new URL(dsn).hostname;
+  } catch {
+    /* ignore */
+  }
 
   Sentry.init({
     app,
@@ -27,5 +37,6 @@ export function initSentryVue(app: App, router: Router): boolean {
     },
   });
 
+  console.info(`[sentry] enabled for frontend → ${host} env=${environment}`);
   return true;
 }
