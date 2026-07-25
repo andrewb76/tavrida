@@ -122,8 +122,15 @@ VITEPRESS_BASE=/tavrida/ pnpm docs:build
 | `VITE_LOGTO_ENDPOINT`      | `https://auth.evatorg.su`                              |
 | `VITE_LOGTO_APP_ID`        | SPA app id                                             |
 | `VITE_LOGTO_API_RESOURCE`  | `https://api.evatorg.su` (= `LOGTO_AUDIENCE`)          |
+| `GRAFANA_CLOUD_PROMETHEUS_URL` | remote write URL из Grafana Cloud stack            |
+| `GRAFANA_CLOUD_PROMETHEUS_USERNAME` | Prometheus instance id                        |
+| `GRAFANA_CLOUD_LOKI_URL`   | Loki push URL                                          |
+| `GRAFANA_CLOUD_LOKI_USERNAME` | Loki instance id                                    |
+| `GRAFANA_CLOUD_OTLP_ENDPOINT` | OTLP gateway (`…/otlp`)                             |
+| `GRAFANA_CLOUD_OTLP_INSTANCE_ID` | OTLP username (часто = Prometheus id)            |
 
-Чеклист DNS / Logto / первого деплоя: [dev-evatorg.md](./dev-evatorg.md).
+Чеклист DNS / Logto / первого деплоя: [dev-evatorg.md](./dev-evatorg.md).  
+Observability: [grafana-setup.md](../07-observability/grafana-setup.md).
 
 
 
@@ -153,6 +160,8 @@ CI декодирует её в `docker/swarm/ci-ssh-agent.sh`. Сырой PEM �
 | `MINIO_ROOT_PASSWORD`    | sync-secrets → Swarm                          |
 | `LOGTO_M2M_APP_SECRET`   | sync-secrets → Swarm (tenant «dev/server»)    |
 | `INTERNAL_SERVICE_TOKEN` | sync-secrets → Swarm (`openssl rand -hex 32`) |
+| `SENTRY_DSN`             | sync-secrets → Nest + Vite build (Hawk/Sentry DSN) |
+| `GRAFANA_CLOUD_TOKEN`    | sync-secrets → Alloy (отложено) |
 
 > **Локальная разработка не затрагивается.** Environment `dev` читают только Actions (`deploy-dev`, `sync-secrets-dev`). Ноутбук использует gitignored `.env.local` / `docker/swarm/dev.secrets.env` — это разные файлы и разные Logto tenants.
 

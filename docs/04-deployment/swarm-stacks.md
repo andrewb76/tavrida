@@ -70,8 +70,10 @@ services:
 
 ## 📦 stack-tools
 
-Portainer, Dozzle, Adminer, RedisInsight, Mailpit — см. [dev-tools](../02-infrastructure/dev-tools.md).  
-Все роутеры: middleware `tinyauth`.
+Grafana Alloy (dev → Grafana Cloud), позже Portainer / Dozzle — см. [dev-tools](../02-infrastructure/dev-tools.md) · [grafana-setup](../07-observability/grafana-setup.md).  
+Файл: `docker/swarm/stack-tools.dev.yml` (подключается `deploy-dev.sh` при наличии `GRAFANA_CLOUD_PROMETHEUS_URL`).
+
+Все UI-роутеры tools (когда появятся): middleware `tinyauth`.
 
 ## 🏷️ Traefik labels (BFF)
 

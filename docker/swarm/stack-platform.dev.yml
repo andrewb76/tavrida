@@ -53,12 +53,18 @@ secrets:
   minio_secret_key:
     external: true
     name: tavrida_dev_minio_root_password
+  sentry_dsn:
+    external: true
+    name: tavrida_dev_sentry_dsn
 
 x-nest-env: &nest-env
   NODE_ENV: production
   REDIS_URL: redis://redis:6379
   RABBITMQ_URL_FILE: /run/secrets/rabbitmq_url
   INTERNAL_SERVICE_TOKEN_FILE: /run/secrets/internal_service_token
+  SENTRY_DSN_FILE: /run/secrets/sentry_dsn
+  SENTRY_ENVIRONMENT: dev
+  SENTRY_RELEASE: ${GIT_SHA}
 
 x-nest-deploy: &nest-deploy
   replicas: 1
@@ -75,6 +81,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-billing:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - billing_database_url
     environment:
@@ -95,6 +102,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-plan-config:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - plan_config_database_url
     environment:
@@ -117,6 +125,7 @@ services:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
+      - sentry_dsn
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -142,6 +151,7 @@ services:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
+      - sentry_dsn
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -166,6 +176,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-auction:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - auction_database_url
     environment:
@@ -187,6 +198,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-subscriptions:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - subscriptions_database_url
     environment:
@@ -207,6 +219,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-user-profile:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - user_profile_database_url
     environment:
@@ -227,6 +240,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-scalar-config:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - scalar_config_database_url
     environment:
@@ -247,6 +261,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-forum:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - forum_database_url
     environment:
@@ -268,6 +283,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-periods:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - periods_database_url
     environment:
@@ -288,6 +304,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-marketplace:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - marketplace_database_url
     environment:
@@ -308,6 +325,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-notifications:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - notifications_database_url
     environment:
       <<: *nest-env
@@ -328,6 +346,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-chat:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - chat_database_url
     environment:
@@ -348,6 +367,7 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
       - internal_service_token
+      - sentry_dsn
       - rabbitmq_url
       - bff_database_url
       - logto_m2m_app_secret

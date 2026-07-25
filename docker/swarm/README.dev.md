@@ -27,6 +27,7 @@ TLS: Let's Encrypt (HTTP-01) через Traefik.
 |------|------------|
 | `stack-infra.dev.yml` | Traefik (+ apex redirect), Postgres, Redis, RabbitMQ, MinIO, imgproxy, Keto |
 | `stack-platform.dev.yml` | BFF + domain services + frontend (**GHCR**) + `plan-config-renew` (hourly) |
+| `stack-tools.dev.yml` | Grafana Alloy → Cloud (если `GRAFANA_CLOUD_PROMETHEUS_URL` задан) |
 | `dev.env.example` | Публичный конфиг → `dev.env` (домены, GHCR, Logto URLs) |
 | `dev.secrets.env.example` | Секреты → `dev.secrets.env` (**только на ноутбуке**, gitignore) |
 | `secrets-manifest.dev` | Список ключей → Swarm secret `tavrida_dev_*` |

@@ -1,0 +1,66 @@
+import * as Sentry from '@sentry/node';
+
+export type InitSentryNodeOptions = {
+  /** Logical service name (tag `service`) */
+  service: string;
+};
+
+function sampleRate(): number {
+  const raw = process.env.SENTRY_TRACES_SAMPLE_RATE?.trim();
+  if (raw !== undefined && raw !== '') {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n >= 0 && n <= 1) return n;
+  }
+  return process.env.NODE_ENV === 'production' ? 0.2 : 1;
+}
+
+/**
+ * Init `@sentry/node` when `SENTRY_DSN` is set (no-op otherwise).
+ * Hawk.so accepts official Sentry SDK DSN from project Integrations.
+ */
+export function initSentryNode(options: InitSentryNodeOptions): boolean {
+  const dsn = process.env.SENTRY_DSN?.trim();
+  if (!dsn || !/^https?:\/\//i.test(dsn)) return false;
+
+  const environment =
+    process.env.SENTRY_ENVIRONMENT?.trim() ||
+    process.env.NODE_ENV?.trim() ||
+    'development';
+  const release =
+    process.env.SENTRY_RELEASE?.trim() ||
+    process.env.GIT_SHA?.trim() ||
+    undefined;
+
+  Sentry.init({
+    dsn,
+    environment,
+    release,
+    serverName: options.service,
+    tracesSampleRate: sampleRate(),
+    initialScope: {
+      tags: { service: options.service },
+    },
+  });
+
+  return true;
+}
+
+type NestLikeApp = {
+  getHttpAdapter: () => { getInstance: () => unknown };
+};
+
+/**
+ * Hook Nest (Express) error pipeline so unhandled HTTP errors reach Sentry.
+ * Call after `NestFactory.create`.
+ */
+export function attachSentryToNestApp(app: NestLikeApp): void {
+  if (!process.env.SENTRY_DSN?.trim()) return;
+  try {
+    const instance = app.getHttpAdapter().getInstance();
+    Sentry.setupExpressErrorHandler(instance as Parameters<typeof Sentry.setupExpressErrorHandler>[0]);
+  } catch {
+    // Non-Express adapter or Sentry not inited — ignore
+  }
+}
+
+export { Sentry };

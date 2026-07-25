@@ -112,6 +112,12 @@ jobs:
           VITE_LOGTO_ENDPOINT: ${{ vars.VITE_LOGTO_ENDPOINT }}
           VITE_LOGTO_APP_ID: ${{ vars.VITE_LOGTO_APP_ID }}
           VITE_LOGTO_API_RESOURCE: ${{ vars.VITE_LOGTO_API_RESOURCE }}
+          GRAFANA_CLOUD_PROMETHEUS_URL: ${{ vars.GRAFANA_CLOUD_PROMETHEUS_URL }}
+          GRAFANA_CLOUD_PROMETHEUS_USERNAME: ${{ vars.GRAFANA_CLOUD_PROMETHEUS_USERNAME }}
+          GRAFANA_CLOUD_LOKI_URL: ${{ vars.GRAFANA_CLOUD_LOKI_URL }}
+          GRAFANA_CLOUD_LOKI_USERNAME: ${{ vars.GRAFANA_CLOUD_LOKI_USERNAME }}
+          GRAFANA_CLOUD_OTLP_ENDPOINT: ${{ vars.GRAFANA_CLOUD_OTLP_ENDPOINT }}
+          GRAFANA_CLOUD_OTLP_INSTANCE_ID: ${{ vars.GRAFANA_CLOUD_OTLP_INSTANCE_ID }}
         run: ./docker/swarm/ci-write-dev-env.sh
 
       - name: Log in to GHCR
@@ -135,6 +141,9 @@ jobs:
           VITE_LOGTO_ENDPOINT: ${{ vars.VITE_LOGTO_ENDPOINT }}
           VITE_LOGTO_APP_ID: ${{ vars.VITE_LOGTO_APP_ID }}
           VITE_LOGTO_API_RESOURCE: ${{ vars.VITE_LOGTO_API_RESOURCE }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: dev
         run: ./docker/swarm/build-images.sh --push
 
       - name: Start SSH agent
@@ -160,6 +169,8 @@ jobs:
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
           LOGTO_M2M_APP_SECRET: ${{ secrets.LOGTO_M2M_APP_SECRET }}
           INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          GRAFANA_CLOUD_TOKEN: ${{ secrets.GRAFANA_CLOUD_TOKEN }}
         run: |
           {
             echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
@@ -167,6 +178,8 @@ jobs:
             echo "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
             echo "LOGTO_M2M_APP_SECRET=${LOGTO_M2M_APP_SECRET}"
             echo "INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}"
+            echo "SENTRY_DSN=${SENTRY_DSN}"
+            echo "GRAFANA_CLOUD_TOKEN=${GRAFANA_CLOUD_TOKEN}"
           } > docker/swarm/dev.secrets.env
           DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
 

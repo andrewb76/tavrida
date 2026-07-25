@@ -68,9 +68,16 @@
 | `NOVU_API_KEY` | **да** | notifications | — | Secret Novu CE / Cloud ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); local ≈ `NOVU_SECRET_KEY` из `docker/compose/novu.local.env` |
 | `NOVU_API_URL` | нет | notifications | `http://localhost:3020` | Self-host API ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); Cloud был `https://api.novu.co` |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox (из Dashboard) |
-| `SENTRY_DSN` | **да** | все NestJS, опц. | — | Backend error tracking |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector |
+| `SENTRY_DSN` | **да** | все NestJS, frontend build | — | Hawk/Sentry DSN ([sentry-setup](../07-observability/sentry-setup.md)); Swarm `tavrida_dev_sentry_dsn` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector; на Swarm → `http://alloy:4318` |
 | `OTEL_SERVICE_NAME` | нет | каждый сервис | имя сервиса | Идентификатор в трейсах |
+| `GRAFANA_CLOUD_PROMETHEUS_URL` | нет | Alloy (dev) | — | Mimir remote_write URL ([grafana-setup](../07-observability/grafana-setup.md)) |
+| `GRAFANA_CLOUD_PROMETHEUS_USERNAME` | нет | Alloy | — | Prometheus instance id |
+| `GRAFANA_CLOUD_LOKI_URL` | нет | Alloy | — | Loki push URL |
+| `GRAFANA_CLOUD_LOKI_USERNAME` | нет | Alloy | — | Loki instance id |
+| `GRAFANA_CLOUD_OTLP_ENDPOINT` | нет | Alloy | — | Tempo OTLP gateway (`…/otlp`) |
+| `GRAFANA_CLOUD_OTLP_INSTANCE_ID` | нет | Alloy | — | OTLP basic-auth username |
+| `GRAFANA_CLOUD_TOKEN` | **да** (для Alloy) | Alloy | — | Access Policy token → Swarm `tavrida_dev_grafana_cloud_token` |
 
 ---
 

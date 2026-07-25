@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@logto/vue": "^3.0.13",
+    "@sentry/vue": "^9.40.0",
     "@tanstack/vue-query": "^5.62.8",
     "@tavrida/object-storage": "workspace:*",
     "@tavrida/shared": "workspace:*",

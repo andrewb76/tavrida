@@ -9,6 +9,7 @@ export function hydrateSecretEnv(keys: string[] = []): void {
     'DATABASE_URL',
     'INTERNAL_SERVICE_TOKEN',
     'RABBITMQ_URL',
+    'SENTRY_DSN',
     ...keys,
   ];
   for (const key of defaults) {

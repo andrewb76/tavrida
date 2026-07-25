@@ -76,6 +76,9 @@ docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_LOGTO_ENDPOINT=${VITE_LOGTO_ENDPOINT:-}" \
   --build-arg "VITE_LOGTO_APP_ID=${VITE_LOGTO_APP_ID:-}" \
   --build-arg "VITE_LOGTO_API_RESOURCE=${VITE_LOGTO_API_RESOURCE:-https://api.${DEV_DOMAIN}}" \
+  --build-arg "VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-${SENTRY_DSN:-}}" \
+  --build-arg "VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT:-dev}" \
+  --build-arg "VITE_SENTRY_RELEASE=${GIT_SHA}" \
   -t "${frontend_image}" \
   "${ROOT}"
 if $PUSH; then

@@ -112,10 +112,21 @@ Testing rollout:
 Dev Swarm (evatorg.su):
   ✔ Репо: CD только с dev + apex redirect + docs @ops @docs @done(26-07-18)
   ✔ Logto OSS в stack-infra (auth./logto.) вместо Cloud @ops @done(26-07-19)
+  ✔ Alloy stack-tools + docs → Grafana Cloud (нужны credentials в GH env) @ops @observability @done(26-07-25)
+  ✘ Grafana Cloud Free stack + token / GH vars / Explore verify @ops @observability @cancelled(26-07-25) отложено
+  ✔ Sentry SDK Nest+Vue (`@tavrida/sentry`, `@sentry/vue`) → Hawk DSN @ops @observability @done(26-07-25)
+  ☐ GH Environment `dev`: secret `SENTRY_DSN` → Sync secrets + Deploy (rebuild FE) @ops @observability
+  ☐ Verify Hawk garage: smoke error from BFF + SPA @ops @observability
   ☐ DNS A: auth + logto (+ остальные) → 193.142.148.175 @ops
   ☐ Logto Console: SPA + API resource + M2M; GH env VITE_LOGTO_* @ops
   ☐ Deploy с rebuild frontend + приёмка login/audience @ops
   ☐ Защита ветки dev @ops
+
+Observability:
+  ☐ `@tavrida/otel` + NestJS bootstrap → Alloy OTLP на Swarm @otel @backend
+  ☐ Point Swarm services `OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318` @ops @otel
+  ✘ App dashboards / alerts в Grafana Cloud @observability @cancelled(26-07-25) отложено
+  ☐ Resume Grafana Cloud Alloy when ready @observability @ops
 
 Docs / workflow:
   ✔ Добавить CLUB_INVITES_* в PLATFORM-SECRETS.md @done(26-07-11)

@@ -16,4 +16,5 @@ hydrateSecretEnv([
   'INTERNAL_SERVICE_TOKEN',
   'LOGTO_M2M_APP_SECRET',
   'MINIO_SECRET_KEY',
+  'SENTRY_DSN',
 ]);

@@ -34,7 +34,18 @@ if [[ "$state" != "active" ]]; then
   fi
 fi
 
-echo "Deploying stack ${STACK_NAME} (infra + platform)..." >&2
+COMPOSE_ARGS=(
+  -c "${ROOT}/docker/swarm/stack-infra.dev.yml"
+  -c "${ROOT}/docker/swarm/stack-platform.dev.yml"
+)
+if [[ -n "${GRAFANA_CLOUD_PROMETHEUS_URL:-}" ]]; then
+  COMPOSE_ARGS+=(-c "${ROOT}/docker/swarm/stack-tools.dev.yml")
+  echo "Observability: Grafana Alloy → Cloud (GRAFANA_CLOUD_* set)" >&2
+else
+  echo "Observability: skip Alloy (set GRAFANA_CLOUD_PROMETHEUS_URL in dev.env to enable)" >&2
+fi
+
+echo "Deploying stack ${STACK_NAME} (infra + platform${GRAFANA_CLOUD_PROMETHEUS_URL:+ + tools})..." >&2
 echo "Ensure secrets are synced: DOCKER_CONTEXT=${DOCKER_CONTEXT:-default} ./docker/swarm/sync-secrets-dev.sh" >&2
 
 # Swarm optimistic concurrency: concurrent/internal version bumps can yield
@@ -46,8 +57,7 @@ while true; do
   out="$("${docker_cmd[@]}" stack deploy \
     --with-registry-auth \
     --resolve-image always \
-    -c "${ROOT}/docker/swarm/stack-infra.dev.yml" \
-    -c "${ROOT}/docker/swarm/stack-platform.dev.yml" \
+    "${COMPOSE_ARGS[@]}" \
     "$STACK_NAME" 2>&1)"
   rc=$?
   set -e

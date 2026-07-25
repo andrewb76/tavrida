@@ -1,6 +1,6 @@
 # 📊 Observability
 
-> **Статус:** spec ready · **Версия:** 0.2
+> **Статус:** in progress · **Версия:** 0.3
 
 ## 🎯 Назначение
 
@@ -11,7 +11,8 @@
 | Инструмент | Назначение |
 |------------|------------|
 | Grafana Cloud | Метрики (Mimir), логи (Loki), трейсы (Tempo) |
-| OpenTelemetry | SDK в NestJS-сервисах |
+| Grafana Alloy | Agent на Swarm → Cloud ([grafana-setup](./grafana-setup.md)) |
+| OpenTelemetry | SDK в NestJS (planned) → Alloy OTLP |
 | Sentry | Ошибки frontend + backend |
 | Dozzle / Jaeger | Local debug ([dev-tools](../02-infrastructure/dev-tools.md)) |
 
@@ -20,16 +21,18 @@
 | Документ | Описание |
 |----------|----------|
 | [logging-metrics.md](./logging-metrics.md) | JSON logs, metric names, OTel |
-| [grafana-setup.md](./grafana-setup.md) | Cloud stack, dashboards, alerts |
+| [grafana-setup.md](./grafana-setup.md) | Cloud stack, Alloy на dev, dashboards, alerts |
 | [slo.md](./slo.md) | SLI/SLO targets |
 | [sentry-setup.md](./sentry-setup.md) | Sentry NestJS + Vue |
 
 ## 📋 Implementation TODO
 
-- [ ] Alloy agent в stack-tools
+- [x] Sentry SDK Nest + Vue → Hawk DSN ([sentry-setup](./sentry-setup.md))
+- [x] Alloy agent в `stack-tools.dev.yml` → Grafana Cloud (dev) — **отложено включать**
 - [ ] OTel bootstrap shared package `@tavrida/otel`
 - [ ] Grafana dashboards as code (optional)
 - [ ] SLO recording rules в Mimir
+- [ ] Point NestJS `OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318` на Swarm
 
 ## 🔗 Связанные разделы
 
@@ -39,4 +42,4 @@
 
 ---
 
-**Автор:** команда разработки · **Версия:** 0.2-spec
+**Автор:** команда разработки · **Версия:** 0.3

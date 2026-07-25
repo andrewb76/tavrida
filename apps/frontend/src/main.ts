@@ -7,6 +7,7 @@ import App from './App.vue';
 import './assets/main.css';
 import { createLogtoConfig } from './config/logto';
 import { router } from './router';
+import { initSentryVue } from './sentry';
 
 const i18n = createI18n({
   legacy: false,
@@ -26,6 +27,7 @@ if (logtoConfig) {
 }
 
 app.use(router);
+initSentryVue(app, router);
 app.use(VueQueryPlugin);
 app.use(i18n);
 

@@ -1,0 +1,143 @@
+// Grafana Alloy → Grafana Cloud (dev)
+// Credentials: env URLs/usernames + Swarm secret grafana_cloud_token
+// Docs: docs/07-observability/grafana-setup.md
+
+local.file "grafana_cloud_token" {
+  filename  = "/run/secrets/grafana_cloud_token"
+  is_secret = true
+}
+
+// --- Docker discovery (logs + cAdvisor metrics) ---
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
+    target_label  = "swarm_service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_stack_namespace"]
+    target_label  = "stack"
+  }
+
+  rule {
+    target_label = "env"
+    replacement  = "dev"
+  }
+}
+
+// --- Metrics: cAdvisor → Mimir ---
+
+prometheus.exporter.cadvisor "docker" {
+  docker_host = "unix:///var/run/docker.sock"
+
+  storage_duration = "5m"
+}
+
+prometheus.scrape "cadvisor" {
+  targets         = prometheus.exporter.cadvisor.docker.targets
+  forward_to      = [prometheus.relabel.metrics.receiver]
+  scrape_interval = "60s"
+  scrape_timeout  = "10s"
+}
+
+prometheus.relabel "metrics" {
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+
+  rule {
+    target_label = "env"
+    replacement  = "dev"
+  }
+
+  rule {
+    target_label = "cluster"
+    replacement  = "tavrida-dev"
+  }
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USERNAME")
+      password = local.file.grafana_cloud_token.content
+    }
+  }
+}
+
+// --- Logs: Docker stdout → Loki ---
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker_containers.output
+  labels     = { "env" = "dev", "cluster" = "tavrida-dev" }
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USERNAME")
+      password = local.file.grafana_cloud_token.content
+    }
+  }
+}
+
+// --- Traces: OTLP (NestJS later) → Tempo ---
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.processor.transform.defaults.input]
+  }
+}
+
+otelcol.processor.transform "defaults" {
+  error_mode = "ignore"
+
+  trace_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["deployment.environment"], "dev")`,
+      `set(attributes["cluster"], "tavrida-dev")`,
+    ]
+  }
+
+  output {
+    traces = [otelcol.exporter.otlphttp.grafana_cloud.input]
+  }
+}
+
+otelcol.auth.basic "grafana_cloud" {
+  username = sys.env("GRAFANA_CLOUD_OTLP_INSTANCE_ID")
+  password = local.file.grafana_cloud_token.content
+}
+
+otelcol.exporter.otlphttp "grafana_cloud" {
+  client {
+    endpoint = sys.env("GRAFANA_CLOUD_OTLP_ENDPOINT")
+    auth     = otelcol.auth.basic.grafana_cloud.handler
+  }
+}

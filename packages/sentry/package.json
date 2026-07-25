@@ -1,0 +1,25 @@
+{
+  "name": "@tavrida/sentry",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@sentry/node": "^9.40.0"
+  },
+  "devDependencies": {
+    "@tavrida/tsconfig": "workspace:*",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}
