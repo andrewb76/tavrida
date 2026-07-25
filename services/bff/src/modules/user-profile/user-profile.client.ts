@@ -358,36 +358,42 @@ export class UserProfileClient {
     const payload = parseJsonBody(raw);
 
     if (!res.ok) {
-      const detail =
-        (payload && typeof payload === 'object' && typeof (payload as { detail?: unknown }).detail === 'string'
-          ? (payload as { detail: string }).detail
-          : undefined) ??
-        (payload && typeof payload === 'object' && typeof (payload as { message?: unknown }).message === 'string'
-          ? (payload as { message: string }).message
-          : payload &&
-              typeof payload === 'object' &&
-              Array.isArray((payload as { message?: unknown }).message)
-            ? ((payload as { message: string[] }).message).join(', ')
-            : res.statusText);
-
-      const body = {
-        type:
-          payload && typeof payload === 'object' && typeof (payload as { type?: unknown }).type === 'string'
-            ? (payload as { type: string }).type
-            : 'upstream-error',
-        detail: `user-profile ${method} ${path}: ${detail}`,
-      };
-
-      if (res.status === 404) throw new NotFoundException(body);
-      if (res.status === 409) throw new ConflictException(body);
-      if (res.status === 410) throw new GoneException(body);
-      if (res.status >= 500) throw new ServiceUnavailableException(body);
-      throw new HttpException(body, res.status);
+      throwUserProfileHttpError(res, method, path, payload);
     }
 
     // Nest may serialize `return null` as an empty body; treat both as null.
     return (payload ?? null) as T;
   }
+}
+
+function payloadStringField(payload: unknown, field: 'detail' | 'message' | 'type'): string | undefined {
+  if (!payload || typeof payload !== 'object') return undefined;
+  const value = (payload as Record<string, unknown>)[field];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function payloadMessageDetail(payload: unknown, statusText: string): string {
+  const detail = payloadStringField(payload, 'detail');
+  if (detail) return detail;
+  const message = payloadStringField(payload, 'message');
+  if (message) return message;
+  if (payload && typeof payload === 'object' && Array.isArray((payload as Record<string, unknown>).message)) {
+    return ((payload as { message: string[] }).message).join(', ');
+  }
+  return statusText;
+}
+
+function throwUserProfileHttpError(res: Response, method: string, path: string, payload: unknown): never {
+  const body = {
+    type: payloadStringField(payload, 'type') ?? 'upstream-error',
+    detail: `user-profile ${method} ${path}: ${payloadMessageDetail(payload, res.statusText)}`,
+  };
+
+  if (res.status === 404) throw new NotFoundException(body);
+  if (res.status === 409) throw new ConflictException(body);
+  if (res.status === 410) throw new GoneException(body);
+  if (res.status >= 500) throw new ServiceUnavailableException(body);
+  throw new HttpException(body, res.status);
 }
 
 function parseJsonBody(raw: string): unknown {

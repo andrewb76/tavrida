@@ -161,24 +161,14 @@ export class PeriodsService {
       throw new BadRequestException('categoryId cannot be changed');
     }
 
-    if (patch.title !== undefined) row.title = patch.title.trim();
-    if (patch.summary !== undefined) row.summary = patch.summary;
-    if (patch.body !== undefined) row.body = patch.body;
-    if (patch.sortIndex !== undefined) row.sortIndex = patch.sortIndex;
-    if (patch.startsOn !== undefined) row.startsOn = patch.startsOn.slice(0, 10);
-    if (patch.endsOn !== undefined) row.endsOn = patch.endsOn.slice(0, 10);
+    this.applyPeriodPatch(row, patch);
 
     if (this.toDateString(row.startsOn) > this.toDateString(row.endsOn)) {
       throw new BadRequestException('startsOn must be ≤ endsOn');
     }
 
     if (patch.metadata !== undefined) {
-      const category = await this.categories.get(row.categoryId);
-      try {
-        row.metadata = validateMetadataValues(category.metadataSchema, patch.metadata);
-      } catch (e) {
-        throw new BadRequestException(e instanceof Error ? e.message : 'Invalid metadata');
-      }
+      await this.setValidatedMetadata(row, patch.metadata);
     }
 
     const saved = await this.repo.save(row);
@@ -190,6 +180,34 @@ export class PeriodsService {
     await this.assertPartition(saved);
 
     return saved;
+  }
+
+  private applyPeriodPatch(
+    row: PeriodEntity,
+    patch: {
+      startsOn?: string;
+      endsOn?: string;
+      title?: string;
+      summary?: string;
+      body?: string;
+      sortIndex?: number;
+    },
+  ): void {
+    if (patch.title !== undefined) row.title = patch.title.trim();
+    if (patch.summary !== undefined) row.summary = patch.summary;
+    if (patch.body !== undefined) row.body = patch.body;
+    if (patch.sortIndex !== undefined) row.sortIndex = patch.sortIndex;
+    if (patch.startsOn !== undefined) row.startsOn = patch.startsOn.slice(0, 10);
+    if (patch.endsOn !== undefined) row.endsOn = patch.endsOn.slice(0, 10);
+  }
+
+  private async setValidatedMetadata(row: PeriodEntity, metadata: Record<string, unknown>): Promise<void> {
+    const category = await this.categories.get(row.categoryId);
+    try {
+      row.metadata = validateMetadataValues(category.metadataSchema, metadata);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : 'Invalid metadata');
+    }
   }
 
   async remove(id: string) {
@@ -241,117 +259,173 @@ export class PeriodsService {
     }
 
     const existing = await this.repo.find({ where: { parentId } });
-    const keepIds = new Set(children.map((c) => c.id).filter(Boolean) as string[]);
-    for (const old of existing) {
-      if (!keepIds.has(old.id)) {
-        const grand = await this.repo.count({ where: { parentId: old.id } });
-        if (grand > 0) {
-          throw new BadRequestException(`Cannot drop period ${old.id}: has children`);
-        }
-        await this.repo.remove(old);
-      }
-    }
+    await this.removeDroppedChildren(parentId, existing, children);
 
     const result: PeriodEntity[] = [];
     for (let i = 0; i < children.length; i++) {
-      const c = children[i]!;
-      let metadata: Record<string, unknown> = {};
-      try {
-        metadata = validateMetadataValues(category.metadataSchema, c.metadata);
-      } catch (e) {
-        throw new BadRequestException(e instanceof Error ? e.message : 'Invalid metadata');
-      }
-
-      if (c.id) {
-        const row = await this.get(c.id);
-        if (row.parentId !== parentId) {
-          throw new BadRequestException(`Period ${c.id} is not a child of parent`);
-        }
-        row.startsOn = c.startsOn.slice(0, 10);
-        row.endsOn = c.endsOn.slice(0, 10);
-        row.title = c.title.trim();
-        row.summary = c.summary ?? row.summary;
-        row.body = c.body ?? row.body;
-        row.metadata = metadata;
-        row.sortIndex = i;
-        result.push(await this.repo.save(row));
-      } else {
-        const row = this.repo.create({
-          categoryId: parent.categoryId,
-          parentId: parent.id,
-          rootId: parent.rootId,
-          depth: parent.depth + 1,
-          sortIndex: i,
-          startsOn: c.startsOn.slice(0, 10),
-          endsOn: c.endsOn.slice(0, 10),
-          title: c.title.trim(),
-          summary: c.summary ?? '',
-          body: c.body ?? '',
-          metadata,
-        });
-        result.push(await this.repo.save(row));
-      }
+      result.push(await this.upsertChildPeriod(parent, category, children[i]!, i));
     }
 
     return { data: result };
   }
 
-  async query(input: QueryPeriodsInput): Promise<PeriodEntity[] | PeriodTreeNode[]> {
-    let categoryId = input.categoryId;
-    if (!categoryId && input.categorySlug) {
-      const cat = await this.categories.getBySlug(input.categorySlug);
-      categoryId = cat.id;
+  private async removeDroppedChildren(
+    parentId: string,
+    existing: PeriodEntity[],
+    children: Array<{ id?: string }>,
+  ): Promise<void> {
+    const keepIds = new Set(children.map((c) => c.id).filter(Boolean) as string[]);
+    for (const old of existing) {
+      if (keepIds.has(old.id)) continue;
+
+      const grand = await this.repo.count({ where: { parentId: old.id } });
+      if (grand > 0) {
+        throw new BadRequestException(`Cannot drop period ${old.id}: has children`);
+      }
+      await this.repo.remove(old);
+    }
+  }
+
+  private async upsertChildPeriod(
+    parent: PeriodEntity,
+    category: PeriodCategoryEntity,
+    child: {
+      id?: string;
+      startsOn: string;
+      endsOn: string;
+      title: string;
+      summary?: string;
+      body?: string;
+      metadata?: Record<string, unknown>;
+    },
+    sortIndex: number,
+  ): Promise<PeriodEntity> {
+    let metadata: Record<string, unknown> = {};
+    try {
+      metadata = validateMetadataValues(category.metadataSchema, child.metadata);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : 'Invalid metadata');
     }
 
+    if (child.id) {
+      const row = await this.get(child.id);
+      if (row.parentId !== parent.id) {
+        throw new BadRequestException(`Period ${child.id} is not a child of parent`);
+      }
+      row.startsOn = child.startsOn.slice(0, 10);
+      row.endsOn = child.endsOn.slice(0, 10);
+      row.title = child.title.trim();
+      row.summary = child.summary ?? row.summary;
+      row.body = child.body ?? row.body;
+      row.metadata = metadata;
+      row.sortIndex = sortIndex;
+      return this.repo.save(row);
+    }
+
+    const row = this.repo.create({
+      categoryId: parent.categoryId,
+      parentId: parent.id,
+      rootId: parent.rootId,
+      depth: parent.depth + 1,
+      sortIndex,
+      startsOn: child.startsOn.slice(0, 10),
+      endsOn: child.endsOn.slice(0, 10),
+      title: child.title.trim(),
+      summary: child.summary ?? '',
+      body: child.body ?? '',
+      metadata,
+    });
+    return this.repo.save(row);
+  }
+
+  async query(input: QueryPeriodsInput): Promise<PeriodEntity[] | PeriodTreeNode[]> {
+    const categoryId = await this.resolveQueryCategoryId(input);
     const qb = this.repo.createQueryBuilder('p').orderBy('p.startsOn', 'ASC').addOrderBy('p.sortIndex', 'ASC');
 
     if (categoryId) qb.andWhere('p.categoryId = :categoryId', { categoryId });
     if (input.rootId) qb.andWhere('p.rootId = :rootId', { rootId: input.rootId });
 
-    if (input.view !== 'tree') {
-      if (input.rootsOnly) {
-        qb.andWhere('p.parentId IS NULL');
-      } else if (input.parentId !== undefined) {
-        if (input.parentId === null) qb.andWhere('p.parentId IS NULL');
-        else qb.andWhere('p.parentId = :parentId', { parentId: input.parentId });
+    this.applyQueryViewFilters(qb, input);
+    this.applyQueryDateFilters(qb, input);
+    this.applyQueryMetadataFilter(qb, input);
+    await this.applyQueryMaxDepthFilter(qb, input);
+
+    const rows = await qb.getMany();
+    if (input.view === 'flat') return rows;
+    return this.buildTree(rows);
+  }
+
+  private async resolveQueryCategoryId(input: QueryPeriodsInput): Promise<string | undefined> {
+    if (input.categoryId) return input.categoryId;
+    if (!input.categorySlug) return undefined;
+    const cat = await this.categories.getBySlug(input.categorySlug);
+    return cat.id;
+  }
+
+  private applyQueryViewFilters(
+    qb: ReturnType<Repository<PeriodEntity>['createQueryBuilder']>,
+    input: QueryPeriodsInput,
+  ): void {
+    if (input.view === 'tree') {
+      if (input.parentId) {
+        qb.andWhere('(p.id = :treeRoot OR p.rootId = :treeRoot)', {
+          treeRoot: input.parentId,
+        });
       }
-    } else if (input.parentId) {
-      // tree rooted at a specific node: load that subtree via root filter after fetch
-      qb.andWhere('(p.id = :treeRoot OR p.rootId = :treeRoot)', {
-        treeRoot: input.parentId,
-      });
-    } else if (input.rootsOnly === false && input.parentId === undefined && input.rootId) {
-      // already filtered by rootId
+      return;
     }
 
+    if (input.rootsOnly) {
+      qb.andWhere('p.parentId IS NULL');
+      return;
+    }
+    if (input.parentId === undefined) return;
+    if (input.parentId === null) qb.andWhere('p.parentId IS NULL');
+    else qb.andWhere('p.parentId = :parentId', { parentId: input.parentId });
+  }
+
+  private applyQueryDateFilters(
+    qb: ReturnType<Repository<PeriodEntity>['createQueryBuilder']>,
+    input: QueryPeriodsInput,
+  ): void {
     if (input.from) {
       qb.andWhere('p.endsOn >= :from', { from: input.from.slice(0, 10) });
     }
     if (input.to) {
       qb.andWhere('p.startsOn <= :to', { to: input.to.slice(0, 10) });
     }
+  }
 
-    if (input.metadata && Object.keys(input.metadata).length > 0) {
-      qb.andWhere('p.metadata @> :metadata::jsonb', {
-        metadata: JSON.stringify(input.metadata),
-      });
+  private applyQueryMetadataFilter(
+    qb: ReturnType<Repository<PeriodEntity>['createQueryBuilder']>,
+    input: QueryPeriodsInput,
+  ): void {
+    if (!input.metadata || Object.keys(input.metadata).length === 0) return;
+    qb.andWhere('p.metadata @> :metadata::jsonb', {
+      metadata: JSON.stringify(input.metadata),
+    });
+  }
+
+  private async applyQueryMaxDepthFilter(
+    qb: ReturnType<Repository<PeriodEntity>['createQueryBuilder']>,
+    input: QueryPeriodsInput,
+  ): Promise<void> {
+    if (input.maxDepth === undefined) return;
+
+    const baseDepth = await this.resolveQueryBaseDepth(input);
+    qb.andWhere('p.depth <= :maxAbsDepth', {
+      maxAbsDepth: baseDepth + input.maxDepth,
+    });
+  }
+
+  private async resolveQueryBaseDepth(input: QueryPeriodsInput): Promise<number> {
+    if (input.parentId && input.parentId !== null) {
+      return (await this.get(input.parentId)).depth;
     }
-
-    if (input.maxDepth !== undefined) {
-      const baseDepth =
-        input.parentId && input.parentId !== null
-          ? (await this.get(input.parentId)).depth
-          : input.rootId
-            ? (await this.get(input.rootId)).depth
-            : -1;
-      qb.andWhere('p.depth <= :maxAbsDepth', {
-        maxAbsDepth: baseDepth + input.maxDepth,
-      });
+    if (input.rootId) {
+      return (await this.get(input.rootId)).depth;
     }
-
-    const rows = await qb.getMany();
-    if (input.view === 'flat') return rows;
-    return this.buildTree(rows);
+    return -1;
   }
 
   private buildTree(rows: PeriodEntity[]): PeriodTreeNode[] {

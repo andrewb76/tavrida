@@ -79,6 +79,16 @@ export class NotificationsService {
     const workflowId = input.workflowId.trim();
     const idempotencyKey = input.idempotencyKey?.trim() || null;
 
+    this.assertValidTrigger(userId, workflowId);
+
+    const deduped = await this.findDedupedTrigger(userId, idempotencyKey);
+    if (deduped) return deduped;
+
+    const subscriber = await this.ensureSubscriber(userId);
+    return this.executeTrigger({ userId, workflowId, idempotencyKey, payload: input.payload, subscriber });
+  }
+
+  private assertValidTrigger(userId: string, workflowId: string): void {
     if (!userId || !workflowId) {
       throw new BadRequestException({
         type: 'validation',
@@ -91,31 +101,39 @@ export class NotificationsService {
         detail: `unknown workflowId=${workflowId}`,
       });
     }
+  }
 
-    if (idempotencyKey) {
-      const existing = await this.logs.findOne({ where: { userId, idempotencyKey } });
-      if (existing) {
-        return {
-          transactionId: existing.transactionId,
-          mode: this.novu.isConfigured() ? ('novu' as const) : ('mock' as const),
-          status: existing.status,
-          deduped: true as const,
-        };
-      }
-    }
+  private async findDedupedTrigger(userId: string, idempotencyKey: string | null) {
+    if (!idempotencyKey) return null;
 
-    const subscriber = await this.ensureSubscriber(userId);
+    const existing = await this.logs.findOne({ where: { userId, idempotencyKey } });
+    if (!existing) return null;
 
+    return {
+      transactionId: existing.transactionId,
+      mode: this.novu.isConfigured() ? ('novu' as const) : ('mock' as const),
+      status: existing.status,
+      deduped: true as const,
+    };
+  }
+
+  private async executeTrigger(input: {
+    userId: string;
+    workflowId: string;
+    idempotencyKey: string | null;
+    payload?: Record<string, unknown>;
+    subscriber: SubscriberEntity;
+  }) {
     let transactionId: string;
     let mode: 'novu' | 'mock';
     let status: NotificationLogEntity['status'] = 'pending';
 
     try {
       const result = await this.novu.trigger({
-        workflowId,
-        subscriberId: userId,
+        workflowId: input.workflowId,
+        subscriberId: input.userId,
         payload: input.payload,
-        email: subscriber.email,
+        email: input.subscriber.email,
       });
       transactionId = result.transactionId;
       mode = result.mode;
@@ -125,11 +143,11 @@ export class NotificationsService {
       mode = this.novu.isConfigured() ? 'novu' : 'mock';
       status = 'failed';
       await this.saveLog({
-        userId,
-        workflowId,
+        userId: input.userId,
+        workflowId: input.workflowId,
         transactionId,
         status,
-        idempotencyKey,
+        idempotencyKey: input.idempotencyKey,
         payload: {
           ...(input.payload ?? {}),
           error: error instanceof Error ? error.message : String(error),
@@ -142,11 +160,11 @@ export class NotificationsService {
     }
 
     await this.saveLog({
-      userId,
-      workflowId,
+      userId: input.userId,
+      workflowId: input.workflowId,
       transactionId,
       status,
-      idempotencyKey,
+      idempotencyKey: input.idempotencyKey,
       payload: input.payload ?? null,
     });
 

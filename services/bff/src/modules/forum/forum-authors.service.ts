@@ -41,18 +41,7 @@ export class ForumAuthorsService {
 
     try {
       const result = await this.profiles.lookupByIds(unique);
-      const rows = Array.isArray(result)
-        ? result
-        : Array.isArray((result as { data?: unknown }).data)
-          ? ((result as {
-              data: Array<{
-                userId: string;
-                displayName: string | null;
-                username?: string | null;
-                avatarUrl: string | null;
-              }>;
-            }).data ?? [])
-          : [];
+      const rows = this.normalizeLookupRows(result);
       for (const row of rows) {
         map.set(row.userId, {
           userId: row.userId,
@@ -120,5 +109,31 @@ export class ForumAuthorsService {
 
   private fallbackAuthor(userId: string): ForumAuthorPreview {
     return { userId, displayName: null, username: null, avatarUrl: null };
+  }
+
+  private normalizeLookupRows(result: unknown): Array<{
+    userId: string;
+    displayName: string | null;
+    username?: string | null;
+    avatarUrl: string | null;
+  }> {
+    if (Array.isArray(result)) {
+      return result as Array<{
+        userId: string;
+        displayName: string | null;
+        username?: string | null;
+        avatarUrl: string | null;
+      }>;
+    }
+    const data = (result as { data?: unknown })?.data;
+    if (Array.isArray(data)) {
+      return data as Array<{
+        userId: string;
+        displayName: string | null;
+        username?: string | null;
+        avatarUrl: string | null;
+      }>;
+    }
+    return [];
   }
 }

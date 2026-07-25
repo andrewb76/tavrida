@@ -3,7 +3,15 @@ import { buildObjectKey } from './paths';
 import type { MediaDomain } from './types';
 
 export function normalizePublicBaseUrl(baseUrl: string): string {
-  return baseUrl.replace(/\/+$/, '');
+  let end = baseUrl.length;
+  while (end > 0 && baseUrl.charCodeAt(end - 1) === 47 /* / */) end -= 1;
+  return baseUrl.slice(0, end);
+}
+
+function stripLeadingSlashes(path: string): string {
+  let i = 0;
+  while (i < path.length && path.charCodeAt(i) === 47 /* / */) i += 1;
+  return path.slice(i);
 }
 
 export function buildPublicUrl(input: {
@@ -13,7 +21,7 @@ export function buildPublicUrl(input: {
 }): string {
   const base = normalizePublicBaseUrl(input.publicBaseUrl);
   const bucket = bucketForDomain(input.domain);
-  const key = input.objectKey.replace(/^\/+/, '');
+  const key = stripLeadingSlashes(input.objectKey);
   return `${base}/${bucket}/${key}`;
 }
 
@@ -43,12 +51,13 @@ export function parseMediaUrl(url: string, publicBaseUrl: string): ParsedMediaUr
 
   if (parsed.origin !== baseUrl.origin) return null;
 
-  const basePath = baseUrl.pathname.replace(/\/+$/, '');
+  const basePath = normalizePublicBaseUrl(baseUrl.pathname === '/' ? '' : baseUrl.pathname);
   const fullPath = parsed.pathname;
-  const relative =
+  const relativeRaw =
     basePath && fullPath.startsWith(basePath)
-      ? fullPath.slice(basePath.length).replace(/^\/+/, '')
-      : fullPath.replace(/^\/+/, '');
+      ? fullPath.slice(basePath.length)
+      : fullPath;
+  const relative = stripLeadingSlashes(relativeRaw);
 
   const segments = relative.split('/').filter(Boolean);
   if (segments.length < 4) return null;

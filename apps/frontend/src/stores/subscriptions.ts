@@ -108,11 +108,11 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     error.value = null;
     const created = await createEventSubscription(input);
     const session = useSessionStore();
-    if (epoch !== cacheEpoch || uid !== (session.actAsUserId ?? session.userId ?? null)) {
-      return created;
+    const sameOwner = uid === (session.actAsUserId ?? session.userId ?? null);
+    if (epoch === cacheEpoch && sameOwner) {
+      rows.value = upsertSubscription(rows.value, created);
+      loadedScopes.value = new Set([...loadedScopes.value, input.sourceDomain, 'all']);
     }
-    rows.value = upsertSubscription(rows.value, created);
-    loadedScopes.value = new Set([...loadedScopes.value, input.sourceDomain, 'all']);
     return created;
   }
 

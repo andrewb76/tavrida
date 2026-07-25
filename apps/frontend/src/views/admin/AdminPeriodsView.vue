@@ -461,15 +461,18 @@ onMounted(load);
               v-model="field.key"
               class="rounded border border-border px-2 py-1 text-sm"
               placeholder="key"
+              :aria-label="`Ключ поля ${idx + 1}`"
             >
             <input
               v-model="field.label"
               class="rounded border border-border px-2 py-1 text-sm"
               placeholder="label"
+              :aria-label="`Подпись поля ${idx + 1}`"
             >
             <select
               v-model="field.type"
               class="rounded border border-border px-2 py-1 text-sm"
+              :aria-label="`Тип поля ${idx + 1}`"
             >
               <option
                 v-for="t in fieldTypes"
@@ -484,6 +487,7 @@ onMounted(load);
               :value="(field.options ?? []).join(',')"
               class="rounded border border-border px-2 py-1 text-sm md:col-span-4"
               placeholder="options через запятую"
+              :aria-label="`Варианты enum для поля ${idx + 1}`"
               @input="
                 field.options = ($event.target as HTMLInputElement).value
                   .split(',')
@@ -696,16 +700,19 @@ onMounted(load);
             v-model="row.title"
             class="rounded border border-border px-2 py-1"
             placeholder="Название"
+            :aria-label="`Название сегмента ${idx + 1}`"
           >
           <input
             v-model="row.startsOn"
             class="rounded border border-border px-2 py-1"
             type="date"
+            :aria-label="`Начало сегмента ${idx + 1}`"
           >
           <input
             v-model="row.endsOn"
             class="rounded border border-border px-2 py-1"
             type="date"
+            :aria-label="`Конец сегмента ${idx + 1}`"
           >
         </div>
         <div class="flex flex-wrap gap-2">

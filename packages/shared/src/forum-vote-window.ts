@@ -1,4 +1,4 @@
-import { canEditForumContent, parseEditWindowMinutes } from './forum-edit-window.js';
+import { canEditForumContent } from './forum-edit-window.js';
 
 export type ForumVoteValue = 1 | -1;
 
@@ -11,4 +11,4 @@ export function canChangeForumVote(
   return canEditForumContent(firstVotedAt, changeWindowMinutes, now);
 }
 
-export { parseEditWindowMinutes as parseVoteChangeWindowMinutes };
+export { parseEditWindowMinutes as parseVoteChangeWindowMinutes } from './forum-edit-window.js';

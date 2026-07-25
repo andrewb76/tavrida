@@ -4,8 +4,8 @@ import {
   type ImageProxyResize,
 } from '@tavrida/object-storage';
 
-const DEFAULT_PUBLIC_BASE = 'http://localhost:9000';
-const DEFAULT_FETCH_BASE = 'http://minio:9000';
+const DEFAULT_PUBLIC_BASE = 'http://localhost:9000'; // NOSONAR typescript:S5332 — local MinIO
+const DEFAULT_FETCH_BASE = 'http://minio:9000'; // NOSONAR typescript:S5332 — docker network
 
 function readImageProxyConfig(): ImageProxyConfig | null {
   const baseUrl = import.meta.env.VITE_IMAGE_PROXY_URL?.trim();

@@ -15,7 +15,7 @@ import {
 import { formatKarma, formatRating } from '@/services/profile';
 import { formatMoney } from '@/services/wallet';
 import { UiButton } from '@tavrida/ui';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { refreshSessionBalance } from '@/composables/useWalletBalance';
@@ -40,9 +40,11 @@ const depositUser = ref<AdminUserRow | null>(null);
 const depositAmount = ref(500);
 const depositing = ref(false);
 const depositError = ref<string | null>(null);
+const depositDialogRef = ref<HTMLDialogElement | null>(null);
 
 const rolesOpen = ref(false);
 const rolesUser = ref<AdminUserRow | null>(null);
+const rolesDialogRef = ref<HTMLDialogElement | null>(null);
 
 const reputationOpen = ref(false);
 const reputationUserId = ref('');
@@ -305,6 +307,53 @@ function closeDeposit() {
   depositError.value = null;
 }
 
+function onDepositDialogClose() {
+  closeDeposit();
+}
+
+function onDepositDialogCancel(event: Event) {
+  if (depositing.value) {
+    event.preventDefault();
+  }
+}
+
+function onDepositDialogClick(event: MouseEvent) {
+  if (event.target === depositDialogRef.value && !depositing.value) {
+    depositDialogRef.value?.close();
+  }
+}
+
+watch([depositOpen, depositUser], async ([isOpen, user]) => {
+  await nextTick();
+  const dialog = depositDialogRef.value;
+  if (isOpen && user) {
+    dialog?.showModal();
+  } else if (dialog?.open) {
+    dialog.close();
+  }
+});
+
+watch([rolesOpen, rolesUser], async ([isOpen, user]) => {
+  await nextTick();
+  const dialog = rolesDialogRef.value;
+  if (isOpen && user) {
+    dialog?.showModal();
+  } else if (dialog?.open) {
+    dialog.close();
+  }
+});
+
+function onRolesDialogClose() {
+  rolesOpen.value = false;
+  rolesUser.value = null;
+}
+
+function onRolesDialogClick(event: MouseEvent) {
+  if (event.target === rolesDialogRef.value) {
+    rolesDialogRef.value?.close();
+  }
+}
+
 async function confirmDeposit() {
   if (!depositUser.value || !depositAmountValid.value) {
     depositError.value = 'Минимальная сумма — 100 ₽';
@@ -353,6 +402,7 @@ async function confirmDeposit() {
           v-model="search"
           type="search"
           placeholder="Имя, email или ID…"
+          aria-label="Поиск пользователей"
           class="rounded-md border border-border bg-bg px-3 py-2 text-sm"
         >
         <UiButton
@@ -700,22 +750,17 @@ async function confirmDeposit() {
     </div>
 
     <Teleport to="body">
-      <div
+      <dialog
         v-if="depositOpen && depositUser"
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
+        ref="depositDialogRef"
+        class="admin-users-dialog"
         aria-labelledby="admin-deposit-title"
+        @close="onDepositDialogClose"
+        @cancel="onDepositDialogCancel"
+        @click="onDepositDialogClick"
       >
-        <button
-          type="button"
-          class="absolute inset-0 bg-black/50"
-          aria-label="Закрыть"
-          @click="closeDeposit"
-        />
-
         <div
-          class="relative z-10 w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-card"
+          class="admin-users-dialog__panel relative z-10 w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-card"
           @click.stop
         >
           <div class="flex items-start justify-between gap-3">
@@ -790,27 +835,26 @@ async function confirmDeposit() {
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </Teleport>
 
     <Teleport to="body">
-      <div
+      <dialog
         v-if="rolesOpen && rolesUser"
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
+        ref="rolesDialogRef"
+        class="admin-users-dialog"
+        aria-labelledby="admin-roles-title"
+        @close="onRolesDialogClose"
+        @click="onRolesDialogClick"
       >
-        <button
-          type="button"
-          class="absolute inset-0 bg-black/50"
-          aria-label="Закрыть"
-          @click="rolesOpen = false"
-        />
         <div
-          class="relative z-10 w-full max-w-sm rounded-lg border border-border bg-surface p-5 shadow-card"
+          class="admin-users-dialog__panel relative z-10 w-full max-w-sm rounded-lg border border-border bg-surface p-5 shadow-card"
           @click.stop
         >
-          <h3 class="text-base font-semibold">
+          <h3
+            id="admin-roles-title"
+            class="text-base font-semibold"
+          >
             Роли — {{ displayLabel(rolesUser) }}
           </h3>
           <div class="mt-3 flex flex-col gap-2">
@@ -844,7 +888,7 @@ async function confirmDeposit() {
             </UiButton>
           </div>
         </div>
-      </div>
+      </dialog>
     </Teleport>
 
     <ProfileReputationLogModal
@@ -856,3 +900,26 @@ async function confirmDeposit() {
     />
   </section>
 </template>
+
+<style scoped>
+.admin-users-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 1rem;
+  border: none;
+  background: transparent;
+}
+
+.admin-users-dialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+</style>

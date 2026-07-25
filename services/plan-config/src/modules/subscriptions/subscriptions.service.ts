@@ -46,7 +46,7 @@ export class SubscriptionsService {
 
   async resolvePlanId(userId: string): Promise<string> {
     const sub = await this.subscriptions.findOne({ where: { userId } });
-    if (!sub || sub.status !== 'ACTIVE') return DEFAULT_PLAN_ID;
+    if (sub?.status !== 'ACTIVE') return DEFAULT_PLAN_ID;
     if (sub.expiresAt && sub.expiresAt.getTime() <= Date.now()) return DEFAULT_PLAN_ID;
     return sub.planId;
   }
@@ -185,91 +185,7 @@ export class SubscriptionsService {
     };
 
     for (const row of candidates) {
-      const candidate = {
-        userId: row.userId,
-        planId: row.planId,
-        status: row.status,
-        autoRenew: row.autoRenew,
-        startsAt: row.startsAt,
-        expiresAt: row.expiresAt,
-        billingPeriod: row.billingPeriod,
-      };
-
-      if (isExpireDue(candidate, now)) {
-        row.status = 'EXPIRED';
-        await this.subscriptions.save(row);
-        result.expired += 1;
-        result.results.push({
-          userId: row.userId,
-          action: 'expired',
-          planId: row.planId,
-          detail: 'autoRenew=false',
-          expiresAt: row.expiresAt?.toISOString() ?? null,
-        });
-        continue;
-      }
-
-      if (!isRenewDue(candidate, now) || !row.expiresAt) continue;
-
-      const period = resolveBillingPeriod(candidate);
-      const plan = await this.plans.findById(row.planId);
-      if (!plan) {
-        row.status = 'EXPIRED';
-        await this.subscriptions.save(row);
-        result.failed += 1;
-        result.results.push({
-          userId: row.userId,
-          action: 'failed',
-          planId: row.planId,
-          detail: 'plan_not_found',
-        });
-        continue;
-      }
-
-      const price = period === 'yearly' ? Number(plan.yearlyPrice) : Number(plan.monthlyPrice);
-
-      try {
-        let transactionId: string | undefined;
-        if (price > 0) {
-          const periodLabel = period === 'yearly' ? 'год' : 'мес.';
-          const charge = await this.billing.charge({
-            userId: row.userId,
-            amount: price,
-            target: `plan-config.renew-plan:${row.planId}`,
-            description: `Продление ${plan.title} (${periodLabel})`,
-            idempotencyKey: renewIdempotencyKey(row.userId, row.expiresAt),
-          });
-          transactionId = charge.transactionId;
-        }
-
-        const next = nextExpiresAt(row.expiresAt, period, now);
-        row.expiresAt = next;
-        row.billingPeriod = period;
-        row.status = 'ACTIVE';
-        await this.subscriptions.save(row);
-
-        result.renewed += 1;
-        result.results.push({
-          userId: row.userId,
-          action: 'renewed',
-          planId: row.planId,
-          transactionId,
-          expiresAt: next.toISOString(),
-        });
-      } catch (error) {
-        row.status = 'EXPIRED';
-        await this.subscriptions.save(row);
-        result.failed += 1;
-        const detail = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`renew failed user=${row.userId}: ${detail}`);
-        result.results.push({
-          userId: row.userId,
-          action: 'failed',
-          planId: row.planId,
-          detail: detail.slice(0, 200),
-          expiresAt: row.expiresAt?.toISOString() ?? null,
-        });
-      }
+      await this.processRenewCandidate(row, now, result);
     }
 
     if (result.scanned) {
@@ -280,5 +196,122 @@ export class SubscriptionsService {
     }
 
     return result;
+  }
+
+  private toRenewCandidate(row: UserSubscriptionEntity) {
+    return {
+      userId: row.userId,
+      planId: row.planId,
+      status: row.status,
+      autoRenew: row.autoRenew,
+      startsAt: row.startsAt,
+      expiresAt: row.expiresAt,
+      billingPeriod: row.billingPeriod,
+    };
+  }
+
+  private async processRenewCandidate(
+    row: UserSubscriptionEntity,
+    now: Date,
+    result: RenewRunResult,
+  ): Promise<void> {
+    const candidate = this.toRenewCandidate(row);
+
+    if (await this.expireIfDue(row, candidate, now, result)) return;
+    if (!isRenewDue(candidate, now) || !row.expiresAt) return;
+
+    const period = resolveBillingPeriod(candidate);
+    const plan = await this.plans.findById(row.planId);
+    if (!plan) {
+      await this.markRenewFailed(row, result, 'plan_not_found', { includeExpiresAt: false });
+      return;
+    }
+
+    const price = period === 'yearly' ? Number(plan.yearlyPrice) : Number(plan.monthlyPrice);
+
+    try {
+      const transactionId = await this.chargeRenewal(row, plan.title, period, price);
+      const next = nextExpiresAt(row.expiresAt, period, now);
+      row.expiresAt = next;
+      row.billingPeriod = period;
+      row.status = 'ACTIVE';
+      await this.subscriptions.save(row);
+
+      result.renewed += 1;
+      result.results.push({
+        userId: row.userId,
+        action: 'renewed',
+        planId: row.planId,
+        transactionId,
+        expiresAt: next.toISOString(),
+      });
+    } catch (error) {
+      await this.markRenewFailed(
+        row,
+        result,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  private async expireIfDue(
+    row: UserSubscriptionEntity,
+    candidate: ReturnType<SubscriptionsService['toRenewCandidate']>,
+    now: Date,
+    result: RenewRunResult,
+  ): Promise<boolean> {
+    if (!isExpireDue(candidate, now)) return false;
+
+    row.status = 'EXPIRED';
+    await this.subscriptions.save(row);
+    result.expired += 1;
+    result.results.push({
+      userId: row.userId,
+      action: 'expired',
+      planId: row.planId,
+      detail: 'autoRenew=false',
+      expiresAt: row.expiresAt?.toISOString() ?? null,
+    });
+    return true;
+  }
+
+  private async chargeRenewal(
+    row: UserSubscriptionEntity,
+    planTitle: string,
+    period: BillingPeriod,
+    price: number,
+  ): Promise<string | undefined> {
+    if (price <= 0) return undefined;
+
+    const periodLabel = period === 'yearly' ? 'год' : 'мес.';
+    const charge = await this.billing.charge({
+      userId: row.userId,
+      amount: price,
+      target: `plan-config.renew-plan:${row.planId}`,
+      description: `Продление ${planTitle} (${periodLabel})`,
+      idempotencyKey: renewIdempotencyKey(row.userId, row.expiresAt!),
+    });
+    return charge.transactionId;
+  }
+
+  private async markRenewFailed(
+    row: UserSubscriptionEntity,
+    result: RenewRunResult,
+    detail: string,
+    options?: { includeExpiresAt?: boolean },
+  ): Promise<void> {
+    row.status = 'EXPIRED';
+    await this.subscriptions.save(row);
+    result.failed += 1;
+    this.logger.warn(`renew failed user=${row.userId}: ${detail}`);
+    result.results.push({
+      userId: row.userId,
+      action: 'failed',
+      planId: row.planId,
+      detail: detail.slice(0, 200),
+      ...(options?.includeExpiresAt === false
+        ? {}
+        : { expiresAt: row.expiresAt?.toISOString() ?? null }),
+    });
   }
 }

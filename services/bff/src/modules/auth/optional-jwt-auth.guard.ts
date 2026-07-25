@@ -11,12 +11,14 @@ export class OptionalJwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request & { user?: AuthUser }>();
     const header = request.headers.authorization;
-    if (!header?.startsWith('Bearer ')) return true;
-    try {
-      await this.jwt.canActivate(context);
-    } catch {
-      /* anonymous */
+    if (header?.startsWith('Bearer ')) {
+      try {
+        await this.jwt.canActivate(context);
+      } catch {
+        /* leave request anonymous */
+      }
     }
-    return true;
+    // Optional auth: never deny. Always allow whether JWT attached or not.
+    return true; // NOSONAR typescript:S3516 — CanActivate contract for optional JWT
   }
 }

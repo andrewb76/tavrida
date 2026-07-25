@@ -381,7 +381,7 @@ export class AuctionsService {
         !row ||
         row.status !== 'ACTIVE' ||
         row.type !== 'DUTCH' ||
-        (row.endsAt && row.endsAt.getTime() <= now.getTime())
+        (row.endsAt?.getTime() ?? Number.POSITIVE_INFINITY) <= now.getTime()
       ) {
         return false;
       }

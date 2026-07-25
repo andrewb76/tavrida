@@ -277,16 +277,28 @@ onMounted(() => {
           <table class="min-w-full text-sm">
             <thead class="bg-bg text-left text-text-muted">
               <tr>
-                <th class="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                >
                   План
                 </th>
-                <th class="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                >
                   ₽ / мес
                 </th>
-                <th class="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                >
                   ₽ / год
                 </th>
-                <th class="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                >
                   Активен
                 </th>
               </tr>
@@ -312,6 +324,7 @@ onMounted(() => {
                     min="0"
                     step="1"
                     class="w-28 rounded-md border border-border bg-bg px-2 py-1"
+                    :aria-label="`${planForms[plan.id].title}, цена за месяц`"
                     :disabled="plan.id === 'free'"
                   >
                 </td>
@@ -322,6 +335,7 @@ onMounted(() => {
                     min="0"
                     step="1"
                     class="w-28 rounded-md border border-border bg-bg px-2 py-1"
+                    :aria-label="`${planForms[plan.id].title}, цена за год`"
                     :disabled="plan.id === 'free'"
                   >
                 </td>
@@ -330,6 +344,7 @@ onMounted(() => {
                     v-model="planForms[plan.id].isActive"
                     type="checkbox"
                     class="size-4 rounded border-border"
+                    :aria-label="`${planForms[plan.id].title}, активен`"
                     :disabled="plan.id === 'free'"
                   >
                 </td>
@@ -386,17 +401,24 @@ onMounted(() => {
             </colgroup>
             <thead class="bg-bg text-left text-text-muted">
               <tr>
-                <th class="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                >
                   Переменная
                 </th>
                 <th
                   v-for="col in planColumns"
                   :key="col.id"
+                  scope="col"
                   class="px-3 py-2 font-medium"
                 >
                   {{ col.title }}
                 </th>
-                <th class="px-3 py-2 font-medium" />
+                <th
+                  scope="col"
+                  class="px-3 py-2 font-medium"
+                />
               </tr>
             </thead>
             <tbody>
@@ -462,6 +484,7 @@ onMounted(() => {
                           min="0"
                           step="1"
                           class="w-full max-w-24 rounded-md border border-border bg-bg px-2 py-1"
+                          :aria-label="`${variable.name}, ${col.title}, сумма`"
                         >
                         <label class="flex items-center gap-1 text-xs text-text-muted">
                           <input
@@ -479,6 +502,7 @@ onMounted(() => {
                         type="number"
                         class="w-full max-w-24 rounded-md border border-border bg-bg px-2 py-1"
                         :placeholder="formatLimitValue(null)"
+                        :aria-label="`${variable.name}, ${col.title}, лимит`"
                       >
                     </template>
                   </td>

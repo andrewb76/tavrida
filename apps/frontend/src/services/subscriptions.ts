@@ -28,6 +28,14 @@ async function authHeaders(): Promise<HeadersInit> {
   return bffAuthHeaders();
 }
 
+function errorMessageFromBody(
+  body: { message?: string | { message?: string } },
+): string | null {
+  if (typeof body.message === 'string') return body.message;
+  if (typeof body.message?.message === 'string') return body.message.message;
+  return null;
+}
+
 export async function listEventSubscriptions(
   sourceDomain?: SourceDomain,
 ): Promise<EventSubscription[]> {
@@ -55,12 +63,7 @@ export async function createEventSubscription(input: {
     const body = (await res.json().catch(() => ({}))) as {
       message?: string | { message?: string };
     };
-    const raw =
-      typeof body.message === 'string'
-        ? body.message
-        : typeof body.message?.message === 'string'
-          ? body.message.message
-          : null;
+    const raw = errorMessageFromBody(body);
     if (raw?.includes('limit')) {
       throw new Error('Лимит подписок по тарифу исчерпан');
     }
@@ -102,12 +105,7 @@ export async function updateDeliveryPreference(
     const body = (await res.json().catch(() => ({}))) as {
       message?: string | { message?: string };
     };
-    const raw =
-      typeof body.message === 'string'
-        ? body.message
-        : typeof body.message?.message === 'string'
-          ? body.message.message
-          : null;
+    const raw = errorMessageFromBody(body);
     if (raw?.toLowerCase().includes('digest') || raw?.includes('plan')) {
       throw new Error('Email digest недоступен на вашем тарифе');
     }

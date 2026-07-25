@@ -24,10 +24,10 @@ export class MarketplaceClient {
       if (v !== undefined && v !== '') params.set(k, v);
     }
     const qs = params.toString();
-    return this.request<{ data: unknown[] }>(
-      'GET',
-      `/internal/v1/marketplace/listings${qs ? `?${qs}` : ''}`,
-    );
+    const path = qs
+      ? `/internal/v1/marketplace/listings?${qs}`
+      : '/internal/v1/marketplace/listings';
+    return this.request<{ data: unknown[] }>('GET', path);
   }
 
   getListing(id: string, viewerId?: string) {

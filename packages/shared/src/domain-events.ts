@@ -10,6 +10,19 @@ export type DomainEventEnvelope<T = unknown> = {
 
 export const DOMAIN_EVENTS_EXCHANGE = 'tavrida-lot.events';
 
+function createEventId(): string {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === 'function') {
+    return c.randomUUID();
+  }
+  if (typeof c?.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    return `evt-${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
+  }
+  throw new Error('crypto.randomUUID / getRandomValues unavailable');
+}
+
 export function createDomainEvent<T>(input: {
   eventType: string;
   producer: string;
@@ -17,11 +30,7 @@ export function createDomainEvent<T>(input: {
   correlationId?: string;
   eventId?: string;
 }): DomainEventEnvelope<T> {
-  const eventId =
-    input.eventId ??
-    (typeof globalThis.crypto?.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID()
-      : `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const eventId = input.eventId ?? createEventId();
 
   return {
     eventId,

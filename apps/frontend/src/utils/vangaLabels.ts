@@ -26,12 +26,12 @@ export const VANGA_COST_KEY_LABELS: Record<string, string> = {
 };
 
 export function oneTimeLabelRu(key: string): string {
-  return VANGA_ONE_TIME_LABELS[key] ?? key.replace(/\./g, ' · ');
+  return VANGA_ONE_TIME_LABELS[key] ?? key.replaceAll('.', ' · ');
 }
 
 export function costLabelRu(
   key: string,
   yamlLabel?: string,
 ): string {
-  return yamlLabel ?? VANGA_COST_KEY_LABELS[key] ?? key.replace(/_/g, ' ');
+  return yamlLabel ?? VANGA_COST_KEY_LABELS[key] ?? key.replaceAll('_', ' ');
 }

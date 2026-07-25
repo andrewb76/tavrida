@@ -124,7 +124,10 @@ export async function listMarketplaceListings(query?: {
   const params = new URLSearchParams();
   if (query?.category) params.set('category', query.category);
   const qs = params.toString();
-  const res = await fetch(`${apiBase()}/marketplace/listings${qs ? `?${qs}` : ''}`);
+  const url = qs
+    ? `${apiBase()}/marketplace/listings?${qs}`
+    : `${apiBase()}/marketplace/listings`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(await parseError(res));
   const json = (await res.json()) as { data: MarketplaceListing[] };
   return json.data;

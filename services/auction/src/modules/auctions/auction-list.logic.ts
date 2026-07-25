@@ -176,17 +176,23 @@ export function compareRows(
   if (sort === 'PRICE_ASC') return a.currentPrice - b.currentPrice;
   if (sort === 'PRICE_DESC') return b.currentPrice - a.currentPrice;
   if (sort === 'PROMOTED' || sort === 'ENDING_SOON') {
-    const aPromoted = isPromoted(a, now) ? 1 : 0;
-    const bPromoted = isPromoted(b, now) ? 1 : 0;
-    if (bPromoted !== aPromoted) return bPromoted - aPromoted;
-    const aExpert = a.hasExpertAppraisal ? 1 : 0;
-    const bExpert = b.hasExpertAppraisal ? 1 : 0;
-    if (bExpert !== aExpert) return bExpert - aExpert;
-    const aEnds = a.endsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    const bEnds = b.endsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    return aEnds - bEnds;
+    return comparePromotedOrEndingSoon(a, b, now);
   }
   return 0;
+}
+
+function comparePromotedOrEndingSoon(a: AuctionListRow, b: AuctionListRow, now: Date): number {
+  const aPromoted = isPromoted(a, now) ? 1 : 0;
+  const bPromoted = isPromoted(b, now) ? 1 : 0;
+  if (bPromoted !== aPromoted) return bPromoted - aPromoted;
+
+  const aExpert = a.hasExpertAppraisal ? 1 : 0;
+  const bExpert = b.hasExpertAppraisal ? 1 : 0;
+  if (bExpert !== aExpert) return bExpert - aExpert;
+
+  const aEnds = a.endsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const bEnds = b.endsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  return aEnds - bEnds;
 }
 
 export function filterAndSortRows(

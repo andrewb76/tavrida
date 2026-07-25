@@ -1,13 +1,14 @@
 import { bffAuthHeaders } from './apiAuth';
-import {
+import type { ForumAuthor, ForumComment } from './forum-tree';
+import type { MediaAttachment } from './media';
+
+export {
   buildCommentTree,
   forumAuthorLabel,
   type CommentTreeNode,
   type ForumAuthor,
   type ForumComment,
 } from './forum-tree';
-
-import type { MediaAttachment } from './media';
 
 async function forumAuthHeaders(optional = false): Promise<Record<string, string>> {
   return bffAuthHeaders(undefined, { json: false, optional });
@@ -16,8 +17,6 @@ async function forumAuthHeaders(optional = false): Promise<Record<string, string
 async function forumJsonHeaders(): Promise<Record<string, string>> {
   return bffAuthHeaders();
 }
-
-export { buildCommentTree, forumAuthorLabel, type CommentTreeNode, type ForumAuthor, type ForumComment };
 
 export type CategoryNode = {
   id: string;

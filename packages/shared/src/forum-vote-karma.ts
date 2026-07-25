@@ -1,6 +1,8 @@
 /** Karma contribution of a content vote for the author. */
+export type ForumVoteSign = 1 | -1 | null;
+
 export function forumVoteKarmaContribution(
-  vote: 1 | -1 | null,
+  vote: ForumVoteSign,
   plusWeight: number,
   minusWeight: number,
 ): number {
@@ -11,8 +13,8 @@ export function forumVoteKarmaContribution(
 
 /** Net karma delta for content author when a voter's vote changes. */
 export function forumVoteKarmaDelta(
-  previousVote: 1 | -1 | null,
-  nextVote: 1 | -1 | null,
+  previousVote: ForumVoteSign,
+  nextVote: ForumVoteSign,
   plusWeight: number,
   minusWeight: number,
 ): number {

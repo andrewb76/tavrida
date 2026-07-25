@@ -56,8 +56,12 @@ export function useVangaForecast() {
   const enabledReferralModels = computed(() =>
     referralModelOptions.value.filter((opt) => form.value.referralModels[opt.id]?.enabled),
   );
-  const costItemKeys = computed(() => Object.keys(form.value.costItems).sort());
-  const oneTimeKeys = computed(() => Object.keys(form.value.oneTimePrices).sort());
+  const costItemKeys = computed(() =>
+    Object.keys(form.value.costItems).sort((a, b) => a.localeCompare(b)),
+  );
+  const oneTimeKeys = computed(() =>
+    Object.keys(form.value.oneTimePrices).sort((a, b) => a.localeCompare(b)),
+  );
 
   const totalBurn = computed(() => sumCostItems(form.value.costItems));
 
@@ -162,22 +166,35 @@ export function useVangaForecast() {
     return req;
   }
 
+  function growthFromForm(state: {
+    growthModel: string;
+    registrationsPerMonth: number;
+    registrationsMonth1: number;
+    monthlyGrowthRatePercent: number;
+    carryingCapacity: number;
+    inflectionMonth: number;
+    steepness: number;
+  }) {
+    if (state.growthModel === 'linear') {
+      return { model: 'linear' as const, registrationsPerMonth: state.registrationsPerMonth };
+    }
+    if (state.growthModel === 'exponential') {
+      return {
+        model: 'exponential' as const,
+        registrationsMonth1: state.registrationsMonth1,
+        monthlyGrowthRatePercent: state.monthlyGrowthRatePercent,
+      };
+    }
+    return {
+      model: 'logistic_s_curve' as const,
+      carryingCapacity: state.carryingCapacity,
+      inflectionMonth: state.inflectionMonth,
+      steepness: state.steepness,
+    };
+  }
+
   function buildRequest(state = form.value): VangaSimulateRequest {
-    const growth =
-      state.growthModel === 'linear'
-        ? { model: 'linear' as const, registrationsPerMonth: state.registrationsPerMonth }
-        : state.growthModel === 'exponential'
-          ? {
-              model: 'exponential' as const,
-              registrationsMonth1: state.registrationsMonth1,
-              monthlyGrowthRatePercent: state.monthlyGrowthRatePercent,
-            }
-          : {
-              model: 'logistic_s_curve' as const,
-              carryingCapacity: state.carryingCapacity,
-              inflectionMonth: state.inflectionMonth,
-              steepness: state.steepness,
-            };
+    const growth = growthFromForm(state);
 
     return {
       periodMonths: state.periodMonths,

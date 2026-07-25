@@ -113,7 +113,8 @@ function slugFromTitle(title: string): string {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9а-яё]+/gi, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
     .replace(/[а-яё]/gi, (ch) => {
       const map: Record<string, string> = {
         а: 'a',

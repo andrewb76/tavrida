@@ -43,10 +43,8 @@ export class PeriodsClient {
       if (v !== undefined && v !== '') params.set(k, v);
     }
     const qs = params.toString();
-    return this.request<{ data: unknown[] }>(
-      'GET',
-      `/internal/v1/periods${qs ? `?${qs}` : ''}`,
-    );
+    const path = qs ? `/internal/v1/periods?${qs}` : '/internal/v1/periods';
+    return this.request<{ data: unknown[] }>('GET', path);
   }
 
   getPeriod(id: string) {

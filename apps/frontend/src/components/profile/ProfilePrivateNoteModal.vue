@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
-import { onUnmounted, ref, watch } from 'vue';
+import { nextTick, onUnmounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import {
   deleteProfileNote,
@@ -24,6 +24,7 @@ const loading = ref(false);
 const saving = ref(false);
 const note = ref<ProfileNote | null>(null);
 const draft = ref('');
+const dialogRef = ref<HTMLDialogElement | null>(null);
 
 const label = () => publicProfileLabel(props.profile);
 
@@ -31,11 +32,23 @@ let modalLoadGeneration = 0;
 let prefetchGeneration = 0;
 
 function close() {
-  open.value = false;
+  dialogRef.value?.close();
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && !saving.value) {
+function onDialogClose() {
+  if (open.value) {
+    open.value = false;
+  }
+}
+
+function onDialogCancel(event: Event) {
+  if (saving.value) {
+    event.preventDefault();
+  }
+}
+
+function onDialogClick(event: MouseEvent) {
+  if (event.target === dialogRef.value && !saving.value) {
     close();
   }
 }
@@ -70,15 +83,18 @@ async function prefetchPresence(userId: string) {
   }
 }
 
-watch(open, (isOpen) => {
+watch(open, async (isOpen) => {
   if (typeof document === 'undefined') return;
 
+  await nextTick();
+  const dialog = dialogRef.value;
+
   if (isOpen) {
-    document.addEventListener('keydown', onKeydown);
+    dialog?.showModal();
     document.body.style.overflow = 'hidden';
     void loadForModal(props.profile.userId);
   } else {
-    document.removeEventListener('keydown', onKeydown);
+    if (dialog?.open) dialog.close();
     document.body.style.overflow = '';
     modalLoadGeneration += 1;
     note.value = null;
@@ -99,7 +115,6 @@ watch(
 
 onUnmounted(() => {
   if (typeof document === 'undefined') return;
-  document.removeEventListener('keydown', onKeydown);
   document.body.style.overflow = '';
 });
 
@@ -149,20 +164,15 @@ async function remove() {
 
 <template>
   <Teleport to="body">
-    <div
+    <dialog
       v-if="open"
+      ref="dialogRef"
       class="profile-note-overlay"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="profile-note-title"
+      @close="onDialogClose"
+      @cancel="onDialogCancel"
+      @click="onDialogClick"
     >
-      <button
-        type="button"
-        class="profile-note-overlay__backdrop"
-        aria-label="Закрыть"
-        @click="close"
-      />
-
       <div
         class="profile-note-overlay__panel"
         @click.stop
@@ -193,13 +203,16 @@ async function remove() {
           Загрузка…
         </p>
         <template v-else>
-          <textarea
-            v-model="draft"
-            class="profile-note-modal__textarea"
-            rows="6"
-            maxlength="2000"
-            placeholder="Например: внимательный продавец, осторожно со спорами в комментариях"
-          />
+          <label class="profile-note-modal__field">
+            Текст заметки
+            <textarea
+              v-model="draft"
+              class="profile-note-modal__textarea"
+              rows="6"
+              maxlength="2000"
+              placeholder="Например: внимательный продавец, осторожно со спорами в комментариях"
+            />
+          </label>
           <p class="profile-note-modal__counter">
             {{ draft.length }} / 2000
           </p>
@@ -222,7 +235,7 @@ async function remove() {
           </div>
         </template>
       </div>
-    </div>
+    </dialog>
   </Teleport>
 </template>
 
@@ -234,15 +247,18 @@ async function remove() {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
   padding: 1rem;
+  border: none;
+  background: transparent;
 }
 
-.profile-note-overlay__backdrop {
-  position: absolute;
-  inset: 0;
-  border: none;
+.profile-note-overlay::backdrop {
   background: rgb(0 0 0 / 50%);
-  cursor: pointer;
 }
 
 .profile-note-overlay__panel {
@@ -290,6 +306,12 @@ async function remove() {
   margin: 0;
   font-size: 0.875rem;
   color: var(--color-text-muted, #666);
+}
+
+.profile-note-modal__field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.875rem;
 }
 
 .profile-note-modal__textarea {

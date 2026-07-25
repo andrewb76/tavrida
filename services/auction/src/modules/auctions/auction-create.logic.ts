@@ -22,6 +22,13 @@ export type CreateAuctionInput = {
 };
 
 export function validateCreateAuction(input: CreateAuctionInput): void {
+  validateCreateAuctionBasics(input);
+  validateCreateAuctionDates(input);
+  validateCreateAuctionTypeAndReserve(input);
+  validateCreateAuctionImages(input);
+}
+
+function validateCreateAuctionBasics(input: CreateAuctionInput): void {
   const title = input.title.trim();
   const description = input.description.trim();
 
@@ -37,7 +44,9 @@ export function validateCreateAuction(input: CreateAuctionInput): void {
   if (input.bidIncrement < 1) {
     throw new BadRequestException({ type: 'validation', detail: 'Шаг ставки: минимум 1 ₽' });
   }
+}
 
+function validateCreateAuctionDates(input: CreateAuctionInput): void {
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
   if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
@@ -54,7 +63,9 @@ export function validateCreateAuction(input: CreateAuctionInput): void {
       detail: `Макс. длительность по тарифу: ${input.maxDurationHours} ч`,
     });
   }
+}
 
+function validateCreateAuctionTypeAndReserve(input: CreateAuctionInput): void {
   const allowed = input.allowedTypes ?? ['ENGLISH', 'DUTCH'];
   if (!allowed.includes(input.type)) {
     throw new BadRequestException({ type: 'validation', detail: 'Тип аукциона недоступен на вашем тарифе' });
@@ -66,23 +77,25 @@ export function validateCreateAuction(input: CreateAuctionInput): void {
       detail: 'Резервная цена не может быть ниже стартовой',
     });
   }
+}
 
-  if (input.images?.length) {
-    try {
-      assertMediaUrlsAllowed({
-        urls: input.images,
-        userId: input.sellerId,
-        domain: 'auction',
-        publicBaseUrl: input.mediaPublicBaseUrl ?? 'http://localhost:9000',
-        maxCount: input.maxImageCount ?? 8,
-      });
-    } catch (err) {
-      const detail =
-        err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
-          ? err.detail
-          : 'Недопустимые URL изображений';
-      throw new BadRequestException({ type: 'validation', detail });
-    }
+function validateCreateAuctionImages(input: CreateAuctionInput): void {
+  if (!input.images?.length) return;
+
+  try {
+    assertMediaUrlsAllowed({
+      urls: input.images,
+      userId: input.sellerId,
+      domain: 'auction',
+      publicBaseUrl: input.mediaPublicBaseUrl ?? 'http://localhost:9000',
+      maxCount: input.maxImageCount ?? 8,
+    });
+  } catch (err) {
+    const detail =
+      err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
+        ? err.detail
+        : 'Недопустимые URL изображений';
+    throw new BadRequestException({ type: 'validation', detail });
   }
 }
 
