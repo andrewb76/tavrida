@@ -32,7 +32,18 @@ jobs:
           pnpm rebuild esbuild @nestjs/core core-js
 
       - name: Security audit
-        run: pnpm audit --audit-level=high
+        run: |
+          set +e
+          out="$(pnpm audit --audit-level=high 2>&1)"
+          ec=$?
+          printf '%s\n' "$out"
+          if [[ $ec -ne 0 ]] && printf '%s\n' "$out" | grep -q 'ERR_PNPM_AUDIT_BAD_RESPONSE'; then
+            echo "::warning::pnpm audit registry payload unreadable; retrying once"
+            sleep 5
+            pnpm audit --audit-level=high
+            exit $?
+          fi
+          exit $ec
 
       - name: Lint
         run: pnpm lint

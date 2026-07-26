@@ -26,7 +26,8 @@ on:
       - '.github/workflows/deploy-dev.yml'
 
 concurrency:
-  group: deploy-dev
+  # Share with Sync secrets — avoid concurrent secret rebind vs stack deploy.
+  group: swarm-dev
   cancel-in-progress: false
 
 permissions:

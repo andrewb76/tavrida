@@ -22,6 +22,8 @@ NEXT_SUFFIX="__next"
 DRY_RUN=0
 FORCE=0
 PRUNE=0
+# If set (comma-separated KEY names), sync only those keys (still applies --force/--prune to the subset).
+ONLY_KEYS=()
 
 COMPUTED_KEYS=(
   RABBITMQ_URL
@@ -50,6 +52,7 @@ Options:
   --dry-run       Show actions without creating/removing secrets
   --force         Rotate existing secrets (rebind services if still referenced)
   --prune         Remove ${SECRET_PREFIX}_* secrets not in manifest/computed set
+  --only KEYS     Comma-separated keys only (e.g. HAWK_TOKEN). Safer than full --force.
   --context NAME  Docker context (default: dev-swarm)
   --env-file PATH Secrets env file (default: docker/swarm/dev.secrets.env)
   --config-file PATH Public config (default: docker/swarm/dev.env)
@@ -65,6 +68,14 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1 ;;
     --force) FORCE=1 ;;
     --prune) PRUNE=1 ;;
+    --only)
+      IFS=',' read -r -a ONLY_KEYS <<<"$2"
+      # trim whitespace
+      for i in "${!ONLY_KEYS[@]}"; do
+        ONLY_KEYS[$i]="$(echo "${ONLY_KEYS[$i]}" | tr -d '[:space:]')"
+      done
+      shift
+      ;;
     --context) DOCKER_CONTEXT="$2"; shift ;;
     --env-file) ENV_FILE="$2"; shift ;;
     --config-file) CONFIG_FILE="$2"; shift ;;
@@ -338,22 +349,44 @@ sync_one() {
 }
 
 echo "Syncing secrets → context '${DOCKER_CONTEXT}' (prefix ${SECRET_PREFIX}_)" >&2
+if [[ ${#ONLY_KEYS[@]} -gt 0 ]]; then
+  echo "Only keys: ${ONLY_KEYS[*]}" >&2
+fi
 
 SECRET_BINDINGS="$(collect_secret_bindings)"
+
+key_allowed() {
+  local key="$1"
+  if [[ ${#ONLY_KEYS[@]} -eq 0 ]]; then
+    return 0
+  fi
+  local k
+  for k in "${ONLY_KEYS[@]}"; do
+    [[ "$k" == "$key" ]] && return 0
+  done
+  return 1
+}
 
 declare -a ALL_KEYS=()
 
 while IFS= read -r key; do
   ALL_KEYS+=("$key")
-  sync_one "$key"
+  if key_allowed "$key"; then
+    sync_one "$key"
+  fi
 done < <(read_manifest_keys)
 
 for key in "${COMPUTED_KEYS[@]}"; do
   ALL_KEYS+=("$key")
-  sync_one "$key"
+  if key_allowed "$key"; then
+    sync_one "$key"
+  fi
 done
 
 if [[ "$PRUNE" -eq 1 ]]; then
+  if [[ ${#ONLY_KEYS[@]} -gt 0 ]]; then
+    echo "Skip prune — incompatible with --only" >&2
+  else
   echo "Pruning orphaned ${SECRET_PREFIX}_* secrets..." >&2
   SECRET_BINDINGS="$(collect_secret_bindings)"
   mapfile -t existing < <(docker_ctx secret ls --format '{{.Name}}' | grep "^${SECRET_PREFIX}_" || true)
@@ -378,6 +411,7 @@ if [[ "$PRUNE" -eq 1 ]]; then
       fi
     fi
   done
+  fi
 fi
 
 echo "Done. Active secrets:" >&2
