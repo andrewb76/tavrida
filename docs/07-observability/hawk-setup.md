@@ -85,7 +85,8 @@ Build-time (Vite / Docker):
 |---------|---------|
 | `[hawk] disabled` / «looks like a DSN URL» | в токене лежит старый Sentry DSN — нужен Integration Token |
 | FE без `[hawk] enabled` | образ без `VITE_HAWK_TOKEN` → redeploy **с build** |
-| Deploy sync падает на hawk | пустой Secret **и** Variable `HAWK_TOKEN` в env `dev` |
+| Deploy sync: placeholder `__unset__` | нет `HAWK_TOKEN` — Nest/FE no-op; задать токен + Sync `--force` |
+| CI audit на axios | overridden ≥1.13.5 (hawk.nodejs pins 0.21) |
 | Sourcemaps не матчятся | разный `release` у plugin и catcher |
 
 ## 🔗 Связанные разделы

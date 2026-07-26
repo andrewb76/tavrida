@@ -12,7 +12,7 @@ type HawkWindow = Window & {
  */
 export function initHawkVue(app: App): boolean {
   const token = import.meta.env.VITE_HAWK_TOKEN?.trim();
-  if (!token) {
+  if (!token || token === '__unset__') {
     console.warn('[hawk] disabled for frontend: VITE_HAWK_TOKEN missing (build-time)');
     return false;
   }

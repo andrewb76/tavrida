@@ -297,16 +297,19 @@ sync_one() {
 
   value="${!key}"
   if [[ -z "$value" ]]; then
-    # Stack references these as external secrets — empty skip → deploy fails later.
+    # Stack references hawk_token as external — empty would break deploy. Placeholder keeps
+    # Nest no-op until Environment secret HAWK_TOKEN (Integration Token) is set + --force.
     case "$key" in
       HAWK_TOKEN)
-        echo "ERROR: ${key} is empty but stack-platform requires tavrida_dev_hawk_token." >&2
-        echo "Set Environment secret HAWK_TOKEN (Hawk Integration Token), then re-run Sync secrets." >&2
-        exit 1
+        echo "WARN: ${key} empty — using placeholder __unset__ for ${name} (Hawk disabled)." >&2
+        echo "Set Environment secret HAWK_TOKEN, then Sync with --force." >&2
+        value='__unset__'
+        ;;
+      *)
+        echo "Skip ${name} — empty value" >&2
+        return 0
         ;;
     esac
-    echo "Skip ${name} — empty value" >&2
-    return 0
   fi
 
   if ! secret_exists "$name"; then

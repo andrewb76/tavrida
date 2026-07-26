@@ -9,9 +9,12 @@ export type InitHawkNodeOptions = {
  * Hawk Integration Token is a JWT-like string from project settings —
  * not a Sentry-compatible DSN (`https://…@k1.hawk.so/…`).
  */
+/** Swarm placeholder when GH secret not set yet — Nest stays no-op, stack can still mount the secret. */
+const UNSET_TOKEN = '__unset__';
+
 function resolveToken(): string | undefined {
   const token = process.env.HAWK_TOKEN?.trim();
-  if (!token) return undefined;
+  if (!token || token === UNSET_TOKEN) return undefined;
   if (/^https?:\/\//i.test(token)) {
     // eslint-disable-next-line no-console -- bootstrap diagnostics before Nest Logger
     console.warn(

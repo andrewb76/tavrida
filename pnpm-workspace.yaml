@@ -17,6 +17,8 @@ overrides:
   'brace-expansion@>=5': '5.0.5'
   # GHSA-r28c-9q8g-f849 — sourceMappingURL path traversal
   postcss: '>=8.5.18'
+  # @hawk.so/nodejs pins axios@^0.21 (many high CVEs); only uses axios.post()
+  axios: '>=1.13.5'
 
 # GHSA-mh99 / GHSA-3jxr claim patched only >=5.0.8, but that line is ESM-only and
 # breaks Nest/TypeORM at runtime. We keep CJS-safe 2.0.3 / 5.0.5 and ignore those
