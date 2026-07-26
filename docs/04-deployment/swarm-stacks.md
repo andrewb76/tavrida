@@ -104,7 +104,7 @@ labels:
 | `tavrida_rabbitmq_url` | `RABBITMQ_URL` |
 | `tavrida_novu_api_key` | `NOVU_API_KEY` |
 | `tavrida_internal_service_token` | `INTERNAL_SERVICE_TOKEN_FILE` → `INTERNAL_SERVICE_TOKEN` |
-| `tavrida_sentry_dsn` | `SENTRY_DSN` |
+| `tavrida_hawk_token` | `HAWK_TOKEN` |
 
 Полный список: [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md).
 

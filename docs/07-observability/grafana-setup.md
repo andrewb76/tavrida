@@ -10,7 +10,7 @@
 | Metrics | Grafana Mimir (Cloud) | Alloy `prometheus.exporter.cadvisor` → remote_write |
 | Logs | Grafana Loki | Alloy `loki.source.docker` (stdout контейнеров) |
 | Traces | Grafana Tempo | Alloy OTLP `:4317`/`:4318` → OTLP/HTTP gateway |
-| Errors | Sentry | отдельно, см. [sentry-setup.md](./sentry-setup.md) |
+| Errors | Hawk.so | отдельно, см. [hawk-setup.md](./hawk-setup.md) |
 
 NestJS OTel SDK (`@tavrida/otel`) — **ещё не подключён**; Alloy уже слушает OTLP на overlay-сети (`http://alloy:4318`). Пока трейсы появятся после bootstrap SDK.
 
@@ -131,7 +131,7 @@ cluster=tavrida-dev     # Swarm cluster id (Alloy)
 
 - [logging-metrics.md](./logging-metrics.md)
 - [slo.md](./slo.md)
-- [sentry-setup.md](./sentry-setup.md)
+- [hawk-setup.md](./hawk-setup.md)
 - [PLATFORM-SECRETS](../02-infrastructure/PLATFORM-SECRETS.md)
 - [github-actions.md](../04-deployment/github-actions.md)
 - [README.dev.md](../../docker/swarm/README.dev.md)

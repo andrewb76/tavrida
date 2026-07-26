@@ -115,8 +115,10 @@ Dev Swarm (evatorg.su):
   ✔ Alloy stack-tools + docs → Grafana Cloud (нужны credentials в GH env) @ops @observability @done(26-07-25)
   ✘ Grafana Cloud Free stack + token / GH vars / Explore verify @ops @observability @cancelled(26-07-25) отложено
   ✔ Sentry SDK Nest+Vue (`@tavrida/sentry`, `@sentry/vue`) → Hawk DSN @ops @observability @done(26-07-25)
-  ☐ GH Environment `dev`: secret `SENTRY_DSN` → Sync secrets + Deploy (rebuild FE) @ops @observability
-  ☐ Verify Hawk garage: smoke error from BFF + SPA @ops @observability
+  ✔ Native Hawk catchers (`@hawk.so/nodejs` + `@hawk.so/browser` + vite-plugin); drop `@sentry/*` @ops @observability @done(26-07-26)
+  ☐ GH Environment `dev`: secret `HAWK_TOKEN` (Integration Token, not DSN) → Sync secrets + Deploy (rebuild FE) @ops @observability
+  ☐ Verify Hawk garage: smoke error from BFF + SPA (`__tavridaHawkSmoke`) @ops @observability
+  ☐ Swarm: remove obsolete `tavrida_dev_sentry_dsn` after `tavrida_dev_hawk_token` live @ops @observability
   ☐ DNS A: auth + logto (+ остальные) → 193.142.148.175 @ops
   ☐ Logto Console: SPA + API resource + M2M; GH env VITE_LOGTO_* @ops
   ☐ Deploy с rebuild frontend + приёмка login/audience @ops

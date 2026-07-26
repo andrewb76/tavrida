@@ -11,5 +11,5 @@ export function hydrateSecretEnv(keys: string[] = []): void {
 }
 
 hydrateSecretEnv(['RABBITMQ_URL', 'INTERNAL_SERVICE_TOKEN',
-  'SENTRY_DSN',
+  'HAWK_TOKEN',
 ]);

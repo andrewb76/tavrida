@@ -59,7 +59,7 @@ Span names: `HTTP POST /internal/v1/wallets/charge`, `RMQ consume auction.comple
 ## 🐛 Sentry
 
 Release: `tavrida-lot@${GIT_SHA}`.  
-См. [sentry-setup.md](./sentry-setup.md).
+См. [hawk-setup.md](./hawk-setup.md).
 
 ## 🔗 Связанные разделы
 

@@ -7,7 +7,7 @@ import App from './App.vue';
 import './assets/main.css';
 import { createLogtoConfig } from './config/logto';
 import { router } from './router';
-import { initSentryVue } from './sentry';
+import { initHawkVue } from './hawk';
 
 const i18n = createI18n({
   legacy: false,
@@ -27,7 +27,7 @@ if (logtoConfig) {
 }
 
 app.use(router);
-initSentryVue(app, router);
+initHawkVue(app);
 app.use(VueQueryPlugin);
 app.use(i18n);
 

@@ -203,7 +203,7 @@ CI декодирует её в `docker/swarm/ci-ssh-agent.sh`. Сырой PEM �
 | `MINIO_ROOT_PASSWORD`    | sync-secrets → Swarm                          |
 | `LOGTO_M2M_APP_SECRET`   | sync-secrets → Swarm (tenant «dev/server»)    |
 | `INTERNAL_SERVICE_TOKEN` | sync-secrets → Swarm (`openssl rand -hex 32`) |
-| `SENTRY_DSN`             | sync-secrets → Nest + Vite build (Hawk/Sentry DSN) |
+| `HAWK_TOKEN`             | sync-secrets → Nest + Vite build (Hawk Integration Token) |
 | `GRAFANA_CLOUD_TOKEN`    | sync-secrets → Alloy (отложено) |
 
 > **Локальная разработка не затрагивается.** Environment `dev` читают только Actions (`deploy-dev`, `sync-secrets-dev`). Ноутбук использует gitignored `.env.local` / `docker/swarm/dev.secrets.env` — это разные файлы и разные Logto tenants.

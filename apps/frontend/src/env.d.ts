@@ -10,9 +10,9 @@ interface ImportMetaEnv {
   readonly VITE_IMAGE_PROXY_URL?: string;
   readonly VITE_IMAGE_PROXY_FETCH_BASE_URL?: string;
   readonly VITE_MEDIA_PUBLIC_BASE_URL?: string;
-  readonly VITE_SENTRY_DSN?: string;
-  readonly VITE_SENTRY_ENVIRONMENT?: string;
-  readonly VITE_SENTRY_RELEASE?: string;
+  readonly VITE_HAWK_TOKEN?: string;
+  readonly VITE_HAWK_ENVIRONMENT?: string;
+  readonly VITE_HAWK_RELEASE?: string;
 }
 
 interface ImportMeta {

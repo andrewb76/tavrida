@@ -299,9 +299,9 @@ sync_one() {
   if [[ -z "$value" ]]; then
     # Stack references these as external secrets — empty skip → deploy fails later.
     case "$key" in
-      SENTRY_DSN)
-        echo "ERROR: ${key} is empty but stack-platform requires tavrida_dev_sentry_dsn." >&2
-        echo "Set Environment secret SENTRY_DSN (Hawk/Sentry DSN), then re-run Sync secrets." >&2
+      HAWK_TOKEN)
+        echo "ERROR: ${key} is empty but stack-platform requires tavrida_dev_hawk_token." >&2
+        echo "Set Environment secret HAWK_TOKEN (Hawk Integration Token), then re-run Sync secrets." >&2
         exit 1
         ;;
     esac

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@logto/vue": "^3.0.13",
-    "@sentry/vue": "^9.40.0",
+    "@hawk.so/browser": "^3.4.0",
     "@tanstack/vue-query": "^5.62.8",
     "@tavrida/object-storage": "workspace:*",
     "@tavrida/shared": "workspace:*",
@@ -29,6 +29,7 @@
     "vue-sonner": "^1.3.0"
   },
   "devDependencies": {
+    "@hawk.so/vite-plugin": "^1.0.6",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.0.0",
     "@tavrida/tsconfig": "workspace:*",

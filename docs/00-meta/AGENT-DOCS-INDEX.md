@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Ревью docs:** [docs-review.md](../13-maintenance/docs-review.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-23 (docs-review P0–P1 harmony patch)
+**Последнее обновление индекса:** 2026-07-26 (Hawk native catchers; Observability)
 
 ---
 
@@ -48,7 +48,7 @@
 | **Данные / schema** | entities, ownership | [10-data/README.md](../10-data/README.md) → [ADR-001](../03-architecture/adr/001-database-schema-per-service.md) → [migrations.md](../04-deployment/migrations.md) | [naming.md](../13-maintenance/naming.md) · [registry-keys.md](../13-maintenance/registry-keys.md) | schemas incl. `chat` · `DATABASE_URL` · versioned migrations |
 | **Локальная разработка** | docker, env, ports | [local-dev.md](../04-deployment/local-dev.md) → [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | [bootstrap-admin.md](../09-security/bootstrap-admin.md) · [dev-tools.md](../02-infrastructure/dev-tools.md) · `docker/compose/` | infra + Keto · `pnpm novu:up` · Logto optional |
 | **Деплой / CI** | Swarm, migrations, GH Actions | [04-deployment/README.md](../04-deployment/README.md) → [dev-evatorg.md](../04-deployment/dev-evatorg.md) → [migrations.md](../04-deployment/migrations.md) → [github-actions.md](../04-deployment/github-actions.md) | [swarm-stacks.md](../04-deployment/swarm-stacks.md) · [ops-hygiene.md](../13-maintenance/ops-hygiene.md) · `docker/swarm/README.dev.md` | `evatorg.su` · CD `dev` · Logto OSS · Sonar on PR/`master`/`dev` · gate Tavrida |
-| **Observability** | logs, metrics, SLO | [07-observability/README.md](../07-observability/README.md) → [sentry-setup.md](../07-observability/sentry-setup.md) | [grafana-setup.md](../07-observability/grafana-setup.md) · [slo.md](../07-observability/slo.md) | Sentry SDK → Hawk · Grafana Cloud deferred |
+| **Observability** | logs, metrics, SLO | [07-observability/README.md](../07-observability/README.md) → [hawk-setup.md](../07-observability/hawk-setup.md) | [grafana-setup.md](../07-observability/grafana-setup.md) · [slo.md](../07-observability/slo.md) | Hawk `@hawk.so/*` · Grafana Cloud deferred |
 | **UX / wireframes** | экраны, IA, visual direction | [11-ux-ui/README.md](../11-ux-ui/README.md) → [design-system.md](../11-ux-ui/design-system.md) → [screen-tree.md](../11-ux-ui/screen-tree.md) | [wireframes/](../11-ux-ui/wireframes/README.md) · [visual-lab](../11-ux-ui/wireframes/visual-lab/README.md) | light/dark page backgrounds ✅ · W03 direction selection pending |
 | **Продукт (для людей)** | PM, onboarding, copy | [platform-for-users.md](../01-goal/platform-for-users.md) | [platform-scenarios.md](../01-goal/platform-scenarios.md) | — |
 | **Роли и права** | RBAC, тарифы | [roles.md](../01-goal/roles.md) | [keto-schema.md](../09-security/keto-schema.md) | — |
