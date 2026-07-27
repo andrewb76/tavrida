@@ -119,6 +119,8 @@ Default `rating.contextWeights`:
 | `auction.bid.incrementDefault` | number | `100` | global | Шаг ставки по умолчанию (₽) |
 | `auction.lot.minStartingPrice` | number | `1` | global | Минимальная стартовая цена |
 | `auction.lot.expertAppraisalBoost` | number | `1.2` | global | Множитель значимости лота с экспертизой |
+| `auction.lot.image.aspectWidth` | number | `4` | global | Соотношение сторон фото лота — ширина (напр. 4 в 4:3) |
+| `auction.lot.image.aspectHeight` | number | `3` | global | Соотношение сторон фото лота — высота (напр. 3 в 4:3) |
 
 ### marketplace
 

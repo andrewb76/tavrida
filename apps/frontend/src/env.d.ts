@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_HAWK_TOKEN?: string;
   readonly VITE_HAWK_ENVIRONMENT?: string;
   readonly VITE_HAWK_RELEASE?: string;
+  /** Enable window.__tavridaE2E helpers for Playwright (never in prod images). */
+  readonly VITE_E2E?: string;
 }
 
 interface ImportMeta {

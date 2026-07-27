@@ -239,33 +239,10 @@ Priority suites:
 
 **Gate:** bugfix состояния требует regression test на observable behavior.
 
-### T5 — Browser E2E and visual/accessibility smoke
+### T5 — Browser E2E
 
-Оценка: 7–10 engineer-days.
-
-- Playwright config и full-stack test profile;
-- deterministic local OIDC/JWKS; cloud Logto не использовать на PR;
-- API fixture endpoints/scripts для setup/cleanup;
-- trace, screenshot, console/network log only on failure;
-- один retry в CI максимум.
-
-PR smoke:
-
-1. Existing member opens protected deep link.
-2. Invite resolve → auth callback → claim.
-3. Admin enter/exit impersonation без утечки state.
-4. Create English auction → bid; accept Dutch ask.
-5. Paid option / plan activation: success и insufficient balance.
-6. Forum topic → comment → vote/tag subscription.
-7. Marketplace order → completion → pending feedback.
-8. Valid/invalid media upload.
-
-Nightly:
-
-- Firefox/WebKit;
-- light/dark screenshots, desktop/mobile;
-- axe scan primary routes;
-- broader admin/config/period scenarios.
+Справка: [e2e-playwright.md](./e2e-playwright.md). Пакет `@tavrida/e2e`, smoke в CI.  
+Дальнейшее покрытие — по бэклогу в `AGENT-TODO`, не блокер каждой фичи.
 
 ### T6 — Deployment and release gates
 

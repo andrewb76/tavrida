@@ -44,7 +44,7 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 
 | Domain | Ключи |
 |--------|-------|
-| auction | `auction.seller.image.countMax`, `auction.seller.image.sizeMaxMb` |
+| auction | `auction.seller.image.countMax`, `auction.seller.image.sizeMaxMb` (plan) · кадр `auction.lot.image.aspectWidth` / `aspectHeight` (scalar, default 4:3) |
 | forum | `forum.author.attachment.countMax`, `forum.author.attachment.sizeMaxMb` |
 | marketplace | `marketplace.seller.portfolio.itemMax`, `marketplace.seller.portfolio.image.sizeMaxMb` |
 | chat | `chat.member.attachment.countMax`, `chat.member.attachment.sizeMaxMb` |
@@ -86,7 +86,7 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 
 ## Доменные данные
 
-- **Auction:** `images: string[]` — только URL после confirm.
+- **Auction:** `images: string[]` — только URL после confirm. При upload SPA кропает под scalar aspect; display px — imgproxy.
 - **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
 - **Marketplace:** `portfolio_item.imageUrl` — URL после confirm (`domain=marketplace`).
 - **Chat:** `attachmentIds: uuid[]` = upload intent ids; BFF enrich → `attachments: MediaAttachment[]` на сообщениях.

@@ -8,6 +8,8 @@ import type { RegisterScalarVariableDto } from './dto/settings.dto';
 const PUBLIC_KEYS = new Set([
   'club.registration.inviteOnly',
   'club.landing.publicSections',
+  'auction.lot.image.aspectWidth',
+  'auction.lot.image.aspectHeight',
 ]);
 
 @Injectable()

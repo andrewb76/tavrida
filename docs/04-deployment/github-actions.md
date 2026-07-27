@@ -8,7 +8,7 @@
 
 | Workflow               | Файл                                                                                     | Триггер                        | Назначение                             |
 | ---------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------- |
-| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master` / `dev`     | lint, test, turbo build, **SonarQube Scan** (если vars заданы) |
+| **CI**                 | `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)`                             | PR + push `master` / `dev`     | lint, test, **E2E smoke** (Playwright BDD `@smoke`), turbo build, **SonarQube Scan** (если vars заданы) |
 | **Docs Pages**         | `[.github/workflows/docs-pages.yml](../../.github/workflows/docs-pages.yml)`             | push `master`, manual          | Публикация на **GitHub Pages**         |
 | **Deploy dev**         | `[.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml)`             | push **`dev`** (paths) + manual | Build → GHCR → ensure Swarm secrets → stack deploy |
 | **Sync secrets (dev)** | `[.github/workflows/sync-secrets-dev.yml](../../.github/workflows/sync-secrets-dev.yml)` | **manual only**                | GitHub Secrets → Swarm `tavrida_dev_*` (rotate / force) |
@@ -332,6 +332,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 | Actions on Node 24 (`checkout@v5`…) | ✅ workflows                                                |
 | GitHub Pages                        | ✅ workflow                                                 |
 | `pnpm test` в CI                    | ✅ в `ci.yml` (+ JUnit check **Test Results**)              |
+| Playwright BDD `@smoke`             | ✅ job **E2E smoke** → [e2e-playwright](../08-testing/e2e-playwright.md) |
 | Test results badge (`badges` branch)| ✅ SVG после push `master` → [README](../../README.md)       |
 | Docker matrix → GHCR + Swarm deploy | ✅ `deploy-dev.yml`                                         |
 | Sync secrets → Swarm                | ✅ `sync-secrets-dev.yml`                                   |

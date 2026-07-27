@@ -70,6 +70,11 @@ export type ChatSettings = {
   'group.leaveKeepsHistory'?: boolean;
 };
 
+export type AuctionSettings = {
+  'lot.image.aspectWidth'?: number;
+  'lot.image.aspectHeight'?: number;
+};
+
 export async function fetchForumSettings(): Promise<ForumSettings> {
   const res = await fetch(`${apiBase()}/admin/scalar-config/forum`, {
     headers: await bffAuthHeaders(undefined, { json: false }),
@@ -128,6 +133,36 @@ export async function saveChatSettings(patch: ChatSettings): Promise<ChatSetting
     throw new Error(detail);
   }
   return (await res.json()) as ChatSettings;
+}
+
+export async function fetchAuctionSettings(): Promise<AuctionSettings> {
+  const res = await fetch(`${apiBase()}/admin/scalar-config/auction`, {
+    headers: await bffAuthHeaders(undefined, { json: false }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load auction settings (${res.status})`);
+  }
+  return (await res.json()) as AuctionSettings;
+}
+
+export async function saveAuctionSettings(patch: AuctionSettings): Promise<AuctionSettings> {
+  const res = await fetch(`${apiBase()}/admin/scalar-config/auction`, {
+    method: 'PATCH',
+    headers: await bffAuthHeaders(undefined, { skipActAs: true }),
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    let detail = `Failed to save auction settings (${res.status})`;
+    try {
+      const body = (await res.json()) as { detail?: string; message?: string | string[] };
+      if (typeof body.detail === 'string') detail = body.detail;
+      else if (typeof body.message === 'string') detail = body.message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return (await res.json()) as AuctionSettings;
 }
 
 export async function fetchScalarRegistry(): Promise<ScalarRegistryEntry[]> {

@@ -15,6 +15,8 @@ export type MediaLimits = {
   sizeMaxMb: number;
   sizeMaxBytes: number;
   accept: string;
+  aspectWidth?: number;
+  aspectHeight?: number;
 };
 
 export type UploadIntentResponse = {

@@ -1,9 +1,11 @@
 # 🎬 Сценарии платформы — индекс
 
-> **Статус:** spec ready · **Версия:** 0.2  
+> **Статус:** in progress · **Версия:** 0.3  
 > **Назначение:** поведение Tavrida Lot в **трёх группах по частоте** — разные стандарты качества на каждую.
 
 Не заменяет [platform-for-users.md](./platform-for-users.md) (проза) и README сервисов.
+
+Исполняемые BDD-сценарии (по мере готовности): [`e2e/features/`](../../e2e/features/). Справка: [e2e-playwright.md](../08-testing/e2e-playwright.md).
 
 ---
 
@@ -21,9 +23,10 @@
 
 | Поле | Смысл |
 |------|--------|
-| **ID** | `S-xxx` — issues, `.feature`, Playwright |
-| **G/W/T** | Given / When / Then |
-| **Компоненты** | Сервисы и каналы |
+| **ID** | `S-xxx` |
+| **G/W/T** | в `.feature`, если сценарий уже в E2E |
+| **Компоненты** | сервисы и каналы |
+| **e2e** | `none` \| `smoke` \| `full` \| `scaffold` |
 | **Тест** | E2E · INT · UNIT |
 
 **Traceability:** сценарий → [wireframe](../11-ux-ui/wireframes/README.md) → [API](../06-api/README.md) / [events](../03-architecture/event-catalog.md) → тест.

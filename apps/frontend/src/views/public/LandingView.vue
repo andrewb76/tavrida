@@ -34,6 +34,7 @@ const pillars = [
     <section
       class="landing-hero"
       aria-labelledby="landing-brand"
+      data-testid="landing-hero"
     >
       <div
         class="landing-hero__media"
@@ -77,6 +78,7 @@ const pillars = [
           <RouterLink
             v-if="inviteOnly"
             to="/join"
+            data-testid="landing-cta-invite"
           >
             <UiButton
               intent="primary"
@@ -105,7 +107,10 @@ const pillars = [
             </UiButton>
           </RouterLink>
 
-          <RouterLink to="/about">
+          <RouterLink
+            to="/about"
+            data-testid="landing-cta-about"
+          >
             <UiButton
               intent="secondary"
               size="lg"

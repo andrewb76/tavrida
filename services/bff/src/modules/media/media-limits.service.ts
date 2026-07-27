@@ -6,6 +6,7 @@ import {
   type MediaLimits,
 } from '@tavrida/object-storage';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
+import { AuctionSettingsReader } from '../scalar-config/auction-settings.reader';
 
 const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
   auction: {
@@ -28,7 +29,10 @@ const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
 
 @Injectable()
 export class MediaLimitsService {
-  constructor(private readonly planConfig: PlanConfigClient) {}
+  constructor(
+    private readonly planConfig: PlanConfigClient,
+    private readonly auctionSettings: AuctionSettingsReader,
+  ) {}
 
   async getLimits(userId: string, domain: MediaDomain): Promise<MediaLimits & { accept: string }> {
     const keys = DOMAIN_KEYS[domain];
@@ -47,12 +51,20 @@ export class MediaLimitsService {
     const sizeMaxMb = sizeRaw;
     const sizeMaxBytes = sizeMaxMb * 1024 * 1024;
 
-    return {
+    const base: MediaLimits & { accept: string } = {
       countMax,
       sizeMaxMb,
       sizeMaxBytes,
       accept: acceptAttributeForDomain(domain),
     };
+
+    if (domain === 'auction') {
+      const aspect = await this.auctionSettings.lotImageAspect();
+      base.aspectWidth = aspect.aspectWidth;
+      base.aspectHeight = aspect.aspectHeight;
+    }
+
+    return base;
   }
 
   isAllowedContentType(domain: MediaDomain, contentType: string): boolean {

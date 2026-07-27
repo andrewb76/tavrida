@@ -1,0 +1,18 @@
+{
+  "name": "@tavrida/e2e",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "bddgen": "bddgen",
+    "test": "bddgen && playwright test",
+    "test:smoke": "bddgen && playwright test --grep @smoke",
+    "test:ui": "bddgen && playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tavrida/tsconfig": "workspace:*",
+    "playwright-bdd": "^9.2.0",
+    "typescript": "^5.4.5"
+  }
+}

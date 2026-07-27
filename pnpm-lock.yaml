@@ -89,6 +89,9 @@ importers:
       vue:
         specifier: ^3.5.13
         version: 3.5.39(typescript@5.9.3)
+      vue-advanced-cropper:
+        specifier: ^2.8.9
+        version: 2.8.9(vue@3.5.39(typescript@5.9.3))
       vue-i18n:
         specifier: ^10.0.5
         version: 10.0.8(vue@3.5.39(typescript@5.9.3))
@@ -135,6 +138,21 @@ importers:
       vue-tsc:
         specifier: ^2.2.0
         version: 2.2.12(typescript@5.9.3)
+
+  e2e:
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.56.0
+        version: 1.62.0
+      '@tavrida/tsconfig':
+        specifier: workspace:*
+        version: link:../packages/tsconfig
+      playwright-bdd:
+        specifier: ^9.2.0
+        version: 9.2.0(@playwright/test@1.62.0)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
 
   packages/content:
     devDependencies:
@@ -1456,9 +1474,50 @@ packages:
   '@borewit/text-codec@0.2.2':
     resolution: {integrity: sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==}
 
+  '@colors/colors@1.5.0':
+    resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
+    engines: {node: '>=0.1.90'}
+
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@cucumber/ci-environment@13.0.0':
+    resolution: {integrity: sha512-cs+3NzfNkGbcmHPddjEv4TKFiBpZRQ6WJEEufB9mw+ExS22V/4R/zpDSEG+fsJ/iSNCd6A2sATdY8PFOyY3YnA==}
+
+  '@cucumber/cucumber-expressions@19.0.0':
+    resolution: {integrity: sha512-4FKoOQh2Uf6F6/Ln+1OxuK8LkTg6PyAqekhf2Ix8zqV2M54sH+m7XNJNLhOFOAW/t9nxzRbw2CcvXbCLjcvHZg==}
+
+  '@cucumber/gherkin-utils@11.0.0':
+    resolution: {integrity: sha512-LJ+s4+TepHTgdKWDR4zbPyT7rQjmYIcukTwNbwNwgqr6i8Gjcmzf6NmtbYDA19m1ZFg6kWbFsmHnj37ZuX+kZA==}
+    hasBin: true
+
+  '@cucumber/gherkin@38.0.0':
+    resolution: {integrity: sha512-duEXK+KDfQUzu3vsSzXjkxQ2tirF5PRsc1Xrts6THKHJO6mjw4RjM8RV+vliuDasmhhrmdLcOcM7d9nurNTJKw==}
+
+  '@cucumber/gherkin@39.1.0':
+    resolution: {integrity: sha512-pqmSO2bUWxJm3TbNrKXlDaHjL6c77+ez9kWmfCd9oRPeTRPEVH3spZvpAqdXYWOZYSNYwWFCAAeZ4RGpkauNoQ==}
+
+  '@cucumber/html-formatter@23.1.0':
+    resolution: {integrity: sha512-DcCSFoGs6jbwzXPgX1CwgJKEE+ZMcIEzq/0Memg0o24maNn9NJizBFHmoFWG4iv/OxHza+mvc+56cTHetfHndw==}
+    peerDependencies:
+      '@cucumber/messages': '>=18'
+
+  '@cucumber/junit-xml-formatter@0.13.3':
+    resolution: {integrity: sha512-w9ujOxiuKDtU6fLzJz+wp4Sgp5Xu6ba7ls00LHJccVmQU0Ba7zs+AHnv3iIgPjKZAQe1w8x93dr8Gaubh7Vqkg==}
+    peerDependencies:
+      '@cucumber/messages': '*'
+
+  '@cucumber/messages@32.3.1':
+    resolution: {integrity: sha512-yNQq1KoXRYaEKrWMFmpUQX7TdeQuU9jeGgJAZ3dArTsC/T4NpJ6DnqaJIIgwPnz/wtQIQTNX7/h0rOuF5xY4qQ==}
+
+  '@cucumber/query@15.0.1':
+    resolution: {integrity: sha512-FMfT3orJblRsOxvU2doECBvQmauizYlj+5JsM8atAKKPbnQTj7v2/OrnuykvQpfZNBf19DYbRq1e832vllRP/g==}
+    peerDependencies:
+      '@cucumber/messages': '*'
+
+  '@cucumber/tag-expressions@9.1.0':
+    resolution: {integrity: sha512-bvHjcRFZ+J1TqIa9eFNO1wGHqwx4V9ZKV3hYgkuK/VahHx73uiP4rKV3JVrvWSMrwrFvJG6C8aEwnCWSvbyFdQ==}
 
   '@docsearch/css@3.8.2':
     resolution: {integrity: sha512-y05ayQFyUmCXze79+56v/4HpycYF3uFqB78pLPrSV5ZKAlDuIAAJNhaRi8tTdRNXh05yxX/TyNnzD6LwSM89vQ==}
@@ -1997,6 +2056,11 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@playwright/test@1.62.0':
+    resolution: {integrity: sha512-9zOJ6ZQRAena31MpOH9VSzIz8Ou3YJ/wtY/eQm5T2uhfhG7/U3COrMS8xOtUrZrp9OgdmzEnIYODye3nY1VqzA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   '@rollup/rollup-android-arm-eabi@4.62.2':
     resolution: {integrity: sha512-6o7ZLZK+BeenkZCFNDXqpbjw9bD6nuWonvS/lwQJp7NoVVxm6p3qE7qQ5jGuBjiFsgvqjD8mZAU5oWxTmbOeOg==}
     cpu: [arm]
@@ -2315,6 +2379,10 @@ packages:
     resolution: {integrity: sha512-wZMEoSf852jQqaf3Ika1J7PiBae6341LNy/2CxmIyn0XKDQXMuK41wVX+xp6G0yx8jyR95Ef+Tdr13DK7mbJtQ==}
     peerDependencies:
       vue: ^2.7.0 || ^3.0.0
+
+  '@teppeis/multimaps@3.0.0':
+    resolution: {integrity: sha512-ID7fosbc50TbT0MK0EG12O+gAP3W3Aa/Pz4DaTtQtEvlc9Odaqi0de+xuZ7Li2GtK4HzEX7IuRWS/JmZLksR3Q==}
+    engines: {node: '>=14'}
 
   '@tokenizer/inflate@0.4.1':
     resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
@@ -2873,9 +2941,16 @@ packages:
   class-variance-authority@0.7.1:
     resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
 
+  classnames@2.5.1:
+    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+
   cli-boxes@2.2.1:
     resolution: {integrity: sha512-y4coMcylgSCdVinjiDBuR8PCC2bLjyGTwEmPb9NHR/QaNU6EUOXcTY/s6VjGMD6ENSEaeQYHCY0GNGS5jfMwPw==}
     engines: {node: '>=6'}
+
+  cli-table3@0.6.5:
+    resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
+    engines: {node: 10.* || >= 12.*}
 
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
@@ -2898,6 +2973,14 @@ packages:
 
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
+
+  commander@13.1.0:
+    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
+    engines: {node: '>=18'}
+
+  commander@14.0.2:
+    resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
+    engines: {node: '>=20'}
 
   concat-stream@2.0.0:
     resolution: {integrity: sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==}
@@ -2951,6 +3034,9 @@ packages:
 
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
+
+  debounce@1.2.1:
+    resolution: {integrity: sha512-XRRe6Glud4rd/ZGQfiV1ruXSfbvfJedlV9Y6zOlP+2K04vBYiJEte6stfFkCP03aMnY5tsipamumUjL14fofug==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -3023,6 +3109,9 @@ packages:
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
+
+  easy-bem@1.1.1:
+    resolution: {integrity: sha512-GJRqdiy2h+EXy6a8E6R+ubmqUM08BK0FWNq41k24fup6045biQ8NXxoXimiwegMQvFFV3t1emADdGNL1TlS61A==}
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -3252,6 +3341,11 @@ packages:
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
+
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -3557,11 +3651,18 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
+  lodash.sortby@4.7.0:
+    resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
+
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
+
+  luxon@3.7.2:
+    resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
+    engines: {node: '>=12'}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -3815,6 +3916,23 @@ packages:
       typescript:
         optional: true
 
+  playwright-bdd@9.2.0:
+    resolution: {integrity: sha512-1tBTmo4DpOhLsc+A6PB4isWO3DHKb4BQ3Tzw5+ze/PmgBW9W2m9c+nc0TPy2nByWJtw0gKSfMoexyBR+y82+pg==}
+    engines: {node: '>=20'}
+    hasBin: true
+    peerDependencies:
+      '@playwright/test': '>=1.44'
+
+  playwright-core@1.62.0:
+    resolution: {integrity: sha512-nsNRyq0r2zsG8AcRHWknc9QRA5XCueC7gWMrs+Gx2tlZn9hcl8zudfh00lhJPY1DE7NmZ6bDsT9g2yey8mXljA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.62.0:
+    resolution: {integrity: sha512-Z14dG305dgaLu6foB1TXQagFiW8JfSUIUaUuPaKQ6NtBPKF1P/qXcqfh6c6K/icPqdy37JmjbiBXf6JNg6Sylw==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
@@ -3928,6 +4046,13 @@ packages:
   regex@6.1.0:
     resolution: {integrity: sha512-6VwtthbV4o/7+OaAF9I5L5V3llLEsoPyq9P1JVXkedTP33c7MfCG0/5NOPcSJn0TzXcG9YUrR0gQSWioew3LDg==}
 
+  regexp-match-indices@1.0.2:
+    resolution: {integrity: sha512-DwZuAkt8NF5mKwGGER1EGh2PRqyvhRhhLviH+R8y8dIuaQROlUfXjt4s9ZTXstIsSkptf06BSvwcEmmfheJJWQ==}
+
+  regexp-tree@0.1.27:
+    resolution: {integrity: sha512-iETxpjK6YoRWJG5o6hXLwvjYAoW+FEZn9os0PD/b6AP6xQwsa/Y7lCVgIixBbUPMfhu+i2LtdeAqVTgGlQarfA==}
+    hasBin: true
+
   reka-ui@2.10.1:
     resolution: {integrity: sha512-drcOQ4rQtDYAcGCsyQBqQg8QQ+H3B+zDaMJU0h8KPEPMa7g9BHu3zcOi4OB39XJSWizceFoNO0Z9tctSGLOXqg==}
     peerDependencies:
@@ -4040,6 +4165,13 @@ packages:
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
+    engines: {node: '>=0.10.0'}
+
+  source-map-support@0.5.21:
+    resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
+
+  source-map@0.6.1:
+    resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
   space-separated-tokens@2.0.2:
@@ -4395,6 +4527,12 @@ packages:
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
 
+  vue-advanced-cropper@2.8.9:
+    resolution: {integrity: sha512-1jc5gO674kVGpJKekoaol6ZlwaF5VYDLSBwBOUpViW0IOrrRsyLw6XNszjEqgbavvqinlKNS6Kqlom3B5M72Tw==}
+    engines: {node: '>=8', npm: '>=5'}
+    peerDependencies:
+      vue: ^3.0.0
+
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
     engines: {node: '>=12'}
@@ -4493,6 +4631,10 @@ packages:
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
     engines: {node: '>=12'}
+
+  xmlbuilder@15.1.1:
+    resolution: {integrity: sha512-yMqGBqtXyeN1e3TGYvgNgDVZ3j84W4cwkOXQswghol6APgZWaff9lnbvN7MHYJOiXsvGPXtjTYJEiC9J2wv9Eg==}
+    engines: {node: '>=8.0'}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -4829,9 +4971,59 @@ snapshots:
 
   '@borewit/text-codec@0.2.2': {}
 
+  '@colors/colors@1.5.0':
+    optional: true
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+
+  '@cucumber/ci-environment@13.0.0': {}
+
+  '@cucumber/cucumber-expressions@19.0.0':
+    dependencies:
+      regexp-match-indices: 1.0.2
+
+  '@cucumber/gherkin-utils@11.0.0':
+    dependencies:
+      '@cucumber/gherkin': 38.0.0
+      '@cucumber/messages': 32.3.1
+      '@teppeis/multimaps': 3.0.0
+      commander: 14.0.2
+      source-map-support: 0.5.21
+
+  '@cucumber/gherkin@38.0.0':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+
+  '@cucumber/gherkin@39.1.0':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+
+  '@cucumber/html-formatter@23.1.0(@cucumber/messages@32.3.1)':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+
+  '@cucumber/junit-xml-formatter@0.13.3(@cucumber/messages@32.3.1)':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+      '@cucumber/query': 15.0.1(@cucumber/messages@32.3.1)
+      '@teppeis/multimaps': 3.0.0
+      luxon: 3.7.2
+      xmlbuilder: 15.1.1
+
+  '@cucumber/messages@32.3.1':
+    dependencies:
+      class-transformer: 0.5.1
+      reflect-metadata: 0.2.2
+
+  '@cucumber/query@15.0.1(@cucumber/messages@32.3.1)':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+      '@teppeis/multimaps': 3.0.0
+      lodash.sortby: 4.7.0
+
+  '@cucumber/tag-expressions@9.1.0': {}
 
   '@docsearch/css@3.8.2': {}
 
@@ -5355,6 +5547,10 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@playwright/test@1.62.0':
+    dependencies:
+      playwright: 1.62.0
+
   '@rollup/rollup-android-arm-eabi@4.62.2':
     optional: true
 
@@ -5604,6 +5800,8 @@ snapshots:
     dependencies:
       '@tanstack/virtual-core': 3.17.3
       vue: 3.5.39(typescript@5.9.3)
+
+  '@teppeis/multimaps@3.0.0': {}
 
   '@tokenizer/inflate@0.4.1(supports-color@5.5.0)':
     dependencies:
@@ -6233,7 +6431,15 @@ snapshots:
     dependencies:
       clsx: 2.1.1
 
+  classnames@2.5.1: {}
+
   cli-boxes@2.2.1: {}
+
+  cli-table3@0.6.5:
+    dependencies:
+      string-width: 4.2.3
+    optionalDependencies:
+      '@colors/colors': 1.5.0
 
   cliui@8.0.1:
     dependencies:
@@ -6254,6 +6460,10 @@ snapshots:
       delayed-stream: 1.0.0
 
   comma-separated-tokens@2.0.3: {}
+
+  commander@13.1.0: {}
+
+  commander@14.0.2: {}
 
   concat-stream@2.0.0:
     dependencies:
@@ -6296,6 +6506,8 @@ snapshots:
   dayjs@1.11.21: {}
 
   de-indent@1.0.2: {}
+
+  debounce@1.2.1: {}
 
   debug@4.4.3(supports-color@5.5.0):
     dependencies:
@@ -6348,6 +6560,8 @@ snapshots:
       gopd: 1.2.0
 
   eastasianwidth@0.2.0: {}
+
+  easy-bem@1.1.1: {}
 
   ee-first@1.1.1: {}
 
@@ -6658,6 +6872,9 @@ snapshots:
 
   fresh@2.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -6918,9 +7135,13 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
+  lodash.sortby@4.7.0: {}
+
   lodash@4.18.1: {}
 
   lru-cache@10.4.3: {}
+
+  luxon@3.7.2: {}
 
   magic-string@0.30.21:
     dependencies:
@@ -7164,6 +7385,31 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
 
+  playwright-bdd@9.2.0(@playwright/test@1.62.0):
+    dependencies:
+      '@cucumber/ci-environment': 13.0.0
+      '@cucumber/cucumber-expressions': 19.0.0
+      '@cucumber/gherkin': 39.1.0
+      '@cucumber/gherkin-utils': 11.0.0
+      '@cucumber/html-formatter': 23.1.0(@cucumber/messages@32.3.1)
+      '@cucumber/junit-xml-formatter': 0.13.3(@cucumber/messages@32.3.1)
+      '@cucumber/messages': 32.3.1
+      '@cucumber/query': 15.0.1(@cucumber/messages@32.3.1)
+      '@cucumber/tag-expressions': 9.1.0
+      '@playwright/test': 1.62.0
+      cli-table3: 0.6.5
+      commander: 13.1.0
+      mime-types: 3.0.2
+      tinyglobby: 0.2.17
+
+  playwright-core@1.62.0: {}
+
+  playwright@1.62.0:
+    dependencies:
+      playwright-core: 1.62.0
+    optionalDependencies:
+      fsevents: 2.3.2
+
   possible-typed-array-names@1.1.0: {}
 
   postcss-selector-parser@6.0.10:
@@ -7254,6 +7500,12 @@ snapshots:
   regex@6.1.0:
     dependencies:
       regex-utilities: 2.3.0
+
+  regexp-match-indices@1.0.2:
+    dependencies:
+      regexp-tree: 0.1.27
+
+  regexp-tree@0.1.27: {}
 
   reka-ui@2.10.1(vue@3.5.39(typescript@5.9.3)):
     dependencies:
@@ -7434,6 +7686,13 @@ snapshots:
       semver: 7.8.5
 
   source-map-js@1.2.1: {}
+
+  source-map-support@0.5.21:
+    dependencies:
+      buffer-from: 1.1.2
+      source-map: 0.6.1
+
+  source-map@0.6.1: {}
 
   space-separated-tokens@2.0.2: {}
 
@@ -7766,6 +8025,13 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
+  vue-advanced-cropper@2.8.9(vue@3.5.39(typescript@5.9.3)):
+    dependencies:
+      classnames: 2.5.1
+      debounce: 1.2.1
+      easy-bem: 1.1.1
+      vue: 3.5.39(typescript@5.9.3)
+
   vue-demi@0.14.10(vue@3.5.39(typescript@5.9.3)):
     dependencies:
       vue: 3.5.39(typescript@5.9.3)
@@ -7864,6 +8130,8 @@ snapshots:
   ws@8.21.1: {}
 
   xml-name-validator@4.0.0: {}
+
+  xmlbuilder@15.1.1: {}
 
   xtend@4.0.2: {}
 

@@ -4,10 +4,12 @@ import { onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import {
   deleteScalarKey,
+  fetchAuctionSettings,
   fetchChatSettings,
   fetchClubSettings,
   fetchForumSettings,
   fetchScalarRegistry,
+  saveAuctionSettings,
   saveChatSettings,
   saveClubSettings,
   saveForumSettings,
@@ -20,6 +22,7 @@ const loading = ref(true);
 const saving = ref(false);
 const savingForum = ref(false);
 const savingChat = ref(false);
+const savingAuction = ref(false);
 const deletingKey = ref<string | null>(null);
 const error = ref('');
 const registry = ref<ScalarRegistryEntry[]>([]);
@@ -35,6 +38,11 @@ const form = ref({
 const forumForm = ref({
   editWindowMinutes: 10,
   voteChangeWindowMinutes: 3,
+});
+
+const auctionForm = ref({
+  aspectWidth: 4,
+  aspectHeight: 3,
 });
 
 const chatForm = ref({
@@ -64,15 +72,18 @@ async function load() {
   loading.value = true;
   error.value = '';
   try {
-    const [club, forum, chat, rows] = await Promise.all([
+    const [club, forum, chat, auction, rows] = await Promise.all([
       fetchClubSettings(),
       fetchForumSettings(),
       fetchChatSettings(),
+      fetchAuctionSettings(),
       fetchScalarRegistry(),
     ]);
     applySettings(club);
     forumForm.value.editWindowMinutes = forum['edit.windowMinutes'] ?? 10;
     forumForm.value.voteChangeWindowMinutes = forum['vote.changeWindowMinutes'] ?? 3;
+    auctionForm.value.aspectWidth = auction['lot.image.aspectWidth'] ?? 4;
+    auctionForm.value.aspectHeight = auction['lot.image.aspectHeight'] ?? 3;
     chatForm.value.spawnCopyHistoryMax = chat['spawn.copyHistoryMax'] ?? 100;
     chatForm.value.editWindowMinutes = chat['message.editWindowMinutes'] ?? 15;
     chatForm.value.deleteOwnWindowMinutes = chat['message.deleteOwnWindowMinutes'] ?? 60;
@@ -162,6 +173,30 @@ async function saveForum() {
     toast.error(error.value);
   } finally {
     savingForum.value = false;
+  }
+}
+
+async function saveAuction() {
+  savingAuction.value = true;
+  error.value = '';
+  try {
+    const updated = await saveAuctionSettings({
+      'lot.image.aspectWidth': Number(auctionForm.value.aspectWidth),
+      'lot.image.aspectHeight': Number(auctionForm.value.aspectHeight),
+    });
+    auctionForm.value.aspectWidth = updated['lot.image.aspectWidth'] ?? 4;
+    auctionForm.value.aspectHeight = updated['lot.image.aspectHeight'] ?? 3;
+    clubAccess.applyPublicSettings({
+      'auction.lot.image.aspectWidth': auctionForm.value.aspectWidth,
+      'auction.lot.image.aspectHeight': auctionForm.value.aspectHeight,
+    });
+    registry.value = await fetchScalarRegistry();
+    toast.success('Настройки аукциона сохранены');
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Ошибка сохранения аукциона';
+    toast.error(error.value);
+  } finally {
+    savingAuction.value = false;
   }
 }
 
@@ -365,6 +400,61 @@ onMounted(() => {
           :disabled="savingForum"
         >
           {{ savingForum ? 'Сохранение…' : 'Сохранить форум' }}
+        </UiButton>
+      </form>
+    </section>
+
+    <section class="space-y-4">
+      <h3 class="font-medium">
+        Аукцион — фото лота
+      </h3>
+      <p class="text-sm text-text-muted">
+        Соотношение сторон кадра при загрузке. Пиксели отображения — через imgproxy.
+      </p>
+
+      <form
+        v-if="!loading"
+        class="max-w-lg space-y-4"
+        @submit.prevent="saveAuction"
+      >
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="block text-sm">
+            <span class="text-text-muted">Ширина (aspectWidth)</span>
+            <input
+              v-model.number="auctionForm.aspectWidth"
+              type="number"
+              min="1"
+              max="32"
+              step="1"
+              class="mt-1 w-24 rounded-md border border-border bg-bg px-3 py-2"
+            >
+          </label>
+          <span class="pb-2 text-text-muted">:</span>
+          <label class="block text-sm">
+            <span class="text-text-muted">Высота (aspectHeight)</span>
+            <input
+              v-model.number="auctionForm.aspectHeight"
+              type="number"
+              min="1"
+              max="32"
+              step="1"
+              class="mt-1 w-24 rounded-md border border-border bg-bg px-3 py-2"
+            >
+          </label>
+        </div>
+        <p class="text-xs text-text-muted">
+          Ключи
+          <code class="text-xs">auction.lot.image.aspectWidth</code>
+          /
+          <code class="text-xs">auction.lot.image.aspectHeight</code>
+          (по умолчанию 4:3).
+        </p>
+        <UiButton
+          type="submit"
+          intent="primary"
+          :disabled="savingAuction"
+        >
+          {{ savingAuction ? 'Сохранение…' : 'Сохранить аукцион' }}
         </UiButton>
       </form>
     </section>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ImageCropModal from '@/components/media/ImageCropModal.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import { auctionTypeLabel, formatMoney } from '@/services/auction-format';
@@ -36,7 +37,24 @@ const reservePrice = ref(1000);
 const promote = ref(false);
 const photoUpload = useMediaUpload('auction');
 
+const cropQueue = ref<File[]>([]);
+const cropFile = ref<File | null>(null);
+const cropOpen = ref(false);
+
 const flatCategories = computed(() => flattenCategories(categories.value));
+
+const aspectWidth = computed(
+  () =>
+    photoUpload.limits.value?.aspectWidth ??
+    options.value?.imageLimits?.aspectWidth ??
+    4,
+);
+const aspectHeight = computed(
+  () =>
+    photoUpload.limits.value?.aspectHeight ??
+    options.value?.imageLimits?.aspectHeight ??
+    3,
+);
 
 const canSubmit = computed(() => {
   if (!options.value) return false;
@@ -54,7 +72,8 @@ const dailyLimitLabel = computed(() => {
 const photoHint = computed(() => {
   const limits = options.value?.imageLimits ?? photoUpload.limits.value;
   if (!limits) return 'Загрузка фото в MinIO';
-  return `До ${limits.countMax} фото, макс. ${limits.sizeMaxMb} MB каждое`;
+  const ratio = `${aspectWidth.value}:${aspectHeight.value}`;
+  return `До ${limits.countMax} фото (${ratio}), макс. ${limits.sizeMaxMb} MB каждое`;
 });
 
 function defaultSchedule() {
@@ -90,7 +109,38 @@ onMounted(async () => {
 });
 
 function onPhotosSelected(files: FileList) {
-  void photoUpload.addFiles(files);
+  const images = Array.from(files).filter((f) => f.type.startsWith('image/'));
+  if (!images.length) return;
+  cropQueue.value = [...cropQueue.value, ...images];
+  openNextCrop();
+}
+
+function openNextCrop() {
+  if (cropOpen.value) return;
+  const next = cropQueue.value[0];
+  if (!next) {
+    cropFile.value = null;
+    return;
+  }
+  cropFile.value = next;
+  cropOpen.value = true;
+}
+
+function advanceCropQueue() {
+  cropQueue.value = cropQueue.value.slice(1);
+  cropOpen.value = false;
+  cropFile.value = null;
+  // Defer so modal unmounts before next open
+  queueMicrotask(() => openNextCrop());
+}
+
+function onCropCancel() {
+  advanceCropQueue();
+}
+
+function onCropConfirm(file: File) {
+  void photoUpload.addFiles([file]);
+  advanceCropQueue();
 }
 
 async function submit() {
@@ -176,6 +226,14 @@ async function submit() {
           :hint="photoHint"
           @select="onPhotosSelected"
           @remove="photoUpload.removeItem"
+        />
+        <ImageCropModal
+          :open="cropOpen"
+          :file="cropFile"
+          :aspect-width="aspectWidth"
+          :aspect-height="aspectHeight"
+          @cancel="onCropCancel"
+          @confirm="onCropConfirm"
         />
       </fieldset>
 

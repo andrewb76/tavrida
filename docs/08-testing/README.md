@@ -24,7 +24,7 @@ broker delivery или critical browser journeys.
 - **HTTP:** Nest TestingModule + Supertest.
 - **Infrastructure:** Testcontainers PostgreSQL/RabbitMQ/Redis/MinIO/Keto.
 - **Contract:** generated OpenAPI + `oasdiff`; AsyncAPI/JSON Schema events.
-- **E2E:** Playwright critical journeys.
+- **E2E:** Playwright + BDD ([e2e-playwright.md](./e2e-playwright.md)); SoT = `e2e/features/`.
 - **Non-functional:** k6, Lighthouse, ZAP, resilience/migration rehearsals.
 
 ## 🔬 Unit

@@ -41,6 +41,7 @@ export const imageProxyPresets = {
   forumAttachmentInline: { width: 720, height: 0, resizingType: 'fit' as const },
   forumAttachmentThumb: { width: 160, height: 160, resizingType: 'fit' as const },
   auctionCatalogThumb: { width: 480, height: 192, resizingType: 'fit' as const },
-  galleryMain: { width: 900, height: 675, resizingType: 'fit' as const },
+  galleryMain: { width: 900, height: 675, resizingType: 'fill' as const },
+  galleryThumb: { width: 160, height: 120, resizingType: 'fill' as const },
   markdownImage: { width: 900, height: 0, resizingType: 'fit' as const },
 };

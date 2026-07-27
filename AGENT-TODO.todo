@@ -106,7 +106,15 @@ Testing rollout:
   ☐ T2: Nest HTTP/auth + OpenAPI/event contract gates @testing @security @bff
   ☐ T3: RabbitMQ/outbox retry, DLQ, recovery, idempotency integration @testing @rabbitmq
   ☐ T4: Vitest Vue component/store/router + MSW + axe @testing @frontend
-  ☐ T5: Playwright critical journeys + visual/accessibility smoke @testing @frontend
+  ☐ T5 / E2E BDD: см. волны ниже + docs/08-testing/e2e-playwright.md @testing @frontend
+  ✔ T5 W0: Playwright-BDD scaffold + S-001 landing @smoke @testing @frontend @done(26-07-26)
+  ✔ T5 W1 scaffold: S-002/S-003/deep-link/S-010 features + member fixtures @testing @frontend @done(26-07-26)
+  ☐ T5 W1 harden: S-003 catalog seed; full S-010 invite claim @testing @frontend
+  ☐ T5 W2: S-011 bid, S-012 create, S-036 402, S-021 plans @testing @frontend
+  ☐ T5 W3: S-013 forum, S-015 feedback, S-024 marketplace @testing @frontend
+  ☐ T5 W4: impersonation, S-031 mod, media @testing @frontend @admin
+  ☐ T5 nightly: @frequent + Firefox/WebKit + axe @testing @ci
+  ✔ T5 CI: required E2E smoke job in ci.yml @testing @ci @done(26-07-26)
   ☐ T6: deploy gates, k6, ZAP, image scan, release rehearsals @testing @ops
 
 Dev Swarm (evatorg.su):

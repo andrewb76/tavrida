@@ -13,6 +13,9 @@ export type MediaLimits = {
   countMax: number;
   sizeMaxMb: number;
   sizeMaxBytes: number;
+  /** Lot photo aspect (auction domain only). */
+  aspectWidth?: number;
+  aspectHeight?: number;
 };
 
 export type UploadIntentStatus = 'pending' | 'ready' | 'expired';

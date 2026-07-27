@@ -24,6 +24,8 @@
     "docs:dev": "pnpm --filter @tavrida/docs-site dev",
     "docs:build": "pnpm --filter @tavrida/docs-site build",
     "docs:preview": "pnpm --filter @tavrida/docs-site preview",
+    "test:e2e": "pnpm --filter @tavrida/e2e test",
+    "test:e2e:smoke": "pnpm --filter @tavrida/e2e test:smoke",
     "audit": "pnpm audit --audit-level=high"
   },
   "devDependencies": {

@@ -21,21 +21,20 @@
 
 | | |
 |---|---|
-| **G** | amount ≥ `billing.minDepositAmount` |
-| **W** | Deposit flow |
-| **T** | `billing.deposit_completed` |
 | **Компоненты** | `billing`, webhook (provider TBD) |
+| **Feature** | — |
+| **e2e** | `none` |
 | **Тест** | INT + mock provider |
 
 ### S-021 · Подписка Basic/Pro
 
 | | |
 |---|---|
-| **G** | Balance ≥ price |
-| **W** | `/plans` activate |
-| **T** | Charge; ACTIVE sub; `subscription.activated` |
 | **Компоненты** | `plan-config` → `billing`; RMQ |
+| **Feature** | [`S-021-activate-plan.feature`](../../../e2e/features/occasional/S-021-activate-plan.feature) |
+| **e2e** | `scaffold` (`@wip`) |
 | **Тест** | **INT saga**; E2E plans |
+
 
 ### S-022 · Продвижение лота (200 ₽)
 
@@ -61,10 +60,9 @@
 
 | | |
 |---|---|
-| **G** | Listing ACTIVE; `ordersPerMonth` OK |
-| **W** | Order lifecycle → COMPLETED |
-| **T** | `marketplace.order_completed` → feedback (как S-015) |
 | **Компоненты** | `marketplace`, `deal-feedback`, `rating` |
+| **Feature** | [`S-024-marketplace-order.feature`](../../../e2e/features/occasional/S-024-marketplace-order.feature) |
+| **e2e** | `scaffold` (`@wip`) |
 | **Тест** | INT; E2E v1.1 |
 
 ### S-025 · Платная реакция Pro

@@ -2,6 +2,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'services/*'
+  - 'e2e'
 
 overrides:
   lodash: '>=4.18.1'

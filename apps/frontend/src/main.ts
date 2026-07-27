@@ -35,3 +35,7 @@ app.mount('#app');
 
 import { useThemeStore } from './stores/theme';
 useThemeStore().init();
+
+if (import.meta.env.VITE_E2E === '1') {
+  void import('./e2e-bridge').then(({ installE2EBridge }) => installE2EBridge());
+}

@@ -10,7 +10,11 @@ export function useClubAccessSync() {
     void fetchPublicClubSettings()
       .then((data) => clubAccess.applyPublicSettings(data))
       .catch(() => {
-        clubAccess.applyPublicSettings({ 'club.registration.inviteOnly': true });
+        clubAccess.applyPublicSettings({
+          'club.registration.inviteOnly': true,
+          'auction.lot.image.aspectWidth': 4,
+          'auction.lot.image.aspectHeight': 3,
+        });
       });
   });
 }

@@ -61,7 +61,7 @@ Low-fi спецификации для `apps/frontend`. Figma — optional; ка
 
 - [ ] Touch targets ≥ 44px
 - [ ] Bid / post CTAs fixed bottom on lot/topic screens
-- [ ] Image gallery swipe on lot page
+- [x] Image gallery swipe on lot page
 - [ ] Collapse long forum threads (load more)
 
 ## 🔗 Связанные разделы

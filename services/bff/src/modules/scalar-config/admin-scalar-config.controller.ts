@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
-import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuctionSettingsReader } from './auction-settings.reader';
 import { ClubSettingsReader } from './club-settings.reader';
-import type { ChatSettings, ClubSettings, ForumSettings } from './scalar-config.client';
+import type { AuctionSettings, ChatSettings, ClubSettings, ForumSettings } from './scalar-config.client';
 import { ScalarConfigClient } from './scalar-config.client';
 import { ForumSettingsReader } from './forum-settings.reader';
 
@@ -101,12 +102,27 @@ class PatchChatSettingsBodyDto {
   'group.leaveKeepsHistory'?: boolean;
 }
 
+class PatchAuctionSettingsBodyDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(32)
+  'lot.image.aspectWidth'?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(32)
+  'lot.image.aspectHeight'?: number;
+}
+
 @Controller('admin/scalar-config')
 export class AdminScalarConfigController {
   constructor(
     private readonly scalarConfig: ScalarConfigClient,
     private readonly clubSettings: ClubSettingsReader,
     private readonly forumSettings: ForumSettingsReader,
+    private readonly auctionSettings: AuctionSettingsReader,
   ) {}
 
   @Get('club')
@@ -133,6 +149,7 @@ export class AdminScalarConfigController {
   deleteKey(@Param('key') key: string) {
     this.clubSettings.clearCache();
     this.forumSettings.clearCache();
+    this.auctionSettings.clearCache();
     return this.scalarConfig.deleteKey(key);
   }
 
@@ -159,5 +176,18 @@ export class AdminScalarConfigController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   patchChat(@CurrentUser() user: AuthUser, @Body() body: PatchChatSettingsBodyDto) {
     return this.scalarConfig.patchChatSettings(body as ChatSettings, user.sub);
+  }
+
+  @Get('auction')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  getAuction() {
+    return this.scalarConfig.getAuctionSettings();
+  }
+
+  @Patch('auction')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  patchAuction(@CurrentUser() user: AuthUser, @Body() body: PatchAuctionSettingsBodyDto) {
+    this.auctionSettings.clearCache();
+    return this.scalarConfig.patchAuctionSettings(body as AuctionSettings, user.sub);
   }
 }

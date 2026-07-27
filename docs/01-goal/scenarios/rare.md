@@ -31,8 +31,9 @@
 | | |
 |---|---|
 | **Актор** | Moderator scoped |
-| **T** | Promote = marker + new topic ([ADR-005](../../03-architecture/adr/005-forum-terminology.md)) |
 | **Компоненты** | `forum`, Keto, WS `topic.promoted` |
+| **Feature** | [`S-031-moderation.feature`](../../../e2e/features/rare/S-031-moderation.feature) |
+| **e2e** | `scaffold` (`@wip`) |
 | **Тест** | INT Keto; E2E mod UI |
 
 ### S-032 · Экспертная оценка
@@ -73,10 +74,9 @@
 
 | | |
 |---|---|
-| **G** | Limit / balance / rate |
-| **W** | Mutating action from **частых** сценариев |
-| **T** | RFC 7807; UI paywall |
 | **Компоненты** | BFF, plan-config, `billing` |
+| **Feature** | [`S-036-paywall.feature`](../../../e2e/features/rare/S-036-paywall.feature) |
+| **e2e** | `scaffold` (`@wip`) |
 | **Тест** | E2E negative; UNIT plan-config — **включать в MVP gate** |
 
 ### S-037 · Спор маркета (draft)

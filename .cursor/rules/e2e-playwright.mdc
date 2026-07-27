@@ -1,0 +1,14 @@
+---
+description: E2E Playwright BDD — не раздувать фокус без запроса
+globs: e2e/**/*
+alwaysApply: false
+---
+
+# E2E (Playwright BDD)
+
+Справка: [docs/08-testing/e2e-playwright.md](docs/08-testing/e2e-playwright.md).
+
+- Features на русском (`# language: ru`) в `e2e/features/`.
+- **Не** предлагай массово расширять E2E, переписывать все `S-xxx` или «дожать волны W1–W4», пока пользователь явно не попросил.
+- Правки формулировок сценариев после командного ревью — по запросу; не инициируй рефакторинг Gherkin сам.
+- При точечной работе над E2E — держи шаги и docs-индекс согласованными, без лекций про BDD.

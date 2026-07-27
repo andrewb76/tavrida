@@ -48,6 +48,7 @@
 | `rating.bonus.earlyHours` | 3 сегмента — предпочтительно для групп |
 | `club.registration.inviteOnly` | boolean, global scope |
 | `auction.bid.incrementDefault` | дефолт шага ставки (₽), не per plan |
+| `auction.lot.image.aspectWidth` | кадр фото лота (ratio), не px |
 
 **Не хранить здесь:** лимиты по тарифу, feature gates per plan, разовые цены.
 

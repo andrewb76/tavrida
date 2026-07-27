@@ -32,6 +32,11 @@ export type ChatSettings = {
   'realtime.typingTtlSeconds'?: number;
 };
 
+export type AuctionSettings = {
+  'lot.image.aspectWidth'?: number;
+  'lot.image.aspectHeight'?: number;
+};
+
 @Injectable()
 export class ScalarConfigClient {
   constructor(private readonly config: ConfigService) {}
@@ -98,6 +103,17 @@ export class ScalarConfigClient {
 
   async patchChatSettings(patch: ChatSettings, updatedBy: string): Promise<ChatSettings> {
     return this.request<ChatSettings>('POST', '/internal/v1/scalar-variables/chat', {
+      ...patch,
+      updatedBy,
+    });
+  }
+
+  async getAuctionSettings(): Promise<AuctionSettings> {
+    return this.request<AuctionSettings>('GET', '/internal/v1/scalar-variables/auction');
+  }
+
+  async patchAuctionSettings(patch: AuctionSettings, updatedBy: string): Promise<AuctionSettings> {
+    return this.request<AuctionSettings>('POST', '/internal/v1/scalar-variables/auction', {
       ...patch,
       updatedBy,
     });

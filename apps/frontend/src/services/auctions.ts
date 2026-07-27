@@ -165,6 +165,8 @@ export type AuctionCreateOptions = {
     sizeMaxMb: number;
     sizeMaxBytes: number;
     accept: string;
+    aspectWidth?: number;
+    aspectHeight?: number;
   };
 };
 

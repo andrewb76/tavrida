@@ -217,9 +217,13 @@ Create-time reserve/promotion и их idempotent charge реализованы �
 
 | Ключ | Тип | Default | Описание |
 |------|-----|---------|----------|
-| `auction.bidIncrementDefault` | number | `100` | Шаг по умолчанию (₽) |
-| `auction.minStartingPrice` | number | `1` | Мин. стартовая цена |
-| `auction.expertAppraisalBoost` | number | `1.2` | Множитель значимости с экспертизой |
+| `auction.bid.incrementDefault` | number | `100` | Шаг по умолчанию (₽) |
+| `auction.lot.minStartingPrice` | number | `1` | Мин. стартовая цена |
+| `auction.lot.expertAppraisalBoost` | number | `1.2` | Множитель значимости с экспертизой |
+| `auction.lot.image.aspectWidth` | number | `4` | Кадр фото лота — ширина ratio |
+| `auction.lot.image.aspectHeight` | number | `3` | Кадр фото лота — высота ratio |
+
+Клиентский кроп при создании лота использует ratio; пиксели отдачи — imgproxy (`galleryMain` / `galleryThumb`).
 
 ## 💳 Переменные plan-config
 
