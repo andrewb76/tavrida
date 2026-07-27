@@ -271,7 +271,8 @@ GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = priv
 | Симптом | Причина | Решение |
 |---------|---------|---------|
 | `Host key verification failed` / `docker.example.com` dial-stdio | `known_hosts` пуст или устарел | Перезапустить Deploy; `ci-docker-context.sh` fail-fast + probe `ssh` |
-| Ensure Swarm secrets hangs ~30m then `Connection closed by … port 22` | Каждое `docker --context ssh://…` без mux = новый SSH; старый sync сканил *все* service inspect даже в create-missing | На `dev`: create-missing **не** сканит bindings; `ControlMaster` в `ci-docker-context.sh`; step `timeout-minutes: 8`. Cancel hung run → Redeploy. Force-rotate — только `Sync secrets` workflow |
+| Ensure Swarm secrets hangs ~30m then `Connection closed by … port 22` | Каждое `docker --context ssh://…` без mux = новый SSH; старый sync сканил *все* service inspect даже в create-missing | На `dev`: create-missing **не** сканит bindings; step `timeout-minutes: 8`. Cancel hung run → Redeploy. Force-rotate — только `Sync secrets` workflow |
+| `stack deploy` mid-service: `dial-stdio` exit 255 / `error during connect` (stderr empty) | Docker context `ssh://` открывает dial-stdio на каждый API call; длинный `stack deploy` рвёт SSH | CI: `ci-docker-context.sh` туннелит `/var/run/docker.sock` → local unix socket + context `unix://…`; `deploy-dev.sh` ретраит connect-blip. Re-run Deploy (можно `skip_build`) |
 | `Permission denied (publickey)` после keyscan ok | Неверный secret / ключ не в `authorized_keys`, либо (старый баг) `IdentitiesOnly` без `IdentityFile` | Проверить `ssh -i ./tavrida-dev-swarm deploy@HOST`; перезаписать `DEV_SWARM_SSH_KEY` base64 |
 | `error in libcrypto` / `ssh-add` | Multiline PEM в secret | Перезаписать `DEV_SWARM_SSH_KEY` как **base64 одной строкой** |
 

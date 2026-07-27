@@ -48,9 +48,10 @@ fi
 echo "Deploying stack ${STACK_NAME} (infra + platform${GRAFANA_CLOUD_PROMETHEUS_URL:+ + tools})..." >&2
 echo "Ensure secrets are synced: DOCKER_CONTEXT=${DOCKER_CONTEXT:-default} ./docker/swarm/sync-secrets-dev.sh" >&2
 
-# Swarm optimistic concurrency: concurrent/internal version bumps can yield
-# "update out of sequence" mid stack deploy — retry is the usual workaround.
-MAX_ATTEMPTS="${STACK_DEPLOY_RETRIES:-5}"
+# Swarm optimistic concurrency: "update out of sequence" mid stack deploy.
+# SSH dial-stdio / tunnel blips: "error during connect" / exit 255 — re-run is safe
+# (stack deploy is idempotent; already-updated services no-op or converge).
+MAX_ATTEMPTS="${STACK_DEPLOY_RETRIES:-8}"
 attempt=1
 while true; do
   set +e
@@ -66,9 +67,22 @@ while true; do
   if [[ "$rc" -eq 0 ]]; then
     break
   fi
-  if [[ "$out" == *"update out of sequence"* ]] && [[ "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
-    echo "stack deploy: update out of sequence (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${attempt}s..." >&2
-    sleep "$attempt"
+
+  retryable=0
+  if [[ "$out" == *"update out of sequence"* ]]; then
+    retryable=1
+    reason="update out of sequence"
+  elif [[ "$out" == *"error during connect"* ]] \
+    || [[ "$out" == *"dial-stdio"* ]] \
+    || [[ "$out" == *"exit status 255"* ]]; then
+    retryable=1
+    reason="SSH/docker connect blip"
+  fi
+
+  if [[ "$retryable" -eq 1 && "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
+    sleep_s=$((attempt * 2))
+    echo "stack deploy: ${reason} (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${sleep_s}s..." >&2
+    sleep "$sleep_s"
     attempt=$((attempt + 1))
     continue
   fi
