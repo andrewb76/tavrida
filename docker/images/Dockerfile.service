@@ -24,6 +24,8 @@ COPY packages ./packages
 COPY tools ./tools
 COPY services ./services
 COPY config ./config
+# Workspace member (dev-only); package.json needed for frozen pnpm install.
+COPY e2e/package.json ./e2e/package.json
 
 RUN pnpm install --frozen-lockfile --ignore-scripts \
   && pnpm rebuild esbuild @nestjs/core core-js \

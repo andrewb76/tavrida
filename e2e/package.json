@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "bddgen": "bddgen",
-    "test": "bddgen && playwright test",
+    "test:e2e": "bddgen && playwright test",
     "test:smoke": "bddgen && playwright test --grep @smoke",
     "test:ui": "bddgen && playwright test --ui",
     "report": "playwright show-report"
