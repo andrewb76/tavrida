@@ -78,6 +78,7 @@ Auction:
   ✔ English bid + close/run + RMQ + FE placeBid @auction @bff @frontend @done(26-07-16)
   ✔ Dutch accept bid + ask step-down in close/run + FE CTA @auction @frontend @done(26-07-16)
   ☐ promote billing charge · expert POST · WS live @auction
+  ☐ Ревизия user-facing UI на англоязычные лейблы/бейджи/фильтры; заменить на русский и обновить правила/docs @auction @frontend @docs
 
 Periods (historical reference):
   ✔ Spec + Nest scaffold categories/periods + partition rules @periods @done(26-07-13)

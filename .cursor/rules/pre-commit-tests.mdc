@@ -1,0 +1,19 @@
+---
+description: Перед git commit — локально прогнать релевантные тесты/сборку
+alwaysApply: true
+---
+
+# Pre-commit: локальные проверки
+
+Когда пользователь просит **commit** (или commit+push/deploy):
+
+1. **До** `git commit` прогони проверки по затронутым пакетам — не полагайся только на CI.
+2. Минимум для кода сервисов/packages/frontend:
+   - `pnpm exec turbo run test --filter=...` по изменённым пакетам **или**
+   - `pnpm exec turbo run test --continue` если затронуто много workspace-пакетов / `pnpm-workspace` / корневые scripts.
+3. Если менялся frontend UI/Vite deps — ещё `pnpm --filter @tavrida/frontend run build` (или `vue-tsc -b`), особенно перед deploy.
+4. Если менялись `docker/images/*`, `pnpm-workspace.yaml` или добавлен workspace-пакет — убедись, что Docker `pnpm install --frozen-lockfile` не сломается (package.json нового пакета копируется в Dockerfile).
+5. Пакеты **без** unit-скрипта `test` (например E2E только `test:e2e` / `test:smoke`) не должны попадать в `turbo run test`. Не называй Playwright-скрипт просто `test`.
+6. Если тесты красные — **не коммить**; почини или спроси пользователя.
+
+Docs-only / чисто markdown без кода — полный turbo test не обязателен.

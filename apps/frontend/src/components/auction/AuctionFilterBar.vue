@@ -42,7 +42,7 @@ const showPro = ref(false);
 const flatCategories = computed(() => flattenCategories(categories.value));
 
 const statusOptions: Array<{ value: CatalogStatus; label: string }> = [
-  { value: 'ACTIVE', label: 'Live' },
+  { value: 'ACTIVE', label: 'Идут торги' },
   { value: 'ENDING_SOON', label: 'Скоро' },
   { value: 'ENDED', label: 'Завершённые' },
   { value: 'ALL', label: 'Все' },

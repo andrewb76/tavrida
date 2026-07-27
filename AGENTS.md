@@ -67,6 +67,8 @@ Filter a single package:
 pnpm exec turbo run build --filter=@tavrida/billing
 ```
 
+**Перед commit:** локально `turbo run test` (затронутые пакеты или весь workspace) — см. `.cursor/rules/pre-commit-tests.mdc`. Не полагаться только на CI.
+
 ## Environment variables
 
 Runtime secrets and infra env vars: [docs/02-infrastructure/PLATFORM-SECRETS.md](docs/02-infrastructure/PLATFORM-SECRETS.md)  

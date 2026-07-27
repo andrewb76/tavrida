@@ -229,7 +229,7 @@ onMounted(() => {
               <span
                 v-if="lot.isLive"
                 class="member-home__live"
-              >Live</span>
+              >Идут торги</span>
             </div>
             <div class="p-3">
               <h3 class="line-clamp-2 text-sm font-semibold text-text group-hover:text-primary">
