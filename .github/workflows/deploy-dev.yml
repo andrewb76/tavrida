@@ -197,6 +197,14 @@ jobs:
           echo "$GHCR_TOKEN" | docker --context "$DOCKER_CONTEXT" login ghcr.io \
             -u "$GHCR_USER" --password-stdin
 
+      # Pull onto the VPS (unix sock tunnel) so tasks do not Reject "No such image"
+      # when Swarm registry auth is missing/stale. Uses CI ~/.docker/config after login.
+      - name: Pre-pull images on Swarm node
+        if: steps.envcheck.outputs.ready == 'true'
+        env:
+          DOCKER_CONTEXT: dev-swarm
+        run: ./docker/swarm/ci-prepull-images.sh
+
       - name: Stack deploy
         if: steps.envcheck.outputs.ready == 'true'
         env:
