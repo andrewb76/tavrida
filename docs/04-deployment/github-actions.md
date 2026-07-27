@@ -274,6 +274,7 @@ GitHub Variable: `DEV_SWARM_SSH_USER=deploy`, Secret: `DEV_SWARM_SSH_KEY` = priv
 | Ensure Swarm secrets hangs ~30m then `Connection closed by … port 22` | Каждое `docker --context ssh://…` без mux = новый SSH; старый sync сканил *все* service inspect даже в create-missing | На `dev`: create-missing **не** сканит bindings; step `timeout-minutes: 8`. Cancel hung run → Redeploy. Force-rotate — только `Sync secrets` workflow |
 | `stack deploy` mid-service: `dial-stdio` exit 255 / `error during connect` (stderr empty) | Docker context `ssh://` открывает dial-stdio на каждый API call; длинный `stack deploy` рвёт SSH | CI: `ci-docker-context.sh` туннелит `/var/run/docker.sock` → local unix socket + context `unix://…`; `deploy-dev.sh` ретраит connect-blip. Re-run Deploy (можно `skip_build`) |
 | Task `Rejected` / `No such image: ghcr.io/…:sha@sha256:…` | Образ private в GHCR; нода не смогла pull (нет/протух registry auth), хотя CI push ок | На VPS: `docker login ghcr.io` + `docker pull …` + `docker service update --with-registry-auth --force …`. CI: шаг `Pre-pull images on Swarm node` после login. Package → link to repo `tavrida` |
+| Sync secrets `force` fails on `keto-schema-init`: update paused / early termination | Rebind ждал convergence (`--detach=false`); one-shot init exit 0 → Swarm pause. Часто ещё крутили **все** ключи вкл. `POSTGRES_PASSWORD` | Sync с `only=GRAFANA_CLOUD_TOKEN` (или нужный ключ) + `force=true`. Не force-rotate весь manifest. Rebind теперь `--detach`. Починить: Deploy / `docker service update --force` init-сервисов; убрать leftover `*__next` |
 | `Permission denied (publickey)` после keyscan ok | Неверный secret / ключ не в `authorized_keys`, либо (старый баг) `IdentitiesOnly` без `IdentityFile` | Проверить `ssh -i ./tavrida-dev-swarm deploy@HOST`; перезаписать `DEV_SWARM_SSH_KEY` base64 |
 | `error in libcrypto` / `ssh-add` | Multiline PEM в secret | Перезаписать `DEV_SWARM_SSH_KEY` как **base64 одной строкой** |
 
@@ -283,7 +284,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 1. DNS `*.evatorg.su` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
 2. Заполнить Environment `dev` (vars + secrets), в т.ч. `VITE_LOGTO_*`.
-3. **Actions → Sync secrets (dev)** — `force=true`, `redeploy=true` (или `redeploy=false` если образов ещё нет).
+3. **Actions → Sync secrets (dev)** — для нового токена: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`** (или `HAWK_TOKEN`), `redeploy=true`. Не крутите force по всему manifest без нужды (`POSTGRES_PASSWORD` особенно опасен).
 4. **Actions → Deploy / Sync** — всегда с кодом ветки **`dev`** (workflows сами делают `checkout ref: dev` на manual run). Не выбирайте `master` как источник устаревших stack-файлов.
 5. Дальше: push/merge в `dev` обновляет образы; sync — только при ротации паролей.
 

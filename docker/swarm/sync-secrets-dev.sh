@@ -245,13 +245,17 @@ rebind_secret_consumers() {
     target="${targets[$svc_name]}"
     echo "  rebind ${svc_name}: ${from_secret} → ${to_secret} (target=${target})"
     if [[ "$DRY_RUN" -eq 1 ]]; then
-      echo "[dry-run] docker service update --secret-rm ${from_secret} --secret-add source=${to_secret},target=${target} ${svc_name}"
+      echo "[dry-run] docker service update --detach --secret-rm ${from_secret} --secret-add source=${to_secret},target=${target} ${svc_name}"
       continue
     fi
-    docker_ctx service update --detach=false \
+    # --detach: do not wait for convergence. Init/migrate one-shots exit 0 and Swarm
+    # reports "update paused due to … early termination" if we block (--detach=false).
+    if ! docker_ctx service update --detach=true \
       --secret-rm "$from_secret" \
       --secret-add "source=${to_secret},target=${target}" \
-      "$svc_name" >/dev/null
+      "$svc_name" >/dev/null; then
+      echo "WARN: rebind CLI failed for ${svc_name} — continue; repair with stack deploy" >&2
+    fi
   done
 }
 

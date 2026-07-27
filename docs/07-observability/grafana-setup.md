@@ -63,7 +63,8 @@ DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh   # создаст t
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh         # подтянет stack-tools, если PROMETHEUS_URL задан
 ```
 
-Или Actions → **Sync secrets (dev)** (`redeploy=true`) / обычный **Deploy dev**.
+Или Actions → **Sync secrets (dev)**: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`**, `redeploy=true`.  
+Не используйте force по всему manifest — упрётесь в rebind `keto-schema-init` / ротацию `POSTGRES_PASSWORD`.
 
 Пустой `GRAFANA_CLOUD_PROMETHEUS_URL` → Alloy **не** деплоится (остальной stack без изменений).
 
