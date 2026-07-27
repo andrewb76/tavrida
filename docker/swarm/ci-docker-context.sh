@@ -53,6 +53,11 @@ fi
 
 # Trust store only — auth comes from ssh-agent (ci-ssh-agent.sh / SSH_AUTH_SOCK).
 # Do NOT set IdentitiesOnly=yes without IdentityFile: that ignores the agent.
+# ControlMaster: docker CLI opens a new ssh per API call; without mux, sync-secrets
+# (N× service inspect) hammers sshd and can hang ~30m until "Connection closed".
+CM_DIR="${HOME}/.ssh/cm"
+mkdir -p "$CM_DIR"
+chmod 700 "$CM_DIR"
 {
   echo "Host ${HOST}"
   echo "  User ${USER}"
@@ -61,6 +66,11 @@ fi
   echo "  PreferredAuthentications publickey"
   echo "  PubkeyAuthentication yes"
   echo "  ConnectTimeout 30"
+  echo "  ServerAliveInterval 15"
+  echo "  ServerAliveCountMax 3"
+  echo "  ControlMaster auto"
+  echo "  ControlPath ${CM_DIR}/%r@%h:%p"
+  echo "  ControlPersist 10m"
   if [[ -n "${SSH_AUTH_SOCK:-}" ]]; then
     echo "  IdentityAgent ${SSH_AUTH_SOCK}"
   fi
@@ -84,6 +94,10 @@ if ! ssh -o BatchMode=yes -T "${USER}@${HOST}" 'docker version --format "{{.Serv
   echo "Check DEV_SWARM_SSH_KEY matches deploy authorized_keys on the VPS." >&2
   exit 1
 fi
+
+# Warm ControlMaster so subsequent docker dial-stdio reuses one TCP session.
+ssh -o BatchMode=yes -fN "${USER}@${HOST}" || true
+echo "SSH ControlMaster warmed for ${USER}@${HOST}" >&2
 
 if docker context inspect "$CONTEXT_NAME" >/dev/null 2>&1; then
   docker context rm -f "$CONTEXT_NAME" >/dev/null

@@ -173,24 +173,35 @@ create_secret() {
   echo "Created ${name}"
 }
 
-# Lines: SecretName|ServiceName|File.Name (container mount basename)
+# Lines: SecretName|ServiceName|File.Name (container mount basename).
+# One inspect per service (name + secrets in one round-trip) — still N SSH calls
+# unless the context uses ControlMaster multiplexing.
 collect_secret_bindings() {
-  local sid svc line sname target
+  local sid line
+  echo "Collecting secret↔service bindings (one inspect per service)…" >&2
   while IFS= read -r sid; do
     [[ -z "$sid" ]] && continue
-    svc="$(docker_ctx service inspect "$sid" --format '{{.Spec.Name}}')"
     while IFS= read -r line; do
       [[ -z "$line" ]] && continue
-      sname="${line%%|*}"
-      target="${line#*|}"
-      [[ -z "$sname" || -z "$target" ]] && continue
-      printf '%s|%s|%s\n' "$sname" "$svc" "$target"
+      printf '%s\n' "$line"
     done < <(
       docker_ctx service inspect "$sid" --format \
-        '{{range .Spec.TaskTemplate.ContainerSpec.Secrets}}{{.SecretName}}|{{.File.Name}}{{"\n"}}{{end}}' \
+        '{{$n := .Spec.Name}}{{range .Spec.TaskTemplate.ContainerSpec.Secrets}}{{.SecretName}}|{{$n}}|{{.File.Name}}{{"\n"}}{{end}}' \
         2>/dev/null || true
     )
   done < <(docker_ctx service ls -q)
+}
+
+SECRET_BINDINGS=""
+SECRET_BINDINGS_LOADED=0
+
+# Expensive over SSH — only needed for --force rotate / --prune.
+ensure_secret_bindings() {
+  if [[ "$SECRET_BINDINGS_LOADED" -eq 1 ]]; then
+    return 0
+  fi
+  SECRET_BINDINGS="$(collect_secret_bindings)"
+  SECRET_BINDINGS_LOADED=1
 }
 
 # Args: from_secret to_secret — rebind every consumer of from_secret → to_secret (same target).
@@ -293,7 +304,9 @@ rotate_secret() {
   rebind_secret_consumers "$next" "$name" "$consumers"
   remove_secret "$next"
 
-  SECRET_BINDINGS="$(collect_secret_bindings)"
+  # Rebind changed bindings — refresh cache for subsequent rotations.
+  SECRET_BINDINGS_LOADED=0
+  ensure_secret_bindings
 }
 
 sync_one() {
@@ -345,6 +358,7 @@ sync_one() {
     return 0
   fi
 
+  ensure_secret_bindings
   rotate_secret "$name" "$value"
 }
 
@@ -352,8 +366,11 @@ echo "Syncing secrets → context '${DOCKER_CONTEXT}' (prefix ${SECRET_PREFIX}_)
 if [[ ${#ONLY_KEYS[@]} -gt 0 ]]; then
   echo "Only keys: ${ONLY_KEYS[*]}" >&2
 fi
-
-SECRET_BINDINGS="$(collect_secret_bindings)"
+if [[ "$FORCE" -eq 1 || "$PRUNE" -eq 1 ]]; then
+  echo "Mode: force=${FORCE} prune=${PRUNE} (will scan service secret bindings)" >&2
+else
+  echo "Mode: create-missing only (skip service binding scan)" >&2
+fi
 
 key_allowed() {
   local key="$1"
@@ -388,7 +405,7 @@ if [[ "$PRUNE" -eq 1 ]]; then
     echo "Skip prune — incompatible with --only" >&2
   else
   echo "Pruning orphaned ${SECRET_PREFIX}_* secrets..." >&2
-  SECRET_BINDINGS="$(collect_secret_bindings)"
+  ensure_secret_bindings
   mapfile -t existing < <(docker_ctx secret ls --format '{{.Name}}' | grep "^${SECRET_PREFIX}_" || true)
   for name in "${existing[@]}"; do
     [[ "$name" == *"$NEXT_SUFFIX" ]] && continue

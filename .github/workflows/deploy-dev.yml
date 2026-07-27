@@ -164,6 +164,7 @@ jobs:
 
       - name: Ensure Swarm secrets (create missing)
         if: steps.envcheck.outputs.ready == 'true'
+        timeout-minutes: 8
         env:
           DOCKER_CONTEXT: dev-swarm
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -183,6 +184,7 @@ jobs:
             echo "HAWK_TOKEN=${HAWK_TOKEN}"
             echo "GRAFANA_CLOUD_TOKEN=${GRAFANA_CLOUD_TOKEN}"
           } > docker/swarm/dev.secrets.env
+          # create-missing only — must not scan all services (that hammers SSH).
           DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
 
       - name: Registry auth on context (for --with-registry-auth)
