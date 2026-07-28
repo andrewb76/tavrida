@@ -199,9 +199,13 @@ jobs:
 
       # Pull on the VPS over SSH (not via docker.sock tunnel) so long sequential
       # pulls do not die with the tunnel. Login on the node with GITHUB_TOKEN.
+      # continue-on-error: stack deploy still has --with-registry-auth; pre-pull is
+      # best-effort warmth (skip-if-present + parallel). Soft-fail beats skipped deploy.
       - name: Pre-pull images on Swarm node
+        id: prepull
         if: steps.envcheck.outputs.ready == 'true'
-        timeout-minutes: 25
+        continue-on-error: true
+        timeout-minutes: 40
         env:
           DOCKER_CONTEXT: dev-swarm
           DEV_SWARM_SSH_HOST: ${{ vars.DEV_SWARM_SSH_HOST }}
@@ -214,7 +218,11 @@ jobs:
         if: steps.envcheck.outputs.ready == 'true'
         env:
           DOCKER_CONTEXT: dev-swarm
-        run: ./docker/swarm/deploy-dev.sh
+        run: |
+          if [[ "${{ steps.prepull.outcome }}" != "success" ]]; then
+            echo "::warning::Pre-pull did not fully succeed (outcome=${{ steps.prepull.outcome }}) — deploying with --with-registry-auth anyway."
+          fi
+          ./docker/swarm/deploy-dev.sh
 
       - name: Summary
         if: steps.envcheck.outputs.ready == 'true'

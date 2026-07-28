@@ -14,6 +14,7 @@
 #   GHCR_USER / GHCR_TOKEN    required for remote login (Actions: github.actor + GITHUB_TOKEN)
 #   PREPULL_RETRIES           attempts per image (default 3)
 #   PREPULL_RETRY_SLEEP_S     base sleep between retries (default 5)
+#   PREPULL_PARALLEL          concurrent pulls on the node (default 3)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -21,6 +22,7 @@ ENV_FILE="${ENV_FILE:-${ROOT}/docker/swarm/dev.env}"
 DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
 RETRIES="${PREPULL_RETRIES:-3}"
 RETRY_SLEEP_S="${PREPULL_RETRY_SLEEP_S:-5}"
+PARALLEL="${PREPULL_PARALLEL:-3}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing ${ENV_FILE}" >&2
@@ -58,6 +60,10 @@ pull_one_local() {
   if [[ -n "$DOCKER_CONTEXT" ]]; then
     docker_cmd=(docker --context "$DOCKER_CONTEXT")
   fi
+  if "${docker_cmd[@]}" image inspect "$image" >/dev/null 2>&1; then
+    echo "==> skip ${image} (already present)" >&2
+    return 0
+  fi
   while [[ "$attempt" -le "$RETRIES" ]]; do
     echo "==> pull ${image} (attempt ${attempt}/${RETRIES}, context=${DOCKER_CONTEXT:-default})" >&2
     if "${docker_cmd[@]}" pull "$image"; then
@@ -82,12 +88,12 @@ pull_via_ssh() {
     exit 1
   fi
 
-  echo "Pre-pull ${#IMAGES[@]} images ${REGISTRY}/${OWNER}/*:${TAG} via ssh ${target}" >&2
+  echo "Pre-pull ${#IMAGES[@]} images ${REGISTRY}/${OWNER}/*:${TAG} via ssh ${target} (parallel=${PARALLEL})" >&2
 
-  # One SSH session: login + sequential pulls with retries. Layers stay on the VPS.
+  # One SSH session: login + bounded-parallel pulls. Layers stay on the VPS.
   # shellcheck disable=SC2029
   ssh -o BatchMode=yes -o ConnectTimeout=30 \
-    -o ServerAliveInterval=15 -o ServerAliveCountMax=12 \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=20 \
     "$target" \
     env \
       GHCR_TOKEN="$GHCR_TOKEN" \
@@ -97,6 +103,7 @@ pull_via_ssh() {
       TAG="$TAG" \
       RETRIES="$RETRIES" \
       RETRY_SLEEP_S="$RETRY_SLEEP_S" \
+      PARALLEL="$PARALLEL" \
       bash -s <<'REMOTE'
 set -euo pipefail
 
@@ -119,16 +126,18 @@ IMAGES=(
   tavrida-frontend
 )
 
-failed=0
-for name in "${IMAGES[@]}"; do
-  image="${REGISTRY}/${OWNER}/${name}:${TAG}"
-  ok=0
-  attempt=1
+pull_one() {
+  local name="$1"
+  local image="${REGISTRY}/${OWNER}/${name}:${TAG}"
+  if docker image inspect "$image" >/dev/null 2>&1; then
+    echo "==> skip ${image} (already present)" >&2
+    return 0
+  fi
+  local attempt=1
   while [[ "$attempt" -le "$RETRIES" ]]; do
     echo "==> pull ${image} (attempt ${attempt}/${RETRIES})" >&2
     if docker pull "$image"; then
-      ok=1
-      break
+      return 0
     fi
     echo "WARN: pull failed: ${image} (attempt ${attempt}/${RETRIES})" >&2
     if [[ "$attempt" -lt "$RETRIES" ]]; then
@@ -136,15 +145,40 @@ for name in "${IMAGES[@]}"; do
     fi
     attempt=$((attempt + 1))
   done
-  if [[ "$ok" -ne 1 ]]; then
-    failed=$((failed + 1))
-  fi
+  return 1
+}
+
+fail_file="$(mktemp)"
+pids=()
+for name in "${IMAGES[@]}"; do
+  while [[ "${#pids[@]}" -ge "$PARALLEL" ]]; do
+    pid="${pids[0]}"
+    pids=("${pids[@]:1}")
+    if ! wait "$pid"; then
+      true # failure recorded by child
+    fi
+  done
+  (
+    if ! pull_one "$name"; then
+      echo "$name" >>"$fail_file"
+    fi
+  ) &
+  pids+=("$!")
+done
+for pid in "${pids[@]}"; do
+  wait "$pid" || true
 done
 
-if [[ "$failed" -gt 0 ]]; then
-  echo "FATAL: ${failed} image pull(s) failed on node — check GHCR auth, package visibility, VPS→ghcr.io network." >&2
+failed=0
+if [[ -s "$fail_file" ]]; then
+  failed="$(wc -l <"$fail_file" | tr -d ' ')"
+  echo "FATAL: ${failed} image pull(s) failed on node:" >&2
+  sort -u "$fail_file" >&2
+  rm -f "$fail_file"
+  echo "Check GHCR auth, package visibility, VPS→ghcr.io network." >&2
   exit 1
 fi
+rm -f "$fail_file"
 echo "Pre-pull done (ssh)." >&2
 REMOTE
 }
