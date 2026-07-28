@@ -103,18 +103,27 @@ export class LogtoManagementService {
     const endpoint = this.config.get<string>('LOGTO_ENDPOINT')!.replace(/\/$/, '');
     const configured = this.config.get<string>('LOGTO_M2M_RESOURCE')?.trim();
 
-    // OSS default — only valid for self-hosted Logto
-    const ossDefault = 'https://default.logto.app/api';
-    if (configured && configured !== ossDefault) {
-      return configured;
-    }
-
     // Logto Cloud: Management API indicator is https://{tenant}.logto.app/api
     if (endpoint.includes('.logto.app')) {
+      if (configured?.includes('.logto.app')) return configured;
       return `${endpoint}/api`;
     }
 
-    return configured ?? ossDefault;
+    // Self-hosted OSS (auth.evatorg.su, localhost, …): Management API resource is
+    // always https://default.logto.app/api — NOT https://auth…/api (common misconfig).
+    const ossDefault = 'https://default.logto.app/api';
+    if (configured && configured !== ossDefault) {
+      // Ignore accidental copies of LOGTO_ENDPOINT + "/api"
+      try {
+        const host = new URL(endpoint).host;
+        if (configured.includes(host)) return ossDefault;
+      } catch {
+        /* ignore bad endpoint URL */
+      }
+      return configured;
+    }
+
+    return ossDefault;
   }
 
   private async getM2MToken(): Promise<string> {
@@ -145,7 +154,7 @@ export class LogtoManagementService {
     if (!res.ok) {
       const detail = await res.text();
       const hint = detail.includes('invalid_client')
-        ? ` Check LOGTO_M2M_APP_ID (${clientId}) + LOGTO_M2M_APP_SECRET match the M2M app on ${endpoint} (Console → Applications), then sync-secrets + restart BFF.`
+        ? ` Check LOGTO_M2M_APP_ID (${clientId}) is the Machine-to-machine app (not SPA), LOGTO_M2M_APP_SECRET matches App secret in Console → Applications on ${endpoint}, then Sync secrets with force=true only=LOGTO_M2M_APP_SECRET and restart BFF. For OSS set LOGTO_M2M_RESOURCE=https://default.logto.app/api (not ${endpoint}/api).`
         : '';
       throw new ServiceUnavailableException({
         type: 'upstream-error',
