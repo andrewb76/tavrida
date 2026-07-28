@@ -36,9 +36,28 @@ const logtoProfileUrl = computed(() =>
 );
 
 const loading = ref(false);
+const inviteError = ref<string | null>(null);
 const lastCreated = ref<CreatedInvite | null>(null);
 const history = ref<InviteRecord[]>([]);
 const avatarLoadFailed = ref(false);
+
+/** BFF often returns English `detail`; keep toast/inline readable in RU. */
+function inviteErrorMessage(e: unknown): string {
+  const raw = e instanceof Error ? e.message : 'Не удалось создать инвайт';
+  if (/monthly invite limit reached/i.test(raw)) {
+    const n = raw.match(/\((\d+)\)/)?.[1];
+    return n
+      ? `Месячный лимит инвайтов исчерпан (${n})`
+      : 'Месячный лимит инвайтов исчерпан';
+  }
+  if (/not enforceable/i.test(raw)) {
+    return 'Лимит инвайтов не настроен — обратитесь к администратору';
+  }
+  if (/create invite failed/i.test(raw)) {
+    return 'Не удалось создать инвайт. Попробуйте позже.';
+  }
+  return raw;
+}
 
 const publicProfile = ref<PublicProfile | null>(null);
 const publicLoading = ref(false);
@@ -184,17 +203,22 @@ const canPreviewPublicAvatar = computed(
 
 async function create() {
   if (!canCreateInvite.value) {
-    toast.error('Сначала войдите в аккаунт');
+    inviteError.value = 'Сначала войдите в аккаунт';
+    toast.error(inviteError.value, { duration: Infinity });
     return;
   }
 
   loading.value = true;
+  inviteError.value = null;
   try {
     lastCreated.value = await createInvite();
     history.value = await listInvites();
     toast.success('Инвайт создан');
   } catch (e) {
-    toast.error(e instanceof Error ? e.message : 'Ошибка');
+    const message = inviteErrorMessage(e);
+    inviteError.value = message;
+    // Keep visible: toast alone was disappearing before the user could read it.
+    toast.error(message, { duration: Infinity });
   } finally {
     loading.value = false;
   }
@@ -310,6 +334,14 @@ async function copyInviteLink() {
         >
           {{ loading ? 'Создаём…' : 'Создать инвайт' }}
         </UiButton>
+
+        <p
+          v-if="inviteError"
+          role="alert"
+          class="rounded-md border border-error/40 bg-error/10 px-3 py-2 text-sm text-error"
+        >
+          {{ inviteError }}
+        </p>
 
         <p
           v-if="isMe && session.isLoading"

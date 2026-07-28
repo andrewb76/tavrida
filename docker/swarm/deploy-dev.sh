@@ -39,6 +39,24 @@ COMPOSE_ARGS=(
   -c "${ROOT}/docker/swarm/stack-platform.dev.yml"
 )
 if [[ -n "${GRAFANA_CLOUD_PROMETHEUS_URL:-}" ]]; then
+  missing=()
+  for v in \
+    GRAFANA_CLOUD_PROMETHEUS_USERNAME \
+    GRAFANA_CLOUD_LOKI_URL \
+    GRAFANA_CLOUD_LOKI_USERNAME \
+    GRAFANA_CLOUD_OTLP_ENDPOINT \
+    GRAFANA_CLOUD_OTLP_INSTANCE_ID
+  do
+    if [[ -z "${!v:-}" ]]; then
+      missing+=("$v")
+    fi
+  done
+  if ((${#missing[@]} > 0)); then
+    echo "Observability: GRAFANA_CLOUD_PROMETHEUS_URL is set, but Alloy needs all Cloud vars." >&2
+    echo "Missing: ${missing[*]}" >&2
+    echo "Set them in GitHub Environment 'dev' (or dev.env) and redeploy." >&2
+    exit 1
+  fi
   COMPOSE_ARGS+=(-c "${ROOT}/docker/swarm/stack-tools.dev.yml")
   echo "Observability: Grafana Alloy → Cloud (GRAFANA_CLOUD_* set)" >&2
 else

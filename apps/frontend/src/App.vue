@@ -19,5 +19,8 @@ useCookieConsentStore().init();
   <Toaster
     position="top-center"
     rich-colors
+    close-button
+    :duration="8000"
+    :offset="72"
   />
 </template>

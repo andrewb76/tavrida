@@ -99,6 +99,8 @@ loki.write "grafana_cloud" {
 }
 
 // --- Traces: OTLP (NestJS later) → Tempo ---
+// Endpoint must be non-empty (e.g. https://otlp-gateway-….grafana.net/otlp).
+// Empty GRAFANA_CLOUD_OTLP_* makes Alloy fail this whole config (metrics/logs too).
 
 otelcol.receiver.otlp "default" {
   grpc {
@@ -110,21 +112,11 @@ otelcol.receiver.otlp "default" {
   }
 
   output {
-    traces = [otelcol.processor.transform.defaults.input]
+    traces = [otelcol.processor.batch.default.input]
   }
 }
 
-otelcol.processor.transform "defaults" {
-  error_mode = "ignore"
-
-  trace_statements {
-    context = "resource"
-    statements = [
-      `set(attributes["deployment.environment"], "dev")`,
-      `set(attributes["cluster"], "tavrida-dev")`,
-    ]
-  }
-
+otelcol.processor.batch "default" {
   output {
     traces = [otelcol.exporter.otlphttp.grafana_cloud.input]
   }

@@ -1,6 +1,6 @@
 # 📈 Grafana Cloud
 
-> **Статус:** in progress · **Версия:** 0.3  
+> **Статус:** in progress · **Версия:** 0.4  
 > **Среда:** dev Swarm (`evatorg.su`) → Grafana Cloud Free (SaaS)
 
 ## 🎯 Стек observability
@@ -66,14 +66,25 @@ DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh         # подтянет
 Или Actions → **Sync secrets (dev)**: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`**, `redeploy=true`.  
 Не используйте force по всему manifest — упрётесь в rebind `keto-schema-init` / ротацию `POSTGRES_PASSWORD`.
 
-Пустой `GRAFANA_CLOUD_PROMETHEUS_URL` → Alloy **не** деплоится (остальной stack без изменений).
+Пустой `GRAFANA_CLOUD_PROMETHEUS_URL` → Alloy **не** деплоится (остальной stack без изменений).  
+Если URL задан — `deploy-dev.sh` требует **все** `GRAFANA_CLOUD_*` (включая OTLP); иначе Alloy падает на пустом `endpoint`.
+
+`GRAFANA_CLOUD_OTLP_ENDPOINT` — gateway с суффиксом `/otlp`, например  
+`https://otlp-gateway-prod-eu-north-0.grafana.net/otlp` (без `/v1/traces`).
 
 ### 4. Проверка
 
 ```bash
 DOCKER_CONTEXT=dev-swarm docker service ps tavrida-dev_alloy
 DOCKER_CONTEXT=dev-swarm docker service logs --tail 80 tavrida-dev_alloy
+
+# Env реально попал в задачу (после смены GH vars нужен redeploy):
+DOCKER_CONTEXT=dev-swarm docker service inspect tavrida-dev_alloy \
+  --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' | grep GRAFANA
 ```
+
+Если в логах `at least one endpoint must be specified` / caret на `otelcol.exporter.otlphttp` —  
+`GRAFANA_CLOUD_OTLP_ENDPOINT` **пустой в контейнере** (var не в Environment `dev`, или не было redeploy после добавления). URL вида `…/otlp` верный; проблема не в формате.
 
 В Grafana Cloud Explore:
 
@@ -92,7 +103,7 @@ DOCKER_CONTEXT=dev-swarm docker service logs --tail 80 tavrida-dev_alloy
 | `docker/swarm/deploy-dev.sh` | добавляет tools compose, если URL задан |
 | `docker/swarm/secrets-manifest.dev` | `GRAFANA_CLOUD_TOKEN` → `tavrida_dev_grafana_cloud_token` |
 
-При правке `config.alloy` bump Swarm config: `alloy_config_v1` → `v2` в `stack-tools.dev.yml` (configs immutable).
+При правке `config.alloy` bump Swarm config: `alloy_config_v2` → `v3` в `stack-tools.dev.yml` (configs immutable).
 
 ## 📊 Базовые дашборды (цель)
 

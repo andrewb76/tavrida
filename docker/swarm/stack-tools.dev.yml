@@ -15,7 +15,8 @@ volumes:
   alloy_data:
 
 configs:
-  alloy_config_v1:
+  # Bump suffix when editing docker/config/alloy/config.alloy (Swarm configs are immutable).
+  alloy_config_v2:
     file: ../config/alloy/config.alloy
 
 secrets:
@@ -31,9 +32,9 @@ services:
       - /etc/alloy/config.alloy
       - --storage.path=/var/lib/alloy/data
       - --server.http.listen-addr=0.0.0.0:12345
-      - --stability.level=experimental
+      - --stability.level=generally-available
     configs:
-      - source: alloy_config_v1
+      - source: alloy_config_v2
         target: /etc/alloy/config.alloy
     secrets:
       - source: grafana_cloud_token
