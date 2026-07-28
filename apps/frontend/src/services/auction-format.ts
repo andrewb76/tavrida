@@ -8,6 +8,12 @@ export function auctionTypeLabel(type: string): string {
   return 'Английский аукцион';
 }
 
+/** Short badge for catalog / home cards. */
+export function auctionTypeShortLabel(type: string): string {
+  if (type === 'DUTCH') return 'Голландский';
+  return 'Английский';
+}
+
 export function auctionStatusLabel(input: {
   status: string;
   isLive: boolean;

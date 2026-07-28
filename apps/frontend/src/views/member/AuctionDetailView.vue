@@ -201,7 +201,7 @@ async function confirmBid() {
             <span
               v-if="lot.isLive"
               class="lot-page__live"
-            >● LIVE</span>
+            >● Идут торги</span>
             <span
               v-if="lot.isPromoted"
               class="lot-page__promoted"
@@ -214,7 +214,14 @@ async function confirmBid() {
               class="lot-page__timer"
             >⏱ {{ formatCountdown(remainingMs) }}</span>
             <strong class="lot-page__price">{{ formatMoney(lot.currentPrice, lot.currency) }}</strong>
-            <span class="lot-page__bids">{{ lot.bidCount }} ставок</span>
+            <span
+              v-if="isDutch"
+              class="lot-page__bids"
+            >{{ lot.isLive ? 'Цена снижается' : (lot.bidCount > 0 ? 'Куплен' : 'Без покупки') }}</span>
+            <span
+              v-else
+              class="lot-page__bids"
+            >{{ lot.bidCount }} {{ lot.bidCount === 1 ? 'ставка' : 'ставок' }}</span>
           </div>
         </div>
 
@@ -248,10 +255,10 @@ async function confirmBid() {
           <dd>{{ formatMoney(lot.startingPrice, lot.currency) }}</dd>
         </div>
         <div>
-          <dt>Шаг ставки</dt>
+          <dt>{{ isDutch ? 'Шаг снижения' : 'Шаг ставки' }}</dt>
           <dd>{{ formatMoney(lot.bidIncrement, lot.currency) }}</dd>
         </div>
-        <div>
+        <div v-if="!isDutch">
           <dt>Мин. следующая</dt>
           <dd>{{ formatMoney(lot.minNextBid, lot.currency) }}</dd>
         </div>
@@ -289,7 +296,7 @@ async function confirmBid() {
           :class="{ 'lot-page__tab--active': activeTab === 'bids' }"
           @click="activeTab = 'bids'"
         >
-          Ставки ({{ bids.length }})
+          {{ isDutch ? 'Покупки' : 'Ставки' }} ({{ bids.length }})
         </button>
         <button
           type="button"
@@ -329,7 +336,7 @@ async function confirmBid() {
               <span
                 v-if="bid.isWinning"
                 class="lot-page__winning"
-              >лидирует</span>
+              >{{ isDutch ? 'принята' : 'лидирует' }}</span>
             </div>
             <small>
               {{ new Date(bid.placedAt).toLocaleString('ru-RU') }}
@@ -340,7 +347,7 @@ async function confirmBid() {
             v-if="bids.length === 0"
             class="lot-page__empty"
           >
-            Ставок пока нет.
+            {{ isDutch ? 'Покупок пока нет.' : 'Ставок пока нет.' }}
           </li>
         </ul>
 

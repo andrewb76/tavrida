@@ -225,10 +225,10 @@ function applyProFilters() {
             Любой
           </option>
           <option value="ENGLISH">
-            English
+            Английский
           </option>
           <option value="DUTCH">
-            Dutch
+            Голландский
           </option>
         </select>
       </label>

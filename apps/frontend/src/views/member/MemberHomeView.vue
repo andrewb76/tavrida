@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { listAuctions, type AuctionCard } from '@/services/auctions';
+import { auctionTypeShortLabel } from '@/services/auction-format';
 import { listTopics, type TopicSummary } from '@/services/forum';
 import { formatMoney } from '@/services/wallet';
 import { useSessionStore } from '@/stores/session';
@@ -227,8 +228,13 @@ onMounted(() => {
                 decoding="async"
               >
               <span
+                v-if="lot.type === 'DUTCH'"
+                class="member-home__type"
+              >{{ auctionTypeShortLabel(lot.type) }}</span>
+              <span
                 v-if="lot.isLive"
                 class="member-home__live"
+                :class="{ 'member-home__live--with-type': lot.type === 'DUTCH' }"
               >Идут торги</span>
             </div>
             <div class="p-3">
@@ -236,11 +242,19 @@ onMounted(() => {
                 {{ lot.title }}
               </h3>
               <p class="mt-1 tabular-nums text-sm text-text">
+                <span
+                  v-if="lot.type === 'DUTCH'"
+                  class="mr-1 text-xs text-text-muted"
+                >Текущая цена</span>
                 {{ money(lot.currentPrice, lot.currency) }}
                 <span
-                  v-if="lot.bidCount"
+                  v-if="lot.type !== 'DUTCH' && lot.bidCount"
                   class="ml-1 text-text-muted"
-                >· {{ lot.bidCount }} ставки</span>
+                >· {{ lot.bidCount }} {{ lot.bidCount === 1 ? 'ставка' : 'ставок' }}</span>
+                <span
+                  v-else-if="lot.type === 'DUTCH' && lot.isLive"
+                  class="ml-1 text-xs text-text-muted"
+                >· снижение по таймеру</span>
               </p>
               <p
                 v-if="endsLabel(lot.endsAt)"
@@ -442,6 +456,21 @@ html[data-theme='dark'] .member-home__eyebrow {
   color: rgb(242 244 243 / 0.35);
 }
 
+.member-home__type {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--color-surface, #fff) 88%, transparent);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text, #111);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
 .member-home__live {
   position: absolute;
   top: 0.55rem;
@@ -454,6 +483,11 @@ html[data-theme='dark'] .member-home__eyebrow {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #fff;
+}
+
+.member-home__live--with-type {
+  left: auto;
+  right: 0.55rem;
 }
 
 .member-home__skel {

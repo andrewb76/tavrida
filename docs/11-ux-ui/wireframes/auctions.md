@@ -13,8 +13,9 @@
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
 | Filters | category, status, sort, search | Query params; scope по тарифу — [catalog-listing](../../05-microservices/auction/requirements/catalog-listing.md) |
-| Grid | Card: img, title, price, badges | Cursor pagination «Ещё» |
-| Badges | Live 🔴, Promoted ↑ | `status=ACTIVE`, `promotedUntil` |
+| Grid | Card: img, title, price, badges | Cursor pagination «Ещё»; компонент `AuctionLotCard` |
+| Badges | Идут торги 🔴, Promoted ↑, тип **Голландский** | `status=ACTIVE`, `promotedUntil`, `type=DUTCH` |
+| Meta цены | English: цена · N ставок; Dutch: «Текущая цена» · снижение (без bidCount) | bidCount на Dutch скрыт — не смысловой |
 | FAB | «+» | → `/auctions/new`; hide if daily limit |
 
 **States:** loading · empty · end of list.
@@ -75,10 +76,10 @@ AuctionCatalogPage:
 |------|----------|-----------|
 | Gallery | Swipe photos | CDN MinIO |
 | Meta | Title, seller chip, category | → profile |
-| Status | Timer, price, bid count, Live | WS + countdown |
-| Tabs | Описание \| Ставки \| Экспертиза | Lazy load |
-| Bid list | History | WS `bid.placed` prepend |
-| Sticky CTA | «Сделать ставку» | Modal → POST bid |
+| Status | Timer, price; English: bid count; Dutch: «Цена снижается» / «Куплен» | WS + countdown |
+| Tabs | Описание \| Ставки\|Покупки \| Экспертиза | Lazy load; на Dutch вкладка «Покупки» |
+| Bid list | History | WS `bid.placed` prepend; Dutch ≤1 принятие |
+| Sticky CTA | English «Сделать ставку» · Dutch «Купить…» | Modal → POST bid / accept |
 | Owner | Edit, Promote, Cancel | seller only |
 | Pro | Forum topic link | paywall |
 

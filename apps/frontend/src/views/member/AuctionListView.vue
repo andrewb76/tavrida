@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AuctionFilterBar from '@/components/auction/AuctionFilterBar.vue';
+import AuctionLotCard from '@/components/auction/AuctionLotCard.vue';
 import { useAuctionCatalogFilters } from '@/composables/useAuctionCatalogFilters';
 import {
   listAuctions,
   type AuctionCard,
   type AuctionCatalogFilters,
 } from '@/services/auctions';
-import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 import { UiButton } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -156,47 +156,11 @@ function loadMore() {
       v-else
       class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
     >
-      <li
+      <AuctionLotCard
         v-for="lot in items"
         :key="lot.id"
-        class="overflow-hidden rounded-lg border border-border bg-surface shadow-card"
-      >
-        <div class="flex h-32 items-center justify-center bg-bg text-3xl">
-          <img
-            v-if="lot.thumbnailUrl"
-            :src="proxiedMediaUrl(lot.thumbnailUrl, imageProxyPresets.auctionCatalogThumb)"
-            :alt="lot.title"
-            class="h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          >
-          <span v-else>🏺</span>
-        </div>
-        <div class="space-y-2 p-4">
-          <RouterLink
-            :to="`/auctions/${lot.id}`"
-            class="font-medium text-primary"
-          >
-            {{ lot.title }}
-          </RouterLink>
-          <p class="text-sm text-text-muted">
-            <span
-              v-if="lot.isLive"
-              class="mr-2 text-error"
-            >● LIVE</span>
-            <span
-              v-if="lot.isPromoted"
-              class="mr-2 text-accent"
-            >↑</span>
-            <span
-              v-if="lot.hasExpertAppraisal"
-              class="mr-2"
-              title="Есть экспертиза"
-            >🎓</span>
-            {{ lot.currentPrice }} {{ lot.currency === 'RUB' ? '₽' : lot.currency }}
-          </p>
-        </div>
-      </li>
+        :lot="lot"
+      />
     </ul>
 
     <div
