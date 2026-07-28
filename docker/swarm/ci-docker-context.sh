@@ -71,11 +71,12 @@ chmod 700 "$CM_DIR"
   echo "  PubkeyAuthentication yes"
   echo "  ConnectTimeout 30"
   echo "  ServerAliveInterval 15"
-  echo "  ServerAliveCountMax 4"
+  # Long stack deploy / secret sync can be quiet on the tunnel; keep SSH alive.
+  echo "  ServerAliveCountMax 12"
   echo "  TCPKeepAlive yes"
   echo "  ControlMaster auto"
   echo "  ControlPath ${CM_DIR}/%r@%h:%p"
-  echo "  ControlPersist 30m"
+  echo "  ControlPersist 45m"
   if [[ -n "${SSH_AUTH_SOCK:-}" ]]; then
     echo "  IdentityAgent ${SSH_AUTH_SOCK}"
   fi
