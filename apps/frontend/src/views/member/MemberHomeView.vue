@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { listAuctions, type AuctionCard } from '@/services/auctions';
 import { auctionTypeShortLabel } from '@/services/auction-format';
+import ProxiedImg from '@/components/media/ProxiedImg.vue';
 import { listTopics, type TopicSummary } from '@/services/forum';
 import { formatMoney } from '@/services/wallet';
 import { useSessionStore } from '@/stores/session';
@@ -219,14 +220,14 @@ onMounted(() => {
               class="member-home__lot-media"
               :class="thumb(lot.thumbnailUrl) ? '' : 'member-home__lot-media--empty'"
             >
-              <img
-                v-if="thumb(lot.thumbnailUrl)"
-                :src="thumb(lot.thumbnailUrl)!"
+              <ProxiedImg
+                v-if="lot.thumbnailUrl"
+                :src="thumb(lot.thumbnailUrl)"
+                :fallback-src="lot.thumbnailUrl"
                 :alt="lot.title"
                 class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                loading="lazy"
-                decoding="async"
-              >
+                loading="eager"
+              />
               <span
                 v-if="lot.type === 'DUTCH'"
                 class="member-home__type"

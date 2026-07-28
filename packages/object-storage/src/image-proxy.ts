@@ -15,7 +15,11 @@ export type ImageProxyConfig = {
   publicBaseUrl: string;
   /** Origin imgproxy uses to fetch sources, e.g. http://minio:9000 */
   fetchBaseUrl: string;
-  /** Use /insecure/ prefix (local dev). Production should use signed URLs. */
+  /**
+   * When false, reserve the first path segment for a real signature (`sig` placeholder).
+   * When true/omitted, use `/_/` (not `/insecure/`) — imgproxy accepts any unsigned
+   * segment when KEY/SALT are unset; some browsers/extensions stall on `/insecure/`.
+   */
   insecure?: boolean;
 };
 
@@ -123,7 +127,8 @@ export function buildImageProxyUrl(
   if (!fetchUrl) return null;
 
   const segments = [normalizePublicBaseUrl(baseUrl)];
-  segments.push(config.insecure === false ? 'sig' : 'insecure');
+  // Prefer `/_/` over `/insecure/` — same unsigned semantics, fewer client filters.
+  segments.push(config.insecure === false ? 'sig' : '_');
 
   const resizeSegment = buildResizeSegment(resize);
   if (resizeSegment) segments.push(resizeSegment);

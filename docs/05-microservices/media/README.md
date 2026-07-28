@@ -104,7 +104,8 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 Локально: `docker compose -f docker/compose/infra.local.yml up -d` поднимает `imgproxy` на `:8080`.
 
 - Проксируются только URL из наших бакетов (`parseMediaUrl`).
-- Формат imgproxy: base64-encoded source URL (без `/plain/` — тот режим для percent-encoded URL).
+- Формат imgproxy: base64-encoded source URL; unsigned path prefix **`/_/`** (не `/insecure/` — меньше ложных блокировок клиентом).
+- Если прокси зависает, SPA через `ProxiedImg` через ~4 с откатывается на прямой `MEDIA_PUBLIC_BASE_URL` (S3).
 - Внешние аватары (Logto CDN) идут напрямую.
 - Без `VITE_IMAGE_PROXY_URL` фронт использует сырые MinIO URL (как раньше).
 - Production: подписанные URL imgproxy (`IMGPROXY_KEY` / `IMGPROXY_SALT`) — TODO.

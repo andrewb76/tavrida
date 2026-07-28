@@ -223,19 +223,23 @@ services:
         max_attempts: 15
 
   imgproxy:
-    image: darthsim/imgproxy:latest
+    image: darthsim/imgproxy:v3.27.2
     environment:
       IMGPROXY_BIND: ':8080'
       IMGPROXY_USE_ETAG: 'true'
       IMGPROXY_ENABLE_WEBP_DETECTION: 'true'
       IMGPROXY_JPEG_PROGRESSIVE: 'true'
       IMGPROXY_MAX_SRC_RESOLUTION: '50'
+      IMGPROXY_ALLOWED_SOURCES: 'http://minio:9000/'
+      # Avoid CSP sandbox on image responses (can confuse some browsers when opening URLs).
+      IMGPROXY_CONTENT_SECURITY_POLICY: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
     networks:
       - tavrida_net
     deploy:
       replicas: 1
       labels:
         - traefik.enable=true
+        - traefik.docker.network=tavrida-dev_tavrida_net
         - traefik.http.routers.imgproxy.rule=Host(`img.${DEV_DOMAIN}`)
         - traefik.http.routers.imgproxy.entrypoints=websecure
         - traefik.http.routers.imgproxy.tls.certresolver=le

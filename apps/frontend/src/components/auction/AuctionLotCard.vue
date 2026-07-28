@@ -4,6 +4,7 @@ import {
   formatMoney,
 } from '@/services/auction-format';
 import type { AuctionCard } from '@/services/auctions';
+import ProxiedImg from '@/components/media/ProxiedImg.vue';
 import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -28,14 +29,14 @@ const priceHint = computed(() =>
 <template>
   <li class="auction-lot-card overflow-hidden rounded-lg border border-border bg-surface shadow-card">
     <div class="auction-lot-card__media relative flex h-32 items-center justify-center bg-bg text-3xl">
-      <img
-        v-if="thumb"
+      <ProxiedImg
+        v-if="lot.thumbnailUrl"
         :src="thumb"
+        :fallback-src="lot.thumbnailUrl"
         :alt="lot.title"
         class="h-full w-full object-cover"
-        loading="lazy"
-        decoding="async"
-      >
+        loading="eager"
+      />
       <span v-else>🏺</span>
       <span
         v-if="isDutch"

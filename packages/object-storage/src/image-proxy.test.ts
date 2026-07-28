@@ -47,7 +47,7 @@ describe('image-proxy', () => {
     );
 
     assert.ok(url);
-    assert.match(url!, /^http:\/\/localhost:8080\/insecure\/rs:fit:96:96\/[A-Za-z0-9_-]+\.jpg$/);
+    assert.match(url!, /^http:\/\/localhost:8080\/_\/rs:fit:96:96\/[A-Za-z0-9_-]+\.jpg$/);
   });
 
   it('buildImageProxyUrl returns null without proxy base', () => {

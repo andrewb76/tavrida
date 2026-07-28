@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import ProxiedImg from '@/components/media/ProxiedImg.vue';
 import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
 import { useClubAccessStore } from '@/stores/clubAccess';
 
@@ -22,6 +23,8 @@ const activeSrc = computed(() => {
   if (!slide) return undefined;
   return proxiedMediaUrl(slide, imageProxyPresets.galleryMain);
 });
+
+const activeFallback = computed(() => slides.value[active.value]);
 
 function select(index: number) {
   if (!slides.value.length) return;
@@ -87,13 +90,14 @@ function onKeydown(e: KeyboardEvent) {
       @pointerup="onPointerUp"
       @pointercancel="dragStartX = null"
     >
-      <img
-        v-if="activeSrc"
+      <ProxiedImg
+        v-if="activeFallback"
         :src="activeSrc"
+        :fallback-src="activeFallback"
         alt=""
         class="media-gallery__img"
-        draggable="false"
-      >
+        loading="eager"
+      />
       <div
         v-else
         class="media-gallery__placeholder"
@@ -153,10 +157,11 @@ function onKeydown(e: KeyboardEvent) {
         :aria-current="idx === active ? 'true' : undefined"
         @click="select(idx)"
       >
-        <img
+        <ProxiedImg
           :src="thumbSrc(slide)"
+          :fallback-src="slide"
           alt=""
-        >
+        />
       </button>
     </div>
   </div>
