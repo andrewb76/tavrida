@@ -11,12 +11,13 @@ import {
 } from '@/services/chats';
 import { useChatsStore } from '@/stores/chats';
 import { UiIcon } from '@tavrida/ui';
-import { computed, onMounted, ref, watch } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 type FilterKey = 'all' | 'hidden' | ChatKind;
 
+const route = useRoute();
 const router = useRouter();
 const chatsStore = useChatsStore();
 
@@ -45,9 +46,17 @@ const listHint = computed(() => {
   return null;
 });
 
-watch(filter, () => void load());
+watch(filter, () => {
+  if (route.name === 'chats') void load();
+});
 
-onMounted(load);
+watch(
+  () => route.name,
+  (name) => {
+    if (name === 'chats') void load();
+  },
+  { immediate: true },
+);
 
 async function load() {
   loading.value = true;

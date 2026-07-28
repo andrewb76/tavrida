@@ -372,6 +372,7 @@ export class ChatsService {
         'c.context_type AS "contextType"',
         'c.context_id AS "contextId"',
         'm.last_read_at AS "lastReadAt"',
+        'm.last_read_message_id AS "lastReadMessageId"',
       ])
       .getRawMany<{
         id: string;
@@ -380,12 +381,18 @@ export class ChatsService {
         title: string | null;
         contextType: string | null;
         contextId: string | null;
-        lastReadAt: Date | null;
+        lastReadAt: Date | string | null;
+        lastReadMessageId: string | null;
       }>();
 
     const items: ChatListItem[] = [];
     for (const row of rows) {
-      const unreadCount = await this.countUnread(row.id, userId, row.lastReadAt);
+      const unreadCount = await this.countUnread(
+        row.id,
+        userId,
+        row.lastReadAt,
+        row.lastReadMessageId,
+      );
       const last = await this.messages.findOne({
         where: { chatId: row.id },
         order: { createdAt: 'DESC' },
@@ -558,9 +565,19 @@ export class ChatsService {
         attachmentRows.push({ mediaObjectId, sortOrder: i });
       }
 
-      await membersRepo.update(
-        { chatId: input.chatId, userId: input.authorId },
-        { lastReadAt: message.createdAt, lastReadMessageId: message.id },
+      await membersRepo.query(
+        `
+        UPDATE chat.chat_member AS cm
+        SET
+          last_read_at = msg.created_at,
+          last_read_message_id = msg.id
+        FROM chat.message AS msg
+        WHERE cm.chat_id = $1
+          AND cm.user_id = $2
+          AND msg.id = $3
+          AND msg.chat_id = $1
+        `,
+        [input.chatId, input.authorId, message.id],
       );
       await membersRepo.update({ chatId: input.chatId }, { hiddenAt: null });
 
@@ -716,43 +733,81 @@ export class ChatsService {
       throw new ForbiddenException('Not a chat member');
     }
 
-    let readAt = new Date();
-    let readMessageId: string | null = messageId ?? null;
-    if (messageId) {
+    let targetMessageId = messageId ?? null;
+    if (targetMessageId) {
       const msg = await this.messages.findOne({
-        where: { id: messageId, chatId },
+        where: { id: targetMessageId, chatId },
       });
       if (!msg) throw new NotFoundException('Message not found');
-      readAt = msg.createdAt;
-      readMessageId = msg.id;
     } else {
       const last = await this.messages.findOne({
         where: { chatId, deletedAt: IsNull() },
         order: { createdAt: 'DESC' },
       });
-      if (last) {
-        readAt = last.createdAt;
-        readMessageId = last.id;
+      targetMessageId = last?.id ?? null;
+    }
+
+    // Copy created_at in SQL — JS Date is ms-only and truncates PG timestamptz,
+    // which left the just-read message still matching `created_at > last_read_at`.
+    const updated = await this.dataSource.transaction(async (manager) => {
+      let readAt: Date;
+      let readMessageId: string | null = targetMessageId;
+
+      if (targetMessageId) {
+        const result = await manager.query(
+          `
+          UPDATE chat.chat_member AS cm
+          SET
+            last_read_at = msg.created_at,
+            last_read_message_id = msg.id
+          FROM chat.message AS msg
+          WHERE cm.chat_id = $1
+            AND cm.user_id = $2
+            AND msg.id = $3
+            AND msg.chat_id = $1
+            AND (
+              cm.last_read_at IS NULL
+              OR msg.created_at > cm.last_read_at
+              OR (
+                msg.created_at = cm.last_read_at
+                AND (
+                  cm.last_read_message_id IS NULL
+                  OR cm.last_read_message_id IS DISTINCT FROM msg.id
+                )
+              )
+            )
+          RETURNING cm.last_read_at AS "lastReadAt", cm.last_read_message_id AS "lastReadMessageId"
+          `,
+          [chatId, userId, targetMessageId],
+        );
+        if (!result?.length) {
+          return null;
+        }
+        readAt = new Date(result[0].lastReadAt);
+        readMessageId = result[0].lastReadMessageId;
+      } else {
+        const now = new Date();
+        if (member.lastReadAt && member.lastReadAt.getTime() >= now.getTime()) {
+          return null;
+        }
+        await manager.getRepository(ChatMemberEntity).update(
+          { chatId, userId },
+          { lastReadAt: now, lastReadMessageId: null },
+        );
+        readAt = now;
+        readMessageId = null;
       }
-    }
 
-    if (member.lastReadAt && member.lastReadAt.getTime() >= readAt.getTime()) {
-      return;
-    }
-
-    await this.dataSource.transaction(async (manager) => {
-      await manager.getRepository(ChatMemberEntity).update(
-        { chatId, userId },
-        { lastReadAt: readAt, lastReadMessageId: readMessageId },
-      );
       await this.events.enqueueMessageRead(manager, {
         chatId,
         userId,
         lastReadMessageId: readMessageId,
         lastReadAt: readAt,
       });
+      return { readAt, readMessageId };
     });
-    this.events.flush();
+
+    if (updated) this.events.flush();
   }
 
   private async createGroupEntity(input: {
@@ -982,14 +1037,26 @@ export class ChatsService {
   private async countUnread(
     chatId: string,
     userId: string,
-    lastReadAt: Date | null,
+    lastReadAt: Date | string | null,
+    lastReadMessageId?: string | null,
   ): Promise<number> {
     const qb = this.messages
       .createQueryBuilder('msg')
       .where('msg.chat_id = :chatId', { chatId })
       .andWhere('msg.deleted_at IS NULL')
       .andWhere('msg.author_id <> :userId', { userId });
-    if (lastReadAt) {
+    if (lastReadMessageId) {
+      // Compare against the message row's created_at (full PG precision), not a
+      // JS-truncated last_read_at that can leave the cursor message "still unread".
+      qb.andWhere(
+        `(msg.created_at > (SELECT m2.created_at FROM chat.message m2 WHERE m2.id = :lastReadMessageId)
+          OR (
+            msg.created_at = (SELECT m2.created_at FROM chat.message m2 WHERE m2.id = :lastReadMessageId)
+            AND msg.id <> :lastReadMessageId
+          ))`,
+        { lastReadMessageId },
+      );
+    } else if (lastReadAt) {
       qb.andWhere('msg.created_at > :lastReadAt', { lastReadAt });
     }
     return qb.getCount();

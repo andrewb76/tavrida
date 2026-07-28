@@ -103,9 +103,8 @@ async function load(topicId: string) {
     messages.value = page.data;
     nextCursor.value = page.nextCursor;
     historyCapReached.value = page.historyCapReached;
-    const last = page.data[page.data.length - 1];
-    await markChatRead(chatRow.id, last?.id);
-    void chatsStore.refreshUnread();
+    await markChatRead(chatRow.id);
+    await chatsStore.refreshUnread();
     try {
       wsUnsub = await ws.subscribe(`chat:${chatRow.id}`, onWsEvent);
     } catch {

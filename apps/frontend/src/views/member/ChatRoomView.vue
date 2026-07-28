@@ -264,9 +264,9 @@ async function load(id: string) {
     messages.value = page.data;
     nextCursor.value = page.nextCursor;
     historyCapReached.value = page.historyCapReached;
-    const last = [...page.data].reverse().find((m) => !m.deletedAt) ?? page.data[page.data.length - 1];
-    await markChatRead(id, last?.id);
-    void chatsStore.refreshUnread();
+    // Let chat service resolve the latest cursor in SQL (full timestamptz precision).
+    await markChatRead(id);
+    await chatsStore.refreshUnread();
     await bindWs(id);
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось открыть чат';
