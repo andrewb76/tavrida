@@ -16,6 +16,10 @@ import {
   type MessageDeliveryStatus,
   type MessageMention,
 } from '../../common/chat.types';
+import {
+  parsePgTimestamp,
+  unwrapTypeOrmRows,
+} from '../../common/typeorm-query';
 import { ChatMemberEntity } from '../../entities/chat-member.entity';
 import { ChatEntity } from '../../entities/chat.entity';
 import { MessageAttachmentEntity } from '../../entities/message-attachment.entity';
@@ -754,7 +758,8 @@ export class ChatsService {
       let readMessageId: string | null = targetMessageId;
 
       if (targetMessageId) {
-        const result = await manager.query(
+        // TypeORM Postgres returns [rows, rowCount] for UPDATE (not bare rows).
+        const raw = await manager.query(
           `
           UPDATE chat.chat_member AS cm
           SET
@@ -780,11 +785,19 @@ export class ChatsService {
           `,
           [chatId, userId, targetMessageId],
         );
-        if (!result?.length) {
+        const rows = unwrapTypeOrmRows<{
+          lastReadAt: unknown;
+          lastReadMessageId: string | null;
+        }>(raw);
+        if (!rows.length) {
           return null;
         }
-        readAt = new Date(result[0].lastReadAt);
-        readMessageId = result[0].lastReadMessageId;
+        const parsedAt = parsePgTimestamp(rows[0]!.lastReadAt);
+        if (!parsedAt) {
+          throw new Error('markRead: invalid last_read_at from UPDATE RETURNING');
+        }
+        readAt = parsedAt;
+        readMessageId = rows[0]!.lastReadMessageId;
       } else {
         const now = new Date();
         if (member.lastReadAt && member.lastReadAt.getTime() >= now.getTime()) {
