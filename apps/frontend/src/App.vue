@@ -3,10 +3,12 @@ import CookieConsentBanner from '@/components/legal/CookieConsentBanner.vue';
 import { useAuthSync } from '@/composables/useAuthSync';
 import { useClubAccessSync } from '@/composables/useClubAccessSync';
 import { useRolesSync } from '@/composables/useRolesSync';
+import { installBffAuthFetchInterceptor } from '@/services/bffFetchInterceptor';
 import { useCookieConsentStore } from '@/stores/cookieConsent';
 import { RouterView } from 'vue-router';
 import { Toaster } from 'vue-sonner';
 
+installBffAuthFetchInterceptor();
 useAuthSync();
 useClubAccessSync();
 useRolesSync();

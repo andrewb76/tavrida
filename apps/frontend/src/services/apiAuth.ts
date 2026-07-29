@@ -1,7 +1,16 @@
+import { inspectBffAuthFailure } from '@/services/bffErrors';
+import {
+  forceSessionReauth,
+  sessionExpiredError,
+} from '@/services/sessionReauth';
 import { useSessionStore } from '@/stores/session';
 
 /** BFF impersonation header (ADR-018). Express lowercases incoming names. */
 export const ACT_AS_HEADER = 'X-Act-As';
+
+function apiBase(): string {
+  return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+}
 
 export async function optionalBearerToken(): Promise<string | undefined> {
   const session = useSessionStore();
@@ -11,12 +20,22 @@ export async function optionalBearerToken(): Promise<string | undefined> {
 /** Bearer token for BFF — fails fast with a user-facing message. */
 export async function requireBearerToken(): Promise<string> {
   const session = useSessionStore();
-  const token = await session.getAccessToken();
+  let token: string | undefined;
+  try {
+    token = await session.getAccessToken();
+  } catch {
+    if (session.logtoEnabled) {
+      void forceSessionReauth();
+      throw sessionExpiredError();
+    }
+    throw new Error('Войдите в аккаунт');
+  }
 
   if (token) return token;
 
   if (session.logtoEnabled) {
-    throw new Error('Сессия истекла — войдите снова');
+    void forceSessionReauth();
+    throw sessionExpiredError();
   }
 
   throw new Error('Войдите в аккаунт');
@@ -61,4 +80,29 @@ export async function bffAuthHeaders(
     headers[ACT_AS_HEADER] = session.actAsUserId;
   }
   return mergeHeaders(headers, init);
+}
+
+export type BffFetchOptions = {
+  json?: boolean;
+  skipActAs?: boolean;
+  optional?: boolean;
+};
+
+/**
+ * Authenticated fetch to BFF. On 401 stale/invalid access token → logout + relogin.
+ * On 403 hard_locked → SPA trap flag (same as before).
+ */
+export async function bffFetch(
+  path: string,
+  init?: RequestInit,
+  options?: BffFetchOptions,
+): Promise<Response> {
+  const url = path.startsWith('http') ? path : `${apiBase()}${path}`;
+  const headers = await bffAuthHeaders(init?.headers, options);
+  const res = await fetch(url, { ...init, headers });
+  if (!res.ok) {
+    const body = await res.clone().json().catch(() => null);
+    inspectBffAuthFailure(res.status, body);
+  }
+  return res;
 }

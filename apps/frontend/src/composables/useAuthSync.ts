@@ -1,8 +1,13 @@
 import { useLogto } from '@logto/vue';
 import { watch } from 'vue';
-import { isLogtoConfigured, logtoApiResource } from '@/config/logto';
+import {
+  isLogtoConfigured,
+  logtoApiResource,
+  signOutReloginUri,
+} from '@/config/logto';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { resolveBearerToken } from '@/services/logtoToken';
+import { setSessionReauthHandler } from '@/services/sessionReauth';
 import { useSessionStore } from '@/stores/session';
 import { refreshSessionBalance } from '@/composables/useWalletBalance';
 
@@ -15,6 +20,14 @@ export function useAuthSync() {
   const resource = logtoApiResource();
 
   session.setAccessTokenGetter(() => resolveBearerToken(logto, resource));
+
+  setSessionReauthHandler(async () => {
+    try {
+      await logto.signOut(signOutReloginUri());
+    } catch {
+      window.location.assign(signOutReloginUri());
+    }
+  });
 
   watch(
     () => logto.isLoading.value,

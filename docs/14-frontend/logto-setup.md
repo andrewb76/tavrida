@@ -188,6 +188,7 @@ sequenceDiagram
 |------|------|
 | `src/config/logto.ts` | env, redirect URIs |
 | `src/composables/useAuth.ts` | `signIn`, `signInWithInvite` |
+| `src/services/sessionReauth.ts` | 401 stale/invalid access token → logout → `/auth/relogin` |
 | `src/views/public/JoinView.vue` | код / ссылка → Logto |
 | `src/views/member/InvitesView.vue` | выдача приглашений |
 | `src/services/invite.ts` | mock → BFF contract |
@@ -242,6 +243,7 @@ BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохран
 |---------|---------|
 | `Error found in the callback URI` | Logto вернул `?error=` — часто API resource в sign-in до создания в Console; сейчас `resources` убраны из config |
 | 404 / unknown session на странице Logto | Прямой заход на `/sign-in`, истёкшая сессия — настроить **Unknown session redirect URL**: `http://localhost:5173/auth/unknown-session` |
+| `Invalid access token` / `VITE_LOGTO_API_RESOURCE` / `audience mismatch` (BFF 401) | Протухший или неверный access token (часто ID token / старый `aud`). SPA сама делает **logout → `/auth/relogin` → Logto sign-in**. После смены API Resource в Console — достаточно этого цикла |
 | `invalid_scope` | Убрать лишние scopes в `logto.ts` или whitelist в Console |
 | `invalid_client` (sign-in SPA) | Redirect URI / CORS не совпадают с Console |
 | `invalid_client` (BFF M2M / invites) | ID+secret **M2M** app (не SPA). Secret в Swarm обновляется только через Sync **`force=true`**, **`only=LOGTO_M2M_APP_SECRET`**. OSS: `LOGTO_M2M_RESOURCE=https://default.logto.app/api` — **не** `https://auth…/api` |

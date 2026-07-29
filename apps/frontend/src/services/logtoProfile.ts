@@ -1,6 +1,5 @@
 import type { useLogto } from '@logto/vue';
 import type { useSessionStore } from '@/stores/session';
-import { bffAuthHeaders } from './apiAuth';
 
 type LogtoClient = ReturnType<typeof useLogto>;
 type SessionStore = ReturnType<typeof useSessionStore>;
@@ -22,10 +21,6 @@ type LogtoUserInfo = {
   avatar?: string;
 };
 
-function apiBase(): string {
-  return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
-}
-
 function pickAvatarUrl(...sources: Array<string | undefined | null>): string | undefined {
   for (const value of sources) {
     const trimmed = value?.trim();
@@ -42,12 +37,11 @@ async function pushIdentityToProfile(input: {
   avatarUrl?: string;
 }): Promise<void> {
   try {
-    await fetch(`${apiBase()}/me/identity`, {
+    const { bffFetch } = await import('./apiAuth');
+    await bffFetch('/me/identity', {
       method: 'POST',
-      // These claims belong to the real JWT actor, never to an impersonation target.
-      headers: await bffAuthHeaders(undefined, { skipActAs: true }),
       body: JSON.stringify(input),
-    });
+    }, { skipActAs: true });
   } catch {
     /* profile cache sync is best-effort; session still works */
   }

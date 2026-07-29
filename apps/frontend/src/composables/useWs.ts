@@ -76,11 +76,18 @@ class WsClient {
         ws.addEventListener('open', onOpen);
         ws.addEventListener('error', onError);
         ws.addEventListener('message', (ev) => this.onRawMessage(String(ev.data)));
-        ws.addEventListener('close', () => {
+        ws.addEventListener('close', (ev) => {
           this.status.value = 'closed';
           this.socket = null;
           for (const entry of this.channels.values()) {
             entry.subscribed = false;
+          }
+          // BFF closes with 4401 when JWT is missing/invalid (see ws-hub.service).
+          if (ev.code === 4401) {
+            void import('@/services/sessionReauth').then(({ forceSessionReauth }) => {
+              void forceSessionReauth();
+            });
+            return;
           }
           if (!this.intentionalClose) this.scheduleReconnect();
         });

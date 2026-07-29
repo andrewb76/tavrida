@@ -46,6 +46,11 @@ export function signOutRedirectUri(): string {
   return `${window.location.origin}/`;
 }
 
+/** After forced re-auth: Logto end-session lands here, then SPA opens sign-in. */
+export function signOutReloginUri(): string {
+  return `${window.location.origin}/auth/relogin`;
+}
+
 /**
  * Logto prebuilt Account Center — profile (name, avatar).
  * @see https://docs.logto.io/end-user-flows/account-settings/by-account-center-ui

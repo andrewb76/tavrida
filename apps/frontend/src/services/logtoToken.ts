@@ -1,4 +1,8 @@
 import type { useLogto } from '@logto/vue';
+import {
+  forceSessionReauth,
+  sessionExpiredError,
+} from '@/services/sessionReauth';
 
 type LogtoClient = ReturnType<typeof useLogto>;
 
@@ -23,15 +27,15 @@ export async function resolveBearerToken(
     try {
       const apiToken = await logto.getAccessToken(resource);
       if (apiToken) return apiToken;
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `Не удалось получить API-токен Logto для ${resource}. ` +
-          `Проверьте API Resource в Console и что SPA имеет к нему доступ. (${detail})`,
+    } catch {
+      void forceSessionReauth();
+      throw sessionExpiredError(
+        'Не удалось обновить API-токен Logto — войдите снова.',
       );
     }
-    throw new Error(
-      `Нет access token для ${resource}. Выйдите и войдите снова после настройки API Resource.`,
+    void forceSessionReauth();
+    throw sessionExpiredError(
+      `Нет access token для ${resource}. Войдите снова после настройки API Resource.`,
     );
   }
 

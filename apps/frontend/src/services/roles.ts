@@ -1,14 +1,10 @@
-import { bffAuthHeaders, requireBearerToken } from './apiAuth';
+import { bffFetch, requireBearerToken } from './apiAuth';
 import { applyHardLockFromResponse, readHardLockedDetail } from './hardLock';
 import { useSessionStore } from '@/stores/session';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
 type RolesResponse = { roles: PlatformRole[] };
-
-function apiBase(): string {
-  return import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
-}
 
 function useMockApi(): boolean {
   return import.meta.env.VITE_USE_MOCK !== 'false';
@@ -25,9 +21,7 @@ export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
   }
 
   await requireBearerToken();
-  const res = await fetch(`${apiBase()}/me/roles`, {
-    headers: await bffAuthHeaders(undefined, { json: false }),
-  });
+  const res = await bffFetch('/me/roles', undefined, { json: false });
 
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as unknown;
@@ -36,6 +30,16 @@ export async function fetchPlatformRoles(): Promise<PlatformRole[]> {
       const hardLockError = new Error(detail);
       (hardLockError as Error & { code?: string }).code = 'hard_locked';
       throw hardLockError;
+    }
+    if (
+      err &&
+      typeof err === 'object' &&
+      // reauth already kicked off inside bffFetch for stale tokens
+      res.status === 401
+    ) {
+      const sessionErr = new Error('Сессия истекла — войдите снова');
+      (sessionErr as Error & { code?: string }).code = 'session_expired';
+      throw sessionErr;
     }
     throw new Error(`Failed to load roles (${res.status})`);
   }
@@ -73,10 +77,15 @@ export async function refreshPlatformRoles(): Promise<PlatformRole[]> {
       })
       .catch(async (error) => {
         const current = useSessionStore();
-        const hardLocked =
-          error instanceof Error && (error as Error & { code?: string }).code === 'hard_locked';
-        if (hardLocked) {
+        const code =
+          error instanceof Error
+            ? (error as Error & { code?: string }).code
+            : undefined;
+        if (code === 'hard_locked') {
           // Session flag + redirect already applied in applyHardLockFromResponse.
+          return [] as PlatformRole[];
+        }
+        if (code === 'session_expired') {
           return [] as PlatformRole[];
         }
         if ((current.actAsUserId ?? current.userId) === identity) {

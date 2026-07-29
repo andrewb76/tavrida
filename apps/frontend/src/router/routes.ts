@@ -254,6 +254,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/views/public/UnknownSessionView.vue'),
         meta: { title: 'Сессия входа', public: true },
       },
+      {
+        path: 'auth/relogin',
+        name: 'auth-relogin',
+        component: () => import('@/views/public/ReloginView.vue'),
+        meta: { title: 'Повторный вход', public: true },
+      },
     ],
   },
   {
