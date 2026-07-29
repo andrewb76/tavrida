@@ -1,6 +1,6 @@
 # 📈 Grafana Cloud
 
-> **Статус:** in progress · **Версия:** 0.4  
+> **Статус:** in progress · **Версия:** 0.5  
 > **Среда:** dev Swarm (`evatorg.su`) → Grafana Cloud Free (SaaS)
 
 ## 🎯 Стек observability
@@ -9,12 +9,10 @@
 |--------|---------|----------------|
 | Metrics | Grafana Mimir (Cloud) | Alloy `prometheus.exporter.cadvisor` → remote_write |
 | Logs | Grafana Loki | Alloy `loki.source.docker` (stdout контейнеров) |
-| Traces | Grafana Tempo | Alloy OTLP `:4317`/`:4318` → OTLP/HTTP gateway |
+| Traces | Grafana Tempo | **отложено** — пустой `GRAFANA_CLOUD_OTLP_ENDPOINT` валил весь Alloy; вернём OTLP в config после стабильных Cloud vars + Nest OTel |
 | Errors | Hawk.so | отдельно, см. [hawk-setup.md](./hawk-setup.md) |
 
-NestJS OTel SDK (`@tavrida/otel`) — **ещё не подключён**; Alloy уже слушает OTLP на overlay-сети (`http://alloy:4318`). Пока трейсы появятся после bootstrap SDK.
-
-Labels: `env=dev`, `cluster=tavrida-dev`.
+NestJS OTel SDK (`@tavrida/otel`) — **ещё не подключён**. Labels: `env=dev`, `cluster=tavrida-dev`.
 
 ## 🚀 Bootstrap (dev) — чеклист
 
@@ -67,10 +65,9 @@ DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh         # подтянет
 Не используйте force по всему manifest — упрётесь в rebind `keto-schema-init` / ротацию `POSTGRES_PASSWORD`.
 
 Пустой `GRAFANA_CLOUD_PROMETHEUS_URL` → Alloy **не** деплоится (остальной stack без изменений).  
-Если URL задан — `deploy-dev.sh` требует **все** `GRAFANA_CLOUD_*` (включая OTLP); иначе Alloy падает на пустом `endpoint`.
+Если URL задан — `deploy-dev.sh` требует Prometheus + Loki Cloud vars (OTLP для traces пока не обязателен — см. config без otelcol).
 
-`GRAFANA_CLOUD_OTLP_ENDPOINT` — gateway с суффиксом `/otlp`, например  
-`https://otlp-gateway-prod-eu-north-0.grafana.net/otlp` (без `/v1/traces`).
+`docker stack deploy` использует `--resolve-image changed` (не `always`): иначе менеджер на VPS снова ходит в GHCR/Docker Hub и деплой флапает на TLS/timeout.
 
 ### 4. Проверка
 
