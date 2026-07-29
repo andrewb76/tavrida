@@ -71,10 +71,14 @@ x-nest-deploy: &nest-deploy
   restart_policy:
     condition: on-failure
     delay: 5s
+  # stop-first: one replica — never leave old+new both Desired=Running.
+  # start-first + unhealthy during deploy used to stack zombie tasks (N/1 in service ls).
   update_config:
     parallelism: 1
-    delay: 15s
-    order: start-first
+    delay: 10s
+    order: stop-first
+    failure_action: rollback
+    monitor: 30s
 
 services:
   billing:

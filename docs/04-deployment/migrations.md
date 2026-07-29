@@ -24,9 +24,10 @@ Baseline поддерживает два безопасных сценария:
   forward migration делала бы baseline невыполнимым. При отсутствии baseline
   tables запуск останавливается, данные автоматически не переписываются.
 
-В текущем Swarm у каждого domain-service одна replica и `start-first`, поэтому
-старая replica остаётся доступной, пока новая выполняет migration. До увеличения
-числа replicas запуск следует вынести в dedicated one-shot job.
+В текущем Swarm у каждого domain-service одна replica и `stop-first`, поэтому
+новый таск поднимается после остановки старого (короткое окно downtime на
+dev). До увеличения числа replicas запуск миграций в отдельный one-shot job
+всё ещё желателен.
 
 ## 🔄 Целевой one-shot job
 
