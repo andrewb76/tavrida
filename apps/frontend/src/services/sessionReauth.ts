@@ -1,8 +1,5 @@
 import { setPostAuthRedirect } from '@/services/authRedirect';
-import {
-  isStaleAccessTokenUnauthorized,
-  readUnauthorizedPayload,
-} from '@/services/sessionReauth.logic';
+import { isStaleAccessTokenUnauthorized } from '@/services/sessionReauth.logic';
 import { useSessionStore } from '@/stores/session';
 
 export {
