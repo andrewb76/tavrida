@@ -62,10 +62,10 @@
 
 | Method | Path | Описание |
 |--------|------|----------|
-| GET | `/forum/categories` | Дерево с ACL (optional JWT); admin видит `accessGroupIds` |
+| GET | `/forum/categories` | Дерево с ACL (optional JWT); на узле `topicCount` / `commentCount` (published + non-deleted); admin видит `accessGroupIds` |
 | GET/PUT | `/admin/forum/categories/{id}/access-groups` | Привязка групп (admin) · [category-acl.md](./category-acl.md) |
 | CRUD | `/admin/forum/access-groups` (+ `/members`) | Группы доступа и состав |
-| GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
+| GET/POST | `/forum/topics` | Список (published; `?categoryId`, `?q` ILIKE title/body, `?status=DRAFT` — свои) / создание (`status`) |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
 | DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
 | GET | `/forum/tags` | Autocomplete `?q=` |

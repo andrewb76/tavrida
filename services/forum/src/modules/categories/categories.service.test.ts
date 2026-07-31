@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import type { Repository } from 'typeorm';
+import type { DataSource, Repository } from 'typeorm';
 
 import { AccessGroupMemberEntity } from '../../entities/access-group-member.entity';
 import { AccessGroupEntity } from '../../entities/access-group.entity';
@@ -31,12 +31,25 @@ function createHarness(
   initialGroups: AccessGroupEntity[] = [],
   initialMembers: AccessGroupMemberEntity[] = [],
   initialLinks: CategoryAccessGroupEntity[] = [],
+  countQueryResult: {
+    topics?: Array<{ categoryId: string; topicCount: number }>;
+    comments?: Array<{ categoryId: string; commentCount: number }>;
+  } = {},
 ) {
   const categories = [...initialCategories];
   const topics = [...initialTopics];
   const groups = [...initialGroups];
   const members = [...initialMembers];
   const links = [...initialLinks];
+  let queryCall = 0;
+  const dataSource = {
+    query: async (sql: string) => {
+      void sql;
+      queryCall += 1;
+      if (queryCall === 1) return countQueryResult.topics ?? [];
+      return countQueryResult.comments ?? [];
+    },
+  } as unknown as DataSource;
 
   const categoriesRepo = {
     find: async (opts?: { select?: string[]; order?: unknown }) => {
@@ -206,7 +219,7 @@ function createHarness(
     linksRepo,
     categoriesRepo,
   );
-  const service = new CategoriesService(categoriesRepo, topicsRepo, accessGroups);
+  const service = new CategoriesService(categoriesRepo, topicsRepo, accessGroups, dataSource);
 
   return { service, accessGroups, categories, groups, members, links };
 }
@@ -224,6 +237,37 @@ describe('CategoriesService (access groups)', () => {
     assert.equal(result.data[0]?.children.length, 1);
     assert.equal(result.data[0]?.children[0]?.slug, 'finds');
     assert.equal(result.data[0]?.restricted, false);
+    assert.equal(result.data[0]?.topicCount, 0);
+    assert.equal(result.data[0]?.commentCount, 0);
+  });
+
+  it('listTree attaches per-category topic and comment counts', async () => {
+    const { service } = createHarness(
+      [
+        category({ id: 'root', slug: 'general', title: 'Общее' }),
+        category({ id: 'child', slug: 'finds', title: 'Находки', parentId: 'root' }),
+      ],
+      [],
+      [],
+      [],
+      [],
+      {
+        topics: [
+          { categoryId: 'root', topicCount: 3 },
+          { categoryId: 'child', topicCount: 1 },
+        ],
+        comments: [
+          { categoryId: 'root', commentCount: 10 },
+          { categoryId: 'child', commentCount: 2 },
+        ],
+      },
+    );
+
+    const result = await service.listTree();
+    assert.equal(result.data[0]?.topicCount, 3);
+    assert.equal(result.data[0]?.commentCount, 10);
+    assert.equal(result.data[0]?.children[0]?.topicCount, 1);
+    assert.equal(result.data[0]?.children[0]?.commentCount, 2);
   });
 
   it('listTree hides restricted category; OR across groups', async () => {

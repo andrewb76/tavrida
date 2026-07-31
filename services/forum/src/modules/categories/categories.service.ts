@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { AccessGroupsService } from '../access-groups/access-groups.service';
@@ -20,9 +20,15 @@ export type CategoryNode = {
   parentId: string | null;
   sortOrder: number;
   restricted: boolean;
+  /** Published topics in this category (not subtree). */
+  topicCount: number;
+  /** Non-deleted comments on those published topics (not subtree). */
+  commentCount: number;
   accessGroupIds?: string[];
   children: CategoryNode[];
 };
+
+type CategoryCounts = { topicCount: number; commentCount: number };
 
 export type CategoryAccessViewer = {
   viewerId?: string | null;
@@ -41,6 +47,7 @@ export class CategoriesService {
     @InjectRepository(TopicEntity)
     private readonly topics: Repository<TopicEntity>,
     private readonly accessGroups: AccessGroupsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async listTree(access: CategoryAccessViewer = {}) {
@@ -50,8 +57,14 @@ export class CategoriesService {
     const visible = rows.filter((row) =>
       this.isAllowed(row.id, groupsByCategory, viewerGroupIds, access.isAdmin),
     );
+    const counts = await this.loadCountsByCategory();
     return {
-      data: this.buildTree(visible, groupsByCategory, Boolean(access.includeAccessGroups)),
+      data: this.buildTree(
+        visible,
+        groupsByCategory,
+        Boolean(access.includeAccessGroups),
+        counts,
+      ),
     };
   }
 
@@ -208,10 +221,44 @@ export class CategoriesService {
     return linked.some((groupId) => viewerGroupIds.has(groupId));
   }
 
+  private async loadCountsByCategory(): Promise<Map<string, CategoryCounts>> {
+    const topicRows = (await this.dataSource.query(
+      `SELECT category_id AS "categoryId", COUNT(*)::int AS "topicCount"
+       FROM forum.topic
+       WHERE deleted_at IS NULL AND status = 'PUBLISHED'
+       GROUP BY category_id`,
+    )) as Array<{ categoryId: string; topicCount: number }>;
+
+    const commentRows = (await this.dataSource.query(
+      `SELECT t.category_id AS "categoryId", COUNT(c.id)::int AS "commentCount"
+       FROM forum.comment c
+       INNER JOIN forum.topic t ON t.id = c.topic_id
+       WHERE c.deleted_at IS NULL
+         AND t.deleted_at IS NULL
+         AND t.status = 'PUBLISHED'
+       GROUP BY t.category_id`,
+    )) as Array<{ categoryId: string; commentCount: number }>;
+
+    const counts = new Map<string, CategoryCounts>();
+    for (const row of topicRows) {
+      counts.set(row.categoryId, {
+        topicCount: Number(row.topicCount) || 0,
+        commentCount: 0,
+      });
+    }
+    for (const row of commentRows) {
+      const prev = counts.get(row.categoryId) ?? { topicCount: 0, commentCount: 0 };
+      prev.commentCount = Number(row.commentCount) || 0;
+      counts.set(row.categoryId, prev);
+    }
+    return counts;
+  }
+
   private buildTree(
     rows: CategoryEntity[],
     groupsByCategory: Map<string, string[]>,
     includeAccessGroups: boolean,
+    counts: Map<string, CategoryCounts>,
   ): CategoryNode[] {
     const byParent = new Map<string | null, CategoryEntity[]>();
 
@@ -226,6 +273,7 @@ export class CategoriesService {
       (byParent.get(parentId) ?? []).map((row) => {
         const accessGroupIds = groupsByCategory.get(row.id) ?? [];
         const restricted = accessGroupIds.length > 0;
+        const nodeCounts = counts.get(row.id) ?? { topicCount: 0, commentCount: 0 };
         return {
           id: row.id,
           slug: row.slug,
@@ -234,6 +282,8 @@ export class CategoriesService {
           parentId: row.parentId,
           sortOrder: row.sortOrder,
           restricted,
+          topicCount: nodeCounts.topicCount,
+          commentCount: nodeCounts.commentCount,
           ...(includeAccessGroups ? { accessGroupIds } : {}),
           children: build(row.id),
         };

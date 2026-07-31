@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
 import { validateForumContent } from '../../common/forum-media.validation';
@@ -41,10 +41,13 @@ export class TopicsService {
     authorId?: string;
     viewerId?: string;
     isAdmin?: boolean;
+    /** Case-insensitive search over title/body (trimmed, max 100). */
+    q?: string;
   }) {
     const take = Math.min(Math.max(input.limit ?? 20, 1), 100);
     const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
     const access = { viewerId: input.viewerId, isAdmin: input.isAdmin };
+    const q = this.normalizeSearchQuery(input.q);
 
     if (input.categoryId) {
       await this.categoryAcl.assertAccessible(input.categoryId, access);
@@ -57,28 +60,34 @@ export class TopicsService {
           detail: 'Для списка черновиков нужен authorId',
         });
       }
-      const rows = await this.topics.find({
-        where: {
-          status: 'DRAFT',
-          authorId: input.authorId,
-          deletedAt: IsNull(),
-          ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-        },
-        order: { updatedAt: 'DESC' },
-        take,
-      });
+      const qb = this.topics
+        .createQueryBuilder('topic')
+        .where('topic.status = :status', { status: 'DRAFT' })
+        .andWhere('topic.author_id = :authorId', { authorId: input.authorId })
+        .andWhere('topic.deleted_at IS NULL')
+        .orderBy('topic.updated_at', 'DESC')
+        .take(take);
+      if (input.categoryId) {
+        qb.andWhere('topic.category_id = :categoryId', { categoryId: input.categoryId });
+      }
+      this.applySearchFilter(qb, q);
+      const rows = await qb.getMany();
       return { data: rows.map((row) => this.toSummary(row)) };
     }
 
-    const rows = await this.topics.find({
-      where: {
-        status: 'PUBLISHED',
-        deletedAt: IsNull(),
-        ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-      },
-      order: { isPinned: 'DESC', createdAt: 'DESC' },
-      take,
-    });
+    const qb = this.topics
+      .createQueryBuilder('topic')
+      .where('topic.status = :status', { status: 'PUBLISHED' })
+      .andWhere('topic.deleted_at IS NULL')
+      .orderBy('topic.is_pinned', 'DESC')
+      .addOrderBy('topic.created_at', 'DESC')
+      .take(take);
+    if (input.categoryId) {
+      qb.andWhere('topic.category_id = :categoryId', { categoryId: input.categoryId });
+    }
+    this.applySearchFilter(qb, q);
+
+    const rows = await qb.getMany();
 
     if (input.categoryId || input.isAdmin) {
       return { data: rows.map((row) => this.toSummary(row)) };
@@ -88,6 +97,23 @@ export class TopicsService {
     return {
       data: rows.filter((row) => allowed.has(row.categoryId)).map((row) => this.toSummary(row)),
     };
+  }
+
+  private normalizeSearchQuery(raw?: string): string | undefined {
+    if (raw == null) return undefined;
+    const q = raw.trim().slice(0, 100);
+    return q.length > 0 ? q : undefined;
+  }
+
+  private applySearchFilter(
+    qb: ReturnType<Repository<TopicEntity>['createQueryBuilder']>,
+    q: string | undefined,
+  ) {
+    if (!q) return;
+    const pattern = `%${q.replace(/[%_\\]/g, '\\$&')}%`;
+    qb.andWhere('(topic.title ILIKE :q ESCAPE \'\\\' OR topic.body ILIKE :q ESCAPE \'\\\')', {
+      q: pattern,
+    });
   }
 
   async getById(

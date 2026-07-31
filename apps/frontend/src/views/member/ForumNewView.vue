@@ -55,7 +55,7 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
       attachments: attachmentUpload.readyAttachments.value,
     });
     if (status === 'DRAFT') {
-      await router.push({ path: '/forum', query: { status: 'DRAFT' } });
+      await router.push({ name: 'forum-topics', query: { status: 'DRAFT' } });
     } else {
       await router.push(`/forum/topics/${topic.id}`);
     }

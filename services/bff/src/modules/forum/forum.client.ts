@@ -123,6 +123,7 @@ export class ForumClient {
     authorId?: string;
     viewerId?: string;
     isAdmin?: boolean;
+    q?: string;
   }) {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);
@@ -131,6 +132,7 @@ export class ForumClient {
     if (query.authorId) params.set('authorId', query.authorId);
     if (query.viewerId) params.set('viewerId', query.viewerId);
     if (query.isAdmin) params.set('isAdmin', '1');
+    if (query.q) params.set('q', query.q);
     const suffix = params.size ? `?${params.toString()}` : '';
     return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
   }

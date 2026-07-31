@@ -85,6 +85,12 @@ class ListTopicsQuery {
   @IsOptional()
   @IsString()
   isAdmin?: string;
+
+  /** Search in title/body (ILIKE). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  q?: string;
 }
 
 class CreateTopicRequestDto extends CreateTopicDto {
@@ -172,6 +178,7 @@ export class InternalTopicsController {
       authorId: query.authorId,
       viewerId: query.viewerId,
       isAdmin: query.isAdmin === '1' || query.isAdmin === 'true',
+      q: query.q,
     });
   }
 

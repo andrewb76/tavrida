@@ -26,6 +26,8 @@ export type CategoryNode = {
   parentId: string | null;
   sortOrder: number;
   restricted?: boolean;
+  topicCount?: number;
+  commentCount?: number;
   accessGroupIds?: string[];
   children: CategoryNode[];
 };
@@ -89,10 +91,12 @@ export async function listCategories(): Promise<CategoryNode[]> {
 export async function listTopics(options?: {
   categoryId?: string;
   status?: 'DRAFT' | 'PUBLISHED';
+  q?: string;
 }): Promise<TopicSummary[]> {
   const params = new URLSearchParams();
   if (options?.categoryId) params.set('categoryId', options.categoryId);
   if (options?.status) params.set('status', options.status);
+  if (options?.q) params.set('q', options.q);
   const suffix = params.size ? `?${params}` : '';
   const res = await fetch(`${apiBase()}/forum/topics${suffix}`, {
     headers: options?.status === 'DRAFT' ? await forumAuthHeaders() : await forumAuthHeaders(true),

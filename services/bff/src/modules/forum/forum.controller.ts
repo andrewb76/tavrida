@@ -286,6 +286,7 @@ export class ForumController {
     @Query('categoryId') categoryId?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: string,
+    @Query('q') q?: string,
   ) {
     const wantDrafts = status === 'DRAFT';
     if (wantDrafts && !req.user?.sub) {
@@ -303,6 +304,7 @@ export class ForumController {
       authorId: wantDrafts ? req.user!.sub : undefined,
       viewerId: userId,
       isAdmin,
+      q,
     });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data };

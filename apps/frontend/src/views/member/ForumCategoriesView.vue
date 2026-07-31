@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue';
+import { useForumTreeCollapsed } from '@/composables/useForumTreeCollapsed';
 import {
   createCategory,
   deleteCategory,
@@ -18,6 +19,7 @@ import { RouterLink } from 'vue-router';
 
 const session = useSessionStore();
 const isAdmin = computed(() => session.isAdmin);
+const { collapsedIds, toggleCollapse } = useForumTreeCollapsed();
 
 const tree = ref<CategoryNode[]>([]);
 const allGroups = ref<AccessGroup[]>([]);
@@ -264,12 +266,12 @@ async function saveAccess() {
       <div>
         <p class="forum-categories__back">
           <RouterLink to="/forum">
-            ← К списку тем
+            ← К форуму
           </RouterLink>
         </p>
         <h1>Разделы форума</h1>
         <p class="forum-categories__lead">
-          Дерево категорий. Выберите раздел, чтобы посмотреть темы внутри.
+          Управление деревом категорий. Клик по названию открывает темы раздела.
         </p>
       </div>
       <UiButton
@@ -462,10 +464,12 @@ async function saveAccess() {
         :node="node"
         :depth="0"
         :is-admin="isAdmin"
+        :collapsed-ids="collapsedIds"
         @edit="openEdit"
         @add-child="openCreateChild"
         @access="openAccess"
         @delete="removeCategory"
+        @toggle-collapse="toggleCollapse"
       />
     </ul>
   </section>

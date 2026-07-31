@@ -41,8 +41,14 @@ const memberChildren: RouteRecordRaw[] = [
   {
     path: 'forum',
     name: 'forum',
-    component: () => import('@/views/member/ForumListView.vue'),
+    component: () => import('@/views/member/ForumHomeView.vue'),
     meta: { title: 'Форум', requiresMember: true },
+    beforeEnter: (to) => {
+      const { categoryId, status, q } = to.query;
+      if (categoryId || status || q) {
+        return { name: 'forum-topics', query: { ...to.query } };
+      }
+    },
   },
   {
     path: 'forum/categories',
@@ -55,6 +61,12 @@ const memberChildren: RouteRecordRaw[] = [
     name: 'forum-new',
     component: () => import('@/views/member/ForumNewView.vue'),
     meta: { title: 'Новая тема', requiresMember: true },
+  },
+  {
+    path: 'forum/topics',
+    name: 'forum-topics',
+    component: () => import('@/views/member/ForumListView.vue'),
+    meta: { title: 'Темы', requiresMember: true },
   },
   {
     path: 'forum/topics/:id',

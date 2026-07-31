@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import type { CategoryNode } from '@/services/forum';
 import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue';
+import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 
-defineProps<{
+const props = defineProps<{
   node: CategoryNode;
   depth: number;
   isAdmin: boolean;
+  /** Collapsed category ids (home + admin share localStorage via parent). */
+  collapsedIds: Set<string>;
+  showCounts?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -14,7 +18,22 @@ const emit = defineEmits<{
   addChild: [parent: CategoryNode];
   access: [node: CategoryNode];
   delete: [node: CategoryNode];
+  toggleCollapse: [categoryId: string];
 }>();
+
+const hasChildren = computed(() => props.node.children.length > 0);
+const isCollapsed = computed(() => props.collapsedIds.has(props.node.id));
+const topicsLink = computed(() => ({
+  path: '/forum/topics',
+  query: { categoryId: props.node.id },
+}));
+
+const topicCount = computed(() => props.node.topicCount ?? 0);
+const commentCount = computed(() => props.node.commentCount ?? 0);
+
+function onToggle() {
+  emit('toggleCollapse', props.node.id);
+}
 </script>
 
 <template>
@@ -24,18 +43,41 @@ const emit = defineEmits<{
       :style="{ paddingLeft: `${depth * 1.25}rem` }"
     >
       <div class="forum-category-node__main">
-        <RouterLink
-          :to="`/forum?categoryId=${node.id}`"
-          class="forum-category-node__link"
-        >
-          <strong>{{ node.title }}</strong>
-          <span class="forum-category-node__slug">/{{ node.slug }}</span>
+        <div class="forum-category-node__title-row">
+          <button
+            v-if="hasChildren"
+            type="button"
+            class="forum-category-node__toggle"
+            :aria-expanded="!isCollapsed"
+            :aria-label="isCollapsed ? 'Развернуть раздел' : 'Свернуть раздел'"
+            @click="onToggle"
+          >
+            {{ isCollapsed ? '▸' : '▾' }}
+          </button>
           <span
-            v-if="node.restricted"
-            class="forum-category-node__badge"
-            title="Ограниченный доступ"
-          >доступ</span>
-        </RouterLink>
+            v-else
+            class="forum-category-node__toggle-spacer"
+            aria-hidden="true"
+          />
+          <RouterLink
+            :to="topicsLink"
+            class="forum-category-node__link"
+          >
+            <strong>{{ node.title }}</strong>
+            <span class="forum-category-node__slug">/{{ node.slug }}</span>
+            <span
+              v-if="node.restricted"
+              class="forum-category-node__badge"
+              title="Ограниченный доступ"
+            >доступ</span>
+          </RouterLink>
+        </div>
+        <p
+          v-if="showCounts !== false"
+          class="forum-category-node__counts"
+        >
+          {{ topicCount }} тем · {{ commentCount }} комментариев
+        </p>
         <p
           v-if="node.description"
           class="forum-category-node__desc"
@@ -80,7 +122,7 @@ const emit = defineEmits<{
     </div>
 
     <ul
-      v-if="node.children.length"
+      v-if="hasChildren && !isCollapsed"
       class="forum-category-node__children"
     >
       <ForumCategoryTreeNode
@@ -89,10 +131,13 @@ const emit = defineEmits<{
         :node="child"
         :depth="depth + 1"
         :is-admin="isAdmin"
+        :collapsed-ids="collapsedIds"
+        :show-counts="showCounts"
         @edit="emit('edit', $event)"
         @add-child="emit('addChild', $event)"
         @access="emit('access', $event)"
         @delete="emit('delete', $event)"
+        @toggle-collapse="emit('toggleCollapse', $event)"
       />
     </ul>
   </li>
@@ -120,6 +165,34 @@ const emit = defineEmits<{
 
 .forum-category-node__main {
   min-width: 0;
+}
+
+.forum-category-node__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.forum-category-node__toggle {
+  flex: none;
+  width: 1.5rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  cursor: pointer;
+  color: var(--color-text-muted, #666);
+}
+
+.forum-category-node__toggle:hover {
+  color: var(--color-primary, #2563eb);
+}
+
+.forum-category-node__toggle-spacer {
+  display: inline-block;
+  width: 1.5rem;
+  flex: none;
 }
 
 .forum-category-node__link {
@@ -151,8 +224,14 @@ const emit = defineEmits<{
   color: var(--color-text-muted, #666);
 }
 
+.forum-category-node__counts {
+  margin: 0.25rem 0 0 1.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #666);
+}
+
 .forum-category-node__desc {
-  margin: 0.35rem 0 0;
+  margin: 0.35rem 0 0 1.75rem;
   font-size: 0.9rem;
   color: var(--color-text-muted, #666);
 }

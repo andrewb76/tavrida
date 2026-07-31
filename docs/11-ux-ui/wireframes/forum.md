@@ -4,37 +4,83 @@
 
 ---
 
-## W05 — Список тем
+## W05a — Главная форума (дерево разделов)
 
-**Route:** `/forum` · `/forum/categories/:id` · **ID:** W05 · **MVP:** ✅
+**Route:** `/forum` · **ID:** W05a · **MVP:** ✅
 
 ### Содержание экрана
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Categories | Tree / drawer (mobile) | Filter by category |
-| Sort | recent, active, pinned | Query param |
-| List | Pin, title, excerpt, meta | Cursor «Ещё» |
-| FAB | Новая тема | Limit `postsPerDay` counter |
-| Drafts | «Мои черновики» | `GET /forum/topics?status=DRAFT` ([drafts.md](../../05-microservices/forum/drafts.md)) |
-| Limits UI | Posts remaining | On create (published only) |
+| Tree | Expand/collapse ▸/▾ (default: развёрнуто) | localStorage `tavrida.forum.treeCollapsed` |
+| Counts | «N тем · M комментариев» | Per-node (не subtree); refresh: focus/visibility + ~30s poll |
+| Category click | Title | → `/forum/topics?categoryId=` |
+| Filters | Search `q` + select категории | Submit → `/forum/topics?…` |
+| Links | Новая тема · Мои черновики · Управление разделами (admin) | |
 
-**States:** empty category · loading · error · empty drafts.
+**States:** empty tree · loading · error.
 
-**API:** `GET /forum/topics`, `GET /forum/categories`
+**API:** `GET /forum/categories` (`topicCount`, `commentCount` на узле)
+
+Админ-CRUD дерева: `/forum/categories` (ссылка «← К форуму»).
 
 ### ASCII
 
 ```
 ┌─────────────────────────────────────┐
-│ ☰ Categories    Sort: recent ▼      │
+│ Форум          [Новая тема]         │
+├─────────────────────────────────────┤
+│ [поиск……] [раздел ▼] [Найти темы] │
+├─────────────────────────────────────┤
+│ ▾ Общее                             │
+│   3 темы · 10 комментариев          │
+│   ▾ Находки                         │
+│     1 тема · 2 комментария          │
+└─────────────────────────────────────┘
+```
+
+### Component tree
+
+```yaml
+ForumHomePage:
+  - FilterBar
+  - CategoryTree
+      - CategoryTreeNode (expand, counts)
+```
+
+---
+
+## W05b — Список тем
+
+**Route:** `/forum/topics` · query: `categoryId`, `q`, `status=DRAFT` · **ID:** W05b · **MVP:** ✅
+
+Старые закладки `/forum?categoryId=` / `?status=DRAFT` / `?q=` → redirect на `/forum/topics` с теми же query.
+
+### Содержание экрана
+
+| Зона | Элементы | Поведение |
+|------|----------|-----------|
+| Back | «← К разделам форума» | → `/forum` |
+| List | Pin, title, excerpt, meta | |
+| Filters (query) | category · search · drafts | Chips «× сбросить» |
+| FAB | Новая тема | |
+| Drafts | «Мои черновики» | `GET /forum/topics?status=DRAFT` ([drafts.md](../../05-microservices/forum/drafts.md)) |
+
+**States:** empty category · empty search · loading · error · empty drafts.
+
+**API:** `GET /forum/topics` (`?categoryId`, `?q`, `?status=DRAFT`), `GET /forum/categories`
+
+### ASCII
+
+```
+┌─────────────────────────────────────┐
+│ ← К разделам форума                 │
+│ Темы               [Новая тема]     │
 ├─────────────────────────────────────┤
 │ 📌 Topic title                      │
-│ excerpt · author · 12 comments      │
+│ excerpt · author                    │
 │ ─────────────────────────────────── │
 │ Topic title …                       │
-│ [Ещё]                               │
-│                            [+] FAB  │
 └─────────────────────────────────────┘
 ```
 
@@ -42,18 +88,14 @@
 
 ```yaml
 ForumTopicListPage:
-  - AppHeader
-  - CategoryDrawer
-  - TopicSortBar
+  - BackToSections
   - TopicList
       - TopicListItem
           - PinnedBadge
           - TopicTitleLink
           - TopicExcerpt
           - TopicMeta
-  - LoadMoreButton
   - CreateTopicFab
-  - AppBottomNav
 ```
 
 ---
@@ -129,7 +171,7 @@ ForumTopicPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Header | «Новая тема», «Отмена» | → back `/forum` |
+| Header | «Новая тема», «Отмена» | → back `/forum` (дерево разделов) |
 | Form | Категория, заголовок, тело (Markdown) | Category required |
 | Preview | Toggle preview (optional) | Client-side render |
 | Limits | Posts remaining today | `postsPerDay` counter |
@@ -174,4 +216,4 @@ CreateTopicPage:
 
 ---
 
-**IDs:** W05, W06, W14
+**IDs:** W05a, W05b, W06, W14

@@ -27,6 +27,11 @@ const categoryId = computed(() => {
   return typeof raw === 'string' && raw ? raw : undefined;
 });
 
+const searchQ = computed(() => {
+  const raw = route.query.q;
+  return typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, 100) : undefined;
+});
+
 const activeCategory = computed(() => {
   if (!categoryId.value) return null;
   const walk = (nodes: CategoryNode[]): CategoryNode | null => {
@@ -42,7 +47,11 @@ const activeCategory = computed(() => {
 
 let loadGeneration = 0;
 
-async function load(selectedCategoryId: string | undefined, drafts: boolean) {
+async function load(
+  selectedCategoryId: string | undefined,
+  drafts: boolean,
+  q: string | undefined,
+) {
   const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
@@ -52,13 +61,15 @@ async function load(selectedCategoryId: string | undefined, drafts: boolean) {
       listTopics({
         categoryId: selectedCategoryId,
         status: drafts ? 'DRAFT' : undefined,
+        q,
       }),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
     ]);
     if (
       generation !== loadGeneration ||
       selectedCategoryId !== categoryId.value ||
-      drafts !== draftsOnly.value
+      drafts !== draftsOnly.value ||
+      q !== searchQ.value
     ) {
       return;
     }
@@ -73,13 +84,30 @@ async function load(selectedCategoryId: string | undefined, drafts: boolean) {
 }
 
 watch(
-  [categoryId, draftsOnly],
-  ([id, drafts]) => void load(id, drafts),
+  [categoryId, draftsOnly, searchQ],
+  ([id, drafts, q]) => void load(id, drafts, q),
   { immediate: true },
 );
 
+function listQuery(extra: Record<string, string> = {}) {
+  const query: Record<string, string> = { ...extra };
+  if (draftsOnly.value && !('status' in extra)) query.status = 'DRAFT';
+  if (searchQ.value && !('q' in extra)) query.q = searchQ.value;
+  return { name: 'forum-topics' as const, query };
+}
+
 function clearCategoryFilter() {
-  return draftsOnly.value ? { path: '/forum', query: { status: 'DRAFT' } } : { path: '/forum' };
+  const query: Record<string, string> = {};
+  if (draftsOnly.value) query.status = 'DRAFT';
+  if (searchQ.value) query.q = searchQ.value;
+  return { name: 'forum-topics' as const, query };
+}
+
+function clearSearchFilter() {
+  const query: Record<string, string> = {};
+  if (draftsOnly.value) query.status = 'DRAFT';
+  if (categoryId.value) query.categoryId = categoryId.value;
+  return { name: 'forum-topics' as const, query };
 }
 
 function authorOf(topic: TopicSummary) {
@@ -98,7 +126,12 @@ function authorOf(topic: TopicSummary) {
   <section class="forum-list">
     <header class="forum-list__header">
       <div>
-        <h1>{{ draftsOnly ? 'Мои черновики' : 'Форум' }}</h1>
+        <p class="forum-list__back">
+          <RouterLink to="/forum">
+            ← К разделам форума
+          </RouterLink>
+        </p>
+        <h1>{{ draftsOnly ? 'Мои черновики' : 'Темы' }}</h1>
         <p class="forum-list__lead">
           <template v-if="draftsOnly">
             Черновики видны только вам. Опубликуйте тему, когда будете готовы.
@@ -120,27 +153,41 @@ function authorOf(topic: TopicSummary) {
             × сбросить
           </RouterLink>
         </p>
+        <p
+          v-if="searchQ"
+          class="forum-list__filter"
+        >
+          Поиск:
+          <strong>{{ searchQ }}</strong>
+          <RouterLink
+            :to="clearSearchFilter()"
+            class="forum-list__filter-clear"
+          >
+            × сбросить
+          </RouterLink>
+        </p>
       </div>
       <div class="forum-list__actions">
         <RouterLink
           v-if="!draftsOnly && session.isMember"
-          :to="{ path: '/forum', query: { status: 'DRAFT' } }"
+          :to="listQuery({ status: 'DRAFT' })"
           class="forum-list__categories-link"
         >
           Мои черновики →
         </RouterLink>
         <RouterLink
           v-if="draftsOnly"
-          to="/forum"
+          to="/forum/topics"
           class="forum-list__categories-link"
         >
-          ← К форуму
+          ← К темам
         </RouterLink>
         <RouterLink
+          v-if="session.isAdmin"
           to="/forum/categories"
           class="forum-list__categories-link"
         >
-          Разделы →
+          Управление разделами →
         </RouterLink>
         <RouterLink to="/forum/new">
           <UiButton intent="primary">
@@ -166,7 +213,10 @@ function authorOf(topic: TopicSummary) {
       v-else-if="topics.length === 0"
       class="forum-list__status"
     >
-      <template v-if="activeCategory">
+      <template v-if="searchQ">
+        По запросу ничего не найдено.
+      </template>
+      <template v-else-if="activeCategory">
         В этом разделе пока нет тем.
       </template>
       <template v-else-if="draftsOnly">
@@ -243,6 +293,20 @@ function authorOf(topic: TopicSummary) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.forum-list__back {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+
+.forum-list__back a {
+  color: var(--color-primary, #2563eb);
+  text-decoration: none;
+}
+
+.forum-list__back a:hover {
+  text-decoration: underline;
 }
 
 .forum-list__actions {
