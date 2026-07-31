@@ -5,10 +5,10 @@ export const buttonVariants = cva(
   {
     variants: {
       intent: {
-        primary: 'bg-primary text-white hover:bg-primary-hover',
+        primary: 'bg-primary text-primary-fg hover:bg-primary-hover',
         secondary: 'border border-border bg-surface text-text hover:bg-bg',
         ghost: 'text-text hover:bg-surface',
-        danger: 'bg-error text-white hover:opacity-90',
+        danger: 'bg-error text-primary-fg hover:opacity-90',
       },
       size: {
         sm: 'min-h-9 px-4 py-2 text-sm',

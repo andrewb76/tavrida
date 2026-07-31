@@ -500,10 +500,15 @@ async function confirmBid() {
 </template>
 
 <style scoped>
+/*
+ * Use --token-* (set on html[data-theme]) for chrome surfaces/text.
+ * Do not rely on light hex fallbacks — they break dark theme contrast.
+ */
 .lot-page {
   display: grid;
   gap: 1rem;
   padding-bottom: 5rem;
+  color: var(--token-text);
 }
 
 .lot-page__top {
@@ -513,7 +518,7 @@ async function confirmBid() {
 }
 
 .lot-page__back {
-  color: var(--color-primary, #2563eb);
+  color: var(--token-primary);
   text-decoration: none;
   font-size: 0.95rem;
 }
@@ -521,14 +526,14 @@ async function confirmBid() {
 .lot-page__wireframe {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
 }
 
 .lot-page__gallery {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--token-border);
   border-radius: 12px;
   overflow: hidden;
-  background: var(--color-bg, #f8fafc);
+  background: var(--token-bg);
 }
 
 .lot-page__gallery-main {
@@ -561,12 +566,12 @@ async function confirmBid() {
   height: 8px;
   border-radius: 50%;
   border: 0;
-  background: #cbd5e1;
+  background: var(--token-border);
   cursor: pointer;
 }
 
 .lot-page__dot--active {
-  background: var(--color-primary, #2563eb);
+  background: var(--token-primary);
 }
 
 .lot-page__title-row {
@@ -582,13 +587,14 @@ async function confirmBid() {
   margin: 0;
   font-size: 1.5rem;
   flex: 1 1 12rem;
+  color: var(--token-text);
 }
 
 .lot-page__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
   font-size: 0.9rem;
 }
 
@@ -598,8 +604,9 @@ async function confirmBid() {
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  border: 1px solid var(--color-border, #ddd);
-  background: var(--color-surface, #fff);
+  border: 1px solid var(--token-border);
+  background: var(--token-surface);
+  color: var(--token-text);
 }
 
 .lot-page__status-main {
@@ -618,30 +625,31 @@ async function confirmBid() {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
 }
 
 .lot-page__auction-progress-track {
   overflow: hidden;
   height: 0.5rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text, #111) 8%, transparent);
+  background: color-mix(in srgb, var(--token-text) 8%, transparent);
 }
 
 .lot-page__auction-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--color-primary, #2563eb);
+  background: var(--token-primary);
   transition: width 1s linear;
 }
 
 .lot-page__status-bar--ending .lot-page__auction-progress-fill {
-  background: #f59e0b;
+  background: var(--token-warning);
 }
 
 .lot-page__status-bar--ending {
-  border-color: #f59e0b;
-  background: #fffbeb;
+  border-color: color-mix(in srgb, var(--token-warning) 55%, var(--token-border));
+  background: color-mix(in srgb, var(--token-warning) 14%, var(--token-surface));
+  color: var(--token-text);
 }
 
 .lot-page__status-left,
@@ -652,17 +660,24 @@ async function confirmBid() {
   gap: 0.5rem 0.75rem;
 }
 
+.lot-page__phase,
+.lot-page__timer,
+.lot-page__bids {
+  color: var(--token-text);
+}
+
 .lot-page__live {
-  color: #dc2626;
+  color: var(--token-error);
   font-weight: 600;
 }
 
 .lot-page__promoted {
-  color: var(--color-primary, #2563eb);
+  color: var(--token-primary);
 }
 
 .lot-page__price {
   font-size: 1.2rem;
+  color: var(--token-text);
 }
 
 .lot-page__facts {
@@ -671,8 +686,10 @@ async function confirmBid() {
   gap: 0.75rem;
   margin: 0;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--token-border);
   border-radius: 10px;
+  background: var(--token-surface);
+  color: var(--token-text);
 }
 
 .lot-page__facts div {
@@ -683,18 +700,19 @@ async function confirmBid() {
 .lot-page__facts dt {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
 }
 
 .lot-page__facts dd {
   margin: 0;
   font-weight: 600;
+  color: var(--token-text);
 }
 
 .lot-page__tabs {
   display: flex;
   gap: 0.35rem;
-  border-bottom: 1px solid var(--color-border, #ddd);
+  border-bottom: 1px solid var(--token-border);
 }
 
 .lot-page__tabs button {
@@ -702,31 +720,34 @@ async function confirmBid() {
   background: transparent;
   padding: 0.6rem 0.9rem;
   cursor: pointer;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
   border-bottom: 2px solid transparent;
 }
 
 .lot-page__tab--active {
-  color: var(--color-primary, #2563eb) !important;
-  border-bottom-color: var(--color-primary, #2563eb) !important;
+  color: var(--token-primary) !important;
+  border-bottom-color: var(--token-primary) !important;
   font-weight: 600;
 }
 
 .lot-page__tab-badge {
   margin-left: 0.25rem;
-  color: #16a34a;
+  color: var(--token-success);
 }
 
 .lot-page__panel {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--token-border);
   border-radius: 10px;
   padding: 1rem;
   min-height: 120px;
+  background: var(--token-surface);
+  color: var(--token-text);
 }
 
 .lot-page__description {
   white-space: pre-wrap;
   line-height: 1.55;
+  color: var(--token-text);
 }
 
 .lot-page__bid-list {
@@ -740,25 +761,33 @@ async function confirmBid() {
 .lot-page__bid-item {
   padding: 0.65rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--token-border);
+  background: var(--token-bg);
+  color: var(--token-text);
+}
+
+.lot-page__bid-item small {
+  color: var(--token-text-muted);
 }
 
 .lot-page__bid-item--winning {
-  border-color: #86efac;
-  background: #f0fdf4;
+  border-color: color-mix(in srgb, var(--token-success) 45%, var(--token-border));
+  background: color-mix(in srgb, var(--token-success) 12%, var(--token-surface));
+  color: var(--token-text);
 }
 
 .lot-page__winning {
   margin-left: 0.5rem;
   font-size: 0.8rem;
-  color: #16a34a;
+  color: var(--token-success);
 }
 
 .lot-page__expert-card {
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #ddd);
-  background: #f8fafc;
+  border: 1px solid var(--token-border);
+  background: color-mix(in srgb, var(--token-bg) 72%, var(--token-border));
+  color: var(--token-text);
 }
 
 .lot-page__expert-summary {
@@ -773,11 +802,11 @@ async function confirmBid() {
 
 .lot-page__empty,
 .lot-page__status {
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
 }
 
 .lot-page__error {
-  color: #b42318;
+  color: var(--token-error);
 }
 
 .lot-page__sticky {
@@ -793,19 +822,22 @@ async function confirmBid() {
 .lot-page__modal-meta {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
-  color: var(--color-text-muted, #666);
+  color: var(--token-text-muted);
 }
 
 .lot-page__modal-input {
   display: grid;
   gap: 0.25rem;
   margin-bottom: 0.75rem;
+  color: var(--token-text);
 }
 
 .lot-page__modal-input input {
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--token-border);
   border-radius: 8px;
+  background: var(--token-bg);
+  color: var(--token-text);
 }
 
 .lot-page__chips {
@@ -815,10 +847,15 @@ async function confirmBid() {
 }
 
 .lot-page__chips button {
-  border: 1px solid var(--color-border, #ddd);
-  background: #f8fafc;
+  border: 1px solid var(--token-border);
+  background: var(--token-bg);
+  color: var(--token-text);
   border-radius: 999px;
   padding: 0.25rem 0.65rem;
   cursor: pointer;
+}
+
+.lot-page__chips button:hover {
+  background: color-mix(in srgb, var(--token-bg) 72%, var(--token-border));
 }
 </style>

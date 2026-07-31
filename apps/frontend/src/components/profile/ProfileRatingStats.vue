@@ -160,9 +160,9 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
   display: grid;
   gap: 0.2rem;
   padding: 0.875rem 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
 }
 
 .profile-rating-stats__label {
@@ -170,7 +170,7 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-rating-stats__value-btn {
@@ -182,7 +182,7 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
   font: inherit;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
   cursor: pointer;
   text-decoration: underline;
   text-decoration-color: transparent;
@@ -196,16 +196,16 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
 }
 
 .profile-rating-stats__value-btn.is-positive {
-  color: #067647;
+  color: var(--color-success);
 }
 
 .profile-rating-stats__value-btn.is-negative {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .profile-rating-stats__hint {
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-rating-stats__controls {

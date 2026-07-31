@@ -2,6 +2,10 @@
  * Semantic design tokens — source of truth for brandbook.
  * Prefixed --token-* to avoid collision with Tailwind @theme keys.
  * @see docs/11-ux-ui/design-tokens.md
+ *
+ * Runtime bridge: Tailwind `@theme inline` does NOT publish `--color-*` as
+ * CSS custom properties. Scoped Vue CSS that uses `var(--color-*)` must read
+ * these aliases on `html`, otherwise light hex fallbacks win in dark theme.
  */
 
 html[data-theme='light'],
@@ -30,6 +34,22 @@ html:not([data-theme]) {
   --token-font-sans: 'Onest', system-ui, sans-serif;
   --token-font-display: 'Unbounded', system-ui, sans-serif;
   --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Bridge inside theme block so aliases always match active tokens */
+  --color-primary: var(--token-primary);
+  --color-primary-hover: var(--token-primary-hover);
+  --color-primary-fg: var(--token-primary-fg);
+  --color-accent: var(--token-accent);
+  --color-bg: var(--token-bg);
+  --color-surface: var(--token-surface);
+  --color-border: var(--token-border);
+  --color-text: var(--token-text);
+  --color-text-muted: var(--token-text-muted);
+  --color-success: var(--token-success);
+  --color-warning: var(--token-warning);
+  --color-error: var(--token-error);
+  --color-bg-subtle: color-mix(in srgb, var(--token-bg) 72%, var(--token-border));
+  --color-surface-muted: color-mix(in srgb, var(--token-surface) 82%, var(--token-bg));
 }
 
 html[data-theme='dark'] {
@@ -57,4 +77,19 @@ html[data-theme='dark'] {
   --token-font-sans: 'Onest', system-ui, sans-serif;
   --token-font-display: 'Unbounded', system-ui, sans-serif;
   --token-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-primary: var(--token-primary);
+  --color-primary-hover: var(--token-primary-hover);
+  --color-primary-fg: var(--token-primary-fg);
+  --color-accent: var(--token-accent);
+  --color-bg: var(--token-bg);
+  --color-surface: var(--token-surface);
+  --color-border: var(--token-border);
+  --color-text: var(--token-text);
+  --color-text-muted: var(--token-text-muted);
+  --color-success: var(--token-success);
+  --color-warning: var(--token-warning);
+  --color-error: var(--token-error);
+  --color-bg-subtle: color-mix(in srgb, var(--token-bg) 72%, var(--token-border));
+  --color-surface-muted: color-mix(in srgb, var(--token-surface) 82%, var(--token-bg));
 }

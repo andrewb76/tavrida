@@ -97,7 +97,7 @@ function onSelect(event: Event) {
 
 .media-uploader__hint {
   margin: 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
@@ -111,7 +111,7 @@ function onSelect(event: Event) {
 .media-uploader__item {
   width: 7rem;
   height: 7rem;
-  border: 1px dashed var(--color-border, #ccc);
+  border: 1px dashed var(--color-border);
   border-radius: 8px;
   position: relative;
   overflow: hidden;
@@ -121,7 +121,7 @@ function onSelect(event: Event) {
   display: grid;
   place-items: center;
   cursor: pointer;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .media-uploader__preview {
@@ -151,7 +151,7 @@ function onSelect(event: Event) {
 }
 
 .media-uploader__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .media-uploader__remove {

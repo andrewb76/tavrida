@@ -219,7 +219,7 @@ function pickSuggestion(item: ForumTagItem) {
 }
 
 .forum-tags__icon {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-tags__list {
@@ -236,14 +236,14 @@ function pickSuggestion(item: ForumTagItem) {
   align-items: center;
   gap: 0.25rem;
   padding: 0.15rem 0.5rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   font-size: 0.8125rem;
-  color: var(--color-text-muted, #555);
+  color: var(--color-text-muted);
 }
 
 .forum-tags__chip.is-official {
-  border-color: color-mix(in srgb, var(--color-primary, #2563eb) 45%, var(--color-border, #ddd));
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
 }
 
 .forum-tags__remove {
@@ -262,7 +262,7 @@ function pickSuggestion(item: ForumTagItem) {
 
 .forum-tags__empty {
   font-size: 0.8125rem;
-  color: var(--color-text-muted, #888);
+  color: var(--color-text-muted);
 }
 
 .forum-tags__add {
@@ -279,7 +279,7 @@ function pickSuggestion(item: ForumTagItem) {
   width: 7rem;
   height: 2rem;
   padding: 0 0.5rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   font: inherit;
   font-size: 0.8125rem;
@@ -294,8 +294,8 @@ function pickSuggestion(item: ForumTagItem) {
   padding: 0.25rem;
   list-style: none;
   min-width: 10rem;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #ddd);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
 }
@@ -316,11 +316,11 @@ function pickSuggestion(item: ForumTagItem) {
 }
 
 .forum-tags__suggest button:hover {
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .forum-tags__official {
   font-size: 0.7rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 </style>

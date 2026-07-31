@@ -439,19 +439,19 @@ async function submit() {
 }
 
 .create-lot__back {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .create-lot__tag {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .create-lot__lead {
   margin: 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .create-lot__form {
@@ -460,7 +460,7 @@ async function submit() {
 }
 
 .create-lot__section {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 1rem;
   display: grid;
@@ -482,7 +482,7 @@ async function submit() {
 .create-lot__section textarea,
 .create-lot__section select {
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -495,7 +495,7 @@ async function submit() {
 .create-lot__hint {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .create-lot__photos {
@@ -507,7 +507,7 @@ async function submit() {
 .create-lot__upload {
   width: 88px;
   height: 88px;
-  border: 1px dashed var(--color-border, #ddd);
+  border: 1px dashed var(--color-border);
   border-radius: 8px;
   display: grid;
   place-items: center;
@@ -559,10 +559,10 @@ async function submit() {
 }
 
 .create-lot__status {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .create-lot__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 </style>

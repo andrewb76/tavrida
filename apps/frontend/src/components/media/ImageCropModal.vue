@@ -190,8 +190,8 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 12px;
-  background: var(--color-surface, #fff);
-  color: var(--color-text, #111);
+  background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
@@ -203,7 +203,7 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
 .crop-modal__header p {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .crop-modal__cropper {

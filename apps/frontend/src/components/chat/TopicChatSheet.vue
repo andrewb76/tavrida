@@ -362,7 +362,7 @@ function onBackdrop(e: MouseEvent) {
   width: 100%;
   flex-direction: column;
   border-radius: 1rem 1rem 0 0;
-  background: var(--color-surface, #fff);
+  background: var(--color-surface);
   box-shadow: 0 -8px 32px rgb(0 0 0 / 0.12);
 }
 
@@ -370,7 +370,7 @@ function onBackdrop(e: MouseEvent) {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  border-bottom: 1px solid var(--color-border);
   padding: 0.75rem 1rem;
 }
 
@@ -387,7 +387,7 @@ function onBackdrop(e: MouseEvent) {
 .topic-chat-sheet__compose {
   display: flex;
   gap: 0.5rem;
-  border-top: 1px solid var(--color-border, #e5e5e5);
+  border-top: 1px solid var(--color-border);
   padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
 }
 </style>

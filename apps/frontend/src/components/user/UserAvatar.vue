@@ -126,11 +126,11 @@ function onImageError() {
 }
 
 .user-avatar-link:hover {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .user-avatar-link:focus-visible {
-  outline: 2px solid var(--color-primary, #2563eb);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -140,8 +140,8 @@ function onImageError() {
   place-items: center;
   overflow: hidden;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 15%, transparent);
-  color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
   font-weight: 600;
 }
 

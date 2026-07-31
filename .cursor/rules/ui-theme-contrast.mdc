@@ -1,0 +1,37 @@
+---
+description: Theme tokens and contrast — no light-only hex surfaces in SPA/UI
+globs: apps/frontend/**/*.{vue,css},packages/ui/**/*.{vue,css,ts}
+alwaysApply: false
+---
+
+# UI: темы и контраст
+
+## Источник истины
+
+1. Значения: [docs/11-ux-ui/brandbook.md](../../docs/11-ux-ui/brandbook.md) §5–7  
+2. Семантика: [design-system.md](../../docs/11-ux-ui/design-system.md) §12  
+3. Код: `packages/ui/styles/tokens.css` (`--token-*`) + bridge `--color-*` на `html`
+
+## Обязательные правила
+
+1. **Поверхности и текст** — только семантические токены:  
+   `var(--color-bg|surface|border|text|text-muted|primary|…)` или Tailwind `bg-surface`, `text-text`, …  
+   Не хардкодить `#fff`, `#f8fafc`, `#ddd` и т.п. для UI chrome.
+2. **Не полагаться на light fallback** в scoped CSS:  
+   `var(--color-surface, #fff)` в dark theme ломает контраст, если переменная недоступна.  
+   После bridge используй `var(--color-surface)` без light-only fallback.
+3. **`@theme inline` ≠ runtime CSS vars.** Tailwind utilities ок; в `<style scoped>` читай bridge/`--token-*`, не предполагай, что `@theme` опублил `--color-*`.
+4. **Текст на primary/accent** — `var(--color-primary-fg)` / `text-primary-fg`, не `#fff`.
+5. **Статусы** — `error` / `success` / `warning` токены; мягкий фон через  
+   `color-mix(in srgb, var(--color-success) 12%, var(--color-surface))`, не `#f0fdf4`.
+6. **Чипы / secondary кнопки** — `background: var(--color-surface); color: var(--color-text); border-color: var(--color-border)`.
+7. Исключения (допустимы raw hex): фото-viewport (`#111`), декоративный landing hero, impersonation banner ink на amber.
+
+## Чеклист перед merge UI
+
+- [ ] Экран проверен в `data-theme="dark"` и `light`
+- [ ] Нет сырых light hex на фонах/бордерах интерактивных элементов
+- [ ] Primary CTA использует `primary-fg`
+- [ ] PR checklist design-system §14
+
+См. также: [design-tokens.md](../../docs/11-ux-ui/design-tokens.md).

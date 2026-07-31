@@ -131,8 +131,8 @@ onUnmounted(() => {
   z-index: 1;
   width: min(100%, 24rem);
   border-radius: 0.5rem;
-  border: 1px solid var(--color-border, #ddd);
-  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   padding: 1.5rem;
   box-shadow: 0 10px 40px rgb(0 0 0 / 20%);
 }
@@ -144,21 +144,21 @@ onUnmounted(() => {
   border: none;
   border-radius: 0.375rem;
   background: transparent;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   padding: 0.25rem 0.5rem;
   cursor: pointer;
 }
 
 .profile-avatar-preview-overlay__close:hover {
-  background: var(--color-bg, #f5f5f5);
-  color: var(--color-text, #111);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .profile-avatar-preview-overlay__title {
   margin: 0 2rem 1rem 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .profile-avatar-preview {
@@ -175,8 +175,8 @@ onUnmounted(() => {
   justify-content: center;
   overflow: hidden;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 15%, transparent);
-  color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
   font-size: 4rem;
   font-weight: 600;
 }

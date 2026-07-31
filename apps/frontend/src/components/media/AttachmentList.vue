@@ -108,8 +108,8 @@ function inlineSrc(file: MediaAttachment): string {
   display: block;
   overflow: hidden;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #ddd);
-  background: var(--color-bg, #f8fafc);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 .attachment-list__gallery-img {
@@ -128,7 +128,7 @@ function inlineSrc(file: MediaAttachment): string {
 }
 
 .attachment-list__item {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -155,7 +155,7 @@ function inlineSrc(file: MediaAttachment): string {
   width: 3rem;
   height: 3rem;
   border-radius: 4px;
-  background: var(--color-bg, #f8fafc);
+  background: var(--color-bg);
   font-size: 1.25rem;
 }
 
@@ -165,6 +165,6 @@ function inlineSrc(file: MediaAttachment): string {
 }
 
 .attachment-list__meta small {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 </style>

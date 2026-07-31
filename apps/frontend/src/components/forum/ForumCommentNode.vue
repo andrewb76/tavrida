@@ -444,10 +444,10 @@ async function onDelete() {
 }
 
 .forum-comment__card {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.75rem;
-  background: var(--color-surface, #fff);
+  background: var(--color-surface);
 }
 
 .forum-comment__header {
@@ -471,12 +471,12 @@ async function onDelete() {
 .forum-comment__author {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .forum-comment__time {
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-comment__actions {
@@ -492,7 +492,7 @@ async function onDelete() {
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .forum-comment__toolbar {
@@ -552,14 +552,14 @@ async function onDelete() {
 }
 
 .forum-comment__error {
-  color: #b42318;
+  color: var(--color-error);
   margin: 0;
 }
 
 .forum-comment__deleted {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 </style>

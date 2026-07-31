@@ -1,6 +1,10 @@
 /**
  * Tailwind v4 @theme — maps --token-* to utility classes (bg-bg, text-text, …).
  * `inline` required so utilities resolve token vars at use-time on html[data-theme].
+ *
+ * NOTE: `@theme inline` does not define runtime `--color-*` custom properties.
+ * Scoped CSS must use the bridge in tokens.css (`html { --color-*: var(--token-*) }`)
+ * or reference `--token-*` directly — never rely on light hex fallbacks alone.
  */
 
 @theme inline {

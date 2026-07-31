@@ -200,7 +200,7 @@ onUnmounted(() => {
 
 .forum-home__lead {
   margin: 0.25rem 0 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-home__actions {
@@ -212,7 +212,7 @@ onUnmounted(() => {
 
 .forum-home__link {
   font-size: 0.9rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -226,9 +226,9 @@ onUnmounted(() => {
   align-items: flex-end;
   gap: 0.75rem;
   padding: 1rem;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--color-bg-subtle, #f9fafb);
+  background: var(--color-bg-subtle);
 }
 
 .forum-home__field {
@@ -240,16 +240,17 @@ onUnmounted(() => {
 
 .forum-home__label {
   font-size: 0.8rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-home__input,
 .forum-home__select {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 0.45rem 0.6rem;
   font: inherit;
-  background: var(--color-bg, #fff);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .forum-home__status,
@@ -258,7 +259,7 @@ onUnmounted(() => {
 }
 
 .forum-home__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .forum-home__tree {

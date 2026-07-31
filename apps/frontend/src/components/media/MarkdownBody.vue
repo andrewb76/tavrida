@@ -55,15 +55,15 @@ const html = computed(() => renderForumMarkdown(props.body));
 }
 
 .markdown-body :deep(a) {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .markdown-body :deep(blockquote) {
-  border-left: 3px solid color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   padding-left: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 :global(html[data-theme='dark']) .markdown-body :deep(blockquote) {
@@ -72,7 +72,7 @@ const html = computed(() => renderForumMarkdown(props.body));
 
 .markdown-body :deep(code) {
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--color-text, #111) 6%, transparent);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
   padding: 0.1rem 0.3rem;
   font-size: 0.875em;
 }
@@ -80,8 +80,8 @@ const html = computed(() => renderForumMarkdown(props.body));
 .markdown-body :deep(pre) {
   overflow-x: auto;
   border-radius: 0.5rem;
-  border: 1px solid var(--color-border, #ddd);
-  background: var(--color-surface, #f8fafc);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   padding: 0.75rem;
 }
 
@@ -104,7 +104,7 @@ const html = computed(() => renderForumMarkdown(props.body));
 
 .markdown-body :deep(th),
 .markdown-body :deep(td) {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   padding: 0.35rem 0.5rem;
 }
 </style>

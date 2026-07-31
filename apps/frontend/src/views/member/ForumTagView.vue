@@ -133,17 +133,17 @@ watch(
 .tag-page__crumb {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--color-muted, #667);
+  color: var(--color-text-muted);
 }
 
 .tag-page__desc,
 .tag-page__muted {
   margin: 0.5rem 0 0;
-  color: var(--color-muted, #667);
+  color: var(--color-text-muted);
 }
 
 .tag-page__error {
-  color: var(--color-danger, #b00020);
+  color: var(--color-error);
 }
 
 .tag-page__list {
@@ -162,6 +162,6 @@ watch(
   display: block;
   margin-top: 0.2rem;
   font-size: 0.85rem;
-  color: var(--color-muted, #667);
+  color: var(--color-text-muted);
 }
 </style>

@@ -301,7 +301,7 @@ function authorOf(topic: TopicSummary) {
 }
 
 .forum-list__back a {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -318,7 +318,7 @@ function authorOf(topic: TopicSummary) {
 
 .forum-list__categories-link {
   font-size: 0.9rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -328,18 +328,18 @@ function authorOf(topic: TopicSummary) {
 
 .forum-list__lead {
   margin: 0.25rem 0 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-list__filter {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-list__filter-clear {
   margin-left: 0.5rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -349,7 +349,7 @@ function authorOf(topic: TopicSummary) {
 }
 
 .forum-list__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .forum-list__items {
@@ -362,12 +362,12 @@ function authorOf(topic: TopicSummary) {
 
 .forum-list__card {
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
 .forum-list__card:hover {
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .forum-list__item-head {
@@ -386,12 +386,12 @@ function authorOf(topic: TopicSummary) {
   gap: 0.1rem;
   min-width: 0;
   font-size: 0.8125rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-list__author {
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .forum-list__item-body {
@@ -408,7 +408,7 @@ function authorOf(topic: TopicSummary) {
 
 .forum-list__item-body p {
   margin: 0.5rem 0 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-list__tags {
@@ -419,7 +419,7 @@ function authorOf(topic: TopicSummary) {
   margin: 0.5rem 0 0;
   padding: 0;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #777);
+  color: var(--color-text-muted);
 }
 
 .forum-list__pin {
@@ -430,8 +430,8 @@ function authorOf(topic: TopicSummary) {
   flex: none;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-warning, #b8860b);
-  border: 1px solid color-mix(in srgb, var(--color-warning, #b8860b) 40%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
   border-radius: 4px;
   padding: 0.1rem 0.35rem;
 }

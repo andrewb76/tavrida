@@ -163,7 +163,7 @@ function closeOnProfileNavigate() {
 
 .rep-log__item {
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .rep-log__item:last-child {
@@ -184,22 +184,22 @@ function closeOnProfileNavigate() {
 }
 
 .rep-log__delta.is-plus {
-  color: #067647;
+  color: var(--color-success);
 }
 
 .rep-log__delta.is-minus {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .rep-log__after {
   font-size: 0.875rem;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .rep-log__when {
   margin-left: auto;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .rep-log__meta {
@@ -209,7 +209,7 @@ function closeOnProfileNavigate() {
   align-items: center;
   gap: 0.35rem 0.5rem;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .rep-log__actor {
@@ -227,13 +227,13 @@ function closeOnProfileNavigate() {
 }
 
 .rep-log__actor-name {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-underline-offset: 0.12em;
 }
 
 .rep-log__muted {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 </style>

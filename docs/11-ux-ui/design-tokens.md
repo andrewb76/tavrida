@@ -14,9 +14,24 @@
 ```
 brandbook (значения, роли)
     → design-system (семантика UI, компоненты)
-        → packages/ui/styles/tokens.css (--token-*)
-            → packages/ui/styles/theme.css (@theme inline → Tailwind)
+        → packages/ui/styles/tokens.css (--token-* + runtime --color-* bridge)
+            → packages/ui/styles/theme.css (@theme inline → Tailwind utilities)
 ```
+
+### Runtime bridge `--color-*`
+
+`@theme inline` мапит токены на utility-классы (`bg-surface`, …), но **не** создаёт CSS custom properties для scoped Vue CSS.
+
+Поэтому в `tokens.css` на `html` дублируются алиасы:
+
+| Alias | → |
+|-------|---|
+| `--color-bg` / `surface` / `border` / `text` / `text-muted` | соответствующие `--token-*` |
+| `--color-primary` (+ hover, fg), `accent`, `success`, `warning`, `error` | `--token-*` |
+| `--color-bg-subtle` / `--color-surface-muted` | `color-mix` от bg/surface/border |
+
+В `<style scoped>` используй `var(--color-…)` **без** light-only hex fallback.  
+Контраст / anti-patterns: [design-system §12](./design-system.md#12-темизация).
 
 ---
 

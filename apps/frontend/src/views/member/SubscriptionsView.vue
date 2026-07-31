@@ -279,31 +279,31 @@ async function patchDelivery(
 
 .subs__lead {
   margin: 0.35rem 0 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   font-size: 0.9375rem;
 }
 
 .subs__muted {
   margin: 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .subs__muted a {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .subs__error {
   margin: 0;
-  color: var(--color-danger, #b91c1c);
+  color: var(--color-error);
 }
 
 .subs__card {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: var(--color-surface, #fff);
+  background: var(--color-surface);
 }
 
 .subs__card h2 {
@@ -328,8 +328,8 @@ async function patchDelivery(
 
 .subs__hint {
   font-size: 0.7rem;
-  color: var(--color-primary, #2563eb);
-  border: 1px solid color-mix(in srgb, var(--color-primary, #2563eb) 40%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
   border-radius: 0.25rem;
   padding: 0 0.3rem;
 }
@@ -338,7 +338,7 @@ async function patchDelivery(
   font: inherit;
   font-size: 0.875rem;
   height: 2rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   padding: 0 0.5rem;
   background: transparent;
@@ -353,7 +353,7 @@ async function patchDelivery(
 .subs__chip {
   height: 2rem;
   padding: 0 0.75rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: transparent;
   font: inherit;
@@ -363,9 +363,9 @@ async function patchDelivery(
 }
 
 .subs__chip.is-active {
-  border-color: var(--color-primary, #2563eb);
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent);
-  color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
 }
 
 .subs__group {
@@ -376,7 +376,7 @@ async function patchDelivery(
 .subs__group h2 {
   margin: 0;
   font-size: 0.9375rem;
-  color: var(--color-text-muted, #555);
+  color: var(--color-text-muted);
 }
 
 .subs__list {
@@ -393,7 +393,7 @@ async function patchDelivery(
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--color-border, #eee);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
 }
 
@@ -413,16 +413,16 @@ async function patchDelivery(
 .subs__target {
   font-family: ui-monospace, monospace;
   font-size: 0.8125rem;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .subs__target:not(a) {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .subs__date {
-  color: var(--color-text-muted, #888);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
 }
 </style>

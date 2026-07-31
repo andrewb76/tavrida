@@ -130,13 +130,13 @@ watch(
 }
 
 .event-subscribe--compact :deep(button[aria-pressed='true']) {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .event-subscribe__error {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--color-danger, #b91c1c);
+  color: var(--color-error);
   max-width: 16rem;
   text-align: right;
 }

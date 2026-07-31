@@ -494,32 +494,32 @@ async function saveAccess() {
 }
 
 .forum-categories__back a {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .forum-categories__lead {
   margin: 0.25rem 0 0;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-categories__admin-hint {
   margin: 0;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   font-size: 0.9rem;
 }
 
 .forum-categories__admin-hint a {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .forum-categories__form-panel {
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
 }
 
 .forum-categories__form {
@@ -550,7 +550,7 @@ async function saveAccess() {
 
 .forum-categories__group-desc {
   font-weight: 400;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-categories__form input,
@@ -571,14 +571,14 @@ async function saveAccess() {
 }
 
 .forum-categories__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .forum-categories__tree {
   list-style: none;
   margin: 0;
   padding: 0 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 </style>

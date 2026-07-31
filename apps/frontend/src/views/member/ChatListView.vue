@@ -448,7 +448,7 @@ function avatarTone(id: string): number {
 
 .chat-list__chip--active {
   background: var(--token-primary);
-  color: var(--token-primary-fg, #fff);
+  color: var(--color-primary-fg);
 }
 
 .chat-list__hint {
@@ -504,7 +504,7 @@ function avatarTone(id: string): number {
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-primary-fg);
   background: hsl(var(--hue, 200) 42% 42%);
 }
 
@@ -565,7 +565,7 @@ function avatarTone(id: string): number {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   background: var(--token-primary);
-  color: var(--token-primary-fg, #fff);
+  color: var(--color-primary-fg);
   font-size: 0.6875rem;
   font-weight: 700;
   text-align: center;

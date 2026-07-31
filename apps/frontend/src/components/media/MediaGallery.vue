@@ -179,7 +179,7 @@ function onKeydown(e: KeyboardEvent) {
   width: 100%;
   border-radius: 8px;
   overflow: hidden;
-  background: var(--color-surface-muted, #f3f3f3);
+  background: var(--color-surface-muted);
   touch-action: pan-y;
   user-select: none;
 }
@@ -197,7 +197,7 @@ function onKeydown(e: KeyboardEvent) {
   width: 100%;
   height: 100%;
   min-height: 10rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .media-gallery__nav {
@@ -247,12 +247,12 @@ function onKeydown(e: KeyboardEvent) {
   height: 0.55rem;
   border-radius: 999px;
   border: none;
-  background: #ccc;
+  background: var(--color-border);
   cursor: pointer;
 }
 
 .media-gallery__dots button.is-active {
-  background: #333;
+  background: var(--color-text);
 }
 
 .media-gallery__thumbs {
@@ -271,11 +271,11 @@ function onKeydown(e: KeyboardEvent) {
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  background: var(--color-surface-muted, #eee);
+  background: var(--color-surface-muted);
 }
 
 .media-gallery__thumb.is-active {
-  border-color: var(--color-primary, #333);
+  border-color: var(--color-primary);
 }
 
 .media-gallery__thumb img {

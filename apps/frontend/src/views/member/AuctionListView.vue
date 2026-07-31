@@ -183,7 +183,7 @@ function loadMore() {
   margin-left: 0.35rem;
   border: 0;
   background: none;
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: underline;
 }

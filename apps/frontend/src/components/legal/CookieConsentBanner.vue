@@ -192,10 +192,10 @@ function rejectOptional() {
   display: grid;
   gap: 0.875rem;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--color-border, #d6d3d1);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: var(--color-surface, #fff);
-  color: var(--color-text, #111);
+  background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: 0 -8px 32px rgb(0 0 0 / 0.12);
 }
 
@@ -210,11 +210,11 @@ function rejectOptional() {
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.45;
-  color: var(--color-text-muted, #57534e);
+  color: var(--color-text-muted);
 }
 
 .cookie-banner__link {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -253,7 +253,7 @@ function rejectOptional() {
 .cookie-banner__cat-desc {
   display: block;
   margin-top: 0.15rem;
-  color: var(--color-text-muted, #57534e);
+  color: var(--color-text-muted);
   font-weight: 400;
 }
 

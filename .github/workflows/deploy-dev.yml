@@ -216,11 +216,17 @@ jobs:
 
       - name: Stack deploy
         if: steps.envcheck.outputs.ready == 'true'
+        timeout-minutes: 25
         env:
           DOCKER_CONTEXT: dev-swarm
+          # Pre-pull warmed GHCR tags on the node — skip manager registry resolve.
+          PREPULL_OK: ${{ steps.prepull.outcome == 'success' && '1' || '0' }}
+          STACK_DEPLOY_RETRIES: '12'
         run: |
           if [[ "${{ steps.prepull.outcome }}" != "success" ]]; then
-            echo "::warning::Pre-pull did not fully succeed (outcome=${{ steps.prepull.outcome }}) — deploying with --with-registry-auth anyway."
+            echo "::warning::Pre-pull did not fully succeed (outcome=${{ steps.prepull.outcome }}) — deploying with resolve-image=changed + --with-registry-auth."
+          else
+            echo "Pre-pull ok — stack deploy will use --resolve-image never."
           fi
           ./docker/swarm/deploy-dev.sh
 

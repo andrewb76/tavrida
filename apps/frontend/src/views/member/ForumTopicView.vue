@@ -640,7 +640,7 @@ async function submitTopicComment() {
 
 .forum-topic__head,
 .forum-topic__comments {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1rem;
 }
@@ -700,7 +700,7 @@ async function submitTopicComment() {
 
 .forum-topic__head h1,
 .forum-topic__comments h2 {
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .forum-topic__draft-badge {
@@ -709,8 +709,8 @@ async function submitTopicComment() {
   vertical-align: middle;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-warning, #b8860b);
-  border: 1px solid color-mix(in srgb, var(--color-warning, #b8860b) 40%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
 }
@@ -719,18 +719,18 @@ async function submitTopicComment() {
   margin: 0 0 0.75rem;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--color-warning, #b8860b) 12%, transparent);
-  color: var(--color-text, #111);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-text);
   font-size: 0.875rem;
 }
 
 .forum-topic__author-name {
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .forum-topic__meta {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
@@ -743,7 +743,7 @@ async function submitTopicComment() {
 }
 
 .forum-topic__empty {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-topic__form {
@@ -774,6 +774,6 @@ async function submitTopicComment() {
 }
 
 .forum-topic__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 </style>

@@ -160,7 +160,7 @@ function onToggle() {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .forum-category-node__main {
@@ -182,11 +182,11 @@ function onToggle() {
   font-size: 0.95rem;
   line-height: 1.4;
   cursor: pointer;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-category-node__toggle:hover {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .forum-category-node__toggle-spacer {
@@ -205,12 +205,12 @@ function onToggle() {
 }
 
 .forum-category-node__link:hover strong {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
 }
 
 .forum-category-node__slug {
   font-size: 0.85rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-category-node__badge {
@@ -220,20 +220,20 @@ function onToggle() {
   letter-spacing: 0.04em;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  background: var(--color-border, #e5e7eb);
-  color: var(--color-text-muted, #666);
+  background: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .forum-category-node__counts {
   margin: 0.25rem 0 0 1.75rem;
   font-size: 0.85rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-category-node__desc {
   margin: 0.35rem 0 0 1.75rem;
   font-size: 0.9rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .forum-category-node__actions {
@@ -244,20 +244,20 @@ function onToggle() {
 }
 
 .forum-category-node__btn {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
 .forum-category-node__btn:hover {
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .forum-category-node__btn--danger:hover {
-  border-color: #b42318;
-  color: #b42318;
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 </style>

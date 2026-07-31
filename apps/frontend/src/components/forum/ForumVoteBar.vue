@@ -167,7 +167,7 @@ function apply(result: {
   justify-content: center;
   min-width: 2rem;
   height: 2rem;
-  border: 1px solid var(--color-border, #ccc);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   background: transparent;
   color: inherit;
@@ -181,9 +181,9 @@ function apply(result: {
 }
 
 .forum-vote__btn.is-active {
-  border-color: var(--color-primary, #2563eb);
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent);
-  color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--color-primary);
 }
 
 .forum-vote__score {

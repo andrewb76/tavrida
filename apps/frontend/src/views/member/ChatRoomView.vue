@@ -1395,7 +1395,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 .chat-bubble--mine {
   border-radius: 1rem 1rem 0.35rem 1rem;
   background: color-mix(in srgb, var(--token-primary) 88%, #0b2a3d);
-  color: var(--token-primary-fg, #fff);
+  color: var(--color-primary-fg);
 }
 
 html[data-theme='dark'] .chat-bubble--mine {
@@ -1559,7 +1559,7 @@ html[data-theme='dark'] .chat-bubble__author {
   height: 1.25rem;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.55);
-  color: #fff;
+  color: var(--color-primary-fg);
   font-size: 0.625rem;
 }
 
@@ -1629,7 +1629,7 @@ html[data-theme='dark'] .chat-bubble__author {
   height: 2.75rem;
   border-radius: 999px;
   background: var(--token-primary);
-  color: var(--token-primary-fg, #fff);
+  color: var(--color-primary-fg);
   flex-shrink: 0;
 }
 

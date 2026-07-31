@@ -8,7 +8,15 @@ DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
 # Pre-pull already warms GHCR tags on the node. "always" makes the Swarm manager
 # re-query every registry (incl. Docker Hub for imgproxy/alloy) and hangs/fails
 # when VPS→registry is flaky. Prefer "changed" (or STACK_DEPLOY_RESOLVE_IMAGE=never).
-RESOLVE_IMAGE="${STACK_DEPLOY_RESOLVE_IMAGE:-changed}"
+# After a successful CI pre-pull, prefer "never" (set STACK_DEPLOY_RESOLVE_IMAGE /
+# PREPULL_OK) so the manager does not re-query registries mid-deploy.
+if [[ -n "${STACK_DEPLOY_RESOLVE_IMAGE:-}" ]]; then
+  RESOLVE_IMAGE="${STACK_DEPLOY_RESOLVE_IMAGE}"
+elif [[ "${PREPULL_OK:-}" == "1" || "${PREPULL_OK:-}" == "true" ]]; then
+  RESOLVE_IMAGE="never"
+else
+  RESOLVE_IMAGE="changed"
+fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing ${ENV_FILE}. Copy from dev.env.example" >&2
@@ -73,10 +81,31 @@ fi
 echo "Deploying stack ${STACK_NAME} (infra + platform${GRAFANA_CLOUD_PROMETHEUS_URL:+ + tools}) resolve-image=${RESOLVE_IMAGE}..." >&2
 echo "Ensure secrets are synced: DOCKER_CONTEXT=${DOCKER_CONTEXT:-default} ./docker/swarm/sync-secrets-dev.sh" >&2
 
-# Swarm optimistic concurrency: "update out of sequence" mid stack deploy.
-# SSH dial-stdio / tunnel blips: "error during connect" / exit 255 — re-run is safe
-# (stack deploy is idempotent; already-updated services no-op or converge).
-MAX_ATTEMPTS="${STACK_DEPLOY_RETRIES:-8}"
+is_retryable_deploy_error() {
+  local out="$1"
+  # Swarm optimistic concurrency mid multi-service update
+  [[ "$out" == *"update out of sequence"* ]] && return 0
+  # SSH / docker context tunnel blips (unix socket or dial-stdio)
+  [[ "$out" == *"error during connect"* ]] && return 0
+  [[ "$out" == *"dial-stdio"* ]] && return 0
+  [[ "$out" == *"exit status 255"* ]] && return 0
+  [[ "$out" == *"connection reset"* ]] && return 0
+  [[ "$out" == *"broken pipe"* ]] && return 0
+  [[ "$out" == *"EOF"* ]] && return 0
+  [[ "$out" == *"context deadline"* ]] && return 0
+  [[ "$out" == *"session closed"* ]] && return 0
+  [[ "$out" == *"Unable to connect"* ]] && return 0
+  [[ "$out" == *"Cannot connect to the Docker daemon"* ]] && return 0
+  # Registry flakiness when resolve-image is not "never"
+  [[ "$out" == *"failed to resolve image"* ]] && return 0
+  [[ "$out" == *"TLS handshake timeout"* ]] && return 0
+  [[ "$out" == *"i/o timeout"* ]] && return 0
+  [[ "$out" == *"Error response from daemon"* && "$out" == *"timeout"* ]] && return 0
+  return 1
+}
+
+# stack deploy is idempotent — safe to re-run after partial updates.
+MAX_ATTEMPTS="${STACK_DEPLOY_RETRIES:-12}"
 attempt=1
 while true; do
   set +e
@@ -93,32 +122,31 @@ while true; do
     break
   fi
 
-  retryable=0
+  reason="unknown"
   if [[ "$out" == *"update out of sequence"* ]]; then
-    retryable=1
     reason="update out of sequence"
-  elif [[ "$out" == *"error during connect"* ]] \
-    || [[ "$out" == *"dial-stdio"* ]] \
-    || [[ "$out" == *"exit status 255"* ]] \
-    || [[ "$out" == *"connection reset"* ]] \
-    || [[ "$out" == *"EOF"* ]]; then
-    retryable=1
-    reason="SSH/docker connect blip"
   elif [[ "$out" == *"failed to resolve image"* ]] \
-    || [[ "$out" == *"Error response from daemon"* && "$out" == *"timeout"* ]] \
     || [[ "$out" == *"TLS handshake timeout"* ]] \
     || [[ "$out" == *"i/o timeout"* ]]; then
-    retryable=1
     reason="registry resolve/timeout"
+  elif is_retryable_deploy_error "$out"; then
+    reason="SSH/docker connect blip"
   fi
 
-  if [[ "$retryable" -eq 1 && "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
-    sleep_s=$((attempt * 2))
+  if is_retryable_deploy_error "$out" && [[ "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
+    # Cap backoff so a long flake still finishes within ~CI step budget.
+    sleep_s=$((attempt * 3))
+    if [[ "$sleep_s" -gt 30 ]]; then
+      sleep_s=30
+    fi
     echo "stack deploy: ${reason} (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${sleep_s}s..." >&2
+    # On tunnel errors, briefly poke the API so a dead ControlMaster reconnects.
+    "${docker_cmd[@]}" info >/dev/null 2>&1 || true
     sleep "$sleep_s"
     attempt=$((attempt + 1))
     continue
   fi
+  echo "stack deploy: giving up after ${attempt} attempt(s) (rc=${rc}, reason=${reason})" >&2
   exit "$rc"
 done
 

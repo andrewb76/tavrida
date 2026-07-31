@@ -109,9 +109,9 @@ import { cn } from '../../lib/cn'
 
 ### Принцип: CSS variables → Tailwind → компоненты
 
-1. **`packages/ui/styles/tokens.css`** — семантические переменные (`--color-primary`, …) для `[data-theme="light"]` и `[data-theme="dark"]`.
-2. **`packages/ui/styles/theme.css`** — `@theme` Tailwind v4 мапит переменные на utility-классы.
-3. **Компоненты** используют только semantic classes: `bg-surface`, `text-muted`, `border-default` — **не** `#1B4D6E`.
+1. **`packages/ui/styles/tokens.css`** — `--token-*` для `[data-theme="light"|"dark"]` + runtime bridge `--color-*` на `html` (для scoped CSS).
+2. **`packages/ui/styles/theme.css`** — `@theme inline` Tailwind v4 → utilities (`bg-surface`, `text-text`, …). Не полагаться на `@theme` как на runtime CSS vars.
+3. **Компоненты** — semantic classes **или** `var(--color-*)` / `var(--token-*)`; **не** raw light hex (`#fff`, `#f8fafc`) для chrome. Текст на primary → `primary-fg`.
 
 ### Переключение темы
 

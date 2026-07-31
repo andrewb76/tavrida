@@ -421,6 +421,21 @@ Headless: **Reka UI**. Стили — CVA + токены темы.
 - **v2:** `dark` — инверсия поверхностей, те же роли токенов (brandbook §5).  
 - Переключение: `html[data-theme]`; токены в `tokens.css`, не в компонентах.
 
+### Контраст и scoped CSS (обязательно)
+
+Tailwind v4 `@theme inline` **не публикует** runtime `--color-*` для произвольного CSS.  
+В `tokens.css` на `html` задан **bridge**: `--color-*` → `--token-*` (+ `--color-bg-subtle`, `--color-surface-muted`).
+
+| Делать | Не делать |
+|--------|-----------|
+| `background: var(--color-surface); color: var(--color-text)` | `background: #f8fafc` / `#fff` |
+| `color: var(--color-error)` | `color: #b42318` |
+| `text-primary-fg` на primary CTA | `text-white` на primary |
+| мягкий статус через `color-mix(…, var(--color-success), var(--color-surface))` | `#f0fdf4` / `#fffbeb` |
+| проверять UI в **dark и light** | полагаться на light-only fallback `var(--color-x, #fff)` |
+
+Агент-правило: `.cursor/rules/ui-theme-contrast.mdc`.
+
 ---
 
 ## 13. Копирайт в UI

@@ -50,8 +50,9 @@ async function exit() {
   gap: 0.75rem;
   min-height: 1.75rem;
   padding: 0.25rem 0.75rem;
-  background: #f59e0b;
-  color: #1c1917;
+  background: var(--color-warning);
+  /* Dark ink on warning amber — readable in both themes */
+  color: #0b1f24;
   font-size: 0.75rem;
   line-height: 1.2;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);

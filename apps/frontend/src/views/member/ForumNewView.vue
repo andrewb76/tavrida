@@ -229,10 +229,10 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
 }
 
 .forum-new__error {
-  color: #b42318;
+  color: var(--color-error);
 }
 
 .forum-new__status {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 </style>

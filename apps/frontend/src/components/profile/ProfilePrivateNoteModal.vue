@@ -266,8 +266,8 @@ async function remove() {
   z-index: 1;
   width: min(100%, 28rem);
   border-radius: 0.5rem;
-  border: 1px solid var(--color-border, #ddd);
-  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   padding: 1.5rem;
   box-shadow: 0 10px 40px rgb(0 0 0 / 20%);
 }
@@ -279,33 +279,33 @@ async function remove() {
   border: none;
   border-radius: 0.375rem;
   background: transparent;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   padding: 0.25rem 0.5rem;
   cursor: pointer;
 }
 
 .profile-note-overlay__close:hover {
-  background: var(--color-bg, #f5f5f5);
-  color: var(--color-text, #111);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .profile-note-overlay__title {
   margin: 0 2rem 0.35rem 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .profile-note-overlay__description {
   margin: 0 0 1rem;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-note-modal__status {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-note-modal__field {
@@ -318,18 +318,18 @@ async function remove() {
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   padding: 0.75rem;
   font: inherit;
-  background: var(--color-bg, #fff);
-  color: var(--color-text, #111);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .profile-note-modal__counter {
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   text-align: right;
 }
 

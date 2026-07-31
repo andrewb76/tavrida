@@ -380,11 +380,7 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1f7a6e;
-}
-
-html[data-theme='dark'] .member-home__eyebrow {
-  color: #3d9b8e;
+  color: var(--color-primary);
 }
 
 .member-home__shortcuts {
@@ -462,13 +458,13 @@ html[data-theme='dark'] .member-home__eyebrow {
   top: 0.55rem;
   left: 0.55rem;
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--color-surface, #fff) 88%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   padding: 0.15rem 0.45rem;
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--color-text, #111);
+  color: var(--color-text);
   box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
 }
 
@@ -477,13 +473,13 @@ html[data-theme='dark'] .member-home__eyebrow {
   top: 0.55rem;
   left: 0.55rem;
   border-radius: 999px;
-  background: #d94a2a;
+  background: var(--color-error);
   padding: 0.15rem 0.5rem;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--color-primary-fg);
 }
 
 .member-home__live--with-type {

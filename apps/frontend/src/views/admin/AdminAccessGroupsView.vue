@@ -408,9 +408,9 @@ async function saveMembers() {
 
 .access-groups__panel {
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
   display: grid;
   gap: 0.75rem;
   max-width: 36rem;
@@ -455,21 +455,21 @@ async function saveMembers() {
   gap: 0.5rem;
   width: 100%;
   text-align: left;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--color-surface, #fff);
+  background: var(--color-surface);
   padding: 0.4rem 0.6rem;
   cursor: pointer;
   font: inherit;
 }
 
 .access-groups__hit:hover {
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .access-groups__hit-id {
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
   word-break: break-all;
 }
 
@@ -477,7 +477,7 @@ async function saveMembers() {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -487,7 +487,7 @@ async function saveMembers() {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .access-groups__row:last-child {
@@ -497,13 +497,13 @@ async function saveMembers() {
 .access-groups__meta {
   margin-left: 0.5rem;
   font-size: 0.8rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .access-groups__desc {
   margin: 0.35rem 0 0;
   font-size: 0.9rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .access-groups__row-actions {
@@ -514,25 +514,25 @@ async function saveMembers() {
 }
 
 .access-groups__btn {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
 .access-groups__btn:hover {
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .access-groups__btn--danger:hover {
-  border-color: #b42318;
-  color: #b42318;
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .access-groups__error {
   margin: 0;
-  color: #b42318;
+  color: var(--color-error);
 }
 </style>

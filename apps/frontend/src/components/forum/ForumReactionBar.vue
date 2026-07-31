@@ -112,7 +112,7 @@ async function toggle(emojiKey: string) {
   gap: 0.2rem;
   min-height: 2rem;
   padding: 0.15rem 0.4rem;
-  border: 1px solid var(--color-border, #ccc);
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   background: transparent;
   color: inherit;
@@ -127,13 +127,13 @@ async function toggle(emojiKey: string) {
 }
 
 .forum-reactions__btn.is-active {
-  border-color: var(--color-primary, #2563eb);
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 14%, transparent);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .forum-reactions__count {
   font-variant-numeric: tabular-nums;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 </style>

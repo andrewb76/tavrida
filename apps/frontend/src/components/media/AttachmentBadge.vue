@@ -31,15 +31,15 @@ const expanded = ref(false);
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
-  background: var(--color-surface, #fff);
+  background: var(--color-surface);
   cursor: pointer;
   font-size: 0.9rem;
 }
 
 .attachment-badge__label {
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 </style>

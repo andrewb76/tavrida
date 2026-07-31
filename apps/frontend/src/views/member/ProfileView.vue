@@ -519,11 +519,11 @@ async function copyInviteLink() {
 }
 
 .profile-avatar-trigger--interactive:hover {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .profile-avatar-trigger--interactive:focus-visible {
-  outline: 2px solid var(--color-primary, #2563eb);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -537,9 +537,9 @@ async function copyInviteLink() {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg);
 }
 
 .profile-public-card__body {
@@ -558,13 +558,13 @@ async function copyInviteLink() {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-text, #111);
+  color: var(--color-text);
 }
 
 .profile-public-card__badge {
   border-radius: 9999px;
   background: color-mix(in srgb, #b42318 12%, transparent);
-  color: #b42318;
+  color: var(--color-error);
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.15rem 0.5rem;
@@ -573,13 +573,13 @@ async function copyInviteLink() {
 .profile-public-card__username {
   margin: 0.15rem 0 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-public-card__meta {
   margin: 0.35rem 0 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-public-card__note {
@@ -593,7 +593,7 @@ async function copyInviteLink() {
 .profile-public-card__note-hint {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .profile-public-card__note-btn {

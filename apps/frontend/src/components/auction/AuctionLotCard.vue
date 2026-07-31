@@ -90,13 +90,13 @@ const priceHint = computed(() =>
   left: 0.5rem;
   top: 0.5rem;
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--color-surface, #fff) 88%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   padding: 0.15rem 0.45rem;
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--color-text, #111);
+  color: var(--color-text);
   box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
 }
 </style>
