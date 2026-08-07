@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { BillingModule } from '../billing/billing.module';
+import { KetoModule } from '../keto/keto.module';
 import { MediaModule } from '../media/media.module';
 import { PlanConfigModule } from '../plan-config/plan-config.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
@@ -10,8 +11,16 @@ import { AuctionPlanPolicyService } from './auction-plan-policy.service';
 import { AuctionScalarBootstrapService } from './auction-scalar-bootstrap.service';
 
 @Module({
-  imports: [AuthModule, BillingModule, PlanConfigModule, MediaModule, ScalarConfigModule],
+  imports: [
+    AuthModule,
+    BillingModule,
+    KetoModule,
+    PlanConfigModule,
+    MediaModule,
+    ScalarConfigModule,
+  ],
   controllers: [AuctionController],
   providers: [AuctionClient, AuctionPlanPolicyService, AuctionScalarBootstrapService],
+  exports: [AuctionClient],
 })
 export class AuctionModule {}

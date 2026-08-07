@@ -5,6 +5,7 @@ import { ForbiddenException } from '@nestjs/common';
 
 import type { AuthUser } from '../auth/current-user.decorator';
 import type { BillingClient } from '../billing/billing.client';
+import type { KetoService } from '../keto/keto.service';
 import type { MediaLimitsService } from '../media/media-limits.service';
 import type { MediaStorageService } from '../media/media-storage.service';
 import { AuctionController } from './auction.controller';
@@ -45,13 +46,19 @@ function freeSellerOptions(lotsCreatedToday: number) {
   };
 }
 
-function createHarness(planId: string, lotsCreatedToday = 0) {
+function createHarness(
+  planId: string,
+  lotsCreatedToday = 0,
+  opts: { isAdmin?: boolean; isExpert?: boolean; sellerId?: string } = {},
+) {
   const calls = {
     listAuctions: [] as Record<string, unknown>[],
     createAuction: [] as Record<string, unknown>[],
     getAuction: [] as string[],
     listBids: [] as string[],
     listExpertAppraisals: [] as string[],
+    promoteAuction: [] as string[],
+    createExpertAppraisal: [] as Record<string, unknown>[],
     getSellerMeta: [] as string[],
     charges: [] as Record<string, unknown>[],
   };
@@ -67,7 +74,7 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     },
     getAuction: async (id: string) => {
       calls.getAuction.push(id);
-      return { id, title: 'Lot' };
+      return { id, title: 'Lot', sellerId: opts.sellerId ?? 'seller-1' };
     },
     listBids: async (id: string) => {
       calls.listBids.push(id);
@@ -76,6 +83,14 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     listExpertAppraisals: async (id: string) => {
       calls.listExpertAppraisals.push(id);
       return { data: [{ id: 'appraisal-1' }] };
+    },
+    promoteAuction: async (id: string) => {
+      calls.promoteAuction.push(id);
+      return { id, isPromoted: true };
+    },
+    createExpertAppraisal: async (id: string, body: Record<string, unknown>) => {
+      calls.createExpertAppraisal.push({ id, ...body });
+      return { id: 'appraisal-new', ...body };
     },
     getSellerMeta: async (sellerId: string) => {
       calls.getSellerMeta.push(sellerId);
@@ -158,12 +173,18 @@ function createHarness(planId: string, lotsCreatedToday = 0) {
     },
   } as unknown as BillingClient;
 
+  const keto = {
+    isPlatformAdmin: async () => Boolean(opts.isAdmin),
+    isPlatformExpert: async () => Boolean(opts.isExpert || opts.isAdmin),
+  } as unknown as KetoService;
+
   const controller = new AuctionController(
     auction,
     auctionPlanPolicy,
     mediaLimits,
     mediaStorage,
     billing,
+    keto,
   );
 
   return { controller, calls };
@@ -219,7 +240,7 @@ describe('AuctionController (integration)', () => {
     const result = await controller.getById('lot-42');
 
     assert.deepEqual(calls.getAuction, ['lot-42']);
-    assert.deepEqual(result, { id: 'lot-42', title: 'Lot' });
+    assert.deepEqual(result, { id: 'lot-42', title: 'Lot', sellerId: 'seller-1' });
   });
 
   it('GET :id/bids proxies to auction service', async () => {
@@ -301,6 +322,64 @@ describe('AuctionController (integration)', () => {
 
     await assert.rejects(
       () => controller.create(USER, validCreateBody),
+      (error: unknown) => error instanceof ForbiddenException,
+    );
+  });
+
+  it('POST :id/promote charges and proxies for seller on pro plan', async () => {
+    const { controller, calls } = createHarness('pro', 0);
+
+    const result = await controller.promote(USER, 'lot-42', 'promote-key-1');
+
+    assert.equal(calls.charges.length, 1);
+    assert.equal(calls.charges[0]?.target, 'auction.promotion');
+    assert.deepEqual(calls.promoteAuction, ['lot-42']);
+    assert.equal(result.id, 'lot-42');
+  });
+
+  it('POST :id/promote rejects free plan', async () => {
+    const { controller } = createHarness('free', 0);
+
+    await assert.rejects(
+      () => controller.promote(USER, 'lot-42', 'promote-key-1'),
+      (error: unknown) => error instanceof ForbiddenException,
+    );
+  });
+
+  it('POST :id/promote rejects non-owner', async () => {
+    const { controller } = createHarness('pro', 0, { sellerId: 'other-seller' });
+
+    await assert.rejects(
+      () => controller.promote(USER, 'lot-42', 'promote-key-1'),
+      (error: unknown) => error instanceof ForbiddenException,
+    );
+  });
+
+  it('POST :id/expert-appraisals proxies for expert', async () => {
+    const { controller, calls } = createHarness('free', 0, {
+      isExpert: true,
+      sellerId: 'other-seller',
+    });
+
+    const result = await controller.createExpertAppraisal(USER, 'lot-42', {
+      summary: 'Подлинная монета XVIII века',
+      estimatedValueMin: 1000,
+      estimatedValueMax: 2000,
+    });
+
+    assert.equal(calls.createExpertAppraisal.length, 1);
+    assert.equal(calls.createExpertAppraisal[0]?.expertId, 'seller-1');
+    assert.equal(result.id, 'appraisal-new');
+  });
+
+  it('POST :id/expert-appraisals rejects non-expert', async () => {
+    const { controller } = createHarness('free', 0, { sellerId: 'other-seller' });
+
+    await assert.rejects(
+      () =>
+        controller.createExpertAppraisal(USER, 'lot-42', {
+          summary: 'Подлинная монета XVIII века',
+        }),
       (error: unknown) => error instanceof ForbiddenException,
     );
   });

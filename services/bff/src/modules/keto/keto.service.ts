@@ -23,6 +23,11 @@ export class KetoService {
     return this.hasPlatformRelation(userId, 'admin');
   }
 
+  async isPlatformExpert(userId: string): Promise<boolean> {
+    if (await this.isPlatformAdmin(userId)) return true;
+    return this.hasPlatformRelation(userId, 'expert');
+  }
+
   /** Platform admin or platform moderator (forum staff). Bootstrap env counts as admin. */
   async isForumStaff(userId: string): Promise<boolean> {
     if (await this.isPlatformAdmin(userId)) return true;

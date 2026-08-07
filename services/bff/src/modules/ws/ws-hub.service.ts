@@ -8,6 +8,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import type { IncomingMessage, Server } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { AuctionClient } from '../auction/auction.client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatClient } from '../chats/chat.client';
 import { ForumClient } from '../forum/forum.client';
@@ -35,6 +36,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly jwt: JwtAuthGuard,
     private readonly chat: ChatClient,
     private readonly forum: ForumClient,
+    private readonly auction: AuctionClient,
     private readonly scalarConfig: ScalarConfigClient,
   ) {}
 
@@ -151,7 +153,8 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
   ): Promise<void> {
     const chatId = parseChatChannel(channel);
     const topicId = parseForumChannel(channel);
-    if (!chatId && !topicId) {
+    const auctionId = parseAuctionChannel(channel);
+    if (!chatId && !topicId && !auctionId) {
       this.send(socket, {
         type: 'error',
         requestId: requestId ?? null,
@@ -165,6 +168,8 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
         await this.chat.get(chatId, state.userId);
       } else if (topicId) {
         await this.forum.getTopic(topicId, { userId: state.userId });
+      } else if (auctionId) {
+        await this.auction.getAuction(auctionId);
       }
     } catch {
       this.send(socket, {
@@ -269,5 +274,10 @@ function parseChatChannel(channel: string): string | null {
 
 function parseForumChannel(channel: string): string | null {
   const match = /^forum:([0-9a-f-]{36})$/i.exec(channel.trim());
+  return match?.[1] ?? null;
+}
+
+function parseAuctionChannel(channel: string): string | null {
+  const match = /^auction:([0-9a-f-]{36})$/i.exec(channel.trim());
   return match?.[1] ?? null;
 }

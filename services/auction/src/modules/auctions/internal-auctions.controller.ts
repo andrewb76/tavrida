@@ -155,6 +155,29 @@ class PlaceBidDto {
   amount!: number;
 }
 
+class CreateExpertAppraisalDto {
+  @IsString()
+  @MinLength(1)
+  expertId!: string;
+
+  @IsString()
+  @MinLength(10)
+  @MaxLength(5000)
+  summary!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  estimatedValueMin?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  estimatedValueMax?: number;
+}
+
 @Controller('internal/v1/auctions')
 export class InternalAuctionsController {
   constructor(private readonly auctions: AuctionsService) {}
@@ -193,6 +216,11 @@ export class InternalAuctionsController {
     return this.auctions.closeAuction(id);
   }
 
+  @Post(':id/promote')
+  promote(@Param('id') id: string) {
+    return this.auctions.promote(id);
+  }
+
   @Get(':id/bids')
   listBids(@Param('id') id: string) {
     return this.auctions.listBids(id);
@@ -201,6 +229,17 @@ export class InternalAuctionsController {
   @Get(':id/expert-appraisals')
   listExpertAppraisals(@Param('id') id: string) {
     return this.auctions.listExpertAppraisals(id);
+  }
+
+  @Post(':id/expert-appraisals')
+  createExpertAppraisal(@Param('id') id: string, @Body() body: CreateExpertAppraisalDto) {
+    return this.auctions.createExpertAppraisal({
+      auctionId: id,
+      expertId: body.expertId,
+      summary: body.summary,
+      estimatedValueMin: body.estimatedValueMin,
+      estimatedValueMax: body.estimatedValueMax,
+    });
   }
 
   @Get(':id')

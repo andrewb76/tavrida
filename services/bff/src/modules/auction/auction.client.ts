@@ -51,6 +51,29 @@ export class AuctionClient {
     );
   }
 
+  promoteAuction(auctionId: string) {
+    return this.request<Record<string, unknown>>(
+      'POST',
+      `/internal/v1/auctions/${auctionId}/promote`,
+    );
+  }
+
+  createExpertAppraisal(
+    auctionId: string,
+    body: {
+      expertId: string;
+      summary: string;
+      estimatedValueMin?: number;
+      estimatedValueMax?: number;
+    },
+  ) {
+    return this.request<Record<string, unknown>>(
+      'POST',
+      `/internal/v1/auctions/${auctionId}/expert-appraisals`,
+      body,
+    );
+  }
+
   getSellerMeta(sellerId: string) {
     const qs = new URLSearchParams({ sellerId });
     return this.request<{ sellerId: string; lotsCreatedToday: number }>(

@@ -2,6 +2,7 @@
 import MediaGallery from '@/components/media/MediaGallery.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import { useCountdown } from '@/composables/useCountdown';
+import { useWs } from '@/composables/useWs';
 import {
   auctionStatusLabel,
   auctionTimeProgressPercent,
@@ -16,19 +17,25 @@ import {
   type CategoryNode,
 } from '@/services/forum';
 import {
+  createExpertAppraisal,
   getAuction,
+  getAuctionCreateOptions,
   listAuctionBids,
   listExpertAppraisals,
   placeBid,
+  promoteAuction,
   type AuctionBid,
   type AuctionDetail,
   type ExpertAppraisal,
 } from '@/services/auctions';
+import { useSessionStore } from '@/stores/session';
 import { UiButton, UiModal } from '@tavrida/ui';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 
 const route = useRoute();
+const session = useSessionStore();
+const ws = useWs();
 const auctionId = computed(() => route.params.id as string);
 
 const lot = ref<AuctionDetail | null>(null);
@@ -42,6 +49,15 @@ const bidOpen = ref(false);
 const bidAmount = ref<number | null>(null);
 const bidSubmitting = ref(false);
 const bidError = ref<string | null>(null);
+const promoteSubmitting = ref(false);
+const promoteError = ref<string | null>(null);
+const promotionEnabled = ref(false);
+const promotionUnitPrice = ref(200);
+const expertSummary = ref('');
+const expertMin = ref<number | null>(null);
+const expertMax = ref<number | null>(null);
+const expertSubmitting = ref(false);
+const expertError = ref<string | null>(null);
 
 const { remainingMs, start: startCountdown } = useCountdown(() => lot.value?.endsAt);
 
@@ -67,6 +83,15 @@ const auctionProgress = computed(() => {
 
 const canBid = computed(() => Boolean(lot.value?.isLive));
 const isDutch = computed(() => lot.value?.type === 'DUTCH');
+const isOwner = computed(
+  () => Boolean(lot.value && session.userId && lot.value.sellerId === session.userId),
+);
+const canPromote = computed(
+  () => Boolean(lot.value && isOwner.value && promotionEnabled.value && lot.value.status !== 'ENDED'),
+);
+const canAddExpert = computed(
+  () => Boolean(lot.value && session.isExpert && !isOwner.value),
+);
 
 watch(
   () => lot.value?.minNextBid,
@@ -81,6 +106,49 @@ watch(bidOpen, (open) => {
 });
 
 let loadGeneration = 0;
+let wsUnsub: (() => void) | null = null;
+
+function unbindWs() {
+  wsUnsub?.();
+  wsUnsub = null;
+}
+
+function applyAuctionWsEvent(ev: { event: string; payload: Record<string, unknown> }) {
+  if (!lot.value) return;
+  if (ev.event === 'bid.placed') {
+    void refreshLiveState();
+    return;
+  }
+  if (ev.event === 'auction.ended') {
+    void refreshLiveState();
+  }
+}
+
+function bindWs(id: string) {
+  unbindWs();
+  void ws
+    .subscribe(`auction:${id}`, (ev) => applyAuctionWsEvent(ev))
+    .then((fn) => {
+      wsUnsub = fn;
+    })
+    .catch(() => {
+      /* REST-only fallback */
+    });
+}
+
+async function refreshLiveState() {
+  const id = auctionId.value;
+  if (!id || !lot.value) return;
+  try {
+    const [detail, bidRows] = await Promise.all([getAuction(id), listAuctionBids(id)]);
+    if (id !== auctionId.value) return;
+    lot.value = detail;
+    bids.value = bidRows;
+    if (detail.isLive) startCountdown();
+  } catch {
+    /* keep current snapshot */
+  }
+}
 
 async function load(id: string) {
   const generation = ++loadGeneration;
@@ -90,20 +158,28 @@ async function load(id: string) {
   bids.value = [];
   appraisals.value = [];
   bidOpen.value = false;
+  promoteError.value = null;
+  expertError.value = null;
+  unbindWs();
   try {
-    const [detail, bidRows, expertRows, categoryTree] = await Promise.all([
+    const [detail, bidRows, expertRows, categoryTree, createOpts] = await Promise.all([
       getAuction(id),
       listAuctionBids(id),
       listExpertAppraisals(id),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
+      getAuctionCreateOptions().catch(() => null),
     ]);
     if (generation !== loadGeneration || id !== auctionId.value) return;
     lot.value = detail;
     bids.value = bidRows;
     appraisals.value = expertRows;
     if (!categories.value.length) categories.value = categoryTree;
+    if (createOpts) {
+      promotionEnabled.value = createOpts.promotionEnabled;
+      promotionUnitPrice.value = createOpts.promotionUnitPrice;
+    }
     if (detail.isLive) startCountdown();
-    if (detail.hasExpertAppraisal && expertRows.length) activeTab.value = 'description';
+    bindWs(id);
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
@@ -114,6 +190,10 @@ async function load(id: string) {
 }
 
 watch(auctionId, (id) => void load(id), { immediate: true });
+
+onBeforeUnmount(() => {
+  unbindWs();
+});
 
 function addBidStep(step: number) {
   if (!lot.value || bidAmount.value == null || isDutch.value) return;
@@ -135,6 +215,41 @@ async function confirmBid() {
     bidError.value = e instanceof Error ? e.message : 'Не удалось сделать ставку';
   } finally {
     bidSubmitting.value = false;
+  }
+}
+
+async function onPromote() {
+  if (!lot.value || !canPromote.value) return;
+  promoteSubmitting.value = true;
+  promoteError.value = null;
+  try {
+    lot.value = await promoteAuction(lot.value.id, crypto.randomUUID());
+  } catch (e) {
+    promoteError.value = e instanceof Error ? e.message : 'Не удалось продвинуть лот';
+  } finally {
+    promoteSubmitting.value = false;
+  }
+}
+
+async function onSubmitExpert() {
+  if (!lot.value || !canAddExpert.value) return;
+  expertSubmitting.value = true;
+  expertError.value = null;
+  try {
+    const created = await createExpertAppraisal(lot.value.id, {
+      summary: expertSummary.value.trim(),
+      estimatedValueMin: expertMin.value ?? undefined,
+      estimatedValueMax: expertMax.value ?? undefined,
+    });
+    appraisals.value = [created, ...appraisals.value];
+    lot.value = { ...lot.value, hasExpertAppraisal: true };
+    expertSummary.value = '';
+    expertMin.value = null;
+    expertMax.value = null;
+  } catch (e) {
+    expertError.value = e instanceof Error ? e.message : 'Не удалось сохранить экспертизу';
+  } finally {
+    expertSubmitting.value = false;
   }
 }
 </script>
@@ -176,12 +291,30 @@ async function confirmBid() {
       <div class="lot-page__head">
         <div class="lot-page__title-row">
           <h1>{{ lot.title }}</h1>
-          <EventSubscribeButton
-            source-domain="auction"
-            target-type="AUCTION"
-            :target-id="lot.id"
-          />
+          <div class="lot-page__title-actions">
+            <UiButton
+              v-if="canPromote"
+              intent="secondary"
+              size="sm"
+              :disabled="promoteSubmitting"
+              @click="onPromote"
+            >
+              {{ lot.isPromoted ? 'Продлить продвижение' : 'Продвинуть' }}
+              · {{ formatMoney(promotionUnitPrice, lot.currency) }}
+            </UiButton>
+            <EventSubscribeButton
+              source-domain="auction"
+              target-type="AUCTION"
+              :target-id="lot.id"
+            />
+          </div>
         </div>
+        <p
+          v-if="promoteError"
+          class="lot-page__inline-error"
+        >
+          {{ promoteError }}
+        </p>
         <div class="lot-page__meta">
           <span class="lot-page__seller">👤 {{ sellerDisplayName(lot.sellerId) }}</span>
           <span
@@ -355,6 +488,57 @@ async function confirmBid() {
           v-else
           class="lot-page__expert"
         >
+          <form
+            v-if="canAddExpert"
+            class="lot-page__expert-form"
+            @submit.prevent="onSubmitExpert"
+          >
+            <label>
+              Заключение
+              <textarea
+                v-model="expertSummary"
+                rows="4"
+                required
+                minlength="10"
+                maxlength="5000"
+                placeholder="Краткое экспертное заключение…"
+              />
+            </label>
+            <div class="lot-page__expert-range-inputs">
+              <label>
+                Оценка от
+                <input
+                  v-model.number="expertMin"
+                  type="number"
+                  min="0"
+                  step="1"
+                >
+              </label>
+              <label>
+                Оценка до
+                <input
+                  v-model.number="expertMax"
+                  type="number"
+                  min="0"
+                  step="1"
+                >
+              </label>
+            </div>
+            <p
+              v-if="expertError"
+              class="lot-page__inline-error"
+            >
+              {{ expertError }}
+            </p>
+            <UiButton
+              type="submit"
+              intent="primary"
+              :disabled="expertSubmitting || expertSummary.trim().length < 10"
+            >
+              {{ expertSubmitting ? 'Сохранение…' : 'Добавить экспертизу' }}
+            </UiButton>
+          </form>
+
           <article
             v-for="item in appraisals"
             :key="item.id"
@@ -378,7 +562,7 @@ async function confirmBid() {
             </small>
           </article>
           <p
-            v-if="appraisals.length === 0"
+            v-if="appraisals.length === 0 && !canAddExpert"
             class="lot-page__empty"
           >
             <template v-if="lot.hasExpertAppraisal">
@@ -581,6 +765,19 @@ async function confirmBid() {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
+}
+
+.lot-page__title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lot-page__inline-error {
+  margin: 0.35rem 0 0;
+  color: var(--token-error);
+  font-size: 0.9rem;
 }
 
 .lot-page__head h1 {
@@ -788,6 +985,37 @@ async function confirmBid() {
   border: 1px solid var(--token-border);
   background: color-mix(in srgb, var(--token-bg) 72%, var(--token-border));
   color: var(--token-text);
+}
+
+.lot-page__expert-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--token-border);
+}
+
+.lot-page__expert-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--token-text);
+}
+
+.lot-page__expert-form textarea,
+.lot-page__expert-form input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--token-border);
+  border-radius: 8px;
+  background: var(--token-bg);
+  color: var(--token-text);
+  font: inherit;
+}
+
+.lot-page__expert-range-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .lot-page__expert-summary {

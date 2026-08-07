@@ -88,4 +88,18 @@ export class AuctionEventsPublisher implements OnModuleInit, OnModuleDestroy {
       correlationId: payload.auctionId,
     });
   }
+
+  enqueueExpertAppraisalAdded(manager: EntityManager, payload: {
+    auctionId: string;
+    appraisalId: string;
+    expertId: string;
+    createdAt: string;
+  }) {
+    return enqueueDomainEvent(manager, {
+      eventType: 'auction.expert_appraisal_added',
+      producer: 'auction',
+      payload,
+      correlationId: payload.auctionId,
+    });
+  }
 }

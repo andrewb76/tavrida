@@ -78,6 +78,9 @@ export const useSessionStore = defineStore('session', () => {
   const isModerator = computed(
     () => isAdmin.value || platformRoles.value.includes('moderator'),
   );
+  const isExpert = computed(
+    () => isAdmin.value || platformRoles.value.includes('expert'),
+  );
 
   function setAccessTokenGetter(getter: AccessTokenGetter | null) {
     accessTokenGetter = getter;
@@ -200,6 +203,7 @@ export const useSessionStore = defineStore('session', () => {
     hardLockResolved,
     isAdmin,
     isModerator,
+    isExpert,
     isImpersonating,
     actAsUserId,
     actAsDisplayName,

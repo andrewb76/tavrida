@@ -7,9 +7,9 @@
 Управление **аукционами** Tavrida Lot: лоты, ставки, завершение сделок, экспертные оценки.
 
 - Каталог list/get/create ✅ · English **bid** ✅ · Dutch **accept** ✅ · **close** / `close/run` ✅
-- RMQ: `auction.created` / `bid_placed` / `completed` (если задан `RABBITMQ_URL`)
+- RMQ: `auction.created` / `bid_placed` / `completed` / `expert_appraisal_added` (если задан `RABBITMQ_URL`)
 - Проверка лимитов через plan-config — ✅ (BFF `limits/check`, `features/can-use`, `resolve-tier`)
-- Платные фичи / Redis WS live — next
+- Promote charge (create + `POST …/promote`) ✅ · Expert POST ✅ · BFF WS relay `auction:{id}` ✅
 - Dutch: ask step-down в `close/run`; live clock — later
 
 ## ✅ Реализовано (v0.3)
@@ -25,7 +25,9 @@
 | RMQ domain events | ✅ (optional RMQ) |
 | BFF plan-config policy (create/list) | ✅ |
 | `GET /health/ready` DB ping | ✅ |
-| promote charge / expert POST / WS | ⏳ |
+| `POST …/promote` + billing charge | ✅ |
+| `POST …/expert-appraisals` (Keto expert) | ✅ |
+| BFF WS relay `bid.placed` / `auction.ended` | ✅ |
 
 ## 📖 Термины
 
@@ -133,15 +135,15 @@ stateDiagram-v2
 | POST | `/auctions/{id}/bids` | Ставка (English) / accept ask (Dutch → immediate ENDED) |
 | GET | `/auctions/{id}/bids` | История ставок |
 | GET | `/auctions/{id}/expert-appraisals` | Публичный просмотр |
+| POST | `/auctions/{id}/promote` | Продвижение существующего лота (seller/admin) |
+| POST | `/auctions/{id}/expert-appraisals` | Добавить экспертизу (Keto expert, не owner) |
 
-Create-time reserve/promotion и их idempotent charge реализованы внутри
-`POST /auctions`; отдельного promote endpoint пока нет.
+Create-time reserve/promotion и их idempotent charge — внутри `POST /auctions`.
+Отдельный `POST …/promote` для уже созданных лотов — ниже.
 
 ### Target public mutations
 
-- `PATCH /auctions/{id}` и `POST /auctions/{id}/publish`;
-- `POST /auctions/{id}/promote`;
-- `POST /auctions/{id}/expert-appraisals`.
+- `PATCH /auctions/{id}` и `POST /auctions/{id}/publish`.
 
 #### `GET /api/v1/auctions` — каталог
 
@@ -203,15 +205,29 @@ Create-time reserve/promotion и их idempotent charge реализованы �
 { "amount": 1500 }
 ```
 
-→ `201` + transactional outbox `auction.bid_placed`; BFF WS relay planned.
+→ `201` + transactional outbox `auction.bid_placed`; BFF WS → `bid.placed` на `auction:{id}`.
 
-### Target: `POST /api/v1/auctions/{id}/promote`
+### `POST /api/v1/auctions/{id}/promote`
 
-Отдельный endpoint не реализован; create-time promotion уже работает:
+Seller (или platform admin). Требует `Idempotency-Key`.
 
 1. `features/can-use` → `auction.seller.promotion.enabled`
-2. `billing.charge` — цена из plan variable
-3. Set `promotedUntil`
+2. `billing.charge` — `auction.promotion` (цена из plan variable)
+3. Extend `promotedUntil` (+7 суток от `max(now, current)`)
+
+### `POST /api/v1/auctions/{id}/expert-appraisals`
+
+Keto `platform:tavrida-lot#expert` (admin тоже). Owner лота — `403`.
+
+```json
+{
+  "summary": "Подлинная монета XVIII века",
+  "estimatedValueMin": 1000,
+  "estimatedValueMax": 2000
+}
+```
+
+→ outbox `auction.expert_appraisal_added`; `hasExpertAppraisal = true`
 
 ## ⚙️ Переменные scalar-config
 
@@ -253,7 +269,8 @@ plan-config хранит матрицу; до register auction параметр�
 | produce | `auction.expert_appraisal_added` | Expert POST |
 | consume | `rating.user_banned` | Блокировка ставок bidder |
 
-> Redis: channel `auction:{id}` для BFF relay. Каталог: [event-catalog](../../03-architecture/event-catalog.md)
+> BFF WS channel `auction:{id}`: `auction.bid_placed` → `bid.placed`, `auction.completed` → `auction.ended`.  
+> Каталог: [event-catalog](../../03-architecture/event-catalog.md)
 
 ## 🔗 Взаимодействие
 
@@ -263,7 +280,7 @@ plan-config хранит матрицу; до register auction параметр�
 | billing | charge (promotion, reserve) | HTTP internal |
 | feedback, rating | `auction.completed` | RabbitMQ |
 | notifications | bid, completed | RabbitMQ |
-| BFF | REST proxy, WS relay | HTTP + Redis |
+| BFF | REST proxy, WS relay (`bff.auction-ws`) | HTTP + RabbitMQ → WS |
 | MinIO | images | S3 API |
 
 ## 🔒 Безопасность

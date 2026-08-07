@@ -12,6 +12,10 @@ export class HealthController {
 
   @Get('ready')
   async ready() {
+    await new Promise((resolve) => {
+
+      return resolve(true);
+    });
     await this.dataSource.query('SELECT 1');
     return { status: 'ready', service: 'chat' };
   }

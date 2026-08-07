@@ -4,6 +4,7 @@ import { useForumTreeCollapsed } from '@/composables/useForumTreeCollapsed';
 import {
   createCategory,
   deleteCategory,
+  flattenCategories,
   listAccessGroups,
   listCategories,
   setCategoryAccessGroups,
@@ -27,6 +28,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const saving = ref(false);
 const formError = ref<string | null>(null);
+const slugManual = ref(false);
 
 type FormState = {
   mode: 'create' | 'edit';
@@ -51,6 +53,11 @@ const access = ref<AccessState | null>(null);
 const accessError = ref<string | null>(null);
 const accessSaving = ref(false);
 
+const parentTitle = computed(() => {
+  if (!form.value?.parentId) return null;
+  return flattenCategories(tree.value).find((c) => c.id === form.value?.parentId)?.title ?? null;
+});
+
 async function loadTree() {
   loading.value = true;
   error.value = null;
@@ -69,6 +76,8 @@ async function loadTree() {
 onMounted(loadTree);
 
 function openCreateRoot() {
+  access.value = null;
+  slugManual.value = false;
   form.value = {
     mode: 'create',
     parentId: null,
@@ -81,6 +90,8 @@ function openCreateRoot() {
 }
 
 function openCreateChild(parent: CategoryNode) {
+  access.value = null;
+  slugManual.value = false;
   form.value = {
     mode: 'create',
     parentId: parent.id,
@@ -93,6 +104,8 @@ function openCreateChild(parent: CategoryNode) {
 }
 
 function openEdit(node: CategoryNode) {
+  access.value = null;
+  slugManual.value = true;
   form.value = {
     mode: 'edit',
     categoryId: node.id,
@@ -108,15 +121,13 @@ function openEdit(node: CategoryNode) {
 function closeForm() {
   form.value = null;
   formError.value = null;
+  slugManual.value = false;
 }
 
 function slugFromTitle(title: string): string {
-  return title
+  const translit = title
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9а-яё]+/gi, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '')
     .replace(/[а-яё]/gi, (ch) => {
       const map: Record<string, string> = {
         а: 'a',
@@ -155,26 +166,76 @@ function slugFromTitle(title: string): string {
       };
       return map[ch.toLowerCase()] ?? '';
     })
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
     .replace(/-+/g, '-')
     .slice(0, 64);
+  return translit || 'category';
+}
+
+function takenSlugs(excludeId?: string): Set<string> {
+  const set = new Set<string>();
+  for (const node of flattenCategories(tree.value)) {
+    if (excludeId && node.id === excludeId) continue;
+    set.add(node.slug);
+  }
+  return set;
+}
+
+function uniqueSlug(base: string, excludeId?: string): string {
+  const taken = takenSlugs(excludeId);
+  const root = (base || 'category').slice(0, 64);
+  if (!taken.has(root)) return root;
+  for (let i = 2; i < 1000; i += 1) {
+    const suffix = `-${i}`;
+    const candidate = `${root.slice(0, Math.max(1, 64 - suffix.length))}${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${root.slice(0, 55)}-${Date.now().toString(36).slice(-8)}`;
+}
+
+function syncSlugFromTitle() {
+  if (!form.value || form.value.mode !== 'create' || slugManual.value) return;
+  form.value.slug = uniqueSlug(slugFromTitle(form.value.title));
 }
 
 function onTitleInput() {
-  if (!form.value || form.value.mode !== 'create' || form.value.slug) return;
-  form.value.slug = slugFromTitle(form.value.title);
+  syncSlugFromTitle();
+}
+
+function onSlugInput() {
+  slugManual.value = true;
+  if (!form.value) return;
+  form.value.slug = form.value.slug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function regenerateSlug() {
+  if (!form.value) return;
+  slugManual.value = false;
+  form.value.slug = uniqueSlug(
+    slugFromTitle(form.value.title || form.value.slug),
+    form.value.mode === 'edit' ? form.value.categoryId : undefined,
+  );
 }
 
 async function submitForm() {
   if (!form.value) return;
+  if (form.value.mode === 'create' && !form.value.slug.trim()) {
+    form.value.slug = uniqueSlug(slugFromTitle(form.value.title));
+  }
   const payload: CategoryFormInput = {
-    slug: form.value.slug.trim(),
+    slug: form.value.slug.trim().replace(/^-+|-+$/g, ''),
     title: form.value.title.trim(),
     description: form.value.description.trim(),
     parentId: form.value.parentId,
     sortOrder: form.value.sortOrder,
   };
   if (!payload.title || !payload.slug) {
-    formError.value = 'Укажите название и slug';
+    formError.value = 'Укажите название';
     return;
   }
 
@@ -263,14 +324,16 @@ async function saveAccess() {
 <template>
   <section class="forum-categories">
     <header class="forum-categories__header">
-      <div>
+      <div class="min-w-0">
         <p class="forum-categories__back">
           <RouterLink to="/forum">
             ← К форуму
           </RouterLink>
         </p>
-        <h1>Разделы форума</h1>
-        <p class="forum-categories__lead">
+        <h1 class="text-xl font-semibold text-text sm:text-2xl">
+          Разделы форума
+        </h1>
+        <p class="mt-1 text-sm text-text-muted">
           Управление деревом категорий. Клик по названию открывает темы раздела.
         </p>
       </div>
@@ -278,6 +341,7 @@ async function saveAccess() {
         v-if="isAdmin"
         intent="primary"
         type="button"
+        class="w-full shrink-0 sm:w-auto"
         @click="openCreateRoot"
       >
         + Корневой раздел
@@ -286,10 +350,13 @@ async function saveAccess() {
 
     <p
       v-if="isAdmin"
-      class="forum-categories__admin-hint"
+      class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text-muted"
     >
       Режим администратора: доступ через
-      <RouterLink to="/admin/access-groups">
+      <RouterLink
+        to="/admin/access-groups"
+        class="text-primary hover:underline"
+      >
         группы доступа
       </RouterLink>
       (нет групп = всем; иначе OR по выбранным + админы).
@@ -297,32 +364,38 @@ async function saveAccess() {
 
     <div
       v-if="access"
-      class="forum-categories__form-panel"
+      class="rounded-md border border-border bg-surface p-4"
     >
-      <h2>Доступ: {{ access.title }}</h2>
-      <p class="forum-categories__lead">
+      <h2 class="text-lg font-medium text-text">
+        Доступ: {{ access.title }}
+      </h2>
+      <p class="mt-1 text-sm text-text-muted">
         Выберите группы. Пустой выбор — раздел виден всем.
       </p>
       <p
         v-if="allGroups.length === 0"
-        class="forum-categories__lead"
+        class="mt-2 text-sm text-text-muted"
       >
         Групп пока нет —
-        <RouterLink to="/admin/access-groups">
+        <RouterLink
+          to="/admin/access-groups"
+          class="text-primary hover:underline"
+        >
           создайте на странице групп доступа
         </RouterLink>.
       </p>
       <ul
         v-else
-        class="forum-categories__group-list"
+        class="mt-3 grid gap-2"
       >
         <li
           v-for="g in allGroups"
           :key="g.id"
         >
-          <label class="forum-categories__group-item">
+          <label class="flex cursor-pointer items-start gap-2 text-sm text-text">
             <input
               type="checkbox"
+              class="mt-1 size-4 accent-primary"
               :checked="isSelected(g.id)"
               @change="toggleGroup(g.id)"
             >
@@ -330,7 +403,7 @@ async function saveAccess() {
               <strong>{{ g.name }}</strong>
               <span
                 v-if="g.description"
-                class="forum-categories__group-desc"
+                class="font-normal text-text-muted"
               > — {{ g.description }}</span>
             </span>
           </label>
@@ -338,11 +411,11 @@ async function saveAccess() {
       </ul>
       <p
         v-if="accessError"
-        class="forum-categories__error"
+        class="mt-2 text-sm text-error"
       >
         {{ accessError }}
       </p>
-      <div class="forum-categories__form-actions">
+      <div class="mt-4 flex flex-wrap gap-2">
         <UiButton
           intent="primary"
           type="button"
@@ -364,55 +437,81 @@ async function saveAccess() {
 
     <div
       v-if="showForm"
-      class="forum-categories__form-panel"
+      class="rounded-md border border-border bg-surface p-4"
     >
-      <h2>{{ form?.mode === 'create' ? 'Новый раздел' : 'Редактирование' }}</h2>
+      <h2 class="text-lg font-medium text-text">
+        {{ form?.mode === 'create' ? 'Новый раздел' : 'Редактирование' }}
+      </h2>
+      <p
+        v-if="parentTitle"
+        class="mt-1 text-sm text-text-muted"
+      >
+        Родитель: {{ parentTitle }}
+      </p>
       <form
-        class="forum-categories__form"
+        class="mt-3 grid max-w-xl gap-3"
         @submit.prevent="submitForm"
       >
-        <label>
+        <label class="grid gap-1 text-sm text-text">
           Название
           <input
             v-model="form!.title"
             type="text"
             maxlength="128"
             required
+            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
             @input="onTitleInput"
           >
         </label>
-        <label>
-          Slug (URL)
+        <label class="grid gap-1 text-sm text-text">
+          <span class="flex flex-wrap items-center justify-between gap-2">
+            Slug (URL)
+            <button
+              type="button"
+              class="text-xs font-medium text-primary hover:underline"
+              @click="regenerateSlug"
+            >
+              Сгенерировать
+            </button>
+          </span>
           <input
             v-model="form!.slug"
             type="text"
             maxlength="64"
             required
+            pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+            class="w-full rounded-md border border-border bg-bg px-3 py-2 font-mono text-sm text-text"
+            @input="onSlugInput"
           >
+          <span class="text-xs text-text-muted">
+            При создании заполняется автоматически и делается уникальным.
+          </span>
         </label>
-        <label>
+        <label class="grid gap-1 text-sm text-text">
           Описание
           <textarea
             v-model="form!.description"
             rows="3"
             maxlength="2000"
+            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
           />
         </label>
-        <label>
-          Порядок сортировки
+        <label class="grid gap-1 text-sm text-text sm:max-w-40">
+          Порядок
           <input
             v-model.number="form!.sortOrder"
             type="number"
             step="1"
+            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
           >
         </label>
         <p
           v-if="formError"
-          class="forum-categories__error"
+          class="text-sm text-error"
         >
           {{ formError }}
         </p>
-        <div class="forum-categories__form-actions">
+        <div class="flex flex-wrap gap-2 pt-1">
           <UiButton
             intent="primary"
             type="submit"
@@ -434,19 +533,19 @@ async function saveAccess() {
 
     <p
       v-if="loading"
-      class="forum-categories__status"
+      class="text-sm text-text-muted"
     >
       Загрузка…
     </p>
     <p
       v-else-if="error"
-      class="forum-categories__error"
+      class="text-sm text-error"
     >
       {{ error }}
     </p>
     <p
       v-else-if="tree.length === 0"
-      class="forum-categories__status"
+      class="text-sm text-text-muted"
     >
       Пока нет разделов.
       <template v-if="isAdmin">
@@ -478,14 +577,22 @@ async function saveAccess() {
 <style scoped>
 .forum-categories {
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .forum-categories__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .forum-categories__header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
 }
 
 .forum-categories__back {
@@ -498,87 +605,19 @@ async function saveAccess() {
   text-decoration: none;
 }
 
-.forum-categories__lead {
-  margin: 0.25rem 0 0;
-  color: var(--color-text-muted);
-}
-
-.forum-categories__admin-hint {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  font-size: 0.9rem;
-}
-
-.forum-categories__admin-hint a {
-  color: var(--color-primary);
-}
-
-.forum-categories__form-panel {
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-bg);
-}
-
-.forum-categories__form {
-  display: grid;
-  gap: 0.85rem;
-  max-width: 32rem;
-}
-
-.forum-categories__form label {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.forum-categories__group-list {
-  list-style: none;
-  margin: 0.75rem 0 0;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.forum-categories__group-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.forum-categories__group-desc {
-  font-weight: 400;
-  color: var(--color-text-muted);
-}
-
-.forum-categories__form input,
-.forum-categories__form textarea {
-  width: 100%;
-}
-
-.forum-categories__form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.forum-categories__status,
-.forum-categories__error {
-  margin: 0;
-}
-
-.forum-categories__error {
-  color: var(--color-error);
-}
-
 .forum-categories__tree {
   list-style: none;
   margin: 0;
-  padding: 0 1rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .forum-categories__tree {
+    padding: 0 1rem;
+  }
 }
 </style>

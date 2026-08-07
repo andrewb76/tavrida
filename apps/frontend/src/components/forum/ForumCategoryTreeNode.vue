@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CategoryNode } from '@/services/forum';
 import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const props = defineProps<{
@@ -21,6 +21,8 @@ const emit = defineEmits<{
   toggleCollapse: [categoryId: string];
 }>();
 
+const menuOpen = ref(false);
+
 const hasChildren = computed(() => props.node.children.length > 0);
 const isCollapsed = computed(() => props.collapsedIds.has(props.node.id));
 const topicsLink = computed(() => ({
@@ -31,16 +33,48 @@ const topicsLink = computed(() => ({
 const topicCount = computed(() => props.node.topicCount ?? 0);
 const commentCount = computed(() => props.node.commentCount ?? 0);
 
+const indentStyle = computed(() => ({
+  '--depth': String(props.depth),
+}));
+
 function onToggle() {
   emit('toggleCollapse', props.node.id);
 }
+
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value;
+}
+
+function closeMenu() {
+  menuOpen.value = false;
+}
+
+function runAction(action: 'addChild' | 'edit' | 'access' | 'delete') {
+  closeMenu();
+  emit(action, props.node);
+}
+
+function onDocClick(e: MouseEvent) {
+  const target = e.target as HTMLElement | null;
+  if (!target?.closest(`[data-category-actions="${props.node.id}"]`)) {
+    closeMenu();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick);
+});
 </script>
 
 <template>
   <li class="forum-category-node">
     <div
       class="forum-category-node__row"
-      :style="{ paddingLeft: `${depth * 1.25}rem` }"
+      :style="indentStyle"
     >
       <div class="forum-category-node__main">
         <div class="forum-category-node__title-row">
@@ -89,35 +123,77 @@ function onToggle() {
       <div
         v-if="isAdmin"
         class="forum-category-node__actions"
+        :data-category-actions="node.id"
       >
         <button
           type="button"
-          class="forum-category-node__btn"
-          @click="emit('addChild', node)"
+          class="forum-category-node__menu-btn"
+          :aria-expanded="menuOpen"
+          aria-haspopup="menu"
+          aria-label="Действия"
+          title="Действия"
+          @click.stop="toggleMenu"
         >
-          + Подраздел
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="forum-category-node__menu-icon"
+            aria-hidden="true"
+          >
+            <circle
+              cx="12"
+              cy="5"
+              r="1.5"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="1.5"
+            />
+            <circle
+              cx="12"
+              cy="19"
+              r="1.5"
+            />
+          </svg>
         </button>
-        <button
-          type="button"
-          class="forum-category-node__btn"
-          @click="emit('edit', node)"
+
+        <div
+          v-if="menuOpen"
+          class="forum-category-node__menu"
+          role="menu"
         >
-          Изменить
-        </button>
-        <button
-          type="button"
-          class="forum-category-node__btn"
-          @click="emit('access', node)"
-        >
-          Доступ
-        </button>
-        <button
-          type="button"
-          class="forum-category-node__btn forum-category-node__btn--danger"
-          @click="emit('delete', node)"
-        >
-          Удалить
-        </button>
+          <button
+            type="button"
+            role="menuitem"
+            @click="runAction('addChild')"
+          >
+            + Подраздел
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            @click="runAction('edit')"
+          >
+            Изменить
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            @click="runAction('access')"
+          >
+            Доступ
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="forum-category-node__menu-danger"
+            @click="runAction('delete')"
+          >
+            Удалить
+          </button>
+        </div>
       </div>
     </div>
 
@@ -158,31 +234,39 @@ function onToggle() {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 0;
+  gap: 0.5rem;
+  padding: 0.65rem 0;
+  padding-left: calc(var(--depth, 0) * 0.85rem);
   border-bottom: 1px solid var(--color-border);
 }
 
 .forum-category-node__main {
   min-width: 0;
+  flex: 1;
 }
 
 .forum-category-node__title-row {
   display: flex;
-  align-items: baseline;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.15rem;
 }
 
 .forum-category-node__toggle {
   flex: none;
-  width: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  min-height: 2.25rem;
+  margin: -0.25rem 0;
   border: none;
   background: transparent;
   padding: 0;
   font-size: 0.95rem;
-  line-height: 1.4;
+  line-height: 1;
   cursor: pointer;
   color: var(--color-text-muted);
+  touch-action: manipulation;
 }
 
 .forum-category-node__toggle:hover {
@@ -191,7 +275,7 @@ function onToggle() {
 
 .forum-category-node__toggle-spacer {
   display: inline-block;
-  width: 1.5rem;
+  width: 2.25rem;
   flex: none;
 }
 
@@ -200,8 +284,14 @@ function onToggle() {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.35rem;
+  padding-top: 0.35rem;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
+}
+
+.forum-category-node__link strong {
+  word-break: break-word;
 }
 
 .forum-category-node__link:hover strong {
@@ -209,8 +299,9 @@ function onToggle() {
 }
 
 .forum-category-node__slug {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
+  word-break: break-all;
 }
 
 .forum-category-node__badge {
@@ -225,39 +316,105 @@ function onToggle() {
 }
 
 .forum-category-node__counts {
-  margin: 0.25rem 0 0 1.75rem;
-  font-size: 0.85rem;
+  margin: 0.2rem 0 0 2.25rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
 .forum-category-node__desc {
-  margin: 0.35rem 0 0 1.75rem;
-  font-size: 0.9rem;
+  margin: 0.3rem 0 0 2.25rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .forum-category-node__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+  position: relative;
   flex-shrink: 0;
 }
 
-.forum-category-node__btn {
+.forum-category-node__menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg);
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   cursor: pointer;
+  touch-action: manipulation;
 }
 
-.forum-category-node__btn:hover {
+.forum-category-node__menu-btn:hover,
+.forum-category-node__menu-btn[aria-expanded='true'] {
   border-color: var(--color-primary);
+  color: var(--color-text);
+  background: var(--color-bg);
 }
 
-.forum-category-node__btn--danger:hover {
-  border-color: var(--color-error);
+.forum-category-node__menu-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.forum-category-node__menu {
+  position: absolute;
+  right: 0;
+  z-index: 30;
+  margin-top: 0.25rem;
+  min-width: 11rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card, 0 8px 24px rgb(0 0 0 / 12%));
+  padding: 0.25rem 0;
+}
+
+.forum-category-node__menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.forum-category-node__menu button:hover {
+  background: var(--color-bg);
+}
+
+.forum-category-node__menu-danger:hover {
   color: var(--color-error);
+}
+
+@media (max-width: 640px) {
+  .forum-category-node__row {
+    padding-left: calc(var(--depth, 0) * 0.5rem);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .forum-category-node__slug {
+    display: none;
+  }
+
+  .forum-category-node__desc {
+    display: none;
+  }
+
+  .forum-category-node__counts {
+    margin-left: 2.25rem;
+  }
 }
 </style>

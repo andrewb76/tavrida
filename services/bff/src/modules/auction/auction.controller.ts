@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -27,6 +28,7 @@ import { assertMediaUrlsAllowed } from '@tavrida/object-storage';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { BillingClient } from '../billing/billing.client';
+import { KetoService } from '../keto/keto.service';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import { AuctionClient } from './auction.client';
@@ -142,6 +144,25 @@ class PlaceBidDto {
   amount!: number;
 }
 
+class CreateExpertAppraisalDto {
+  @IsString()
+  @MinLength(10)
+  @MaxLength(5000)
+  summary!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  estimatedValueMin?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  estimatedValueMax?: number;
+}
+
 @Controller('auctions')
 @UseGuards(JwtAuthGuard)
 export class AuctionController {
@@ -151,6 +172,7 @@ export class AuctionController {
     private readonly mediaLimits: MediaLimitsService,
     private readonly mediaStorage: MediaStorageService,
     private readonly billing: BillingClient,
+    private readonly keto: KetoService,
   ) {}
 
   @Get('create-options')
@@ -279,9 +301,87 @@ export class AuctionController {
     return this.auction.placeBid(id, { bidderId: user.sub, amount: body.amount });
   }
 
+  @Post(':id/promote')
+  async promote(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    const lot = await this.auction.getAuction(id);
+    const sellerId = typeof lot.sellerId === 'string' ? lot.sellerId : '';
+    const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    if (sellerId !== user.sub && !isAdmin) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Продвижение доступно только продавцу лота',
+      });
+    }
+
+    const meta = await this.auction.getSellerMeta(user.sub);
+    const resolved = await this.auctionPlanPolicy.resolveSellerPlanOptions(
+      user.sub,
+      meta.lotsCreatedToday,
+    );
+    if (!resolved.promotionEnabled) {
+      throw new ForbiddenException({
+        type: 'feature_not_available',
+        detail: 'Продвижение недоступно на текущем тарифе',
+      });
+    }
+
+    const requestKey = idempotencyKey?.trim();
+    if (!requestKey || requestKey.length > 80) {
+      throw new BadRequestException({
+        type: 'idempotency_key_required',
+        detail: 'Для платных опций требуется Idempotency-Key (до 80 символов)',
+      });
+    }
+    const chargeKey = createHash('sha256').update(`${user.sub}:${requestKey}`).digest('hex');
+    await this.billing.charge({
+      userId: user.sub,
+      amount: resolved.promotionUnitPrice,
+      target: 'auction.promotion',
+      description: 'Продвижение лота',
+      idempotencyKey: `auction.promote:${chargeKey}`,
+    });
+
+    return this.auction.promoteAuction(id);
+  }
+
   @Get(':id/expert-appraisals')
   listExpertAppraisals(@Param('id') id: string) {
     return this.auction.listExpertAppraisals(id);
+  }
+
+  @Post(':id/expert-appraisals')
+  async createExpertAppraisal(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() body: CreateExpertAppraisalDto,
+  ) {
+    const isExpert = await this.keto.isPlatformExpert(user.sub);
+    if (!isExpert) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Экспертиза доступна только экспертам',
+      });
+    }
+
+    const lot = await this.auction.getAuction(id);
+    const sellerId = typeof lot.sellerId === 'string' ? lot.sellerId : '';
+    if (sellerId === user.sub) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Нельзя оценить собственный лот',
+      });
+    }
+
+    return this.auction.createExpertAppraisal(id, {
+      expertId: user.sub,
+      summary: body.summary,
+      estimatedValueMin: body.estimatedValueMin,
+      estimatedValueMax: body.estimatedValueMax,
+    });
   }
 
   @Get(':id')

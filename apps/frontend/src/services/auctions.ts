@@ -227,3 +227,30 @@ export async function placeBid(
     amount,
   });
 }
+
+export async function promoteAuction(
+  auctionId: string,
+  idempotencyKey: string,
+): Promise<AuctionDetail> {
+  return authPost<AuctionDetail>(
+    `/auctions/${encodeURIComponent(auctionId)}/promote`,
+    {},
+    { 'Idempotency-Key': idempotencyKey },
+  );
+}
+
+export type CreateExpertAppraisalInput = {
+  summary: string;
+  estimatedValueMin?: number;
+  estimatedValueMax?: number;
+};
+
+export async function createExpertAppraisal(
+  auctionId: string,
+  input: CreateExpertAppraisalInput,
+): Promise<ExpertAppraisal> {
+  return authPost<ExpertAppraisal>(
+    `/auctions/${encodeURIComponent(auctionId)}/expert-appraisals`,
+    input,
+  );
+}

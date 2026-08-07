@@ -432,15 +432,94 @@ export class AuctionsService {
       order: { createdAt: 'DESC' },
     });
     return {
-      data: rows.map((row) => ({
-        id: row.id,
-        expertId: row.expertId,
-        summary: row.summary,
-        estimatedValueMin: row.estimatedValueMin != null ? Number(row.estimatedValueMin) : null,
-        estimatedValueMax: row.estimatedValueMax != null ? Number(row.estimatedValueMax) : null,
-        currency: row.currency,
-        createdAt: row.createdAt.toISOString(),
-      })),
+      data: rows.map((row) => this.toAppraisal(row)),
+    };
+  }
+
+  async promote(auctionId: string) {
+    const row = await this.assertPublicAuction(auctionId);
+    const now = new Date();
+    const baseMs =
+      row.promotedUntil && row.promotedUntil.getTime() > now.getTime()
+        ? row.promotedUntil.getTime()
+        : now.getTime();
+    row.promotedUntil = new Date(baseMs + 7 * 24 * 60 * 60 * 1000);
+    await this.auctions.save(row);
+    return this.toDetail(row);
+  }
+
+  async createExpertAppraisal(input: {
+    auctionId: string;
+    expertId: string;
+    summary: string;
+    estimatedValueMin?: number | null;
+    estimatedValueMax?: number | null;
+  }) {
+    const auction = await this.assertPublicAuction(input.auctionId);
+    if (auction.sellerId === input.expertId) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'Seller cannot appraise own lot',
+      });
+    }
+    const summary = input.summary.trim();
+    if (summary.length < 10 || summary.length > 5000) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'summary must be 10–5000 characters',
+      });
+    }
+    const min = input.estimatedValueMin ?? null;
+    const max = input.estimatedValueMax ?? null;
+    if (min != null && min < 0) {
+      throw new BadRequestException({ type: 'validation', detail: 'estimatedValueMin invalid' });
+    }
+    if (max != null && max < 0) {
+      throw new BadRequestException({ type: 'validation', detail: 'estimatedValueMax invalid' });
+    }
+    if (min != null && max != null && min > max) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: 'estimatedValueMin must be ≤ estimatedValueMax',
+      });
+    }
+
+    const appraisal = this.expertAppraisals.create({
+      id: randomUUID(),
+      auctionId: input.auctionId,
+      expertId: input.expertId,
+      summary,
+      estimatedValueMin: min != null ? String(min) : null,
+      estimatedValueMax: max != null ? String(max) : null,
+      currency: 'RUB',
+    });
+
+    const createdAtIso = new Date().toISOString();
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(ExpertAppraisalEntity).save(appraisal);
+      auction.hasExpertAppraisal = true;
+      await manager.getRepository(AuctionEntity).save(auction);
+      await this.events.enqueueExpertAppraisalAdded(manager, {
+        auctionId: input.auctionId,
+        appraisalId: appraisal.id,
+        expertId: input.expertId,
+        createdAt: createdAtIso,
+      });
+    });
+    this.events.flush();
+    return this.toAppraisal(appraisal);
+  }
+
+  private toAppraisal(row: ExpertAppraisalEntity) {
+    return {
+      id: row.id,
+      expertId: row.expertId,
+      summary: row.summary,
+      estimatedValueMin: row.estimatedValueMin != null ? Number(row.estimatedValueMin) : null,
+      estimatedValueMax: row.estimatedValueMax != null ? Number(row.estimatedValueMax) : null,
+      currency: row.currency,
+      createdAt: row.createdAt.toISOString(),
     };
   }
 

@@ -23,6 +23,7 @@
 **API:** `GET /forum/categories` (`topicCount`, `commentCount` на узле)
 
 Админ-CRUD дерева: `/forum/categories` (ссылка «← К форуму»).
+На мобилке: действия узла в меню ⋮; slug автогенерируется уникально из названия.
 
 ### ASCII
 

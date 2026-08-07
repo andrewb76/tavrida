@@ -29,10 +29,11 @@
 
 ### Дальше (backlog)
 
-- [ ] promote billing charge
-- [ ] expert POST
-- [ ] Redis/WS live bids
+- [x] promote billing charge (`POST …/promote` + create-time)
+- [x] expert POST
+- [x] WS live bids (`auction:{id}` via BFF relay)
 - [ ] Dutch live clock (чаще чем hourly) — optional
+- [ ] Ревизия англоязычных UI-лейблов аукциона → русский
 
 ### Вне скоупа
 
