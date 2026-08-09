@@ -14,8 +14,8 @@ import {
   type CategoryNode,
 } from '@/services/forum';
 import { useSessionStore } from '@/stores/session';
-import { UiButton } from '@tavrida/ui';
-import { computed, onMounted, ref } from 'vue';
+import { UiButton, UiModal } from '@tavrida/ui';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const session = useSessionStore();
@@ -41,7 +41,15 @@ type FormState = {
 };
 
 const form = ref<FormState | null>(null);
-const showForm = computed(() => form.value != null);
+const formOpen = ref(false);
+
+watch(formOpen, (open) => {
+  if (!open && form.value) {
+    form.value = null;
+    formError.value = null;
+    slugManual.value = false;
+  }
+});
 
 type AccessState = {
   categoryId: string;
@@ -87,6 +95,7 @@ function openCreateRoot() {
     sortOrder: 0,
   };
   formError.value = null;
+  formOpen.value = true;
 }
 
 function openCreateChild(parent: CategoryNode) {
@@ -101,6 +110,7 @@ function openCreateChild(parent: CategoryNode) {
     sortOrder: 0,
   };
   formError.value = null;
+  formOpen.value = true;
 }
 
 function openEdit(node: CategoryNode) {
@@ -116,12 +126,14 @@ function openEdit(node: CategoryNode) {
     sortOrder: node.sortOrder,
   };
   formError.value = null;
+  formOpen.value = true;
 }
 
 function closeForm() {
   form.value = null;
   formError.value = null;
   slugManual.value = false;
+  formOpen.value = false;
 }
 
 function slugFromTitle(title: string): string {
@@ -435,35 +447,28 @@ async function saveAccess() {
       </div>
     </div>
 
-    <div
-      v-if="showForm"
-      class="rounded-md border border-border bg-surface p-4"
+    <UiModal
+      v-model:open="formOpen"
+      :title="form?.mode === 'create' ? 'Новый раздел' : 'Редактирование'"
+      :description="parentTitle ? `Родитель: ${parentTitle}` : undefined"
     >
-      <h2 class="text-lg font-medium text-text">
-        {{ form?.mode === 'create' ? 'Новый раздел' : 'Редактирование' }}
-      </h2>
-      <p
-        v-if="parentTitle"
-        class="mt-1 text-sm text-text-muted"
-      >
-        Родитель: {{ parentTitle }}
-      </p>
       <form
-        class="mt-3 grid max-w-xl gap-3"
+        class="grid gap-4"
         @submit.prevent="submitForm"
       >
-        <label class="grid gap-1 text-sm text-text">
+        <label class="grid gap-1.5 text-sm text-text">
           Название
           <input
             v-model="form!.title"
             type="text"
             maxlength="128"
             required
-            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
+            class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Введите название раздела"
             @input="onTitleInput"
           >
         </label>
-        <label class="grid gap-1 text-sm text-text">
+        <label class="grid gap-1.5 text-sm text-text">
           <span class="flex flex-wrap items-center justify-between gap-2">
             Slug (URL)
             <button
@@ -480,34 +485,36 @@ async function saveAccess() {
             maxlength="64"
             required
             pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-            class="w-full rounded-md border border-border bg-bg px-3 py-2 font-mono text-sm text-text"
+            class="w-full rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="avto-zapolnitsya"
             @input="onSlugInput"
           >
           <span class="text-xs text-text-muted">
             При создании заполняется автоматически и делается уникальным.
           </span>
         </label>
-        <label class="grid gap-1 text-sm text-text">
+        <label class="grid gap-1.5 text-sm text-text">
           Описание
           <textarea
             v-model="form!.description"
             rows="3"
             maxlength="2000"
-            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
+            class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Кратко о содержимом раздела"
           />
         </label>
-        <label class="grid gap-1 text-sm text-text sm:max-w-40">
+        <label class="grid gap-1.5 text-sm text-text sm:max-w-40">
           Порядок
           <input
             v-model.number="form!.sortOrder"
             type="number"
             step="1"
-            class="w-full rounded-md border border-border bg-bg px-3 py-2 text-text"
+            class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
         </label>
         <p
           v-if="formError"
-          class="text-sm text-error"
+          class="text-sm text-danger"
         >
           {{ formError }}
         </p>
@@ -529,7 +536,7 @@ async function saveAccess() {
           </UiButton>
         </div>
       </form>
-    </div>
+    </UiModal>
 
     <p
       v-if="loading"
