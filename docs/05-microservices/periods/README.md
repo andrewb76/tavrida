@@ -106,15 +106,30 @@
 | `rootId` | UUID | id корня (=id для root) |
 | `depth` | int | 0…N |
 | `sortIndex` | int | Порядок среди siblings |
-| `startsOn` | date | Inclusive (PG date, BC ок) |
-| `endsOn` | date | Inclusive |
+| `startsOn` | date | Inclusive; формат: `YYYY-MM-DD` (н.э.) или `-YYYY-MM-DD` (до н.э.) |
+| `endsOn` | date | Inclusive; аналогичный формат |
 | `title` | varchar | — |
 | `summary` | text | Краткое описание |
 | `body` | text | Полное описание (Markdown) |
 | `metadata` | jsonb | Значения по схеме категории |
 | `createdAt` / `updatedAt` | timestamptz | — |
 
-**Индексы:** `(categoryId, startsOn, endsOn)`, `(parentId, sortIndex)`, `(rootId)`, GIN по `metadata` (later).
+**Индексы:** `(categoryId, startsOn, `endsOn`)`, `(parentId, sortIndex)`, `(rootId)`, GIN по `metadata` (later).
+
+### Формат дат (BCE/CE)
+
+Используется **астрономическая нумерация годов** (ISO-8601 расширение):
+
+| Эпоха | Формат | Пример |
+|-------|--------|--------|
+| н.э. | `YYYY-MM-DD` | `0476-01-01` (= 476 г. н.э.) |
+| до н.э. | `-YYYY-MM-DD` | `-0001-01-01` (= 1 г. до н.э.) |
+| | | `-0476-01-01` (= 476 г. до н.э.) |
+
+**Важно:**
+- Год 0 не существует: `-0001-01-01` = 1 до н.э., `-0002-01-01` = 2 до н.э.
+- PostgreSQL `date` тип поддерживает оба формата нatively
+- Сравнение дат выполняется через `parseDateDays()` (proleptic Gregorian calendar), **не** лексикографически
 
 ## 📏 Инварианты partition
 
@@ -204,7 +219,7 @@ Mirror admin + public without JWT (`/internal/v1/periods/...`).
 
 - категории уже из `SEED_CATEGORIES` (`CategoriesService.onModuleInit`);
 - деревья в `config/crimea-seed.ts`: epochs, cultures, polities (с partition у Кафы / ханства), dynasties (Гиреи), religions, craft_traditions, trade_networks;
-- даты в **н.э.** (ISO); до н.э. — в title/summary (лексикографический compare ненадёжен для BC).
+- даты в формате **BCE/CE** (астрономическая нумерация: `-0500-01-01` = 500 до н.э., `0476-01-01` = 476 н.э.).
 
 Повторный старт при `count > 0` seed пропускает.
 

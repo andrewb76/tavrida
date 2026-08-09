@@ -12,6 +12,16 @@ defineEmits<{
   partition: [PeriodRecord];
   remove: [PeriodRecord];
 }>();
+
+function formatDate(dateStr: string): string {
+  const s = String(dateStr).slice(0, 10);
+  const neg = s.startsWith('-');
+  const clean = neg ? s.slice(1) : s;
+  const [y, m, d] = clean.split('-');
+  const year = neg ? `-${y}` : y;
+  const displayYear = neg ? `${Number(y)} до н.э.` : `${Number(y)} н.э.`;
+  return `${d}.${m}.${year} (${displayYear})`;
+}
 </script>
 
 <template>
@@ -27,7 +37,7 @@ defineEmits<{
             {{ node.title }}
           </div>
           <div class="text-xs text-text-muted">
-            {{ String(node.startsOn).slice(0, 10) }} — {{ String(node.endsOn).slice(0, 10) }}
+            {{ formatDate(node.startsOn) }} — {{ formatDate(node.endsOn) }}
             · depth {{ node.depth }}
           </div>
         </div>

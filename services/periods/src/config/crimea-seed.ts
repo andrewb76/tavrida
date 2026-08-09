@@ -1,7 +1,9 @@
 /**
  * Demo seed: Crimea / Northern Black Sea historical periods.
- * Dates use CE ISO (YYYY-MM-DD); BCE context is described in titles/summaries
- * (partition date compare is lexicographic and unreliable for negative years).
+ * Date format: ISO-8601 with astronomical year numbering.
+ *   CE:  "0476-01-01"    (= 476 AD)
+ *   BCE: "-0001-01-01"   (= 1 BC)
+ *         "-0476-01-01"   (= 476 BC)
  */
 
 export type SeedPeriodNode = {
@@ -25,10 +27,10 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
     roots: [
       {
         title: 'Античность Причерноморья',
-        summary: 'Греческая колонизация, Боспор, Херсонес; условно I–V вв. н.э. (с отсылкой к более ранним горизонтам).',
-        startsOn: '0001-01-01',
+        summary: 'Греческая колонизация, Боспор, Херсонес (V в. до н.э. – V в. н.э.).',
+        startsOn: '-0500-01-01',
         endsOn: '0476-01-01',
-        metadata: { convention: 'CE approx; BCE horizons in cultures layer' },
+        metadata: { convention: 'BCE/CE' },
       },
       {
         title: 'Раннее средневековье',
@@ -65,9 +67,9 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
     roots: [
       {
         title: 'Киммерийцы',
-        summary: 'Ранний железный век Северного Причерноморья (условно IX–VII вв. до н.э.).',
-        startsOn: '0001-01-01',
-        endsOn: '0100-01-01',
+        summary: 'Ранний железный век Северного Причерноморья (IX–VII вв. до н.э.).',
+        startsOn: '-0900-01-01',
+        endsOn: '-0700-01-01',
         metadata: {
           region: 'Северное Причерноморье / Крым',
           materialCulture: 'бронза / раннее железо',
@@ -77,8 +79,8 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Скифы',
         summary: 'Степная культура VII–III вв. до н.э.; курганы, звериный стиль.',
-        startsOn: '0001-01-01',
-        endsOn: '0200-01-01',
+        startsOn: '-0700-01-01',
+        endsOn: '-0300-01-01',
         metadata: {
           region: 'Степь + Крым',
           materialCulture: 'золото / железо, звериный стиль',
@@ -88,8 +90,8 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Тавры',
         summary: 'Горный / южный Крым; контакты с греческими колониями.',
-        startsOn: '0001-01-01',
-        endsOn: '0200-01-01',
+        startsOn: '-0700-01-01',
+        endsOn: '-0300-01-01',
         metadata: {
           region: 'Южный берег / горы Крыма',
           materialCulture: 'керамика, оружие',
@@ -99,7 +101,7 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Сарматы',
         summary: 'Иранские кочевники степи; влияние на поздний Боспор.',
-        startsOn: '0050-01-01',
+        startsOn: '-0300-01-01',
         endsOn: '0400-01-01',
         metadata: {
           region: 'Северное Причерноморье',
@@ -123,15 +125,15 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
     roots: [
       {
         title: 'Боспорское царство',
-        summary: 'Эллинистическое / римское царство вокруг Керченского пролива.',
-        startsOn: '0001-01-01',
+        summary: 'Эллинистическое / римское царство вокруг Керченского пролива (V в. до н.э. – IV в. н.э.).',
+        startsOn: '-0500-01-01',
         endsOn: '0370-01-01',
         metadata: { capital: 'Пантикапей', polityType: 'kingdom' },
       },
       {
         title: 'Херсонес Таврический',
-        summary: 'Дорийская колония и византийский Херсон.',
-        startsOn: '0001-01-01',
+        summary: 'Дорийская колония и византийский Херсон (V в. до н.э. – XIV в. н.э.).',
+        startsOn: '-0500-01-01',
         endsOn: '1396-01-01',
         metadata: { capital: 'Херсонес', polityType: 'colony' },
       },
@@ -232,8 +234,8 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       },
       {
         title: 'Спартокиды (Боспор)',
-        summary: 'Династия Боспорского царства (эллинистический и римский периоды).',
-        startsOn: '0001-01-01',
+        summary: 'Династия Боспорского царства (V в. до н.э. – IV в. н.э.).',
+        startsOn: '-0500-01-01',
         endsOn: '0341-01-01',
         metadata: { origin: 'фрако-греческое', seat: 'Пантикапей' },
       },
@@ -245,7 +247,7 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Античные культуры и язычество',
         summary: 'Греческие, скифские и местные культы.',
-        startsOn: '0001-01-01',
+        startsOn: '-0700-01-01',
         endsOn: '0400-01-01',
         metadata: { tradition: 'pagan' },
       },
@@ -278,8 +280,8 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Скифский звериный стиль',
         summary: 'Золото, бронза, кость — образы хищников и копытных.',
-        startsOn: '0001-01-01',
-        endsOn: '0200-01-01',
+        startsOn: '-0700-01-01',
+        endsOn: '-0300-01-01',
         metadata: {
           medium: 'золото / бронза',
           diagnosticTraits: 'стилизованные животные, аппликации на оружии и уборе',
@@ -288,7 +290,7 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Греческая чернолаковая и столовая керамика',
         summary: 'Импорт и местные подражания в колониях.',
-        startsOn: '0001-01-01',
+        startsOn: '-0500-01-01',
         endsOn: '0300-01-01',
         metadata: {
           medium: 'керамика',
@@ -323,7 +325,7 @@ export const CRIMEA_PERIOD_TREES: SeedCategoryTree[] = [
       {
         title: 'Греческая колонизационная сеть',
         summary: 'Связи метрополий с Понтом и Боспором.',
-        startsOn: '0001-01-01',
+        startsOn: '-0700-01-01',
         endsOn: '0300-01-01',
         metadata: {
           hubs: ['Пантикапей', 'Херсонес', 'Ольвия'],

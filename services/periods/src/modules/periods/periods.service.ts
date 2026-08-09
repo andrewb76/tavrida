@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { validateMetadataValues } from '../../common/metadata-schema';
-import { validateSiblingPartition } from '../../common/partition';
+import { cmpDate as cmpDateImported, validateSiblingPartition } from '../../common/partition';
 import { PeriodCategoryEntity } from '../../entities/period-category.entity';
 import { PeriodEntity } from '../../entities/period.entity';
 import { CategoriesService } from '../categories/categories.service';
@@ -26,6 +26,18 @@ export type QueryPeriodsInput = {
   view?: 'flat' | 'tree';
 };
 
+const ISO_DATE_RE = /^-?\d{4}-\d{2}-\d{2}$/;
+
+function normalizeDate(value: string): string {
+  // Strip time component if present (e.g. "2024-01-15T00:00:00Z" → "2024-01-15")
+  // For BCE dates: "-0001-01-01T00:00:00Z" → "-0001-01-01"
+  const sliced = value.slice(0, 10);
+  if (!ISO_DATE_RE.test(sliced)) {
+    throw new BadRequestException(`Invalid date format: "${value}" (expected YYYY-MM-DD or -YYYY-MM-DD)`);
+  }
+  return sliced;
+}
+
 @Injectable()
 export class PeriodsService {
   constructor(
@@ -35,7 +47,7 @@ export class PeriodsService {
   ) {}
 
   private toDateString(value: string | Date): string {
-    if (typeof value === 'string') return value.slice(0, 10);
+    if (typeof value === 'string') return normalizeDate(value);
     return value.toISOString().slice(0, 10);
   }
 
@@ -106,9 +118,9 @@ export class PeriodsService {
       throw new BadRequestException(e instanceof Error ? e.message : 'Invalid metadata');
     }
 
-    const startsOn = input.startsOn.slice(0, 10);
-    const endsOn = input.endsOn.slice(0, 10);
-    if (startsOn > endsOn) {
+    const startsOn = normalizeDate(input.startsOn);
+    const endsOn = normalizeDate(input.endsOn);
+    if (cmpDateImported(startsOn, endsOn) > 0) {
       throw new BadRequestException('startsOn must be ≤ endsOn');
     }
 
@@ -163,7 +175,7 @@ export class PeriodsService {
 
     this.applyPeriodPatch(row, patch);
 
-    if (this.toDateString(row.startsOn) > this.toDateString(row.endsOn)) {
+    if (cmpDateImported(this.toDateString(row.startsOn), this.toDateString(row.endsOn)) > 0) {
       throw new BadRequestException('startsOn must be ≤ endsOn');
     }
 
@@ -197,8 +209,8 @@ export class PeriodsService {
     if (patch.summary !== undefined) row.summary = patch.summary;
     if (patch.body !== undefined) row.body = patch.body;
     if (patch.sortIndex !== undefined) row.sortIndex = patch.sortIndex;
-    if (patch.startsOn !== undefined) row.startsOn = patch.startsOn.slice(0, 10);
-    if (patch.endsOn !== undefined) row.endsOn = patch.endsOn.slice(0, 10);
+    if (patch.startsOn !== undefined) row.startsOn = normalizeDate(patch.startsOn);
+    if (patch.endsOn !== undefined) row.endsOn = normalizeDate(patch.endsOn);
   }
 
   private async setValidatedMetadata(row: PeriodEntity, metadata: Record<string, unknown>): Promise<void> {
@@ -244,8 +256,8 @@ export class PeriodsService {
     const category = await this.categories.get(parent.categoryId);
 
     const bounds = children.map((c) => ({
-      startsOn: c.startsOn.slice(0, 10),
-      endsOn: c.endsOn.slice(0, 10),
+      startsOn: normalizeDate(c.startsOn),
+      endsOn: normalizeDate(c.endsOn),
     }));
     const violation = validateSiblingPartition(
       {
@@ -312,8 +324,8 @@ export class PeriodsService {
       if (row.parentId !== parent.id) {
         throw new BadRequestException(`Period ${child.id} is not a child of parent`);
       }
-      row.startsOn = child.startsOn.slice(0, 10);
-      row.endsOn = child.endsOn.slice(0, 10);
+      row.startsOn = normalizeDate(child.startsOn);
+      row.endsOn = normalizeDate(child.endsOn);
       row.title = child.title.trim();
       row.summary = child.summary ?? row.summary;
       row.body = child.body ?? row.body;
@@ -328,8 +340,8 @@ export class PeriodsService {
       rootId: parent.rootId,
       depth: parent.depth + 1,
       sortIndex,
-      startsOn: child.startsOn.slice(0, 10),
-      endsOn: child.endsOn.slice(0, 10),
+      startsOn: normalizeDate(child.startsOn),
+      endsOn: normalizeDate(child.endsOn),
       title: child.title.trim(),
       summary: child.summary ?? '',
       body: child.body ?? '',
@@ -389,10 +401,10 @@ export class PeriodsService {
     input: QueryPeriodsInput,
   ): void {
     if (input.from) {
-      qb.andWhere('p.endsOn >= :from', { from: input.from.slice(0, 10) });
+      qb.andWhere('p.endsOn >= :from', { from: normalizeDate(input.from) });
     }
     if (input.to) {
-      qb.andWhere('p.startsOn <= :to', { to: input.to.slice(0, 10) });
+      qb.andWhere('p.startsOn <= :to', { to: normalizeDate(input.to) });
     }
   }
 
@@ -442,7 +454,7 @@ export class PeriodsService {
       }
     }
     const sortRec = (nodes: PeriodTreeNode[]) => {
-      nodes.sort((a, b) => a.sortIndex - b.sortIndex || a.startsOn.localeCompare(b.startsOn));
+      nodes.sort((a, b) => a.sortIndex - b.sortIndex || cmpDateImported(a.startsOn, b.startsOn));
       for (const n of nodes) if (n.children?.length) sortRec(n.children);
     };
     sortRec(roots);

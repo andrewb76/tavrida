@@ -1,9 +1,18 @@
 /**
  * Sibling partition invariants for historical periods.
  * Children sorted by sortIndex must cover the parent without gaps/overlaps.
+ *
+ * Date format: ISO-8601 extended with astronomical year numbering.
+ *   CE:  "0476-01-01"    (= 476 AD)
+ *   BCE: "-0001-01-01"   (= 1 BC)
+ *         "-0476-01-01"   (= 476 BC)
+ *   Year 0 does not exist: -0001 = 1 BCE, -0002 = 2 BCE.
+ *
+ * PostgreSQL `date` type accepts both formats natively.
+ * Lexicographic comparison is NOT reliable for mixed CE/BCE — use parseDateDays().
  */
 
-export type DateLike = string; // ISO date YYYY-MM-DD (BC: -YYYY-MM-DD or PostgreSQL style)
+export type DateLike = string;
 
 export type PeriodBounds = {
   startsOn: DateLike;
@@ -23,12 +32,48 @@ export type PartitionViolation = {
   index?: number;
 };
 
-function cmpDate(a: DateLike, b: DateLike): number {
-  // ISO-8601 dates (incl. negative years) compare lexicographically if zero-padded.
-  if (a < b) return -1;
-  if (a > b) return 1;
-  return 0;
+/**
+ * Parse ISO date string to serial day number for reliable comparison.
+ * "-0001-01-01" (1 BCE) → -366,  "0000-12-31" invalid,  "0001-01-01" (1 CE) → 1.
+ * Uses proleptic Gregorian calendar (same as PostgreSQL).
+ */
+export function parseDateDays(s: string): number {
+  const neg = s.startsWith('-');
+  const clean = neg ? s.slice(1) : s;
+  const parts = clean.split('-');
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  // Astronomical year → historical: -0001 = 1 BCE, -0002 = 2 BCE
+  const historicalYear = neg ? -(year - 1) : year;
+
+  // Proleptic Gregorian: compute days from 0001-01-01 (1 CE)
+  const y = historicalYear;
+  const m = month;
+  const d = day;
+
+  // Days in prior years
+  const priorYears = y - 1;
+  const leapDays = Math.floor(priorYears / 4) - Math.floor(priorYears / 100) + Math.floor(priorYears / 400);
+  const yearDays = priorYears * 365 + leapDays;
+
+  // Days in prior months of current year (monthDays[i] = day-of-year for first day of month i+1)
+  const monthDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const isLeap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+  let doy = (monthDays[m - 1] ?? 0) + d;
+  if (isLeap && m > 2) doy += 1;
+
+  return yearDays + doy;
 }
+
+function cmpDate(a: DateLike, b: DateLike): number {
+  const da = parseDateDays(a);
+  const db = parseDateDays(b);
+  return da < db ? -1 : da > db ? 1 : 0;
+}
+
+export { cmpDate };
 
 export function assertPeriodBounds(p: PeriodBounds): PartitionViolation | null {
   if (cmpDate(p.startsOn, p.endsOn) > 0) {

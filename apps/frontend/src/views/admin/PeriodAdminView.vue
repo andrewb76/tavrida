@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BceDateInput from '@/components/periods/BceDateInput.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import { ref, computed, onMounted } from 'vue';
@@ -107,20 +108,18 @@ async function submit(status: 'OPEN' | 'DRAFT') {
       </label>
 
       <label class="period-admin__group">
-        <span class="period-admin__label">Дата начала</span>
-        <input
+        <BceDateInput
           v-model="startDate"
-          type="date"
-          required
+          label="Дата начала"
+          :required="true"
         />
       </label>
 
       <label class="period-admin__group">
-        <span class="period-admin__label">Дата окончания</span>
-        <input
+        <BceDateInput
           v-model="endDate"
-          type="date"
-          required
+          label="Дата окончания"
+          :required="true"
         />
       </label>
 

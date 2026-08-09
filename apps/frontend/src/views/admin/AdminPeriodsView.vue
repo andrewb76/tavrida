@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BceDateInput from '@/components/periods/BceDateInput.vue';
 import PeriodTree from '@/components/periods/PeriodTree.vue';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -574,24 +575,16 @@ onMounted(load);
           >
         </label>
         <div class="grid gap-3 md:grid-cols-2">
-          <label class="grid gap-1 text-sm">
-            Начало
-            <input
-              v-model="periodForm.startsOn"
-              class="rounded border border-border px-2 py-1"
-              type="date"
-              required
-            >
-          </label>
-          <label class="grid gap-1 text-sm">
-            Конец
-            <input
-              v-model="periodForm.endsOn"
-              class="rounded border border-border px-2 py-1"
-              type="date"
-              required
-            >
-          </label>
+          <BceDateInput
+            v-model="periodForm.startsOn"
+            label="Начало"
+            :required="true"
+          />
+          <BceDateInput
+            v-model="periodForm.endsOn"
+            label="Конец"
+            :required="true"
+          />
         </div>
         <label class="grid gap-1 text-sm">
           Кратко
@@ -702,18 +695,14 @@ onMounted(load);
             placeholder="Название"
             :aria-label="`Название сегмента ${idx + 1}`"
           >
-          <input
+          <BceDateInput
             v-model="row.startsOn"
-            class="rounded border border-border px-2 py-1"
-            type="date"
             :aria-label="`Начало сегмента ${idx + 1}`"
-          >
-          <input
+          />
+          <BceDateInput
             v-model="row.endsOn"
-            class="rounded border border-border px-2 py-1"
-            type="date"
             :aria-label="`Конец сегмента ${idx + 1}`"
-          >
+          />
         </div>
         <div class="flex flex-wrap gap-2">
           <UiButton
