@@ -22,7 +22,6 @@
     "@opentelemetry/sdk-metrics": "^2.9.0",
     "@opentelemetry/sdk-trace-node": "^2.9.0",
     "@tavrida/internal-auth": "workspace:*",
-    "@tavrida/hawk": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "pg": "^8.12.0",

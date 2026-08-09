@@ -52,7 +52,7 @@ Options:
   --dry-run       Show actions without creating/removing secrets
   --force         Rotate existing secrets (rebind services if still referenced)
   --prune         Remove ${SECRET_PREFIX}_* secrets not in manifest/computed set
-  --only KEYS     Comma-separated keys only (e.g. HAWK_TOKEN). Safer than full --force.
+  --only KEYS     Comma-separated keys only (e.g. GRAFANA_CLOUD_TOKEN). Safer than full --force.
   --context NAME  Docker context (default: dev-swarm)
   --env-file PATH Secrets env file (default: docker/swarm/dev.secrets.env)
   --config-file PATH Public config (default: docker/swarm/dev.env)
@@ -325,14 +325,7 @@ sync_one() {
 
   value="${!key}"
   if [[ -z "$value" ]]; then
-    # Stack references hawk_token as external — empty would break deploy. Placeholder keeps
-    # Nest no-op until Environment secret HAWK_TOKEN (Integration Token) is set + --force.
     case "$key" in
-      HAWK_TOKEN)
-        echo "WARN: ${key} empty — using placeholder __unset__ for ${name} (Hawk disabled)." >&2
-        echo "Set Environment secret HAWK_TOKEN, then Sync with --force." >&2
-        value='__unset__'
-        ;;
       *)
         echo "Skip ${name} — empty value" >&2
         return 0

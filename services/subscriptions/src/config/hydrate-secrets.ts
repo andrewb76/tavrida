@@ -9,6 +9,4 @@ function hydrateSecretEnv(keys: readonly string[]): void {
   }
 }
 
-hydrateSecretEnv(['DATABASE_URL', 'RABBITMQ_URL', 'INTERNAL_SERVICE_TOKEN',
-  'HAWK_TOKEN',
-]);
+hydrateSecretEnv(['DATABASE_URL', 'RABBITMQ_URL', 'INTERNAL_SERVICE_TOKEN']);

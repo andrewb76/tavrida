@@ -203,7 +203,6 @@ CI декодирует её в `docker/swarm/ci-ssh-agent.sh`. Сырой PEM �
 | `MINIO_ROOT_PASSWORD`    | sync-secrets → Swarm                          |
 | `LOGTO_M2M_APP_SECRET`   | sync-secrets → Swarm (tenant «dev/server»)    |
 | `INTERNAL_SERVICE_TOKEN` | sync-secrets → Swarm (`openssl rand -hex 32`) |
-| `HAWK_TOKEN`             | sync-secrets → Nest + Vite build (Hawk Integration Token) |
 | `GRAFANA_CLOUD_TOKEN`    | sync-secrets → Alloy (отложено) |
 
 > **Локальная разработка не затрагивается.** Environment `dev` читают только Actions (`deploy-dev`, `sync-secrets-dev`). Ноутбук использует gitignored `.env.local` / `docker/swarm/dev.secrets.env` — это разные файлы и разные Logto tenants.
@@ -288,7 +287,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 1. DNS `*.evatorg.su` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
 2. Заполнить Environment `dev` (vars + secrets), в т.ч. `VITE_LOGTO_*`.
-3. **Actions → Sync secrets (dev)** — для нового токена: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`** (или `HAWK_TOKEN`), `redeploy=true`. Не крутите force по всему manifest без нужды (`POSTGRES_PASSWORD` особенно опасен).
+3. **Actions → Sync secrets (dev)** — для нового токена: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`**, `redeploy=true`. Не крутите force по всему manifest без нужды (`POSTGRES_PASSWORD` особенно опасен).
 4. **Actions → Deploy / Sync** — всегда с кодом ветки **`dev`** (workflows сами делают `checkout ref: dev` на manual run). Не выбирайте `master` как источник устаревших stack-файлов.
 5. Дальше: push/merge в `dev` обновляет образы; sync — только при ротации паролей.
 

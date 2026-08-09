@@ -10,9 +10,6 @@ interface ImportMetaEnv {
   readonly VITE_IMAGE_PROXY_URL?: string;
   readonly VITE_IMAGE_PROXY_FETCH_BASE_URL?: string;
   readonly VITE_MEDIA_PUBLIC_BASE_URL?: string;
-  readonly VITE_HAWK_TOKEN?: string;
-  readonly VITE_HAWK_ENVIRONMENT?: string;
-  readonly VITE_HAWK_RELEASE?: string;
   /** Enable window.__tavridaE2E helpers for Playwright (never in prod images). */
   readonly VITE_E2E?: string;
 }

@@ -76,10 +76,6 @@ docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   --build-arg "VITE_LOGTO_ENDPOINT=${VITE_LOGTO_ENDPOINT:-}" \
   --build-arg "VITE_LOGTO_APP_ID=${VITE_LOGTO_APP_ID:-}" \
   --build-arg "VITE_LOGTO_API_RESOURCE=${VITE_LOGTO_API_RESOURCE:-https://api.${DEV_DOMAIN}}" \
-  --build-arg "HAWK_TOKEN=${HAWK_TOKEN:-}" \
-  --build-arg "VITE_HAWK_TOKEN=${VITE_HAWK_TOKEN:-${HAWK_TOKEN:-}}" \
-  --build-arg "VITE_HAWK_ENVIRONMENT=${VITE_HAWK_ENVIRONMENT:-dev}" \
-  --build-arg "VITE_HAWK_RELEASE=${GIT_SHA}" \
   -t "${frontend_image}" \
   "${ROOT}"
 if $PUSH; then

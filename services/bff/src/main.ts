@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import './config/hydrate-secrets';
-import { attachHawkToNestApp, initHawkNode } from '@tavrida/hawk';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -18,11 +17,9 @@ function parseCorsOrigins(): string[] | boolean {
 }
 
 async function bootstrap() {
-  initHawkNode({ service: 'bff' });
   await ensureDatabaseSchema();
 
   const app = await NestFactory.create(AppModule, { rawBody: true });
-  attachHawkToNestApp(app);
   assertInternalAuthConfigured(process.env);
   const config = app.get(ConfigService);
   const authMode = resolveAuthMode({

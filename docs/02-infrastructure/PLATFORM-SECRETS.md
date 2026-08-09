@@ -68,7 +68,6 @@
 | `NOVU_API_KEY` | **да** | notifications | — | Secret Novu CE / Cloud ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); local ≈ `NOVU_SECRET_KEY` из `docker/compose/novu.local.env` |
 | `NOVU_API_URL` | нет | notifications | `http://localhost:3020` | Self-host API ([ADR-019](../03-architecture/adr/019-novu-self-host.md)); Cloud был `https://api.novu.co` |
 | `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox (из Dashboard) |
-| `HAWK_TOKEN` | **да** | все NestJS, frontend build | — | Hawk Integration Token ([hawk-setup](../07-observability/hawk-setup.md)); Swarm `tavrida_dev_hawk_token` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector; на Swarm → `http://alloy:4318` |
 | `OTEL_SERVICE_NAME` | нет | каждый сервис | имя сервиса | Идентификатор в трейсах |
 | `GRAFANA_CLOUD_PROMETHEUS_URL` | нет | Alloy (dev) | — | Mimir remote_write URL ([grafana-setup](../07-observability/grafana-setup.md)) |
@@ -128,7 +127,6 @@
 | `DATABASE_URL` | **да** | `billing` | см. платформа | PostgreSQL |
 | `RABBITMQ_URL` | **да** | — | см. платформа | Events: `billing.*` |
 | `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Проверка тарифов |
-| `HAWK_TOKEN` | **да** | — | — | Опционально |
 
 ---
 
@@ -139,7 +137,6 @@
 | `PORT` | нет | — | `3002` | HTTP |
 | `DATABASE_URL` | **да** | `plan_config` | см. платформа | PostgreSQL |
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Activate + renew charge |
-| `HAWK_TOKEN` | **да** | — | — | Опционально |
 
 **Ops (не env сервиса):** hourly job → `POST {PLAN_CONFIG_URL}/internal/v1/subscription/renew/run`. Dev Swarm: сервис `plan-config-renew` в `stack-platform.dev.yml`. Local: curl вручную ([plan-config README](../05-microservices/plan-config/README.md)).
 
@@ -159,7 +156,6 @@
 | `BILLING_URL` | нет | — | `http://localhost:3001` | Платные фичи (promotion) |
 | `RATING_URL` | нет | — | `http://localhost:3005` | Проверка бана |
 | `MINIO_*` | см. платформа | bucket `auction-images` | — | Фото лотов |
-| `HAWK_TOKEN` | **да** | — | — | Опционально |
 
 ---
 
@@ -172,7 +168,6 @@
 | `RABBITMQ_URL` | **да** | — | см. платформа | События (fan-out later) |
 | `PLAN_CONFIG_URL` | нет | — | `http://localhost:3002` | Лимиты (check via BFF) |
 | `NOTIFICATIONS_URL` | нет | — | `http://localhost:3010` | Триггер уведомлений (later) |
-| `HAWK_TOKEN` | **да** | — | — | Опционально |
 
 ---
 
@@ -295,7 +290,6 @@
 | `VITE_LOGTO_APP_ID` | нет | да | Logto application id (SPA) |
 | `VITE_LOGTO_API_RESOURCE` | нет | да | JWT audience для BFF (optional до BFF) |
 | `VITE_NOVU_APPLICATION_IDENTIFIER` | нет | да | Novu Inbox (public) |
-| `VITE_HAWK_TOKEN` | нет | да* | Frontend Hawk token (Integration Token в бандле; public) |
 
 ---
 
@@ -307,7 +301,6 @@
 - [ ] `MINIO_ACCESS_KEY` + `MINIO_SECRET_KEY`
 - [ ] `LOGTO_*` (tenant dev)
 - [ ] `NOVU_API_KEY` + `NOVU_API_URL=http://localhost:3020` (`pnpm novu:up`)
-- [ ] `HAWK_TOKEN` (Nest + frontend; Integration Token)
 - [ ] `KETO_READ_URL` / `KETO_WRITE_URL` (если Keto поднят)
 
 ---

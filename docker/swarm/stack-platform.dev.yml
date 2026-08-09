@@ -53,18 +53,12 @@ secrets:
   minio_secret_key:
     external: true
     name: tavrida_dev_minio_root_password
-  hawk_token:
-    external: true
-    name: tavrida_dev_hawk_token
 
 x-nest-env: &nest-env
   NODE_ENV: production
   REDIS_URL: redis://redis:6379
   RABBITMQ_URL_FILE: /run/secrets/rabbitmq_url
   INTERNAL_SERVICE_TOKEN_FILE: /run/secrets/internal_service_token
-  HAWK_TOKEN_FILE: /run/secrets/hawk_token
-  HAWK_ENVIRONMENT: dev
-  HAWK_RELEASE: ${GIT_SHA}
 
 x-nest-deploy: &nest-deploy
   replicas: 1
@@ -85,7 +79,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-billing:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - billing_database_url
     environment:
@@ -106,7 +99,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-plan-config:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - plan_config_database_url
     environment:
@@ -130,7 +122,6 @@ services:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
-      - hawk_token
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -156,7 +147,6 @@ services:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
-      - hawk_token
     networks:
       - tavrida_net
     entrypoint: ['/bin/sh', '-c']
@@ -181,7 +171,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-auction:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - auction_database_url
     environment:
@@ -203,7 +192,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-subscriptions:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - subscriptions_database_url
     environment:
@@ -224,7 +212,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-user-profile:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - user_profile_database_url
     environment:
@@ -245,7 +232,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-scalar-config:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - scalar_config_database_url
     environment:
@@ -266,7 +252,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-forum:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - forum_database_url
     environment:
@@ -288,7 +273,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-periods:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - periods_database_url
     environment:
@@ -309,7 +293,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-marketplace:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - marketplace_database_url
     environment:
@@ -330,7 +313,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-notifications:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - notifications_database_url
     environment:
       <<: *nest-env
@@ -351,7 +333,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-chat:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - chat_database_url
     environment:
@@ -372,7 +353,6 @@ services:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
       - internal_service_token
-      - hawk_token
       - rabbitmq_url
       - bff_database_url
       - logto_m2m_app_secret
