@@ -11,7 +11,7 @@ Full documentation: [docs/README.md](docs/README.md)
 
 ## Monorepo layout
 
-pnpm + Turborepo workspace. Package manager: **pnpm@11.13.0**, Turbo **2.x** (`tasks`, not `pipeline`).
+pnpm + Turborepo workspace. Package manager: **pnpm@11.20.0**, Turbo **2.x** (`tasks`, not `pipeline`).
 
 ```
 max-alice/
