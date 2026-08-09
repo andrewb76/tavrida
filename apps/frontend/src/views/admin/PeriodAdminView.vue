@@ -24,7 +24,7 @@ const type          = ref('regular' as 'regular' | 'special' | 'holiday');
 const startDate     = ref('' as string);
 const endDate       = ref('' as string);
 const description   = ref('');
-const priority      = ref('1' as 1 | 2 | 3);
+const priority      = ref<number>(1);
 const calendarVisible = ref(true);
 const priorities    = [
   { label: 'Низкий',   value: '1' },

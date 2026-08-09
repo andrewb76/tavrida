@@ -51,7 +51,10 @@ function closeMenu() {
 
 function runAction(action: 'addChild' | 'edit' | 'access' | 'delete') {
   closeMenu();
-  emit(action, props.node);
+  if (action === 'addChild') emit('addChild', props.node);
+  else if (action === 'edit') emit('edit', props.node);
+  else if (action === 'access') emit('access', props.node);
+  else if (action === 'delete') emit('delete', props.node);
 }
 
 function onDocClick(e: MouseEvent) {
