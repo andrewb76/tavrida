@@ -28,7 +28,7 @@ COPY e2e/package.json ./e2e/package.json
 
 RUN pnpm install --frozen-lockfile --ignore-scripts \
   && pnpm rebuild esbuild @nestjs/core core-js \
-  && pnpm exec turbo run build --filter=${SERVICE_PKG}...
+  && pnpm exec turbo run build --filter=${SERVICE_PKG}... --force
 
 # --- Assemble /deploy ---
 # 1. Copy built service dist + package.json.
