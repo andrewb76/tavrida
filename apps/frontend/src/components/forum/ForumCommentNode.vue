@@ -296,12 +296,14 @@ async function onDelete() {
           class="forum-comment__edit-form"
           @submit.prevent="saveEdit"
         >
-          <label>
+          <label class="grid gap-1.5 text-sm text-text">
             Редактирование комментария
             <textarea
               v-model="editBody"
               rows="4"
               required
+              class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Отредактируйте комментарий..."
             />
           </label>
           <p
@@ -365,12 +367,14 @@ async function onDelete() {
           class="forum-comment__reply-form"
           @submit.prevent="submitReply"
         >
-          <label>
+          <label class="grid gap-1.5 text-sm text-text">
             Ответ на комментарий
             <textarea
               v-model="replyBody"
               rows="3"
               required
+              class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Напишите ответ..."
             />
           </label>
 

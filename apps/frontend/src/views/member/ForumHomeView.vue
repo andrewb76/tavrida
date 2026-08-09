@@ -108,21 +108,21 @@ onUnmounted(() => {
       class="forum-home__filters"
       @submit.prevent="submitFilters"
     >
-      <label class="forum-home__field">
-        <span class="forum-home__label">Поиск</span>
+      <label class="grid gap-1.5 text-sm text-text min-w-[12rem] flex-1">
+        <span class="text-xs text-text-muted">Поиск</span>
         <input
           v-model="searchQ"
           type="search"
           maxlength="100"
           placeholder="Название или текст темы"
-          class="forum-home__input"
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
       </label>
-      <label class="forum-home__field">
-        <span class="forum-home__label">Раздел</span>
+      <label class="grid gap-1.5 text-sm text-text min-w-[12rem] flex-1">
+        <span class="text-xs text-text-muted">Раздел</span>
         <select
           v-model="filterCategoryId"
-          class="forum-home__select"
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option value="">
             Все разделы
@@ -229,28 +229,6 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-subtle);
-}
-
-.forum-home__field {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 12rem;
-  flex: 1;
-}
-
-.forum-home__label {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.forum-home__input,
-.forum-home__select {
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.45rem 0.6rem;
-  font: inherit;
-  background: var(--color-surface);
-  color: var(--color-text);
 }
 
 .forum-home__status,

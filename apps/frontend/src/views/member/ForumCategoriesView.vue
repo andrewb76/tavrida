@@ -619,7 +619,6 @@ async function saveAccess() {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
-  overflow: hidden;
 }
 
 @media (min-width: 640px) {

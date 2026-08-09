@@ -83,11 +83,12 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
       class="forum-new__form"
       @submit.prevent="submit('PUBLISHED')"
     >
-      <label>
+      <label class="grid gap-1.5 text-sm text-text">
         Категория
         <select
           v-model="categoryId"
           required
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option
             v-for="cat in categories"
@@ -99,17 +100,19 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
         </select>
       </label>
 
-      <label>
+      <label class="grid gap-1.5 text-sm text-text">
         Заголовок
         <input
           v-model="title"
           type="text"
           maxlength="256"
           required
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          placeholder="Введите заголовок темы"
         >
       </label>
 
-      <label>
+      <label class="grid gap-1.5 text-sm text-text">
         Текст (Markdown)
         <textarea
           v-model="body"
@@ -117,6 +120,7 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
           maxlength="10000"
           placeholder="**жирный**, *курсив*, списки, ссылки, `код`, ```блоки кода```"
           required
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </label>
 
@@ -192,17 +196,6 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
 .forum-new__form {
   display: grid;
   gap: 0.75rem;
-}
-
-.forum-new__form label {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.forum-new__form input,
-.forum-new__form select,
-.forum-new__form textarea {
-  width: 100%;
 }
 
 .forum-new__attachments {
