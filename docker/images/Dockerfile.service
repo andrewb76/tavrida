@@ -31,26 +31,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts \
   && pnpm rebuild esbuild @nestjs/core core-js \
   && pnpm exec turbo run build --filter=${SERVICE_PKG}... \
   && pnpm deploy --filter=${SERVICE_PKG} --prod --legacy /deploy \
-  && cd /deploy && node -e "
-    const fs = require('fs');
-    const path = require('path');
-    function resolve(dir) {
-      for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
-        const p = path.join(dir, e.name);
-        if (e.isSymbolicLink()) {
-          const t = fs.readlinkSync(p);
-          if (t.includes('/repo/')) {
-            fs.rmSync(p);
-            fs.cpSync(t, p, {recursive:true});
-          }
-        } else if (e.isDirectory()) {
-          resolve(p);
-        }
-      }
-    }
-    resolve('node_modules');
-    console.log('symlinks resolved');
-  "
+  && cd /deploy && node -e "const fs=require('fs'),path=require('path');function r(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isSymbolicLink()){const t=fs.readlinkSync(p);if(t.includes('/repo/')){fs.rmSync(p);fs.cpSync(t,p,{recursive:true})}}else if(e.isDirectory()){r(p)}}}r('node_modules');console.log('symlinks resolved')"
 
 FROM node:22-alpine AS runtime
 ARG SERVICE_DIR
