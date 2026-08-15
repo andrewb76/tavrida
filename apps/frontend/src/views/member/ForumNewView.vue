@@ -6,6 +6,7 @@ import {
   flattenCategoriesWithDepth,
   listCategories,
   type CategoryNode,
+  type FlatCategoryItem,
 } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
@@ -13,7 +14,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-const categories = ref<CategoryNode[]>([]);
+const categories = ref<FlatCategoryItem[]>([]);
 const categoryId = ref('');
 const title = ref('');
 const body = ref('');
