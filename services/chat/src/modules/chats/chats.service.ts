@@ -375,7 +375,6 @@ export class ChatsService {
         'c.kind AS kind',
         'c.self AS self',
         'c.title AS title',
-        'c.image_url AS "imageUrl"',
         'c.context_type AS "contextType"',
         'c.context_id AS "contextId"',
         'm.last_read_at AS "lastReadAt"',
@@ -386,12 +385,17 @@ export class ChatsService {
         kind: ChatKind;
         self: boolean;
         title: string | null;
-        imageUrl: string | null;
         contextType: string | null;
         contextId: string | null;
         lastReadAt: Date | string | null;
         lastReadMessageId: string | null;
       }>();
+
+    const chatIds = rows.map((r) => r.id);
+    const chatEntities = chatIds.length
+      ? await this.chats.findBy({ id: In(chatIds) })
+      : [];
+    const chatById = new Map(chatEntities.map((c) => [c.id, c]));
 
     const items: ChatListItem[] = [];
     for (const row of rows) {
@@ -419,12 +423,13 @@ export class ChatsService {
           preview = attCount > 0 ? 'Вложение' : '';
         }
       }
+      const chatEntity = chatById.get(row.id);
       items.push({
         id: row.id,
         kind: row.kind,
         self: row.self,
         title: row.title,
-        imageUrl: row.imageUrl ?? null,
+        imageUrl: chatEntity?.imageUrl ?? null,
         contextType: row.contextType,
         contextId: row.contextId,
         peerUserId,

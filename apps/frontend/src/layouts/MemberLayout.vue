@@ -181,6 +181,7 @@ function isActive(path: string) {
           <UiButton
             intent="ghost"
             size="icon"
+            class="hover:bg-bg"
             :title="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
             @click="theme.toggle()"
           >
@@ -193,6 +194,7 @@ function isActive(path: string) {
           <UiButton
             intent="ghost"
             size="icon"
+            class="hover:bg-bg"
             title="Выйти"
             @click="auth.signOut()"
           >

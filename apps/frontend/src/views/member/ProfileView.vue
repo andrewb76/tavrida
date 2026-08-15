@@ -619,6 +619,7 @@ async function copyInviteLink() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  margin-top: 1rem;
   padding: 0.5rem 0.85rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
