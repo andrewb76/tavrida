@@ -49,6 +49,7 @@ const dragStartX = ref<number | null>(null);
 
 function onPointerDown(e: PointerEvent) {
   if (!multi.value) return;
+  if ((e.target as HTMLElement)?.closest('button')) return;
   dragStartX.value = e.clientX;
   (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 }

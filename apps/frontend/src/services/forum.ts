@@ -396,6 +396,20 @@ export function flattenCategories(nodes: CategoryNode[]): CategoryNode[] {
   return out;
 }
 
+export type FlatCategoryItem = CategoryNode & { depth: number };
+
+export function flattenCategoriesWithDepth(nodes: CategoryNode[]): FlatCategoryItem[] {
+  const out: FlatCategoryItem[] = [];
+  const walk = (list: CategoryNode[], depth: number) => {
+    for (const node of list) {
+      out.push({ ...node, depth });
+      walk(node.children, depth + 1);
+    }
+  };
+  walk(nodes, 0);
+  return out;
+}
+
 export type CategoryFormInput = {
   slug: string;
   title: string;

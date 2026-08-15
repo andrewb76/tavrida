@@ -9,7 +9,7 @@ import {
   type AuctionCreateOptions,
   type CreateAuctionInput,
 } from '@/services/auctions';
-import { flattenCategories, listCategories, type CategoryNode } from '@/services/forum';
+import { flattenCategoriesWithDepth, listCategories, type CategoryNode } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
@@ -41,7 +41,7 @@ const cropQueue = ref<File[]>([]);
 const cropFile = ref<File | null>(null);
 const cropOpen = ref(false);
 
-const flatCategories = computed(() => flattenCategories(categories.value));
+const flatCategories = computed(() => flattenCategoriesWithDepth(categories.value));
 
 const aspectWidth = computed(
   () =>
@@ -271,7 +271,7 @@ async function submit() {
               :key="cat.id"
               :value="cat.id"
             >
-              {{ cat.title }}
+              {{ '\u00A0\u00A0'.repeat(cat.depth) }}{{ cat.depth > 0 ? '└ ' : '' }}{{ cat.title }}
             </option>
           </select>
         </label>

@@ -6,9 +6,11 @@ import {
   hideChat,
   listChats,
   unhideChat,
+  updateGroupChat,
   type ChatKind,
   type ChatListItem,
 } from '@/services/chats';
+import { uploadFile } from '@/services/media';
 import { useChatsStore } from '@/stores/chats';
 import { UiIcon } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
@@ -28,6 +30,8 @@ const filter = ref<FilterKey>('all');
 const openingSelf = ref(false);
 const actionRow = ref<ChatListItem | null>(null);
 const actionBusy = ref(false);
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarBusy = ref(false);
 
 const filters: Array<{ key: FilterKey; label: string }> = [
   { key: 'all', label: 'Все' },
@@ -172,6 +176,34 @@ function avatarTone(id: string): number {
   for (let i = 0; i < id.length; i++) h = (h + id.charCodeAt(i) * (i + 1)) % 360;
   return h;
 }
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click();
+}
+
+async function onAvatarSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file || !actionRow.value) return;
+  if (!file.type.startsWith('image/')) {
+    toast.error('Выберите изображение');
+    return;
+  }
+  avatarBusy.value = true;
+  try {
+    const uploaded = await uploadFile('chat', file);
+    const updated = await updateGroupChat(actionRow.value.id, { imageUrl: uploaded.url });
+    const idx = rows.value.findIndex((r) => r.id === updated.id);
+    if (idx >= 0) rows.value[idx] = { ...rows.value[idx], ...updated };
+    toast.success('Картинка группы обновлена');
+    actionRow.value = null;
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : 'Не удалось обновить картинку');
+  } finally {
+    avatarBusy.value = false;
+  }
+}
 </script>
 
 <template>
@@ -273,7 +305,7 @@ function avatarTone(id: string): number {
               :src="row.peer.avatarUrl"
               :alt="chatListTitle(row)"
               class="chat-list__avatar-img"
-            />
+            >
             <template v-else>{{ initials(chatListTitle(row)) }}</template>
           </span>
           <span class="chat-list__body">
@@ -328,7 +360,7 @@ function avatarTone(id: string): number {
         <div
           class="chat-sheet__panel"
           role="dialog"
-          :aria-label="showingHidden ? 'Скрытый чат' : 'Убрать чат из списка'"
+          :aria-label="showingHidden ? 'Скрытый чат' : 'Действия с чатом'"
         >
           <p class="chat-sheet__title">
             {{ chatListTitle(actionRow) }}
@@ -343,6 +375,14 @@ function avatarTone(id: string): number {
               Вернуть: вкладка «Скрытые», или когда кто-то напишет снова.
             </template>
           </p>
+          <button
+            v-if="actionRow.kind === 'GROUP'"
+            type="button"
+            :disabled="avatarBusy"
+            @click="triggerAvatarUpload"
+          >
+            {{ avatarBusy ? 'Загрузка…' : 'Задать картинку' }}
+          </button>
           <button
             v-if="showingHidden"
             type="button"
@@ -362,13 +402,20 @@ function avatarTone(id: string): number {
           <button
             type="button"
             class="chat-sheet__cancel"
-            :disabled="actionBusy"
+            :disabled="actionBusy || avatarBusy"
             @click="closeActions"
           >
             Отмена
           </button>
         </div>
       </div>
+      <input
+        ref="avatarInput"
+        type="file"
+        accept="image/*"
+        class="chat-list__avatar-input"
+        @change="onAvatarSelected"
+      >
     </Teleport>
   </section>
 </template>
@@ -658,5 +705,13 @@ function avatarTone(id: string): number {
 .chat-sheet__cancel {
   border-top: 1px solid var(--token-border);
   color: var(--token-text-muted) !important;
+}
+
+.chat-list__avatar-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 </style>

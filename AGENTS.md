@@ -23,6 +23,9 @@ max-alice/
 │   ├── shared/                @tavrida/shared
 │   ├── graphql/               @tavrida/graphql (+ generate script)
 │   ├── content/               @tavrida/content
+│   ├── internal-auth/         @tavrida/internal-auth — service-to-service auth middleware
+│   ├── object-storage/        @tavrida/object-storage — MinIO/S3 abstraction
+│   ├── outbox/                @tavrida/outbox — transactional outbox pattern
 │   ├── monetization-engine/   @tavrida/monetization-engine — pure monetization formulas (ADR-015)
 │   └── ui/                    @tavrida/ui
 ├── services/                  NestJS microservices (@tavrida/*)
@@ -40,13 +43,14 @@ max-alice/
 │   ├── periods/               port 3014
 │   └── chat/                  port 3016
 ├── tools/config/              ESLint + legacy tsconfig paths
+├── e2e/                       Playwright E2E tests (pnpm workspace member)
 ├── docker/
 └── docs/
 ```
 
 **Naming:** service directories use **kebab-case** (`subscriptions`, `deal-feedback`). PostgreSQL schemas may use snake_case per [ADR-001](docs/03-architecture/adr/001-database-schema-per-service.md). Renames: [ADR-006](docs/03-architecture/adr/006-service-renames-deal-feedback-subscriptions.md).
 
-**Docs-only services** (`rating`, …) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace. Chat: [docs/05-microservices/chat/](docs/05-microservices/chat/README.md).
+**Docs-only services** (`rating`, `webhooks`) live under `services/` but have **no `package.json`** until implementation starts — they are outside the pnpm workspace. Chat: [docs/05-microservices/chat/](docs/05-microservices/chat/README.md).
 
 ## Commands
 

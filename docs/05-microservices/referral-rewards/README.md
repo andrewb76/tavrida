@@ -320,7 +320,7 @@ flowchart LR
 |------------|-------|----------|--------|
 | `DATABASE_URL` | да | schema `referral_rewards` | postgres://…/tavrida_lot |
 | `RABBITMQ_URL` | да | Consumer + producer | amqp://… |
-| `USER_PROFILE_URL` | да | Internal base URL | http://user-profile:3020 |
+| `USER_PROFILE_URL` | да | Internal base URL | http://user-profile:3007 |
 | `BILLING_URL` | да | Credit API | http://billing:3001 |
 | `SCALAR_CONFIG_URL` | да | Rules | http://scalar-config:… |
 | `PLAN_CONFIG_URL` | да | Tariff limits | http://plan-config:3002 |

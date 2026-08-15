@@ -403,6 +403,14 @@ async function copyInviteLink() {
           </span>
         </li>
       </ul>
+
+      <RouterLink
+        v-if="effectiveProfileId"
+        :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
+        class="profile-referral-link"
+      >
+        Реферальное дерево
+      </RouterLink>
     </template>
 
     <template v-else>

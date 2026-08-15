@@ -82,7 +82,7 @@ const auctionProgress = computed(() => {
   });
 });
 
-const canBid = computed(() => Boolean(lot.value?.isLive));
+const canBid = computed(() => Boolean(lot.value?.isLive) && !isOwner.value);
 const isDutch = computed(() => lot.value?.type === 'DUTCH');
 const isOwner = computed(
   () => Boolean(lot.value && session.userId && lot.value.sellerId === session.userId),
