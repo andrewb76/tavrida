@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { UiButton, UiIcon } from '@tavrida/ui';
-import { computed, onMounted, onUnmounted, watch } from 'vue';
-import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner.vue';
 import BrandLogo from '@/components/brand/BrandLogo.vue';
 import { useAuth } from '@/composables/useAuth';
 import { refreshSessionBalance } from '@/composables/useWalletBalance';
+import { getOrCreateSelfChat } from '@/services/chats';
 import { refreshPlatformRoles } from '@/services/roles';
 import { formatMoney } from '@/services/wallet';
 import { useChatsStore } from '@/stores/chats';
@@ -13,10 +14,25 @@ import { useSessionStore } from '@/stores/session';
 import { useThemeStore } from '@/stores/theme';
 
 const route = useRoute();
+const router = useRouter();
 const session = useSessionStore();
 const chatsStore = useChatsStore();
 const auth = useAuth();
 const theme = useThemeStore();
+const notesLoading = ref(false);
+
+async function openNotes() {
+  if (notesLoading.value) return;
+  notesLoading.value = true;
+  try {
+    const chat = await getOrCreateSelfChat();
+    await router.push({ name: 'chat-room', params: { chatId: chat.id } });
+  } catch {
+    /* toast handled upstream or ignore */
+  } finally {
+    notesLoading.value = false;
+  }
+}
 
 const unreadBadge = computed(() => {
   const { chatsWithUnread, totalUnreadMessages } = chatsStore.unread;
@@ -165,6 +181,20 @@ function isActive(path: string) {
               {{ unreadBadge }}
             </span>
           </RouterLink>
+          <button
+            v-if="session.isMember"
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-text hover:bg-bg"
+            title="Заметки"
+            :disabled="notesLoading"
+            @click="openNotes"
+          >
+            <UiIcon
+              name="edit"
+              :size="18"
+              label="Заметки"
+            />
+          </button>
           <RouterLink
             v-if="session.isMember"
             to="/subscriptions"
