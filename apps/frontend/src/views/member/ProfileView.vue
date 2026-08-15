@@ -327,13 +327,22 @@ async function copyInviteLink() {
           </p>
         </div>
 
-        <UiButton
-          intent="primary"
-          :disabled="loading || !canCreateInvite"
-          @click="create"
-        >
-          {{ loading ? 'Создаём…' : 'Создать инвайт' }}
-        </UiButton>
+        <div class="flex items-center gap-2">
+          <UiButton
+            intent="primary"
+            :disabled="loading || !canCreateInvite"
+            @click="create"
+          >
+            {{ loading ? 'Создаём…' : 'Создать инвайт' }}
+          </UiButton>
+          <RouterLink
+            v-if="effectiveProfileId"
+            :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
+            class="profile-referral-link"
+          >
+            Реферальное дерево
+          </RouterLink>
+        </div>
 
         <p
           v-if="inviteError"
@@ -403,14 +412,6 @@ async function copyInviteLink() {
           </span>
         </li>
       </ul>
-
-      <RouterLink
-        v-if="effectiveProfileId"
-        :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
-        class="profile-referral-link"
-      >
-        Реферальное дерево
-      </RouterLink>
     </template>
 
     <template v-else>
@@ -618,15 +619,18 @@ async function copyInviteLink() {
 .profile-referral-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  margin-top: 1rem;
-  padding: 0.5rem 0.85rem;
+  padding: 0.5rem 1rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-surface);
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
 }
 
 .profile-referral-link:hover {
