@@ -14,6 +14,7 @@ export type ChatListItem = {
   kind: ChatKind;
   self: boolean;
   title: string | null;
+  imageUrl: string | null;
   contextType: string | null;
   contextId: string | null;
   peerUserId?: string | null;

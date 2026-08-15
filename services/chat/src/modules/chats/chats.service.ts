@@ -31,6 +31,7 @@ export type ChatListItem = {
   kind: ChatKind;
   self: boolean;
   title: string | null;
+  imageUrl: string | null;
   contextType: string | null;
   contextId: string | null;
   peerUserId: string | null;
@@ -374,6 +375,7 @@ export class ChatsService {
         'c.kind AS kind',
         'c.self AS self',
         'c.title AS title',
+        'c.image_url AS "imageUrl"',
         'c.context_type AS "contextType"',
         'c.context_id AS "contextId"',
         'm.last_read_at AS "lastReadAt"',
@@ -384,6 +386,7 @@ export class ChatsService {
         kind: ChatKind;
         self: boolean;
         title: string | null;
+        imageUrl: string | null;
         contextType: string | null;
         contextId: string | null;
         lastReadAt: Date | string | null;
@@ -421,6 +424,7 @@ export class ChatsService {
         kind: row.kind,
         self: row.self,
         title: row.title,
+        imageUrl: row.imageUrl ?? null,
         contextType: row.contextType,
         contextId: row.contextId,
         peerUserId,

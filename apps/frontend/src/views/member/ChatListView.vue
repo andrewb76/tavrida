@@ -301,8 +301,8 @@ async function onAvatarSelected(e: Event) {
             aria-hidden="true"
           >
             <img
-              v-if="row.peer?.avatarUrl"
-              :src="row.peer.avatarUrl"
+              v-if="row.imageUrl || row.peer?.avatarUrl"
+              :src="row.imageUrl || row.peer?.avatarUrl"
               :alt="chatListTitle(row)"
               class="chat-list__avatar-img"
             >
