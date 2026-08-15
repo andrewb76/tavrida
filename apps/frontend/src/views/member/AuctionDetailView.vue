@@ -9,7 +9,6 @@ import {
   auctionTypeLabel,
   formatCountdown,
   formatMoney,
-  sellerDisplayName,
 } from '@/services/auction-format';
 import {
   flattenCategories,
@@ -28,6 +27,7 @@ import {
   type AuctionDetail,
   type ExpertAppraisal,
 } from '@/services/auctions';
+import { fetchPublicProfile, publicProfileLabel, type PublicProfile } from '@/services/profile';
 import { useSessionStore } from '@/stores/session';
 import { UiButton, UiModal } from '@tavrida/ui';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
@@ -42,6 +42,7 @@ const lot = ref<AuctionDetail | null>(null);
 const bids = ref<AuctionBid[]>([]);
 const appraisals = ref<ExpertAppraisal[]>([]);
 const categories = ref<CategoryNode[]>([]);
+const sellerProfile = ref<PublicProfile | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref<'description' | 'bids' | 'expert'>('description');
@@ -157,6 +158,7 @@ async function load(id: string) {
   lot.value = null;
   bids.value = [];
   appraisals.value = [];
+  sellerProfile.value = null;
   bidOpen.value = false;
   promoteError.value = null;
   expertError.value = null;
@@ -180,6 +182,11 @@ async function load(id: string) {
     }
     if (detail.isLive) startCountdown();
     bindWs(id);
+    fetchPublicProfile(detail.sellerId)
+      .then((p) => {
+        if (generation === loadGeneration) sellerProfile.value = p;
+      })
+      .catch(() => {});
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
@@ -316,7 +323,7 @@ async function onSubmitExpert() {
           {{ promoteError }}
         </p>
         <div class="lot-page__meta">
-          <span class="lot-page__seller">👤 {{ sellerDisplayName(lot.sellerId) }}</span>
+          <span class="lot-page__seller">👤 {{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</span>
           <span
             v-if="categoryTitle"
             class="lot-page__category"

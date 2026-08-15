@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -102,6 +103,20 @@ class LeaveGroupDto {
   @IsString()
   @MinLength(1)
   userId!: string;
+}
+
+class UpdateGroupDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | null;
 }
 
 class MentionDto {
@@ -292,6 +307,17 @@ export class InternalChatsController {
     @Query('userId') userId: string,
   ) {
     return this.chats.getChatForMember(chatId, userId);
+  }
+
+  @Patch(':chatId')
+  updateGroup(
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: UpdateGroupDto,
+  ) {
+    return this.chats.updateGroup(chatId, body.userId, {
+      title: body.title,
+      imageUrl: body.imageUrl,
+    });
   }
 
   @Get(':chatId/messages')

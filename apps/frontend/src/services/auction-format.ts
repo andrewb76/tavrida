@@ -50,12 +50,3 @@ export function auctionTimeProgressPercent(input: {
   const elapsed = total - Math.max(0, input.remainingMs);
   return Math.min(100, Math.max(0, (elapsed / total) * 100));
 }
-
-export function sellerDisplayName(sellerId: string): string {
-  const map: Record<string, string> = {
-    'seed-seller-1': 'Андрей К.',
-    'seed-seller-2': 'Мария П.',
-    'seed-seller-3': 'Игорь В.',
-  };
-  return map[sellerId] ?? sellerId;
-}

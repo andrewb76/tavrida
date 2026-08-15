@@ -180,7 +180,7 @@ function isActive(path: string) {
           </RouterLink>
           <UiButton
             intent="ghost"
-            size="sm"
+            size="icon"
             :title="theme.mode === 'light' ? 'Тёмная тема' : 'Светлая тема'"
             @click="theme.toggle()"
           >
@@ -192,7 +192,7 @@ function isActive(path: string) {
           </UiButton>
           <UiButton
             intent="ghost"
-            size="sm"
+            size="icon"
             title="Выйти"
             @click="auth.signOut()"
           >

@@ -232,6 +232,18 @@ export class UserProfileClient {
     return Array.isArray(res?.data) ? res.data : [];
   }
 
+  async getReferralTree(userId: string) {
+    return this.request<{
+      data: Array<{
+        userId: string;
+        displayName: string | null;
+        username: string | null;
+        avatarUrl: string | null;
+        level: 1 | 2;
+      }>;
+    }>('GET', `/internal/v1/users/${encodeURIComponent(userId)}/referrals`);
+  }
+
   async getPublicProfile(userId: string) {
     return this.request<{
       userId: string;

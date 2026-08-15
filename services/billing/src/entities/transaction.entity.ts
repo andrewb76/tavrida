@@ -30,7 +30,7 @@ export class TransactionEntity {
   @Column('varchar', { length: 16, default: 'COMPLETED' })
   status!: TransactionStatus;
 
-  @Column('varchar', { name: 'idempotency_key', length: 64, nullable: true })
+  @Column('varchar', { name: 'idempotency_key', length: 128, nullable: true })
   idempotencyKey!: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

@@ -5,6 +5,14 @@ import { InviteCodeEntity } from '../../entities/invite-code.entity';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 import { UserRatingEntity } from '../../entities/user-rating.entity';
 
+export type ReferralUser = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  level: 1 | 2;
+};
+
 export type AdminCardUserStats = {
   totalRating: number;
   karma: number;
@@ -126,6 +134,41 @@ export class AdminCardStatsService {
     }
 
     return out;
+  }
+
+  async getReferralTree(userId: string): Promise<ReferralUser[]> {
+    const l1Rows = await this.profiles
+      .createQueryBuilder('p')
+      .select('p.userId', 'userId')
+      .addSelect('p.displayName', 'displayName')
+      .addSelect('p.username', 'username')
+      .addSelect('p.avatarUrl', 'avatarUrl')
+      .where('p.inviterId = :userId', { userId })
+      .andWhere('p.deletedAt IS NULL')
+      .getRawMany<{ userId: string; displayName: string | null; username: string | null; avatarUrl: string | null }>();
+
+    const l1Ids = l1Rows.map((r) => r.userId);
+    let l2Rows: { userId: string; displayName: string | null; username: string | null; avatarUrl: string | null }[] = [];
+    if (l1Ids.length) {
+      l2Rows = await this.profiles
+        .createQueryBuilder('p')
+        .select('p.userId', 'userId')
+        .addSelect('p.displayName', 'displayName')
+        .addSelect('p.username', 'username')
+        .addSelect('p.avatarUrl', 'avatarUrl')
+        .where('p.inviterId IN (:...l1Ids)', { l1Ids })
+        .andWhere('p.deletedAt IS NULL')
+        .getRawMany();
+    }
+
+    const result: ReferralUser[] = [];
+    for (const row of l1Rows) {
+      result.push({ userId: row.userId, displayName: row.displayName, username: row.username, avatarUrl: row.avatarUrl, level: 1 });
+    }
+    for (const row of l2Rows) {
+      result.push({ userId: row.userId, displayName: row.displayName, username: row.username, avatarUrl: row.avatarUrl, level: 2 });
+    }
+    return result;
   }
 
   private toRating(row: UserRatingEntity) {

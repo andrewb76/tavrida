@@ -137,6 +137,11 @@ export class ProfileController {
     };
   }
 
+  @Get(':userId/referrals')
+  async getReferralTree(@Param('userId') userId: string) {
+    return this.profiles.getReferralTree(userId);
+  }
+
   @Get(':userId')
   async getPublicProfile(@Param('userId') userId: string) {
     const [profile, rating] = await Promise.all([

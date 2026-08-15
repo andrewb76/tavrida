@@ -684,7 +684,12 @@ async function confirmDeposit() {
               Реф. дерево
             </dt>
             <dd class="tabular-nums text-text">
-              L1 {{ row.referral.l1 }} · L2 {{ row.referral.l2 }}
+              <RouterLink
+                :to="{ name: 'referral-tree', params: { userId: row.userId } }"
+                class="text-primary hover:underline"
+              >
+                L1 {{ row.referral.l1 }} · L2 {{ row.referral.l2 }}
+              </RouterLink>
             </dd>
           </div>
           <div class="col-span-2 sm:col-span-1 lg:col-span-2">

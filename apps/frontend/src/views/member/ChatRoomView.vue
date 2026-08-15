@@ -809,6 +809,12 @@ function messageParts(msg: ChatMessage): BodyPart[] {
               class="chat-room__row"
               :class="isMine(item.msg) ? 'chat-room__row--mine' : 'chat-room__row--peer'"
             >
+              <img
+                v-if="!isMine(item.msg) && showAuthorNames && item.msg.author?.avatarUrl"
+                :src="item.msg.author.avatarUrl"
+                :alt="messageAuthorLabel(item.msg)"
+                class="chat-room__msg-avatar"
+              />
               <div
                 class="chat-room__msg"
                 :class="isMine(item.msg) ? 'chat-room__msg--mine' : 'chat-room__msg--peer'"
@@ -1353,6 +1359,15 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   align-items: center;
   gap: 0.2rem;
   max-width: min(92%, 30rem);
+}
+
+.chat-room__msg-avatar {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+  align-self: flex-end;
 }
 
 .chat-room__msg--mine {

@@ -38,6 +38,9 @@ export class ChatEntity {
   @Column({ type: 'varchar', length: 120, nullable: true })
   title!: string | null;
 
+  @Column({ name: 'image_url', type: 'varchar', length: 512, nullable: true })
+  imageUrl!: string | null;
+
   @Column({ name: 'spawned_from_chat_id', type: 'uuid', nullable: true })
   spawnedFromChatId!: string | null;
 

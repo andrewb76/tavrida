@@ -484,6 +484,8 @@ async function submit() {
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .create-lot__row {

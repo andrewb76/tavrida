@@ -21,7 +21,7 @@ const logoTheme = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh">
+  <div class="flex min-h-dvh flex-col">
     <header
       class="z-20 border-b transition-colors"
       :class="
@@ -122,8 +122,8 @@ const logoTheme = computed(() => {
     <main
       :class="
         isLanding
-          ? 'landing-main'
-          : 'mx-auto max-w-5xl px-4 py-8 sm:px-6'
+          ? 'flex-1 landing-main'
+          : 'flex-1 mx-auto max-w-5xl px-4 py-8 sm:px-6'
       "
     >
       <RouterView />

@@ -289,6 +289,8 @@ function applyProFilters() {
   padding: 0.45rem 0.6rem;
   border-radius: 8px;
   border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .auction-filters__chips {
@@ -346,6 +348,15 @@ function applyProFilters() {
   display: grid;
   gap: 0.25rem;
   font-size: 0.85rem;
+}
+
+.auction-filters__drawer input,
+.auction-filters__drawer select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .auction-filters__check {

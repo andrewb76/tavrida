@@ -268,7 +268,13 @@ function avatarTone(id: string): number {
             :style="{ '--hue': String(avatarTone(row.id)) }"
             aria-hidden="true"
           >
-            {{ initials(chatListTitle(row)) }}
+            <img
+              v-if="row.peer?.avatarUrl"
+              :src="row.peer.avatarUrl"
+              :alt="chatListTitle(row)"
+              class="chat-list__avatar-img"
+            />
+            <template v-else>{{ initials(chatListTitle(row)) }}</template>
           </span>
           <span class="chat-list__body">
             <span class="chat-list__top">
@@ -506,6 +512,13 @@ function avatarTone(id: string): number {
   font-weight: 600;
   color: var(--color-primary-fg);
   background: hsl(var(--hue, 200) 42% 42%);
+  overflow: hidden;
+}
+
+.chat-list__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .chat-list__body {

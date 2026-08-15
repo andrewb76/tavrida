@@ -45,6 +45,7 @@ export type ChatPublicDto = {
   kind: ChatKind;
   self: boolean;
   title: string | null;
+  imageUrl: string | null;
   contextType: string | null;
   contextId: string | null;
   peerUserId: string | null;
@@ -852,6 +853,27 @@ export class ChatsService {
     return chat;
   }
 
+  async updateGroup(
+    chatId: string,
+    userId: string,
+    patch: { title?: string; imageUrl?: string | null },
+  ) {
+    const chat = await this.requireChatEntityForMember(chatId, userId);
+    if (chat.kind !== 'GROUP') {
+      throw new BadRequestException('Only GROUP chats can be updated');
+    }
+    const member = await this.members.findOne({
+      where: { chatId, userId, leftAt: IsNull() },
+    });
+    if (!member || member.role !== 'OWNER') {
+      throw new ForbiddenException('Only the group owner can update settings');
+    }
+    if (patch.title !== undefined) chat.title = patch.title?.trim() || null;
+    if (patch.imageUrl !== undefined) chat.imageUrl = patch.imageUrl?.trim() || null;
+    await this.chats.save(chat);
+    return chat;
+  }
+
   private async requireChatEntityForMember(
     chatId: string,
     userId: string,
@@ -907,6 +929,7 @@ export class ChatsService {
       kind: chat.kind,
       self: chat.self,
       title: chat.title,
+      imageUrl: chat.imageUrl ?? null,
       contextType: chat.contextType,
       contextId: chat.contextId,
       peerUserId,

@@ -30,6 +30,7 @@ export type ChatDto = {
   kind: ChatKind;
   self: boolean;
   title: string | null;
+  imageUrl: string | null;
   contextType: string | null;
   contextId: string | null;
   peerUserId?: string | null;
@@ -245,6 +246,19 @@ export async function leaveGroup(chatId: string): Promise<void> {
     body: JSON.stringify({}),
   });
   if (!res.ok) throw new Error(await parseError(res, 'Не удалось выйти из группы'));
+}
+
+export async function updateGroupChat(
+  chatId: string,
+  patch: { title?: string; imageUrl?: string | null },
+): Promise<ChatDto> {
+  const res = await fetch(`${apiBase()}/chats/${chatId}`, {
+    method: 'PATCH',
+    headers: await bffAuthHeaders(),
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось обновить группу'));
+  return (await res.json()) as ChatDto;
 }
 
 export async function getTopicChat(forumTopicId: string): Promise<ChatDto> {

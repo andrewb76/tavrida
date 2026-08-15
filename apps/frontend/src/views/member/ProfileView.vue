@@ -7,7 +7,7 @@ import UserAvatar from '@/components/user/UserAvatar.vue';
 import { UiButton } from '@tavrida/ui';
 import { useLogto } from '@logto/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
 import { isLogtoConfigured, logtoAccountProfileUrl } from '@/config/logto';
@@ -487,6 +487,13 @@ async function copyInviteLink() {
           @updated="onRatingUpdated"
         />
 
+        <RouterLink
+          :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
+          class="profile-referral-link"
+        >
+          Реферальное дерево
+        </RouterLink>
+
         <ProfilePrivateNoteModal
           v-model:open="noteModalOpen"
           :profile="publicProfile"
@@ -598,5 +605,22 @@ async function copyInviteLink() {
 
 .profile-public-card__note-btn {
   margin-top: 0;
+}
+
+.profile-referral-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.profile-referral-link:hover {
+  background: var(--color-bg);
 }
 </style>

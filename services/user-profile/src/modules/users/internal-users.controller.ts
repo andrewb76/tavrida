@@ -117,6 +117,11 @@ export class InternalUsersController {
     return this.adminCardStats.getStatsForUsers(body.ids).then((data) => ({ data }));
   }
 
+  @Get(':userId/referrals')
+  getReferralTree(@Param('userId') userId: string) {
+    return this.adminCardStats.getReferralTree(userId).then((data) => ({ data }));
+  }
+
   @Get('search')
   search(
     @Query('q') q?: string,

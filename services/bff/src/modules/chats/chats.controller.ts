@@ -88,6 +88,16 @@ class SpawnGroupDto {
   copyCount?: number;
 }
 
+class UpdateGroupDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | null;
+}
+
 class InviteMembersDto {
   @IsArray()
   @IsString({ each: true })
@@ -251,6 +261,21 @@ export class ChatsController {
     @Param('chatId', ParseUUIDPipe) chatId: string,
   ) {
     return this.enrichChat(await this.chat.get(chatId, user.sub));
+  }
+
+  @Patch(':chatId')
+  async updateGroup(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+    @Body() body: UpdateGroupDto,
+  ) {
+    return this.enrichChat(
+      await this.chat.updateGroup(chatId, {
+        userId: user.sub,
+        title: body.title,
+        imageUrl: body.imageUrl,
+      }),
+    );
   }
 
   @Post(':chatId/spawn-group')

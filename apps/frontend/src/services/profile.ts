@@ -101,6 +101,21 @@ export async function fetchPublicProfile(userId: string): Promise<PublicProfile>
   }
 }
 
+export type ReferralUser = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  level: 1 | 2;
+};
+
+export async function fetchReferralTree(userId: string): Promise<ReferralUser[]> {
+  const json = (await profileFetch(
+    `/profile/${encodeURIComponent(userId)}/referrals`,
+  )) as { data: ReferralUser[] };
+  return json.data ?? [];
+}
+
 export async function fetchProfileNote(ownerId: string): Promise<ProfileNote | null> {
   return (await profileFetch(
     `/profile/notes?ownerId=${encodeURIComponent(ownerId)}`,

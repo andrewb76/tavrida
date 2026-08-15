@@ -15,6 +15,7 @@ export type ChatDto = {
   kind: ChatKind;
   self: boolean;
   title: string | null;
+  imageUrl: string | null;
   contextType: string | null;
   contextId: string | null;
   peerUserId?: string | null;
@@ -178,6 +179,10 @@ export class ChatClient {
 
   leaveGroup(chatId: string, userId: string) {
     return this.request<void>('POST', `/internal/v1/chats/${chatId}/leave`, { userId });
+  }
+
+  updateGroup(chatId: string, input: { userId: string; title?: string; imageUrl?: string | null }) {
+    return this.request<ChatDto>('PATCH', `/internal/v1/chats/${chatId}`, input);
   }
 
   countGroupMemberships(userId: string) {

@@ -43,6 +43,13 @@ html[data-theme='dark'] {
   .font-display {
     font-family: var(--token-font-display, 'Unbounded', system-ui, sans-serif);
   }
+
+  select,
+  input:not([type='checkbox']):not([type='radio']),
+  textarea {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
 }
 
 @media (prefers-reduced-motion: reduce), (max-width: 767px) {
