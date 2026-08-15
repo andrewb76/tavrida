@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CatalogSort, CatalogStatus } from '@/services/auctions';
-import { flattenCategories, listCategories, type CategoryNode } from '@/services/forum';
+import { flattenCategoriesWithDepth, listCategories, type CategoryNode } from '@/services/forum';
 import { UiIcon } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -39,7 +39,7 @@ const emit = defineEmits<{
 const categories = ref<CategoryNode[]>([]);
 const showPro = ref(false);
 
-const flatCategories = computed(() => flattenCategories(categories.value));
+const flatCategories = computed(() => flattenCategoriesWithDepth(categories.value));
 
 const statusOptions: Array<{ value: CatalogStatus; label: string }> = [
   { value: 'ACTIVE', label: 'Идут торги' },
@@ -126,7 +126,7 @@ function applyProFilters() {
           :key="cat.id"
           :value="cat.id"
         >
-          {{ cat.title }}
+          {{ '\u00A0\u00A0'.repeat(cat.depth) }}{{ cat.depth > 0 ? '└ ' : '' }}{{ cat.title }}
         </option>
       </select>
     </div>

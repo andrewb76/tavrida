@@ -3,7 +3,7 @@ import MediaUploader from '@/components/media/MediaUploader.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   createTopic,
-  flattenCategories,
+  flattenCategoriesWithDepth,
   listCategories,
   type CategoryNode,
 } from '@/services/forum';
@@ -33,7 +33,7 @@ const attachmentHint = computed(() => {
 onMounted(async () => {
   try {
     const tree = await listCategories();
-    categories.value = flattenCategories(tree);
+    categories.value = flattenCategoriesWithDepth(tree);
     categoryId.value = categories.value[0]?.id ?? '';
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Не удалось загрузить категории';
@@ -95,7 +95,7 @@ async function submit(status: 'DRAFT' | 'PUBLISHED') {
             :key="cat.id"
             :value="cat.id"
           >
-            {{ cat.title }}
+            {{ '\u00A0\u00A0'.repeat(cat.depth) }}{{ cat.depth > 0 ? '└ ' : '' }}{{ cat.title }}
           </option>
         </select>
       </label>

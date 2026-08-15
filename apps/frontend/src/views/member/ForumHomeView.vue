@@ -2,7 +2,7 @@
 import ForumCategoryTreeNode from '@/components/forum/ForumCategoryTreeNode.vue';
 import { useForumTreeCollapsed } from '@/composables/useForumTreeCollapsed';
 import {
-  flattenCategories,
+  flattenCategoriesWithDepth,
   listCategories,
   type CategoryNode,
 } from '@/services/forum';
@@ -22,7 +22,7 @@ const error = ref<string | null>(null);
 const searchQ = ref('');
 const filterCategoryId = ref('');
 
-const flatCategories = computed(() => flattenCategories(tree.value));
+const flatCategories = computed(() => flattenCategoriesWithDepth(tree.value));
 const isAdmin = computed(() => session.isAdmin);
 
 const POLL_MS = 30_000;
@@ -132,7 +132,7 @@ onUnmounted(() => {
             :key="cat.id"
             :value="cat.id"
           >
-            {{ cat.title }}
+            {{ '\u00A0\u00A0'.repeat(cat.depth) }}{{ cat.depth > 0 ? '└ ' : '' }}{{ cat.title }}
           </option>
         </select>
       </label>
