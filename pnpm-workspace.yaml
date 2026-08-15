@@ -16,7 +16,9 @@ overrides:
   'brace-expansion@<2.1.0': '2.1.4'
   'brace-expansion@>=5': '5.0.9'
   # GHSA-r28c-9q8g-f849 — sourceMappingURL path traversal
-  postcss: '>=8.5.18'
+  postcss: '>=8.5.23'
+  # GHSA-2rp8-mm9q-fp49 — TypeORM migration:generate template-literal code injection
+  typeorm: '>=0.3.31'
   # CVE-2026-59870 — js-yaml !!omap DoS
   js-yaml: '>=4.3.1'
   # GHSA-2v37-7h3g-55p8 — nanoid zero-size infinite loop
