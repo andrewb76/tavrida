@@ -14,7 +14,7 @@ const error = ref<string | null>(null);
 const l1 = computed(() => referrals.value.filter((r) => r.level === 1));
 const l2 = computed(() => referrals.value.filter((r) => r.level === 2));
 
-function referralLabel(r: ReferralUser): string {
+function referralLabel(r: ReferralUser | PublicProfile): string {
   return publicProfileLabel(r);
 }
 

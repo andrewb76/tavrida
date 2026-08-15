@@ -70,7 +70,7 @@ export class CategoriesService {
 
   /** Category ids the viewer may use (empty groups or OR member / admin). */
   async listAccessibleCategoryIds(access: CategoryAccessViewer = {}): Promise<string[]> {
-    const rows = await this.categories.find({ select: ['id'] });
+    const rows = await this.categories.find({ select: { id: true } });
     const ids = rows.map((r) => r.id);
     const groupsByCategory = await this.accessGroups.loadGroupsByCategory(ids);
     const viewerGroupIds = await this.accessGroups.loadViewerGroupIds(access.viewerId);

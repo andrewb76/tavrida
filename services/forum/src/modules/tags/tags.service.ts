@@ -67,7 +67,7 @@ export class TagsService {
     const published = ids.length
       ? await this.topics.find({
           where: { id: In(ids), status: 'PUBLISHED' },
-          select: ['id'],
+          select: { id: true },
         })
       : [];
     const publishedSet = new Set(published.map((t) => t.id));

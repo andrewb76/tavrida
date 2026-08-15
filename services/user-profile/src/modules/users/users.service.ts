@@ -236,7 +236,7 @@ export class UsersService {
   async isHardLocked(userId: string): Promise<{ userId: string; isHardLocked: boolean }> {
     const row = await this.profiles.findOne({
       where: { userId },
-      select: ['userId', 'isHardLocked'],
+      select: { userId: true, isHardLocked: true },
     });
     return { userId, isHardLocked: Boolean(row?.isHardLocked) };
   }

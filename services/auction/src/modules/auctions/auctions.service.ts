@@ -530,7 +530,7 @@ export class AuctionsService {
   ): Promise<string[]> {
     const bidderRows = await bids.find({
       where: { auctionId },
-      select: ['bidderId'],
+      select: { bidderId: true },
     });
     const set = new Set<string>([sellerId]);
     for (const b of bidderRows) set.add(b.bidderId);

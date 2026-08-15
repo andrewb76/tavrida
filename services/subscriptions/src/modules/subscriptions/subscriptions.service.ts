@@ -121,7 +121,7 @@ export class SubscriptionsService {
         targetType: query.targetType,
         targetId: query.targetId,
       },
-      select: ['userId'],
+      select: { userId: true },
     });
 
     const userIds = [...new Set(rows.map((row) => row.userId))];
