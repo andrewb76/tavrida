@@ -5,7 +5,6 @@ import {
   createTopic,
   flattenCategoriesWithDepth,
   listCategories,
-  type CategoryNode,
   type FlatCategoryItem,
 } from '@/services/forum';
 import { UiButton } from '@tavrida/ui';
