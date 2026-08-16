@@ -253,7 +253,7 @@ export class AuctionController {
       });
     }
     const chargeKey = requestKey
-      ? createHash('sha256').update(`${user.sub}:${requestKey}`).digest('hex')
+      ? createHash('sha256').update(`${user.sub}:${requestKey}`).digest('hex').slice(0, 32)
       : '';
     for (const charge of charges) {
       await this.billing.charge({
