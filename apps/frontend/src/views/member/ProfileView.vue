@@ -372,7 +372,7 @@ async function copyInviteLink() {
             Участник клуба
           </p>
           <p
-            v-if="logtoProfileUrl && !editing"
+            v-if="isMe && !editing"
             class="mt-3 flex flex-wrap gap-3"
           >
             <button
