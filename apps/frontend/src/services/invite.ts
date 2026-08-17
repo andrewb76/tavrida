@@ -7,7 +7,6 @@ const CODE_PATTERN = /^TAV-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 export type InviteRecord = {
   id?: string;
   code: string;
-  token?: string;
   inviterId?: string;
   email?: string;
   createdAt: string;
@@ -19,8 +18,7 @@ export type InviteRecord = {
 };
 
 export type ResolvedInvite = {
-  token: string;
-  email?: string;
+  email: string;
   inviterId?: string;
   inviteCodeId?: string;
   code?: string;
@@ -82,14 +80,12 @@ function writeMockStore(store: Record<string, InviteRecord>): void {
   localStorage.setItem(MOCK_STORE_KEY, JSON.stringify(store));
 }
 
-function buildJoinLink(params: { code?: string; token?: string; email?: string }): string {
+function buildJoinLink(params: { code?: string; email?: string }): string {
   const url = new URL('/join', window.location.origin);
   if (params.code) {
     url.searchParams.set('code', params.code);
-  } else {
-    if (params.token) url.searchParams.set('token', params.token);
-    if (params.email) url.searchParams.set('email', params.email);
   }
+  if (params.email) url.searchParams.set('email', params.email);
   return url.toString();
 }
 
@@ -106,7 +102,6 @@ function parseErrorBody(body: unknown, fallback: string): string {
 /** Parse pasted link or raw TAV- code. */
 export function parseInviteInput(input: string): {
   code?: string;
-  token?: string;
   email?: string;
 } {
   const trimmed = input.trim();
@@ -119,13 +114,11 @@ export function parseInviteInput(input: string): {
   try {
     const url = new URL(trimmed);
     const code = url.searchParams.get('code');
-    const token = url.searchParams.get('token');
     const email = url.searchParams.get('email');
     if (code && isValidInviteCodeFormat(code)) {
-      return { code: normalizeInviteCode(code), token: token ?? undefined, email: email ?? undefined };
+      return { code: normalizeInviteCode(code), email: email ?? undefined };
     }
     return {
-      token: token ?? undefined,
       email: email ?? undefined,
       code: code ? normalizeInviteCode(code) : undefined,
     };
@@ -166,10 +159,8 @@ export async function createInvite(options?: {
   if (import.meta.env.VITE_USE_MOCK !== 'false') {
     await new Promise((r) => setTimeout(r, 120));
     const code = formatInviteCode();
-    const token = `dev-${crypto.randomUUID()}`;
     const record: InviteRecord = {
       code,
-      token,
       inviterId: options?.inviterId,
       email,
       createdAt: new Date().toISOString(),
@@ -198,10 +189,9 @@ export async function createInvite(options?: {
   return res.json() as Promise<CreatedInvite>;
 }
 
-/** Resolve code or token — `GET /api/v1/invites/resolve`. */
+/** Resolve code — `GET /api/v1/invites/resolve`. */
 export async function resolveInvite(params: {
   code?: string;
-  token?: string;
   email?: string;
 }): Promise<ResolvedInvite> {
   const code = params.code ? normalizeInviteCode(params.code) : undefined;
@@ -216,20 +206,15 @@ export async function resolveInvite(params: {
       }
       return {
         code,
-        token: record.token!,
-        email: record.email ?? params.email,
+        email: record.email ?? params.email ?? '',
         inviterId: record.inviterId,
       };
-    }
-    if (params.token) {
-      return { token: params.token, email: params.email };
     }
     throw new Error('Укажите код или ссылку приглашения');
   }
 
   const qs = new URLSearchParams();
   if (code) qs.set('code', code);
-  if (params.token) qs.set('token', params.token);
   const res = await fetch(`${apiBase()}/invites/resolve?${qs}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

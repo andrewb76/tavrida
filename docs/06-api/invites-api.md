@@ -3,7 +3,7 @@
 > **Статус:** implemented · **Auth:** JWT member (кроме `resolve`) · **BFF:** `services/bff/src/modules/invites/`  
 > **Полный spec:** [bff/invites-api.md](../05-microservices/bff/invites-api.md) · **ADR:** [012](../03-architecture/adr/012-club-invite-via-logto.md)
 
-Публичный BFF surface для клубных инвайтов (Logto one-time token + user-profile).
+Публичный BFF surface для клубных инвайтов (Logto createUser + loginHint + user-profile).
 
 ## Endpoints
 
@@ -11,7 +11,7 @@
 |--------|------|------|----------|
 | `POST` | `/api/v1/invites` | JWT | Создать приглашение → `201` |
 | `GET` | `/api/v1/invites` | JWT | Мои коды |
-| `GET` | `/api/v1/invites/resolve` | public + IP rate limit | Код/token → Logto OTT |
+| `GET` | `/api/v1/invites/resolve` | public + IP rate limit | Код → email + inviterId |
 | `POST` | `/api/v1/invites/claim` | JWT | Зафиксировать `inviterId` |
 
 ---
@@ -79,14 +79,12 @@ paths:
     get:
       operationId: resolveInvite
       tags: [invites]
-      summary: Resolve invite code or token for Logto sign-in
+      summary: Resolve invite code for Logto sign-in
       parameters:
         - name: code
           in: query
+          required: true
           schema: { type: string, example: TAV-K7HM-9R2Q }
-        - name: token
-          in: query
-          schema: { type: string, description: Raw Logto one-time token }
       responses:
         '200':
           description: OK
@@ -95,7 +93,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/InviteResolved'
         '400':
-          description: Neither code nor token provided
+          description: Code parameter required
         '404':
           description: Not found
         '409':
@@ -164,10 +162,9 @@ components:
               enum: [active, redeemed, expired]
     InviteResolved:
       type: object
-      required: [token]
+      required: [email, inviterId, inviteCodeId, code]
       properties:
-        token: { type: string, description: Pass to Logto signIn one_time_token }
-        email: { type: string, format: email, nullable: true }
+        email: { type: string, format: email, description: loginHint for Logto signIn }
         inviterId: { type: string, format: uuid }
         inviteCodeId: { type: string, format: uuid }
         code: { type: string }
@@ -186,8 +183,9 @@ components:
 ## Flow (кратко)
 
 1. Member: `POST /invites` → получает `code` + `link` (`/join?code=…`).
-2. Guest: `GET /invites/resolve?code=` → `token` + `email` → Logto `signIn({ one_time_token })`.
-3. After callback: `POST /invites/claim` → `inviterId` once (идемпотентно).
+2. Guest: `GET /invites/resolve?code=` → `email` + `inviterId` → Logto `signIn({ loginHint: email })`.
+3. Logto: sign-up flow (email verification → password) → callback JWT.
+4. After callback: `POST /invites/claim` → `inviterId` once (идемпотентно).
 
 ## Связанные документы
 

@@ -16,7 +16,7 @@ export type InviteStatus = 'active' | 'redeemed' | 'expired';
 
 export type CreateInviteInput = {
   issuerId: string;
-  logtoToken: string;
+  logtoUserId: string;
   email?: string;
   expiresAt: string;
   maxUses?: number;
@@ -44,7 +44,7 @@ export class InvitesService {
     const entity = this.inviteCodes.create({
       code,
       issuerId: input.issuerId,
-      logtoToken: input.logtoToken,
+      logtoUserId: input.logtoUserId,
       email: input.email ?? null,
       maxUses: input.maxUses ?? 1,
       usesCount: 0,
@@ -61,16 +61,12 @@ export class InvitesService {
     });
   }
 
-  async resolve(params: { code?: string; token?: string }) {
+  async resolve(params: { code?: string }) {
     let record: InviteCodeEntity | null = null;
 
     if (params.code) {
       record = await this.inviteCodes.findOne({
         where: { code: normalizeInviteCode(params.code) },
-      });
-    } else if (params.token) {
-      record = await this.inviteCodes.findOne({
-        where: { logtoToken: params.token },
       });
     }
 
@@ -96,8 +92,7 @@ export class InvitesService {
     }
 
     return {
-      token: record.logtoToken,
-      email: record.email ?? undefined,
+      email: record.email ?? '',
       inviterId: record.issuerId,
       inviteCodeId: record.id,
       code: record.code,

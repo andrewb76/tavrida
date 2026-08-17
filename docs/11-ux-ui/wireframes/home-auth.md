@@ -115,7 +115,7 @@ MemberHomePage:
 
 ## Auth & invite (flow)
 
-1. **Новый участник:** `/join` (код `TAV-…` или ссылка) → Logto (one-time token) → `/callback` → `/app`
+1. **Новый участник:** `/join` (код `TAV-…` или ссылка) → Logto (email verification → password) → `/callback` → `/app`
 2. **Уже есть Logto:** «Войти» на лендинге → `/callback` → `/app`
 3. Member = JWT Logto (ADR-012); реферал — `inviterId` при регистрации по invite
 4. Session: `@logto/vue` + Pinia `session` (`isMember` ≡ authenticated)

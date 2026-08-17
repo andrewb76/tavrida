@@ -24,16 +24,12 @@ const autoStarted = ref(false);
 const codeParam = computed(() =>
   typeof route.query.code === 'string' ? normalizeInviteCode(route.query.code) : undefined,
 );
-const tokenParam = computed(() =>
-  typeof route.query.token === 'string' ? route.query.token : undefined,
-);
 const emailParam = computed(() =>
   typeof route.query.email === 'string' ? route.query.email : undefined,
 );
 const hasAutoInvite = computed(
   () =>
-    (codeParam.value && isValidInviteCodeFormat(codeParam.value)) ||
-    Boolean(tokenParam.value),
+    Boolean(codeParam.value && isValidInviteCodeFormat(codeParam.value)),
 );
 const alreadyLoggedIn = computed(
   () => auth.isAuthenticated.value && !hasAutoInvite.value,
@@ -41,7 +37,6 @@ const alreadyLoggedIn = computed(
 
 async function beginJoin(params: {
   code?: string;
-  token?: string;
   email?: string;
 }) {
   error.value = '';
@@ -60,7 +55,7 @@ async function beginJoin(params: {
 
 async function submit() {
   const parsed = parseInviteInput(input.value);
-  if (!parsed.code && !parsed.token) {
+  if (!parsed.code) {
     error.value = 'Введите код TAV-XXXX-XXXX или вставьте ссылку приглашения';
     return;
   }
@@ -81,7 +76,6 @@ onMounted(async () => {
     autoStarted.value = true;
     await beginJoin({
       code: codeParam.value,
-      token: tokenParam.value,
       email: emailParam.value,
     });
   }

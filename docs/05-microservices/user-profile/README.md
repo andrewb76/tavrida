@@ -104,7 +104,7 @@ Unique: one note per `(ownerId, authorId)` — upsert on POST.
 
 | Method | Path | Описание |
 |--------|------|----------|
-| POST | `/internal/v1/invites` | Создать invite_code + logtoToken ref |
+| POST | `/internal/v1/invites` | Создать invite_code + logtoUserId ref |
 | GET | `/internal/v1/invites` | Список по issuerId |
 | GET | `/internal/v1/invites/resolve` | Lookup |
 | POST | `/internal/v1/invites/claim` | invitation + inviterId |

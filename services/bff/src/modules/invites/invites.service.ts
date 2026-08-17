@@ -51,12 +51,13 @@ export class InvitesService {
     const inviteEmail = email?.trim() || this.generateLinkOnlyEmail();
     const expiresIn = await this.inviteValiditySeconds();
     const maxUses = await this.clubSettings.inviteMaxUses();
-    const ott = await this.logto.createOneTimeToken({ email: inviteEmail, expiresIn });
-    const expiresAt = ott.expiresAt;
+
+    const user = await this.logto.createUser(inviteEmail);
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
     const record = await this.userProfile.createInvite({
       issuerId,
-      logtoToken: ott.token,
+      logtoUserId: user.id,
       email: inviteEmail,
       expiresAt,
       maxUses,
@@ -83,7 +84,7 @@ export class InvitesService {
     };
   }
 
-  resolveInvite(params: { code?: string; token?: string }) {
+  resolveInvite(params: { code?: string }) {
     return this.userProfile.resolveInvite(params);
   }
 

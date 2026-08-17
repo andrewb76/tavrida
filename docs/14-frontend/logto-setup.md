@@ -113,7 +113,7 @@ DOCKER_CONTEXT=dev-swarm docker service update --force tavrida-dev_logto
 | CORS | `http://localhost:5173` | `https://app.evatorg.su` |
 | **Unknown session redirect URL** (Advanced) | `http://localhost:5173/auth/unknown-session` | `https://app.evatorg.su/auth/unknown-session` |
 
-5. **M2M app** (для BFF): Machine-to-machine → роль с **Logto Management API** permission `all` → scopes `one-time-tokens` (если доступны).
+5. **M2M app** (для BFF): Machine-to-machine → роль с **Logto Management API** permission `all` → scopes `users` (create user).
 
    Resource indicator для token request:
    - **Cloud:** `https://<tenant>.logto.app/api` (тот же tenant, что в `LOGTO_ENDPOINT`)
@@ -167,12 +167,14 @@ sequenceDiagram
 
   M->>F: /invites → создать
   F->>B: POST /invites
-  B->>L: one-time token
+  B->>L: POST /api/users (createUser)
   B-->>M: code TAV-… + link
 
   V->>F: /join?code=TAV-…
-  F->>B: GET /invites/resolve
-  F->>L: signIn(one_time_token)
+  F->>B: GET /invites/resolve?code=
+  B-->>F: { email, inviterId }
+  F->>L: signIn({ loginHint: email })
+  L->>V: sign-up: email verification → password
   L->>F: /callback
   F->>V: /app (member)
 ```
@@ -205,7 +207,7 @@ GET  /api/v1/invites/resolve?code=
 POST /api/v1/invites/claim
 ```
 
-BFF внутри: Logto Management API `POST /api/one-time-tokens`, сохранение `code → token, inviterId` в `user-profile`.
+BFF внутри: Logto Management API `POST /api/users` (createUser), сохранение `code → logtoUserId, inviterId` в `user-profile`.
 
 ---
 

@@ -1,10 +1,10 @@
-# ✉️ BFF API — инвайты (Logto one-time token)
+# ✉️ BFF API — инвайты (Logto createUser + loginHint)
 
-> **Статус:** spec ready · **Версия:** 0.1  
+> **Статус:** spec ready · **Версия:** 0.2  
 > **ADR:** [012-club-invite-via-logto](../../03-architecture/adr/012-club-invite-via-logto.md)  
 > **Продукт:** [club-access.md](../../01-goal/club-access.md)
 
-BFF **оркестрирует** invite flow: Logto Management API (one-time token) + `user-profile` (код `TAV-…`, `inviterId`). Это **не** pass-through proxy.
+BFF **оркестрирует** invite flow: Logto Management API (`POST /api/users`) + `user-profile` (код `TAV-…`, `inviterId`). Это **не** pass-through proxy.
 
 ---
 
@@ -15,7 +15,7 @@ BFF **оркестрирует** invite flow: Logto Management API (one-time tok
 | Member | JWT Logto tenant = доступ в клуб |
 | Инвайт | Разрешает **регистрацию** нового пользователя + фиксирует **реферал** |
 | Код `TAV-XXXX-XXXX` | Человекочитаемый alias ссылки `/join?code=…` |
-| Ссылка | `/join?code=TAV-…` или `/join?token=…&email=…` |
+| Ссылка | `/join?code=TAV-…` |
 
 Пользователи, созданные в Logto Console вручную, — members без `inviterId` (bootstrap).
 
@@ -32,15 +32,17 @@ sequenceDiagram
 
   Note over F,UP: Создание (member)
   F->>B: POST /invites { email? }
-  B->>L: POST /one-time-tokens
-  B->>UP: POST /internal/v1/invites
+  B->>L: POST /api/users (createUser)
+  B->>UP: POST /internal/v1/invites { logtoUserId }
   B-->>F: { code, link, expiresAt }
 
   Note over F,UP: Вход гостя
   F->>B: GET /invites/resolve?code=
   B->>UP: lookup code
-  B-->>F: { token, email?, inviterId }
-  F->>F: signIn(one_time_token)
+  B-->>F: { email, inviterId, inviteCodeId }
+  F->>L: signIn({ loginHint: email })
+  L->>L: sign-up: email verification → password
+  L->>F: /callback JWT
 
   Note over F,UP: После callback
   F->>B: POST /invites/claim { inviteCodeId? }
@@ -53,9 +55,9 @@ sequenceDiagram
 | Слой | Делает |
 |------|--------|
 | **BFF** | JWT check, лимиты plan-config, вызов Logto M2M, compose `link`, resolve/claim |
-| **Logto M2M** | `POST /api/one-time-tokens` |
-| **user-profile** | Хранит `invite_code`, `invitation`, `inviterId` |
-| **Frontend** | `/join`, `signIn({ extraParams: { one_time_token } })` |
+| **Logto M2M** | `POST /api/users` (создание пользователя) |
+| **user-profile** | Хранит `invite_code` (logto_user_id), `invitation`, `inviterId` |
+| **Frontend** | `/join`, `signIn({ loginHint: email })` → Logto sign-up flow |
 
 ---
 
@@ -65,14 +67,14 @@ sequenceDiagram
 |--------|------|------|----------|
 | `POST` | `/api/v1/invites` | Member JWT | Создать приглашение |
 | `GET` | `/api/v1/invites` | Member JWT | Мои коды (история) |
-| `GET` | `/api/v1/invites/resolve` | **Нет** | Код → Logto token |
+| `GET` | `/api/v1/invites/resolve` | **Нет** | Код → email + inviterId |
 | `POST` | `/api/v1/invites/claim` | Member JWT | Зафиксировать `inviterId` |
 
 ---
 
 ## `POST /api/v1/invites`
 
-Создаёт invite: Logto one-time token + запись в `user-profile`.
+Создаёт invite: Logto user + запись в `user-profile`.
 
 ### Request
 
@@ -88,7 +90,7 @@ Content-Type: application/json
 
 | Поле | Тип | Обяз. | Описание |
 |------|-----|-------|----------|
-| `email` | string (email) | нет | Если не задан — BFF генерирует `invite-{id}@invite.tavrida-lot.localhost` (Logto API требует email) |
+| `email` | string (email) | нет | Если не задан — BFF генерирует `invite-{id}@invite.tavrida-lot.localhost` |
 
 ### Поведение BFF
 
@@ -97,25 +99,21 @@ Content-Type: application/json
 3. Check `club.member.invite.monthlyMax` via plan-config (admin /
    `CLUB_INVITES_UNLIMITED_ISSUER_IDS` — skip). Unknown policy or unavailable
    plan-config returns `503`; quota enforcement never falls back to env.
-4. `POST {LOGTO_ENDPOINT}/api/one-time-tokens` (M2M token):
+4. `POST {LOGTO_ENDPOINT}/api/users` (M2M token):
 
 ```json
 {
-  "email": "friend@example.com",
-  "expiresIn": 1209600
+  "primaryEmail": "friend@example.com",
+  "name": "friend"
 }
 ```
-
-`expiresIn` = `club.invite.validityDays` × 86400 (default 14 дней). Источник: **settings** (`ClubSettingsReader`, кэш 30 с); env `CLUB_INVITE_VALIDITY_DAYS` — только fallback.
-
-`maxUses`: `1` при `club.invite.codeType=SINGLE_USE`, `100` при `MULTI_USE`.
 
 5. `POST user-profile /internal/v1/invites`:
 
 ```json
 {
   "issuerId": "uuid",
-  "logtoToken": "ott_…",
+  "logtoUserId": "logto-user-id",
   "email": "friend@example.com",
   "expiresAt": "2026-07-23T12:00:00Z",
   "maxUses": 1
@@ -137,7 +135,7 @@ Content-Type: application/json
 }
 ```
 
-`link` собирает BFF из `FRONTEND_ORIGIN` + `code` (не raw Logto token в URL для code-flow).
+`link` собирает BFF из `FRONTEND_ORIGIN` + `code`.
 
 ### Ошибки
 
@@ -207,22 +205,14 @@ Proxy → `user-profile GET /internal/v1/invites?issuerId={sub}`.
 GET /api/v1/invites/resolve?code=TAV-K7HM-9R2Q
 ```
 
-Или (legacy / direct token в ссылке от BFF admin tools):
-
-```http
-GET /api/v1/invites/resolve?token=ott_…
-```
-
 | Query | Обяз. | Описание |
 |-------|-------|----------|
-| `code` | один из | Код `TAV-…` |
-| `token` | `code` \| `token` | Raw one-time token id (если ссылка без code) |
+| `code` | да | Код `TAV-…` |
 
 ### Response `200`
 
 ```json
 {
-  "token": "YHwbXSXxQfL02IoxFqr1hGvkB13uTqcd",
   "email": "friend@example.com",
   "inviterId": "uuid",
   "inviteCodeId": "uuid",
@@ -232,8 +222,7 @@ GET /api/v1/invites/resolve?token=ott_…
 
 | Поле | Назначение |
 |------|------------|
-| `token` | Передаётся в `signIn({ extraParams: { one_time_token } })` |
-| `email` | `loginHint` в Logto SDK |
+| `email` | `loginHint` в Logto SDK (`signIn({ loginHint: email })`) |
 | `inviterId` | Для `claim` после входа (фронт кладёт в sessionStorage) |
 | `inviteCodeId` | Опционально в `claim` для идемпотентности |
 
@@ -250,7 +239,6 @@ Rate limit: **30 req/min per IP** (anonymous).
 
 ### Безопасность
 
-- Не возвращать `logtoToken` в логах.
 - Не отдавать список всех кодов — только resolve по точному `code`.
 - После успешного claim инкремент `usesCount` (не на resolve).
 
@@ -335,16 +323,16 @@ grant_type=client_credentials
 &scope=all
 ```
 
-### Create one-time token
+### Create user
 
 ```http
-POST {LOGTO_ENDPOINT}/api/one-time-tokens
+POST {LOGTO_ENDPOINT}/api/users
 Authorization: Bearer {m2m-access-token}
 Content-Type: application/json
 
 {
-  "email": "friend@example.com",
-  "expiresIn": 1209600
+  "primaryEmail": "friend@example.com",
+  "name": "friend"
 }
 ```
 
@@ -352,23 +340,24 @@ Response (пример):
 
 ```json
 {
-  "token": "YHwbXSXxQfL02IoxFqr1hGvkB13uTqcd",
-  "expiresAt": "2026-07-23T20:00:00.000Z"
+  "id": "usr_5xK2mP8qR3"
 }
 ```
 
-> Logto: [one-time token](https://docs.logto.io/end-user-flows/one-time-token) · [disable registration](https://docs.logto.io/end-user-flows/sign-up-and-sign-in/disable-user-registration)
+> Logto: [Create user](https://docs.logto.io/using-logto-oss/management-api#create-a-user)
 
 ### Logto Console checklist
 
-- [ ] Sign-in experience → **Disable user registration**
+- [ ] Sign-in experience → **Disable user registration** (invite-only)
+- [ ] Sign-up: **Email + Password + Verify email** (для invite flow)
+- [ ] Sign-in: **Email + Password**
 - [ ] SPA app (frontend) — redirect URIs
 - [ ] M2M app — Management API scopes
 - [ ] (Опционально) Email connector для писем с invite
 
 ### Dev без M2M
 
-Если `LOGTO_M2M_APP_ID` / `LOGTO_M2M_APP_SECRET` пусты, BFF генерирует `dev-*` one-time tokens и сохраняет их в user-profile. Logto Cloud **не примет** такие токены — для полного E2E нужен M2M app.
+Если `LOGTO_M2M_APP_ID` / `LOGTO_M2M_APP_SECRET` пусты, BFF генерирует `dev-*` user ids и сохраняет их в user-profile. Logto Cloud **не примет** такие id — для полного E2E нужен M2M app.
 
 ---
 
@@ -378,9 +367,9 @@ BFF вызывает:
 
 | Method | Path | Описание |
 |--------|------|----------|
-| `POST` | `/internal/v1/invites` | Сохранить code + logtoToken hash/ref |
+| `POST` | `/internal/v1/invites` | Сохранить code + logtoUserId |
 | `GET` | `/internal/v1/invites` | Список по `issuerId` |
-| `GET` | `/internal/v1/invites/resolve` | Lookup by `code` or `token` |
+| `GET` | `/internal/v1/invites/resolve` | Lookup by `code` |
 | `POST` | `/internal/v1/invites/claim` | Записать invitation |
 | `POST` | `/internal/v1/profile/ensure` | Профиль при первом JWT (без inviter) |
 
@@ -388,7 +377,7 @@ BFF вызывает:
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `logtoToken` | varchar | One-time token (или hash — TBD security review) |
+| `logto_user_id` | varchar | Logto user ID |
 | `email` | varchar nullable | Target email |
 | `status` | enum | `active` \| `redeemed` \| `expired` |
 
@@ -416,12 +405,12 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 
 ### Smoke: claim после Logto callback
 
-Путь фронта: resolve → Logto sign-in → callback → `POST /api/v1/invites/claim` (JWT + `inviteCodeId` / sessionStorage).
+Путь фронта: resolve → Logto signIn(loginHint) → sign-up flow → callback → `POST /api/v1/invites/claim` (JWT + `inviteCodeId` / sessionStorage).
 
 Локально без браузера: unit/orchestration test `invites.service.test.ts` (mock Logto). Ручной smoke:
 
 1. Member создаёт invite → открыть `link` в инкогнито.
-2. Пройти Logto → после callback фронт должен вызвать claim (без 4xx/5xx в Network).
+2. Пройти Logto sign-up flow (email verification → password) → после callback фронт должен вызвать claim (без 4xx/5xx в Network).
 3. Повторный claim → `claimed: false` (идемпотентность).
 4. В RMQ (если подключён) — одно событие `invitation.redeemed` на первый claim.
 
@@ -459,6 +448,7 @@ Consumer: `rating` — referral tree ([karma-and-rating.md](../../01-goal/karma-
 - [x] `club.member.invite.monthlyMax` — fail-closed BFF quota via plan-config
 - [x] E2E (BFF orchestration test): create → resolve → mock signIn → claim (`invites.service.test.ts`)
 - [x] RMQ `invitation.redeemed` publish из user-profile при первом claim (consumers — planned)
+- [x] Migrate from one-time token to `createUser` + `loginHint` (ADR-012 v0.2)
 
 ---
 

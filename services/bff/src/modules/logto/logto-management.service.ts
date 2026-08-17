@@ -170,6 +170,38 @@ export class LogtoManagementService {
     return json.access_token;
   }
 
+  async createUser(email: string): Promise<{ id: string }> {
+    if (!this.isConfigured) {
+      return { id: `dev-user-${randomBytes(8).toString('hex')}` };
+    }
+
+    const endpoint = this.config.get<string>('LOGTO_ENDPOINT')!.replace(/\/$/, '');
+    const accessToken = await this.getM2MToken();
+
+    const res = await fetch(`${endpoint}/api/users`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        primaryEmail: email,
+        name: email.split('@')[0],
+      }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new ServiceUnavailableException({
+        type: 'upstream-error',
+        detail: `Logto create user failed: ${res.status} ${detail}`,
+      });
+    }
+
+    const json = (await res.json()) as { id: string };
+    return { id: json.id };
+  }
+
   async listUsers(options?: { page?: number; pageSize?: number; search?: string }) {
     if (!this.isConfigured) return [];
 

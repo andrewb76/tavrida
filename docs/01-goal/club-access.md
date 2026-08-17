@@ -34,14 +34,14 @@ Router: `requiresMember` → нет JWT → redirect на `/` или «Войт�
 ### Для гостя
 
 1. Получает **ссылку** или **код** от участника клуба.
-2. Открывает `/join?token=…&email=…` или `/join?code=TAV-XXXX-XXXX`.
-3. Logto: регистрация (новый) или вход (уже был аккаунт).
+2. Открывает `/join?code=TAV-XXXX-XXXX`.
+3. Logto: sign-up flow (email verification → password) или вход (уже был аккаунт).
 4. Сразу member — редирект в `/app`.
 
 ### Для участника
 
 1. `/invites` → «Пригласить» → email (опционально) или «Скопировать ссылку / код».
-2. BFF создаёт one-time token в Logto + код `TAV-…`.
+2. BFF создаёт пользователя в Logto (unverified email) + код `TAV-…`.
 3. Друг переходит по ссылке — попадает в клуб; мы записываем `inviterId`.
 
 ### День 0 (bootstrap)
@@ -63,14 +63,15 @@ sequenceDiagram
   participant V as Guest
 
   M->>B: POST /invites { email? }
-  B->>L: POST /one-time-tokens
-  B->>UP: save code TAV-… → token, inviterId
+  B->>L: POST /api/users (createUser)
+  B->>UP: save code TAV-… → logtoUserId, inviterId
   B-->>M: { code, link }
 
   V->>V: /join?code=TAV-…
   V->>B: GET /invites/resolve?code=…
-  B-->>V: { token, email? }
-  V->>L: signIn(one_time_token)
+  B-->>V: { email, inviterId }
+  V->>L: signIn({ loginHint: email })
+  L->>V: sign-up: email verification → password
   L->>V: /callback JWT
   B->>UP: inviterId (webhook или POST /invites/claim)
   V->>V: /app
@@ -112,8 +113,10 @@ sequenceDiagram
 ## Logto Console (чеклист)
 
 - [ ] Sign-in experience → **Disable user registration** (invite-only)
+- [ ] Sign-up: **Email + Password + Verify email**
+- [ ] Sign-in: **Email + Password**
 - [ ] SPA app: redirect `http://localhost:5173/callback`
-- [ ] M2M app для BFF → Management API (`one-time-tokens`)
+- [ ] M2M app для BFF → Management API (`POST /api/users`)
 - [ ] Email connector (если шлём письма из Logto; иначе — своё)
 
 ---

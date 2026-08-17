@@ -22,7 +22,7 @@ pnpm exec turbo run dev --filter=@tavrida/bff --filter=@tavrida/user-profile
 1. PostgreSQL из `docker/compose/infra.local.yml` (schema `user_profile` создаётся автоматически).
 2. Запустить `@tavrida/user-profile` (:3007), `@tavrida/billing` (:3001), `@tavrida/plan-config` (:3002), `@tavrida/scalar-config` (:3008), `@tavrida/forum` (:3009) и `@tavrida/bff` (:3000).
 3. В `.env.local`: `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=http://localhost:3000/api/v1`.
-4. `LOGTO_M2M_*` — для реальных one-time tokens; без них BFF отдаёт `dev-*` токены (только локальная отладка).
+4. `LOGTO_M2M_*` — для реальных Logto users; без них BFF генерирует `dev-*` user ids (только локальная отладка).
 5. Spec: [bff/invites-api.md](../05-microservices/bff/invites-api.md).
 
 ### Bootstrap admin (день 0)

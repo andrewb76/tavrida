@@ -15,7 +15,7 @@ class CreateInviteDto {
   issuerId!: string;
 
   @IsString()
-  logtoToken!: string;
+  logtoUserId!: string;
 
   @IsOptional()
   @IsEmail()
@@ -87,9 +87,8 @@ export class InternalInvitesController {
   @Get('resolve')
   resolve(
     @Query('code') code?: string,
-    @Query('token') token?: string,
   ) {
-    return this.invites.resolve({ code, token });
+    return this.invites.resolve({ code });
   }
 
   @Post('claim')

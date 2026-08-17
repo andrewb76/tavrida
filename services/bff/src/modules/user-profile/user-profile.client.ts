@@ -21,8 +21,7 @@ export type InternalInviteRecord = {
 };
 
 export type ResolvedInvite = {
-  token: string;
-  email?: string;
+  email: string;
   inviterId: string;
   inviteCodeId: string;
   code: string;
@@ -57,7 +56,7 @@ export class UserProfileClient {
 
   async createInvite(body: {
     issuerId: string;
-    logtoToken: string;
+    logtoUserId: string;
     email?: string;
     expiresAt: string;
     maxUses?: number;
@@ -80,10 +79,9 @@ export class UserProfileClient {
     return res.data;
   }
 
-  async resolveInvite(params: { code?: string; token?: string }) {
+  async resolveInvite(params: { code?: string }) {
     const qs = new URLSearchParams();
     if (params.code) qs.set('code', params.code);
-    if (params.token) qs.set('token', params.token);
     return this.request<ResolvedInvite>('GET', `/internal/v1/invites/resolve?${qs}`);
   }
 

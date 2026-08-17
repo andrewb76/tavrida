@@ -18,7 +18,7 @@ type StoredInvite = {
   id: string;
   code: string;
   issuerId: string;
-  logtoToken: string;
+  logtoUserId: string;
   email?: string;
   expiresAt: string;
   createdAt: string;
@@ -30,7 +30,7 @@ function createFakeUserProfile() {
   const byCode = new Map<string, StoredInvite>();
   const calls = {
     create: [] as Record<string, unknown>[],
-    resolve: [] as Array<{ code?: string; token?: string }>,
+    resolve: [] as Array<{ code?: string }>,
     claim: [] as Array<{ userId: string; inviteCodeId?: string; inviterId?: string }>,
   };
   const claimedByUser = new Map<string, { inviterId: string; invitationAcceptedAt: string }>();
@@ -53,7 +53,7 @@ function createFakeUserProfile() {
     },
     createInvite: async (body: {
       issuerId: string;
-      logtoToken: string;
+      logtoUserId: string;
       email?: string;
       expiresAt: string;
       maxUses?: number;
@@ -64,7 +64,7 @@ function createFakeUserProfile() {
         id: `invite-${seq}`,
         code: `TAV-TEST-${String(seq).padStart(4, '0')}`,
         issuerId: body.issuerId,
-        logtoToken: body.logtoToken,
+        logtoUserId: body.logtoUserId,
         email: body.email,
         expiresAt: body.expiresAt,
         createdAt: new Date().toISOString(),
@@ -80,15 +80,14 @@ function createFakeUserProfile() {
         createdAt: row.createdAt,
       };
     },
-    resolveInvite: async (params: { code?: string; token?: string }): Promise<ResolvedInvite> => {
+    resolveInvite: async (params: { code?: string }): Promise<ResolvedInvite> => {
       calls.resolve.push(params);
       const row = params.code
         ? byCode.get(params.code)
-        : [...byCode.values()].find((r) => r.logtoToken === params.token);
+        : undefined;
       if (!row) throw new Error('not found');
       return {
-        token: row.logtoToken,
-        email: row.email,
+        email: row.email ?? '',
         inviterId: row.issuerId,
         inviteCodeId: row.id,
         code: row.code,
@@ -134,15 +133,12 @@ function createService(opts?: {
   isAdmin?: boolean;
 }) {
   const up = createFakeUserProfile();
-  const logtoCalls: Array<{ email: string; expiresIn: number }> = [];
+  const logtoCalls: Array<{ email: string }> = [];
 
   const logto = {
-    createOneTimeToken: async (input: { email: string; expiresIn: number }) => {
-      logtoCalls.push(input);
-      return {
-        token: `ott-${logtoCalls.length}`,
-        expiresAt: new Date(Date.now() + input.expiresIn * 1000).toISOString(),
-      };
+    createUser: async (email: string) => {
+      logtoCalls.push({ email });
+      return { id: `user-${logtoCalls.length}` };
     },
   } as unknown as LogtoManagementService;
 
@@ -206,14 +202,12 @@ describe('InvitesService flow', () => {
     assert.match(created.link, /\/join\?code=/);
     assert.equal(logtoCalls.length, 1);
     assert.equal(logtoCalls[0]?.email, 'friend@example.com');
-    assert.equal(logtoCalls[0]?.expiresIn, 14 * 86400);
-    assert.equal(up.calls.create[0]?.logtoToken, 'ott-1');
+    assert.equal(up.calls.create[0]?.logtoUserId, 'user-1');
 
     const resolved = await service.resolveInvite({ code: created.code });
-    assert.equal(resolved.token, 'ott-1');
+    assert.equal(resolved.email, 'friend@example.com');
     assert.equal(resolved.inviterId, issuerId);
     assert.equal(resolved.inviteCodeId, created.id);
-    assert.equal(resolved.email, 'friend@example.com');
 
     // mock Logto signIn: invitee receives JWT with sub=inviteeId, then claims attribution
     const claimed = await service.claimInvite(inviteeId, {

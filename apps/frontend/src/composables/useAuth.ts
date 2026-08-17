@@ -17,7 +17,6 @@ import { useSessionStore } from '@/stores/session';
 
 export type SignInWithInviteParams = {
   code?: string;
-  token?: string;
   email?: string;
   redirectAfter?: string;
 };
@@ -52,9 +51,6 @@ export function useAuth() {
       await logto.signIn({
         redirectUri: signInRedirectUri(),
         loginHint: resolved.email,
-        ...(resolved.token
-          ? { extraParams: { one_time_token: resolved.token } }
-          : {}),
       });
     }
 
@@ -75,7 +71,6 @@ export function useAuth() {
     async function signInWithInvite(params: SignInWithInviteParams) {
       const resolved = await resolveInvite({
         code: params.code,
-        token: params.token,
         email: params.email,
       });
       await signInWithResolved(resolved, params.redirectAfter ?? '/app');
@@ -116,10 +111,9 @@ export function useAuth() {
       await router.push(redirectAfter ?? { name: 'member-home' });
     },
     signInWithInvite: async (params: SignInWithInviteParams) => {
-      if (params.code || params.token) {
+      if (params.code) {
         const resolved = await resolveInvite({
           code: params.code,
-          token: params.token,
           email: params.email,
         });
         if (resolved.inviterId) setPendingInviterId(resolved.inviterId);

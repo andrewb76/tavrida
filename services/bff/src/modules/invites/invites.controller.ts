@@ -34,14 +34,14 @@ export class InvitesController {
 
   @Get('resolve')
   @UseGuards(ResolveRateLimitGuard)
-  resolve(@Query('code') code?: string, @Query('token') token?: string) {
-    if (!code?.trim() && !token?.trim()) {
+  resolve(@Query('code') code?: string) {
+    if (!code?.trim()) {
       throw new BadRequestException({
         type: 'validation-error',
-        detail: 'code or token query parameter is required',
+        detail: 'code query parameter is required',
       });
     }
-    return this.invites.resolveInvite({ code, token });
+    return this.invites.resolveInvite({ code });
   }
 
   @Post('claim')

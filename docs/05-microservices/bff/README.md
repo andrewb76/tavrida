@@ -159,7 +159,7 @@ Admin users card enrichment: [admin-users-card.md](./admin-users-card.md) (`GET`
 - [event-catalog](../../03-architecture/event-catalog.md)
 - [Security](../../09-security/README.md)
 - [14-frontend](../../14-frontend/README.md)
-- [invites-api](./invites-api.md) — Logto one-time token + referral
+- [invites-api](./invites-api.md) — Logto createUser + loginHint + referral
 
 ---
 

@@ -13,7 +13,7 @@ describe('InvitesService.claim', () => {
       id: 'code-1',
       code: 'TAV-TEST-0001',
       issuerId: 'inviter-1',
-      logtoToken: 'ott-1',
+      logtoUserId: 'user-1',
       email: null,
       maxUses: 1,
       usesCount: 0,
