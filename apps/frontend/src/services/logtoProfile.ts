@@ -59,6 +59,8 @@ export async function syncLogtoProfile(logto: LogtoClient, session: SessionStore
     userInfo?.username ??
     claims?.name ??
     claims?.username ??
+    userInfo?.email ??
+    claims?.email ??
     undefined;
   const username = userInfo?.username ?? claims?.username ?? undefined;
   const email = userInfo?.email ?? claims?.email ?? undefined;

@@ -22,9 +22,9 @@ export function createLogtoConfig(): LogtoConfig | null {
     appId: import.meta.env.VITE_LOGTO_APP_ID!,
     /**
      * `profile` — name + picture for profile UI (first-party SPA).
-     * Add `email` here if the app requests email in Console → Permissions.
+     * `email` — required for email-based login to return email claims.
      */
-    scopes: ['openid', 'offline_access', 'profile'],
+    scopes: ['openid', 'offline_access', 'profile', 'email'],
     includeReservedScopes: false,
   };
 

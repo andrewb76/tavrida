@@ -243,7 +243,7 @@ export class UsersService {
 
   async syncFromLogto(input: LogtoUserSyncInput) {
     let row = await this.profiles.findOne({ where: { userId: input.userId } });
-    const displayName = input.name?.trim() || input.username?.trim() || null;
+    const displayName = input.name?.trim() || input.username?.trim() || input.primaryEmail?.trim() || null;
     const now = new Date();
 
     if (!row) {
