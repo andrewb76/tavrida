@@ -8,6 +8,7 @@ import type { BillingClient } from '../billing/billing.client';
 import type { KetoService } from '../keto/keto.service';
 import type { MediaLimitsService } from '../media/media-limits.service';
 import type { MediaStorageService } from '../media/media-storage.service';
+import type { UserProfileClient } from '../user-profile/user-profile.client';
 import { AuctionController } from './auction.controller';
 import type { AuctionClient } from './auction.client';
 import type { AuctionPlanPolicyService } from './auction-plan-policy.service';
@@ -78,7 +79,7 @@ function createHarness(
     },
     listBids: async (id: string) => {
       calls.listBids.push(id);
-      return { data: [{ id: 'bid-1' }] };
+      return { data: [{ id: 'bid-1', bidderId: 'user-1', amount: 100, currency: 'RUB', placedAt: '2024-01-01T00:00:00Z', isWinning: true }] };
     },
     listExpertAppraisals: async (id: string) => {
       calls.listExpertAppraisals.push(id);
@@ -178,6 +179,17 @@ function createHarness(
     isPlatformExpert: async () => Boolean(opts.isExpert || opts.isAdmin),
   } as unknown as KetoService;
 
+  const profiles = {
+    getPublicProfile: async (userId: string) => ({
+      userId,
+      displayName: null as string | null,
+      username: null as string | null,
+      avatarUrl: null as string | null,
+      isSuspended: false,
+      memberSince: '2024-01-01T00:00:00Z',
+    }),
+  } as unknown as UserProfileClient;
+
   const controller = new AuctionController(
     auction,
     auctionPlanPolicy,
@@ -185,6 +197,7 @@ function createHarness(
     mediaStorage,
     billing,
     keto,
+    profiles,
   );
 
   return { controller, calls };
@@ -249,7 +262,7 @@ describe('AuctionController (integration)', () => {
     const result = await controller.listBids('lot-42');
 
     assert.deepEqual(calls.listBids, ['lot-42']);
-    assert.deepEqual(result, { data: [{ id: 'bid-1' }] });
+    assert.deepEqual(result, { data: [{ id: 'bid-1', bidderId: 'user-1', bidderDisplayName: null, amount: 100, currency: 'RUB', placedAt: '2024-01-01T00:00:00Z', isWinning: true }] });
   });
 
   it('GET :id/expert-appraisals proxies to auction service', async () => {

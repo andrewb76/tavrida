@@ -480,7 +480,7 @@ async function onSubmitExpert() {
             </div>
             <small>
               {{ new Date(bid.placedAt).toLocaleString('ru-RU') }}
-              · участник {{ bid.bidderId }}
+              · участник {{ bid.bidderDisplayName || bid.bidderId }}
             </small>
           </li>
           <li

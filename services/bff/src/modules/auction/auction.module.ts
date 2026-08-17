@@ -5,6 +5,7 @@ import { KetoModule } from '../keto/keto.module';
 import { MediaModule } from '../media/media.module';
 import { PlanConfigModule } from '../plan-config/plan-config.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 import { AuctionClient } from './auction.client';
 import { AuctionController } from './auction.controller';
 import { AuctionPlanPolicyService } from './auction-plan-policy.service';
@@ -18,6 +19,7 @@ import { AuctionScalarBootstrapService } from './auction-scalar-bootstrap.servic
     PlanConfigModule,
     MediaModule,
     ScalarConfigModule,
+    UserProfileModule,
   ],
   controllers: [AuctionController],
   providers: [AuctionClient, AuctionPlanPolicyService, AuctionScalarBootstrapService],

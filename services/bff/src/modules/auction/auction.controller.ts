@@ -31,6 +31,7 @@ import { BillingClient } from '../billing/billing.client';
 import { KetoService } from '../keto/keto.service';
 import { MediaLimitsService } from '../media/media-limits.service';
 import { MediaStorageService } from '../media/media-storage.service';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 import { AuctionClient } from './auction.client';
 import { AuctionPlanPolicyService } from './auction-plan-policy.service';
 import { applySearchPolicy } from './auction-search-policy';
@@ -173,6 +174,7 @@ export class AuctionController {
     private readonly mediaStorage: MediaStorageService,
     private readonly billing: BillingClient,
     private readonly keto: KetoService,
+    private readonly profiles: UserProfileClient,
   ) {}
 
   @Get('create-options')
@@ -292,8 +294,26 @@ export class AuctionController {
   }
 
   @Get(':id/bids')
-  listBids(@Param('id') id: string) {
-    return this.auction.listBids(id);
+  async listBids(@Param('id') id: string) {
+    const { data } = await this.auction.listBids(id);
+    const bidderIds = [...new Set(data.map((b) => b.bidderId))];
+    const profileMap = new Map<string, string | null>();
+    await Promise.allSettled(
+      bidderIds.map(async (uid) => {
+        try {
+          const p = await this.profiles.getPublicProfile(uid);
+          profileMap.set(uid, p.displayName || p.username || null);
+        } catch {
+          profileMap.set(uid, null);
+        }
+      }),
+    );
+    return {
+      data: data.map((b) => ({
+        ...b,
+        bidderDisplayName: profileMap.get(b.bidderId) ?? null,
+      })),
+    };
   }
 
   @Post(':id/bids')

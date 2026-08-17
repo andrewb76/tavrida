@@ -79,6 +79,7 @@ export type AuctionDetail = {
 export type AuctionBid = {
   id: string;
   bidderId: string;
+  bidderDisplayName: string | null;
   amount: number;
   currency: string;
   placedAt: string;

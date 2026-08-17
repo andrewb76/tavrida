@@ -41,7 +41,16 @@ export class AuctionClient {
   }
 
   listBids(auctionId: string) {
-    return this.request<{ data: unknown[] }>('GET', `/internal/v1/auctions/${auctionId}/bids`);
+    return this.request<{
+      data: Array<{
+        id: string;
+        bidderId: string;
+        amount: number;
+        currency: string;
+        placedAt: string;
+        isWinning: boolean;
+      }>;
+    }>('GET', `/internal/v1/auctions/${auctionId}/bids`);
   }
 
   listExpertAppraisals(auctionId: string) {
