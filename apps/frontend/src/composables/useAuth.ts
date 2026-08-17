@@ -17,6 +17,7 @@ import { useSessionStore } from '@/stores/session';
 
 export type SignInWithInviteParams = {
   code?: string;
+  token?: string;
   email?: string;
   redirectAfter?: string;
 };
@@ -48,10 +49,13 @@ export function useAuth() {
       if (resolved.inviterId) setPendingInviterId(resolved.inviterId);
       if (resolved.inviteCodeId) setPendingInviteCodeId(resolved.inviteCodeId);
 
+      const extra: Record<string, string> = {};
+      if (resolved.token) extra.one_time_token = resolved.token;
+
       await logto.signIn({
         redirectUri: signInRedirectUri(),
         ...(resolved.email ? { loginHint: resolved.email } : {}),
-        firstScreen: 'register',
+        ...(Object.keys(extra).length ? { extraParams: extra } : {}),
       });
     }
 
@@ -74,7 +78,10 @@ export function useAuth() {
         code: params.code,
         email: params.email,
       });
-      await signInWithResolved(resolved, params.redirectAfter ?? '/app');
+      await signInWithResolved(
+        { ...resolved, token: params.token },
+        params.redirectAfter ?? '/app',
+      );
     }
 
     async function signOut() {

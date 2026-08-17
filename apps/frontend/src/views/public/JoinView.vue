@@ -24,6 +24,9 @@ const autoStarted = ref(false);
 const codeParam = computed(() =>
   typeof route.query.code === 'string' ? normalizeInviteCode(route.query.code) : undefined,
 );
+const tokenParam = computed(() =>
+  typeof route.query.token === 'string' ? route.query.token : undefined,
+);
 const emailParam = computed(() =>
   typeof route.query.email === 'string' ? route.query.email : undefined,
 );
@@ -37,6 +40,7 @@ const alreadyLoggedIn = computed(
 
 async function beginJoin(params: {
   code?: string;
+  token?: string;
   email?: string;
 }) {
   error.value = '';
@@ -76,6 +80,7 @@ onMounted(async () => {
     autoStarted.value = true;
     await beginJoin({
       code: codeParam.value,
+      token: tokenParam.value,
       email: emailParam.value,
     });
   }

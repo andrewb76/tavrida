@@ -22,6 +22,7 @@ export type InternalInviteRecord = {
 
 export type ResolvedInvite = {
   email: string | null;
+  token?: string;
   inviterId: string;
   inviteCodeId: string;
   code: string;
@@ -56,6 +57,7 @@ export class UserProfileClient {
 
   async createInvite(body: {
     issuerId: string;
+    logtoUserId: string;
     email?: string;
     expiresAt: string;
     maxUses?: number;

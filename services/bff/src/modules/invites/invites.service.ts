@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KetoService } from '../keto/keto.service';
+import { LogtoManagementService } from '../logto/logto-management.service';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { ClubSettingsReader } from '../scalar-config/club-settings.reader';
 import { UserProfileClient } from '../user-profile/user-profile.client';
@@ -17,6 +18,7 @@ import {
 @Injectable()
 export class InvitesService {
   constructor(
+    private readonly logto: LogtoManagementService,
     private readonly userProfile: UserProfileClient,
     private readonly keto: KetoService,
     private readonly clubSettings: ClubSettingsReader,
@@ -36,20 +38,37 @@ export class InvitesService {
     return days * 86400;
   }
 
-  private buildLink(code: string): string {
-    return `${this.frontendOrigin()}/join?code=${encodeURIComponent(code)}`;
+  private buildLink(code: string, token?: string): string {
+    const base = `${this.frontendOrigin()}/join?code=${encodeURIComponent(code)}`;
+    if (token) return `${base}&token=${encodeURIComponent(token)}`;
+    return base;
   }
 
   async createInvite(issuerId: string, email?: string) {
     await this.assertInviteQuota(issuerId);
 
-    const inviteEmail = email?.trim() || undefined;
+    const inviteEmail = email?.trim();
+    if (!inviteEmail) {
+      throw new ForbiddenException({
+        type: 'validation-error',
+        detail: 'Email is required for invitation',
+      });
+    }
+
     const expiresIn = await this.inviteValiditySeconds();
     const maxUses = await this.clubSettings.inviteMaxUses();
+
+    const user = await this.logto.createUser(inviteEmail);
+    const oneTimeToken = await this.logto.createOneTimeToken({
+      email: inviteEmail,
+      expiresIn,
+    });
+
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
     const record = await this.userProfile.createInvite({
       issuerId,
+      logtoUserId: user.id,
       email: inviteEmail,
       expiresAt,
       maxUses,
@@ -58,7 +77,8 @@ export class InvitesService {
     return {
       id: record.id,
       code: record.code,
-      link: this.buildLink(record.code),
+      link: this.buildLink(record.code, oneTimeToken.token),
+      token: oneTimeToken.token,
       email: record.email,
       expiresAt: record.expiresAt,
       createdAt: record.createdAt,

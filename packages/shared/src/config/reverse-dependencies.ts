@@ -1,0 +1,15 @@
+export const REVERSE_DEPENDENCIES = {
+  auction: ['bff'],
+  notifications: ['bff'],
+  subscriptions: ['bff'],
+  bff: [],
+  forum: ['bff'],
+  marketplace: ['bff'],
+  'user-profile': ['bff'],
+  chat: ['bff'],
+  pgsql: ['auction', 'notifications', 'subscriptions', 'forum', 'marketplace', 'user-profile', 'chat'],
+  redis: ['auction', 'forum'],
+  rabbitmq: ['auction', 'notifications', 'subscriptions', 'chat'],
+  logto: ['notifications', 'user-profile', 'chat'],
+  minio: ['marketplace'],
+};

@@ -11,8 +11,8 @@ export class InviteCodeEntity {
   @Column('varchar', { name: 'issuer_id', length: 128 })
   issuerId!: string;
 
-  @Column('varchar', { name: 'logto_user_id', nullable: true })
-  logtoUserId!: string | null;
+  @Column('varchar', { name: 'logto_user_id' })
+  logtoUserId!: string;
 
   @Column('varchar', { nullable: true })
   email!: string | null;

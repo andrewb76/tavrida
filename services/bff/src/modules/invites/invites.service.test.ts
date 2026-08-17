@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { KetoService } from '../keto/keto.service';
+import type { LogtoManagementService } from '../logto/logto-management.service';
 import type { PlanConfigClient } from '../plan-config/plan-config.client';
 import type { ClubSettingsReader } from '../scalar-config/club-settings.reader';
 import type {
@@ -51,6 +52,7 @@ function createFakeUserProfile() {
     },
     createInvite: async (body: {
       issuerId: string;
+      logtoUserId: string;
       email?: string;
       expiresAt: string;
       maxUses?: number;
@@ -130,6 +132,18 @@ function createService(opts?: {
 }) {
   const up = createFakeUserProfile();
 
+  const logtoCalls: Array<{ email: string }> = [];
+  const logto = {
+    createUser: async (email: string) => {
+      logtoCalls.push({ email });
+      return { id: `user-${logtoCalls.length}` };
+    },
+    createOneTimeToken: async () => ({
+      token: `ott-${logtoCalls.length}`,
+      expiresAt: new Date(Date.now() + 14 * 86400_000).toISOString(),
+    }),
+  } as unknown as LogtoManagementService;
+
   const keto = {
     isPlatformAdmin: async () => opts?.isAdmin ?? false,
   } as unknown as KetoService;
@@ -168,6 +182,7 @@ function createService(opts?: {
   } as unknown as ConfigService;
 
   const service = new InvitesService(
+    logto,
     up.client,
     keto,
     clubSettings,
@@ -175,18 +190,21 @@ function createService(opts?: {
     config,
   );
 
-  return { service };
+  return { service, logtoCalls };
 }
 
 describe('InvitesService flow', () => {
   it('create → resolve → mock signIn → claim', async () => {
-    const { service } = createService();
+    const { service, logtoCalls } = createService();
     const issuerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const inviteeId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
     const created = await service.createInvite(issuerId, 'friend@example.com');
     assert.equal(created.code.startsWith('TAV-'), true);
     assert.match(created.link, /\/join\?code=/);
+    assert.ok(created.token);
+    assert.equal(logtoCalls.length, 1);
+    assert.equal(logtoCalls[0]?.email, 'friend@example.com');
 
     const resolved = await service.resolveInvite({ code: created.code });
     assert.equal(resolved.email, 'friend@example.com');
@@ -211,11 +229,22 @@ describe('InvitesService flow', () => {
   it('denies create when plan-config monthly limit reached', async () => {
     const { service } = createService({ planAllowed: false, planLimit: 1 });
     await assert.rejects(
-      () => service.createInvite('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
+      () => service.createInvite('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'limited@test.com'),
       (err: unknown) => {
         assert.ok(err instanceof ForbiddenException);
         const body = err.getResponse() as { variableKey?: string };
         assert.equal(body.variableKey, INVITE_MONTHLY_LIMIT_KEY);
+        return true;
+      },
+    );
+  });
+
+  it('rejects create without email', async () => {
+    const { service } = createService();
+    await assert.rejects(
+      () => service.createInvite('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+      (err: unknown) => {
+        assert.ok(err instanceof ForbiddenException);
         return true;
       },
     );
@@ -227,7 +256,7 @@ describe('InvitesService flow', () => {
       planLimit: 0,
       isAdmin: true,
     });
-    const created = await service.createInvite('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+    const created = await service.createInvite('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'admin@test.com');
     assert.ok(created.code);
   });
 
@@ -237,7 +266,7 @@ describe('InvitesService flow', () => {
     });
 
     await assert.rejects(
-      () => service.createInvite('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),
+      () => service.createInvite('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'fail@test.com'),
       /plan-config unavailable/,
     );
   });

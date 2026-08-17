@@ -19,6 +19,7 @@ export type InviteRecord = {
 
 export type ResolvedInvite = {
   email: string | null;
+  token?: string;
   inviterId?: string;
   inviteCodeId?: string;
   code?: string;
@@ -28,6 +29,7 @@ export type CreatedInvite = {
   id?: string;
   code: string;
   link: string;
+  token?: string;
   email?: string;
   expiresAt: string;
   createdAt?: string;

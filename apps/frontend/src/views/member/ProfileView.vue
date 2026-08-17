@@ -36,6 +36,7 @@ const logtoUsernameUrl = computed(() =>
 );
 
 const loading = ref(false);
+const inviteEmail = ref('');
 const inviteError = ref<string | null>(null);
 const lastCreated = ref<CreatedInvite | null>(null);
 const history = ref<InviteRecord[]>([]);
@@ -244,7 +245,8 @@ async function create() {
   loading.value = true;
   inviteError.value = null;
   try {
-    lastCreated.value = await createInvite();
+    lastCreated.value = await createInvite({ email: inviteEmail.value || undefined });
+    inviteEmail.value = '';
     history.value = await listInvites();
     toast.success('Инвайт создан');
   } catch (e) {
@@ -405,6 +407,12 @@ async function copyInviteLink() {
         </div>
 
         <div class="flex items-center gap-2">
+          <input
+            v-model="inviteEmail"
+            type="email"
+            placeholder="Email приглашаемого (необязательно)"
+            class="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+          >
           <UiButton
             intent="primary"
             :disabled="loading || !canCreateInvite"

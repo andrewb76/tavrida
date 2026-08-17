@@ -16,6 +16,7 @@ export type InviteStatus = 'active' | 'redeemed' | 'expired';
 
 export type CreateInviteInput = {
   issuerId: string;
+  logtoUserId: string;
   email?: string;
   expiresAt: string;
   maxUses?: number;
@@ -43,6 +44,7 @@ export class InvitesService {
     const entity = this.inviteCodes.create({
       code,
       issuerId: input.issuerId,
+      logtoUserId: input.logtoUserId,
       email: input.email ?? null,
       maxUses: input.maxUses ?? 1,
       usesCount: 0,
