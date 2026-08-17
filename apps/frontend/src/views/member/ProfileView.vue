@@ -10,7 +10,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
-import { isLogtoConfigured, logtoAccountProfileUrl, logtoAccountUsernameUrl } from '@/config/logto';
+import { isLogtoConfigured, logtoAccountUsernameUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
@@ -29,11 +29,6 @@ const avatarPreviewUrl = ref<string | null>(null);
 const avatarPreviewLabel = ref('');
 const isMe = computed(() => route.name === 'profile-me');
 const userId = computed(() => route.params.userId as string | undefined);
-const logtoProfileUrl = computed(() =>
-  isMe.value && isLogtoConfigured() && !session.isImpersonating
-    ? logtoAccountProfileUrl(`${window.location.origin}/profile/me`)
-    : null,
-);
 const logtoUsernameUrl = computed(() =>
   isMe.value && isLogtoConfigured() && !session.isImpersonating
     ? logtoAccountUsernameUrl(`${window.location.origin}/profile/me`)
