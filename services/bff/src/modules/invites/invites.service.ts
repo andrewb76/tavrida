@@ -4,7 +4,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes } from 'node:crypto';
 import { KetoService } from '../keto/keto.service';
 import { LogtoManagementService } from '../logto/logto-management.service';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
@@ -15,8 +14,6 @@ import {
   INVITE_MONTHLY_LIMIT_KEY,
   isUnknownPlanLimit,
 } from './invite-quota.logic';
-
-const LINK_ONLY_EMAIL_DOMAIN = 'invite.tavrida-lot.localhost';
 
 @Injectable()
 export class InvitesService {
@@ -48,7 +45,7 @@ export class InvitesService {
   async createInvite(issuerId: string, email?: string) {
     await this.assertInviteQuota(issuerId);
 
-    const inviteEmail = email?.trim() || this.generateLinkOnlyEmail();
+    const inviteEmail = email?.trim() || undefined;
     const expiresIn = await this.inviteValiditySeconds();
     const maxUses = await this.clubSettings.inviteMaxUses();
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
@@ -90,11 +87,6 @@ export class InvitesService {
     body: { inviteCodeId?: string; inviterId?: string },
   ) {
     return this.userProfile.claimInvite({ userId, ...body });
-  }
-
-  private generateLinkOnlyEmail(): string {
-    const slot = randomBytes(10).toString('base64url').toLowerCase();
-    return `invite-${slot}@${LINK_ONLY_EMAIL_DOMAIN}`;
   }
 
   /**

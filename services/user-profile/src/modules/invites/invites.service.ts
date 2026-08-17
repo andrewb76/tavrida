@@ -90,7 +90,7 @@ export class InvitesService {
     }
 
     return {
-      email: record.email ?? '',
+      email: record.email ?? null,
       inviterId: record.issuerId,
       inviteCodeId: record.id,
       code: record.code,

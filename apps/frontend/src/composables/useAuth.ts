@@ -50,7 +50,7 @@ export function useAuth() {
 
       await logto.signIn({
         redirectUri: signInRedirectUri(),
-        loginHint: resolved.email,
+        ...(resolved.email ? { loginHint: resolved.email } : {}),
         firstScreen: 'register',
       });
     }

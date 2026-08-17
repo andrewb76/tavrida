@@ -84,7 +84,7 @@ function createFakeUserProfile() {
         : undefined;
       if (!row) throw new Error('not found');
       return {
-        email: row.email ?? '',
+        email: row.email ?? null,
         inviterId: row.issuerId,
         inviteCodeId: row.id,
         code: row.code,
