@@ -278,6 +278,17 @@ export class UsersService {
     return { ...this.toDto(row), synced: true };
   }
 
+  async updateProfile(userId: string, patch: { displayName?: string | null; avatarUrl?: string | null }) {
+    let row = await this.profiles.findOne({ where: { userId } });
+    if (!row) {
+      row = this.profiles.create({ userId });
+    }
+    if (patch.displayName !== undefined) row.displayName = patch.displayName?.trim() || null;
+    if (patch.avatarUrl !== undefined) row.avatarUrl = patch.avatarUrl?.trim() || null;
+    await this.profiles.save(row);
+    return this.toDto(row);
+  }
+
   async markDeleted(userId: string) {
     const row = await this.profiles.findOne({ where: { userId } });
     if (!row) {

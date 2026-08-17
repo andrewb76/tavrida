@@ -255,6 +255,15 @@ export class UserProfileClient {
     }>('GET', `/internal/v1/users/${encodeURIComponent(userId)}/public`);
   }
 
+  async updateProfile(userId: string, patch: { displayName?: string | null; avatarUrl?: string | null }) {
+    return this.request<{
+      userId: string;
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+    }>('PATCH', `/internal/v1/users/${encodeURIComponent(userId)}`, patch);
+  }
+
   async getRatingStats(userId: string) {
     return this.request<{
       userId: string;

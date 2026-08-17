@@ -84,6 +84,16 @@ class SetHardLockBody {
   actorId!: string;
 }
 
+class UpdateProfileBody {
+  @IsOptional()
+  @IsString()
+  displayName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string | null;
+}
+
 @Controller('internal/v1/users')
 export class InternalUsersController {
   constructor(
@@ -155,6 +165,11 @@ export class InternalUsersController {
       locked: body.locked,
       actorId: body.actorId,
     });
+  }
+
+  @Patch(':userId')
+  updateProfile(@Param('userId') userId: string, @Body() body: UpdateProfileBody) {
+    return this.users.updateProfile(userId, body);
   }
 
   @Get(':userId')

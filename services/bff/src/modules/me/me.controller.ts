@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,6 +26,18 @@ class SyncIdentityDto {
   avatarUrl?: string | null;
 }
 
+class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  displayName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  avatarUrl?: string | null;
+}
+
 @Controller('me')
 export class MeController {
   constructor(private readonly me: MeService) {}
@@ -41,5 +53,11 @@ export class MeController {
   syncIdentity(@CurrentUser() user: AuthUser, @Body() body: SyncIdentityDto) {
     // Logto claims in this payload always describe the JWT actor, not an X-Act-As target.
     return this.me.syncIdentity(user.actorSub ?? user.sub, body);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@CurrentUser() user: AuthUser, @Body() body: UpdateProfileDto) {
+    return this.me.updateProfile(user.sub, body);
   }
 }

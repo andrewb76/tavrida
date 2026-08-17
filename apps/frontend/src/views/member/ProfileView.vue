@@ -10,10 +10,10 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
-import { isLogtoConfigured, logtoAccountProfileUrl } from '@/config/logto';
+import { isLogtoConfigured, logtoAccountProfileUrl, logtoAccountUsernameUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
-import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile } from '@/services/profile';
+import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
 import { openDirectChat } from '@/services/chats';
 import { useSessionStore } from '@/stores/session';
 
@@ -34,12 +34,22 @@ const logtoProfileUrl = computed(() =>
     ? logtoAccountProfileUrl(`${window.location.origin}/profile/me`)
     : null,
 );
+const logtoUsernameUrl = computed(() =>
+  isMe.value && isLogtoConfigured() && !session.isImpersonating
+    ? logtoAccountUsernameUrl(`${window.location.origin}/profile/me`)
+    : null,
+);
 
 const loading = ref(false);
 const inviteError = ref<string | null>(null);
 const lastCreated = ref<CreatedInvite | null>(null);
 const history = ref<InviteRecord[]>([]);
 const avatarLoadFailed = ref(false);
+
+const editing = ref(false);
+const editDisplayName = ref('');
+const editAvatarUrl = ref('');
+const saving = ref(false);
 
 /** BFF often returns English `detail`; keep toast/inline readable in RU. */
 function inviteErrorMessage(e: unknown): string {
@@ -159,13 +169,14 @@ onMounted(() => {
 
   const showSuccess = typeof route.query.show_success === 'string' ? route.query.show_success : null;
   if (showSuccess && isMe.value) {
-    toast.success(
-      showSuccess === 'true' || showSuccess === 'profile'
-        ? 'Профиль обновлён'
-        : 'Настройки аккаунта обновлены',
-    );
     void router.replace({ name: 'profile-me', query: {} });
-    void refreshProfile();
+    void refreshProfile().then(() => {
+      toast.success(
+        showSuccess === 'true' || showSuccess === 'profile'
+          ? 'Профиль обновлён'
+          : 'Настройки аккаунта обновлены',
+      );
+    });
   }
 });
 
@@ -200,6 +211,33 @@ const canPreviewMyAvatar = computed(
 const canPreviewPublicAvatar = computed(
   () => Boolean(publicProfile.value?.avatarUrl),
 );
+
+function startEdit() {
+  editDisplayName.value = effectiveDisplayName.value;
+  editAvatarUrl.value = publicProfile.value?.avatarUrl || effectiveProfile.value?.avatarUrl || '';
+  editing.value = true;
+}
+
+function cancelEdit() {
+  editing.value = false;
+}
+
+async function saveProfile() {
+  saving.value = true;
+  try {
+    await updateMyProfile({
+      displayName: editDisplayName.value || null,
+      avatarUrl: editAvatarUrl.value || null,
+    });
+    await refreshProfile();
+    editing.value = false;
+    toast.success('Профиль обновлён');
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось сохранить');
+  } finally {
+    saving.value = false;
+  }
+}
 
 async function create() {
   if (!canCreateInvite.value) {
@@ -279,9 +317,45 @@ async function copyInviteLink() {
         </button>
 
         <div class="min-w-0 flex-1">
-          <p class="truncate text-lg font-semibold text-text">
-            {{ effectiveDisplayName }}
-          </p>
+          <template v-if="!editing">
+            <p class="truncate text-lg font-semibold text-text">
+              {{ effectiveDisplayName }}
+            </p>
+          </template>
+          <template v-else>
+            <input
+              v-model="editDisplayName"
+              type="text"
+              maxlength="256"
+              placeholder="Имя"
+              class="mb-2 w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:border-primary focus:outline-none"
+            >
+            <input
+              v-model="editAvatarUrl"
+              type="url"
+              maxlength="2048"
+              placeholder="URL аватара"
+              class="mb-2 w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:border-primary focus:outline-none"
+            >
+            <div class="flex gap-2">
+              <UiButton
+                intent="primary"
+                size="sm"
+                :disabled="saving"
+                @click="saveProfile"
+              >
+                {{ saving ? 'Сохраняем…' : 'Сохранить' }}
+              </UiButton>
+              <UiButton
+                intent="ghost"
+                size="sm"
+                :disabled="saving"
+                @click="cancelEdit"
+              >
+                Отмена
+              </UiButton>
+            </div>
+          </template>
           <p
             v-if="effectiveEmail"
             class="truncate text-sm text-text-muted"
@@ -298,14 +372,22 @@ async function copyInviteLink() {
             Участник клуба
           </p>
           <p
-            v-if="logtoProfileUrl"
-            class="mt-3"
+            v-if="logtoProfileUrl && !editing"
+            class="mt-3 flex flex-wrap gap-3"
           >
+            <button
+              type="button"
+              class="inline-flex items-center text-sm font-medium text-primary underline-offset-2 hover:underline"
+              @click="startEdit"
+            >
+              Изменить имя и аватар
+            </button>
             <a
-              :href="logtoProfileUrl"
+              v-if="logtoUsernameUrl"
+              :href="logtoUsernameUrl"
               class="inline-flex items-center text-sm font-medium text-primary underline-offset-2 hover:underline"
             >
-              Изменить аватар и имя
+              Изменить @username
             </a>
           </p>
         </div>

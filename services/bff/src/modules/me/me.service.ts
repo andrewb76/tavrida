@@ -55,6 +55,10 @@ export class MeService {
     };
   }
 
+  async updateProfile(userId: string, patch: { displayName?: string | null; avatarUrl?: string | null }) {
+    return this.profiles.updateProfile(userId, patch);
+  }
+
   /** Env fallback when Keto is not configured (local bootstrap). */
   private isBootstrapAdmin(userId: string): boolean {
     const unlimited = (this.config.get<string>('CLUB_INVITES_UNLIMITED_ISSUER_IDS') ?? '')

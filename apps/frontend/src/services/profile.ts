@@ -143,6 +143,18 @@ export async function adjustProfileRating(
   })) as ProfileRatingStats;
 }
 
+export async function updateMyProfile(patch: { displayName?: string | null; avatarUrl?: string | null }): Promise<{
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+}> {
+  return (await profileFetch('/me/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })) as { userId: string; displayName: string | null; username: string | null; avatarUrl: string | null };
+}
+
 export type ReputationLogEntry = {
   id: string;
   userId: string;
