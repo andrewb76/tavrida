@@ -62,6 +62,9 @@ function inviteErrorMessage(e: unknown): string {
   if (/create invite failed/i.test(raw)) {
     return 'Не удалось создать инвайт. Попробуйте позже.';
   }
+  if (/email is required/i.test(raw)) {
+    return 'Укажите email приглашаемого';
+  }
   return raw;
 }
 
