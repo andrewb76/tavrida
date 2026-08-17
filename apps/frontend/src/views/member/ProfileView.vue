@@ -410,12 +410,13 @@ async function copyInviteLink() {
           <input
             v-model="inviteEmail"
             type="email"
-            placeholder="Email приглашаемого (необязательно)"
+            required
+            placeholder="Email приглашаемого"
             class="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
           >
           <UiButton
             intent="primary"
-            :disabled="loading || !canCreateInvite"
+            :disabled="loading || !canCreateInvite || !inviteEmail.trim()"
             @click="create"
           >
             {{ loading ? 'Создаём…' : 'Создать инвайт' }}
