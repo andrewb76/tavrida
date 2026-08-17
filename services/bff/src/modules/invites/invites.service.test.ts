@@ -3,7 +3,6 @@ import { describe, it } from 'node:test';
 import { ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { KetoService } from '../keto/keto.service';
-import type { LogtoManagementService } from '../logto/logto-management.service';
 import type { PlanConfigClient } from '../plan-config/plan-config.client';
 import type { ClubSettingsReader } from '../scalar-config/club-settings.reader';
 import type {
@@ -131,8 +130,6 @@ function createService(opts?: {
 }) {
   const up = createFakeUserProfile();
 
-  const logto = {} as unknown as LogtoManagementService;
-
   const keto = {
     isPlatformAdmin: async () => opts?.isAdmin ?? false,
   } as unknown as KetoService;
@@ -171,7 +168,6 @@ function createService(opts?: {
   } as unknown as ConfigService;
 
   const service = new InvitesService(
-    logto,
     up.client,
     keto,
     clubSettings,

@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KetoService } from '../keto/keto.service';
-import { LogtoManagementService } from '../logto/logto-management.service';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { ClubSettingsReader } from '../scalar-config/club-settings.reader';
 import { UserProfileClient } from '../user-profile/user-profile.client';
@@ -18,7 +17,6 @@ import {
 @Injectable()
 export class InvitesService {
   constructor(
-    private readonly logto: LogtoManagementService,
     private readonly userProfile: UserProfileClient,
     private readonly keto: KetoService,
     private readonly clubSettings: ClubSettingsReader,
