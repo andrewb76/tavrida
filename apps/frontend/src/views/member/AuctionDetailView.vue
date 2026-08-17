@@ -36,6 +36,11 @@ import { RouterLink, useRoute } from 'vue-router';
 const route = useRoute();
 const session = useSessionStore();
 const ws = useWs();
+
+function shortId(id: string): string {
+  return id.length > 8 ? `${id.slice(0, 4)}...${id.slice(-3)}` : id;
+}
+
 const auctionId = computed(() => route.params.id as string);
 
 const lot = ref<AuctionDetail | null>(null);
@@ -480,7 +485,7 @@ async function onSubmitExpert() {
             </div>
             <small>
               {{ new Date(bid.placedAt).toLocaleString('ru-RU') }}
-              · участник {{ bid.bidderDisplayName || bid.bidderId }}
+              · участник {{ bid.bidderDisplayName || shortId(bid.bidderId) }}
             </small>
           </li>
           <li
