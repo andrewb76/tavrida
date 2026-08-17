@@ -175,12 +175,12 @@ function createService(opts?: {
     config,
   );
 
-  return { service, up };
+  return { service };
 }
 
 describe('InvitesService flow', () => {
   it('create → resolve → mock signIn → claim', async () => {
-    const { service, up } = createService();
+    const { service } = createService();
     const issuerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const inviteeId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
