@@ -25,6 +25,10 @@ const DOMAIN_KEYS: Record<MediaDomain, { count: string; size: string }> = {
     count: 'chat.member.attachment.countMax',
     size: 'chat.member.attachment.sizeMaxMb',
   },
+  profile: {
+    count: 'profile.avatar.countMax',
+    size: 'profile.avatar.sizeMaxMb',
+  },
 };
 
 @Injectable()

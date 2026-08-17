@@ -15,6 +15,7 @@ import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
 import { openDirectChat } from '@/services/chats';
+import { uploadFile } from '@/services/media';
 import { useSessionStore } from '@/stores/session';
 
 const route = useRoute();
@@ -45,6 +46,8 @@ const avatarLoadFailed = ref(false);
 const editing = ref(false);
 const editDisplayName = ref('');
 const editAvatarUrl = ref('');
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarBusy = ref(false);
 const saving = ref(false);
 
 /** BFF often returns English `detail`; keep toast/inline readable in RU. */
@@ -238,6 +241,31 @@ async function saveProfile() {
   }
 }
 
+function triggerAvatarUpload() {
+  avatarInput.value?.click();
+}
+
+async function onAvatarSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    toast.error('Выберите изображение');
+    return;
+  }
+  avatarBusy.value = true;
+  try {
+    const uploaded = await uploadFile('profile', file);
+    editAvatarUrl.value = uploaded.url;
+    toast.success('Аватар загружен');
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : 'Не удалось загрузить аватар');
+  } finally {
+    avatarBusy.value = false;
+  }
+}
+
 async function create() {
   if (!canCreateInvite.value) {
     inviteError.value = 'Сначала войдите в аккаунт';
@@ -331,12 +359,40 @@ async function copyInviteLink() {
               class="mb-2 w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:border-primary focus:outline-none"
             >
             <input
-              v-model="editAvatarUrl"
-              type="url"
-              maxlength="2048"
-              placeholder="URL аватара"
-              class="mb-2 w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:border-primary focus:outline-none"
+              ref="avatarInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onAvatarSelected"
             >
+            <div class="mb-2 flex items-center gap-3">
+              <div
+                class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary"
+              >
+                <img
+                  v-if="editAvatarUrl"
+                  :src="editAvatarUrl"
+                  class="size-full object-cover"
+                >
+                <span v-else>{{ avatarInitial }}</span>
+              </div>
+              <UiButton
+                intent="ghost"
+                size="sm"
+                :disabled="avatarBusy"
+                @click="triggerAvatarUpload"
+              >
+                {{ avatarBusy ? 'Загрузка…' : 'Выбрать аватар' }}
+              </UiButton>
+              <UiButton
+                v-if="editAvatarUrl"
+                intent="ghost"
+                size="sm"
+                @click="editAvatarUrl = ''"
+              >
+                Убрать
+              </UiButton>
+            </div>
             <div class="flex gap-2">
               <UiButton
                 intent="primary"

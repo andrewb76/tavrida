@@ -1,6 +1,6 @@
 import { bffAuthHeaders } from './apiAuth';
 
-export type MediaDomain = 'auction' | 'forum' | 'marketplace' | 'chat' | 'period';
+export type MediaDomain = 'auction' | 'forum' | 'marketplace' | 'chat' | 'period' | 'profile';
 
 export type MediaAttachment = {
   id?: string;

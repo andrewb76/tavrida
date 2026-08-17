@@ -5,6 +5,7 @@ const DOMAIN_BUCKETS: Record<MediaDomain, string> = {
   forum: 'forum-attachments',
   marketplace: 'marketplace-portfolio',
   chat: 'chat-attachments',
+  profile: 'profile-avatars',
 };
 
 export function bucketForDomain(domain: MediaDomain): string {
