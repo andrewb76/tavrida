@@ -51,13 +51,10 @@ export class InvitesService {
     const inviteEmail = email?.trim() || this.generateLinkOnlyEmail();
     const expiresIn = await this.inviteValiditySeconds();
     const maxUses = await this.clubSettings.inviteMaxUses();
-
-    const user = await this.logto.createUser(inviteEmail);
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
     const record = await this.userProfile.createInvite({
       issuerId,
-      logtoUserId: user.id,
       email: inviteEmail,
       expiresAt,
       maxUses,

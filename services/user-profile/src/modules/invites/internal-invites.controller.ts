@@ -14,9 +14,6 @@ class CreateInviteDto {
   @MaxLength(128)
   issuerId!: string;
 
-  @IsString()
-  logtoUserId!: string;
-
   @IsOptional()
   @IsEmail()
   email?: string;

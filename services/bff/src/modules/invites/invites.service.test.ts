@@ -18,7 +18,6 @@ type StoredInvite = {
   id: string;
   code: string;
   issuerId: string;
-  logtoUserId: string;
   email?: string;
   expiresAt: string;
   createdAt: string;
@@ -53,7 +52,6 @@ function createFakeUserProfile() {
     },
     createInvite: async (body: {
       issuerId: string;
-      logtoUserId: string;
       email?: string;
       expiresAt: string;
       maxUses?: number;
@@ -64,7 +62,6 @@ function createFakeUserProfile() {
         id: `invite-${seq}`,
         code: `TAV-TEST-${String(seq).padStart(4, '0')}`,
         issuerId: body.issuerId,
-        logtoUserId: body.logtoUserId,
         email: body.email,
         expiresAt: body.expiresAt,
         createdAt: new Date().toISOString(),
@@ -133,14 +130,8 @@ function createService(opts?: {
   isAdmin?: boolean;
 }) {
   const up = createFakeUserProfile();
-  const logtoCalls: Array<{ email: string }> = [];
 
-  const logto = {
-    createUser: async (email: string) => {
-      logtoCalls.push({ email });
-      return { id: `user-${logtoCalls.length}` };
-    },
-  } as unknown as LogtoManagementService;
+  const logto = {} as unknown as LogtoManagementService;
 
   const keto = {
     isPlatformAdmin: async () => opts?.isAdmin ?? false,
@@ -188,21 +179,18 @@ function createService(opts?: {
     config,
   );
 
-  return { service, up, logtoCalls };
+  return { service, up };
 }
 
 describe('InvitesService flow', () => {
   it('create → resolve → mock signIn → claim', async () => {
-    const { service, up, logtoCalls } = createService();
+    const { service, up } = createService();
     const issuerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const inviteeId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
     const created = await service.createInvite(issuerId, 'friend@example.com');
     assert.equal(created.code.startsWith('TAV-'), true);
     assert.match(created.link, /\/join\?code=/);
-    assert.equal(logtoCalls.length, 1);
-    assert.equal(logtoCalls[0]?.email, 'friend@example.com');
-    assert.equal(up.calls.create[0]?.logtoUserId, 'user-1');
 
     const resolved = await service.resolveInvite({ code: created.code });
     assert.equal(resolved.email, 'friend@example.com');
@@ -238,18 +226,17 @@ describe('InvitesService flow', () => {
   });
 
   it('skips quota for platform admin', async () => {
-    const { service, logtoCalls } = createService({
+    const { service } = createService({
       planAllowed: false,
       planLimit: 0,
       isAdmin: true,
     });
     const created = await service.createInvite('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
     assert.ok(created.code);
-    assert.equal(logtoCalls.length, 1);
   });
 
   it('fails closed when plan-config is unavailable', async () => {
-    const { service, logtoCalls } = createService({
+    const { service } = createService({
       planError: new Error('plan-config unavailable'),
     });
 
@@ -257,6 +244,5 @@ describe('InvitesService flow', () => {
       () => service.createInvite('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),
       /plan-config unavailable/,
     );
-    assert.equal(logtoCalls.length, 0);
   });
 });

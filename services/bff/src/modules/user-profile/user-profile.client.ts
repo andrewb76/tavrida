@@ -56,7 +56,6 @@ export class UserProfileClient {
 
   async createInvite(body: {
     issuerId: string;
-    logtoUserId: string;
     email?: string;
     expiresAt: string;
     maxUses?: number;

@@ -51,6 +51,7 @@ export function useAuth() {
       await logto.signIn({
         redirectUri: signInRedirectUri(),
         loginHint: resolved.email,
+        firstScreen: 'register',
       });
     }
 
