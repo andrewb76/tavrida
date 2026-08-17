@@ -209,7 +209,7 @@ const canPreviewPublicAvatar = computed(
 
 function startEdit() {
   editDisplayName.value = effectiveDisplayName.value;
-  editAvatarUrl.value = publicProfile.value?.avatarUrl || effectiveProfile.value?.avatarUrl || '';
+  editAvatarUrl.value = effectiveAvatarUrl.value || '';
   editing.value = true;
 }
 
