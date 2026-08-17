@@ -104,6 +104,7 @@ function parseErrorBody(body: unknown, fallback: string): string {
 /** Parse pasted link or raw TAV- code. */
 export function parseInviteInput(input: string): {
   code?: string;
+  token?: string;
   email?: string;
 } {
   const trimmed = input.trim();
@@ -116,11 +117,13 @@ export function parseInviteInput(input: string): {
   try {
     const url = new URL(trimmed);
     const code = url.searchParams.get('code');
+    const token = url.searchParams.get('token') ?? undefined;
     const email = url.searchParams.get('email');
     if (code && isValidInviteCodeFormat(code)) {
-      return { code: normalizeInviteCode(code), email: email ?? undefined };
+      return { code: normalizeInviteCode(code), token, email: email ?? undefined };
     }
     return {
+      token,
       email: email ?? undefined,
       code: code ? normalizeInviteCode(code) : undefined,
     };
