@@ -258,7 +258,12 @@ async function onAvatarSelected(e: Event) {
   try {
     const uploaded = await uploadFile('profile', file);
     editAvatarUrl.value = uploaded.url;
-    toast.success('Аватар загружен');
+    await updateMyProfile({
+      displayName: editDisplayName.value || null,
+      avatarUrl: uploaded.url,
+    });
+    await refreshProfile();
+    toast.success('Аватар обновлён');
   } catch (err) {
     toast.error(err instanceof Error ? err.message : 'Не удалось загрузить аватар');
   } finally {

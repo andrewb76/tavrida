@@ -45,14 +45,22 @@ export class MediaLimitsService {
       this.planConfig.resolveLimitValue(userId, keys.size),
     ]);
 
-    if (sizeRaw == null || sizeRaw < 0) {
+    const PROFILE_DEFAULTS: Record<string, { count: number; size: number }> = {
+      'profile': { count: 1, size: 5 },
+    };
+
+    const defaults = PROFILE_DEFAULTS[domain] ?? null;
+    const countFinal = countRaw ?? defaults?.count ?? null;
+    const sizeFinal = sizeRaw ?? defaults?.size ?? null;
+
+    if (sizeFinal == null || sizeFinal < 0) {
       throw new ServiceUnavailableException({
         type: 'plan_policy_unavailable',
         detail: `Media size policy for ${domain} is not enforceable`,
       });
     }
-    const countMax = countRaw == null || countRaw === -1 ? 999 : Math.max(0, countRaw);
-    const sizeMaxMb = sizeRaw;
+    const countMax = countFinal == null || countFinal === -1 ? 999 : Math.max(0, countFinal);
+    const sizeMaxMb = sizeFinal;
     const sizeMaxBytes = sizeMaxMb * 1024 * 1024;
 
     const base: MediaLimits & { accept: string } = {
