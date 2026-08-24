@@ -732,12 +732,9 @@ async function onSubmitExpert() {
       </UiModal>
 
       <UiModal
-        :open="viewersOpen"
-        @close="viewersOpen = false"
+        v-model:open="viewersOpen"
+        title="Кто смотрел лот"
       >
-        <template #header>
-          <h2>Кто смотрел лот</h2>
-        </template>
         <p
           v-if="viewersLoading"
           class="lot-page__status"
