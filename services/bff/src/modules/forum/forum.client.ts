@@ -324,6 +324,14 @@ export class ForumClient {
     return this.request<Record<string, unknown>>('GET', `/internal/v1/reactions?${params}`);
   }
 
+  recordTopicView(topicId: string, userId: string) {
+    return this.request<{ ok: boolean }>(
+      'POST',
+      `/internal/v1/topics/${topicId}/views`,
+      { userId },
+    );
+  }
+
   upsertReaction(input: {
     contentId: string;
     contentType: 'topic' | 'comment';

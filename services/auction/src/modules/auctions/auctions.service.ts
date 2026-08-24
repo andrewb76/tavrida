@@ -9,6 +9,7 @@ import { DataSource, In, LessThanOrEqual, Repository } from 'typeorm';
 import { AuctionEntity } from '../../entities/auction.entity';
 import { BidEntity } from '../../entities/bid.entity';
 import { ExpertAppraisalEntity } from '../../entities/expert-appraisal.entity';
+import { LotViewEntity } from '../../entities/lot-view.entity';
 import { AuctionEventsPublisher } from '../events/auction-events.publisher';
 import { dropDutchAsk, minNextBid, validatePlaceBid } from './auction-bid.logic';
 import { resolveClose } from './auction-close.logic';
@@ -39,6 +40,8 @@ export class AuctionsService {
     private readonly bids: Repository<BidEntity>,
     @InjectRepository(ExpertAppraisalEntity)
     private readonly expertAppraisals: Repository<ExpertAppraisalEntity>,
+    @InjectRepository(LotViewEntity)
+    private readonly lotViews: Repository<LotViewEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly events: AuctionEventsPublisher,
@@ -619,6 +622,38 @@ export class AuctionsService {
         },
       },
     };
+  }
+
+  async recordView(auctionId: string, userId: string): Promise<void> {
+    await this.lotViews
+      .createQueryBuilder()
+      .insert()
+      .into(LotViewEntity)
+      .values({ auctionId, userId, viewedAt: new Date(), isHidden: false })
+      .orIgnore()
+      .execute();
+  }
+
+  async getLotViewCount(auctionId: string): Promise<number> {
+    const result = await this.lotViews
+      .createQueryBuilder('v')
+      .where('v.auction_id = :auctionId', { auctionId })
+      .andWhere('v.is_hidden = false')
+      .getCount();
+    return result;
+  }
+
+  async getLotViewers(
+    auctionId: string,
+  ): Promise<Array<{ userId: string; viewedAt: string }>> {
+    const rows = await this.lotViews
+      .createQueryBuilder('v')
+      .select(['v.user_id AS "userId"', 'v.viewed_at AS "viewedAt"'])
+      .where('v.auction_id = :auctionId', { auctionId })
+      .andWhere('v.is_hidden = false')
+      .orderBy('v.viewed_at', 'DESC')
+      .getRawMany<{ userId: string; viewedAt: string }>();
+    return rows;
   }
 
   private toListRow(row: AuctionEntity): AuctionListRow {

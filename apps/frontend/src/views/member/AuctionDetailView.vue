@@ -19,10 +19,13 @@ import {
   createExpertAppraisal,
   getAuction,
   getAuctionCreateOptions,
+  getLotViewers,
+  getLotViews,
   listAuctionBids,
   listExpertAppraisals,
   placeBid,
   promoteAuction,
+  recordLotView,
   type AuctionBid,
   type AuctionDetail,
   type ExpertAppraisal,
@@ -64,6 +67,10 @@ const expertMin = ref<number | null>(null);
 const expertMax = ref<number | null>(null);
 const expertSubmitting = ref(false);
 const expertError = ref<string | null>(null);
+const viewCount = ref(0);
+const viewersOpen = ref(false);
+const viewers = ref<Array<{ userId: string; viewedAt: string }>>([]);
+const viewersLoading = ref(false);
 
 const { remainingMs, start: startCountdown } = useCountdown(() => lot.value?.endsAt);
 
@@ -192,6 +199,12 @@ async function load(id: string) {
         if (generation === loadGeneration) sellerProfile.value = p;
       })
       .catch(() => {});
+    recordLotView(id).catch(() => {});
+    getLotViews(id)
+      .then((v) => {
+        if (generation === loadGeneration) viewCount.value = v.count;
+      })
+      .catch(() => {});
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
@@ -240,6 +253,20 @@ async function onPromote() {
     promoteError.value = e instanceof Error ? e.message : 'Не удалось продвинуть лот';
   } finally {
     promoteSubmitting.value = false;
+  }
+}
+
+async function openViewers() {
+  if (!lot.value) return;
+  viewersOpen.value = true;
+  viewersLoading.value = true;
+  try {
+    const result = await getLotViewers(lot.value.id);
+    viewers.value = result.data;
+  } catch {
+    viewers.value = [];
+  } finally {
+    viewersLoading.value = false;
   }
 }
 
@@ -334,6 +361,18 @@ async function onSubmitExpert() {
             class="lot-page__category"
           >{{ categoryTitle }}</span>
           <span class="lot-page__type">{{ auctionTypeLabel(lot.type) }}</span>
+          <span
+            v-if="viewCount > 0"
+            class="lot-page__views"
+          >👁 {{ viewCount }} {{ viewCount === 1 ? 'просмотр' : 'просмотров' }}</span>
+          <button
+            v-if="isOwner || session.isAdmin"
+            type="button"
+            class="lot-page__viewers-btn"
+            @click="openViewers"
+          >
+            Кто смотрел
+          </button>
         </div>
       </div>
 
@@ -691,6 +730,40 @@ async function onSubmitExpert() {
           </template>
         </UiButton>
       </UiModal>
+
+      <UiModal
+        :open="viewersOpen"
+        @close="viewersOpen = false"
+      >
+        <template #header>
+          <h2>Кто смотрел лот</h2>
+        </template>
+        <p
+          v-if="viewersLoading"
+          class="lot-page__status"
+        >
+          Загрузка…
+        </p>
+        <p
+          v-else-if="viewers.length === 0"
+          class="lot-page__status"
+        >
+          Пока никто не просматривал этот лот.
+        </p>
+        <ul
+          v-else
+          class="lot-page__viewers-list"
+        >
+          <li
+            v-for="v in viewers"
+            :key="v.userId"
+            class="lot-page__viewer"
+          >
+            <span class="lot-page__viewer-id">{{ shortId(v.userId) }}</span>
+            <span class="lot-page__viewer-time">{{ new Date(v.viewedAt).toLocaleString('ru-RU') }}</span>
+          </li>
+        </ul>
+      </UiModal>
     </template>
   </section>
 </template>
@@ -805,6 +878,50 @@ async function onSubmitExpert() {
   gap: 0.5rem 1rem;
   color: var(--token-text-muted);
   font-size: 0.9rem;
+}
+
+.lot-page__views {
+  font-size: 0.85rem;
+}
+
+.lot-page__viewers-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--token-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.lot-page__viewers-btn:hover {
+  color: var(--token-text);
+}
+
+.lot-page__viewers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lot-page__viewer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--token-border);
+  font-size: 0.9rem;
+}
+
+.lot-page__viewer-id {
+  color: var(--token-text-muted);
+  font-family: monospace;
+}
+
+.lot-page__viewer-time {
+  color: var(--token-text-muted);
+  font-size: 0.85rem;
 }
 
 .lot-page__status-bar {

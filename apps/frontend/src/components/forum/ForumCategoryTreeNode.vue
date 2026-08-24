@@ -10,7 +10,6 @@ const props = defineProps<{
   isAdmin: boolean;
   /** Collapsed category ids (home + admin share localStorage via parent). */
   collapsedIds: Set<string>;
-  showCounts?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -31,7 +30,7 @@ const topicsLink = computed(() => ({
 }));
 
 const topicCount = computed(() => props.node.topicCount ?? 0);
-const commentCount = computed(() => props.node.commentCount ?? 0);
+const unreadCount = computed(() => props.node.unreadCount ?? 0);
 
 const indentStyle = computed(() => ({
   '--depth': String(props.depth),
@@ -100,8 +99,7 @@ onBeforeUnmount(() => {
             :to="topicsLink"
             class="forum-category-node__link"
           >
-            <strong>{{ node.title }}</strong>
-            <span class="forum-category-node__slug">/{{ node.slug }}</span>
+            <strong>{{ node.title }} ({{ topicCount }}<template v-if="unreadCount > 0">/{{ unreadCount }}</template>)</strong>
             <span
               v-if="node.restricted"
               class="forum-category-node__badge"
@@ -109,12 +107,6 @@ onBeforeUnmount(() => {
             >доступ</span>
           </RouterLink>
         </div>
-        <p
-          v-if="showCounts !== false"
-          class="forum-category-node__counts"
-        >
-          {{ topicCount }} тем · {{ commentCount }} комментариев
-        </p>
         <p
           v-if="node.description"
           class="forum-category-node__desc"
@@ -211,7 +203,6 @@ onBeforeUnmount(() => {
         :depth="depth + 1"
         :is-admin="isAdmin"
         :collapsed-ids="collapsedIds"
-        :show-counts="showCounts"
         @edit="emit('edit', $event)"
         @add-child="emit('addChild', $event)"
         @access="emit('access', $event)"
@@ -301,12 +292,6 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
 }
 
-.forum-category-node__slug {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  word-break: break-all;
-}
-
 .forum-category-node__badge {
   font-size: 0.7rem;
   font-weight: 600;
@@ -315,12 +300,6 @@ onBeforeUnmount(() => {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   background: var(--color-border);
-  color: var(--color-text-muted);
-}
-
-.forum-category-node__counts {
-  margin: 0.2rem 0 0 2.25rem;
-  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
@@ -408,16 +387,8 @@ onBeforeUnmount(() => {
     padding-bottom: 0.5rem;
   }
 
-  .forum-category-node__slug {
-    display: none;
-  }
-
   .forum-category-node__desc {
     display: none;
-  }
-
-  .forum-category-node__counts {
-    margin-left: 2.25rem;
   }
 }
 </style>

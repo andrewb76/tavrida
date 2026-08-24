@@ -24,6 +24,8 @@ export type CategoryNode = {
   topicCount: number;
   /** Non-deleted comments on those published topics (not subtree). */
   commentCount: number;
+  /** Topics the current viewer has not opened yet. 0 when not authenticated. */
+  unreadCount: number;
   accessGroupIds?: string[];
   children: CategoryNode[];
 };
@@ -58,12 +60,16 @@ export class CategoriesService {
       this.isAllowed(row.id, groupsByCategory, viewerGroupIds, access.isAdmin),
     );
     const counts = await this.loadCountsByCategory();
+    const unreadCounts = access.viewerId
+      ? await this.loadUnreadCountsByCategory(access.viewerId)
+      : new Map<string, number>();
     return {
       data: this.buildTree(
         visible,
         groupsByCategory,
         Boolean(access.includeAccessGroups),
         counts,
+        unreadCounts,
       ),
     };
   }
@@ -254,11 +260,31 @@ export class CategoriesService {
     return counts;
   }
 
+  private async loadUnreadCountsByCategory(viewerId: string): Promise<Map<string, number>> {
+    const rows = (await this.dataSource.query(
+      `SELECT t.category_id AS "categoryId", COUNT(*)::int AS "unreadCount"
+       FROM forum.topic t
+       LEFT JOIN forum.topic_view tv ON tv.topic_id = t.id AND tv.user_id = $1
+       WHERE t.deleted_at IS NULL
+         AND t.status = 'PUBLISHED'
+         AND tv.topic_id IS NULL
+       GROUP BY t.category_id`,
+      [viewerId],
+    )) as Array<{ categoryId: string; unreadCount: number }>;
+
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      counts.set(row.categoryId, Number(row.unreadCount) || 0);
+    }
+    return counts;
+  }
+
   private buildTree(
     rows: CategoryEntity[],
     groupsByCategory: Map<string, string[]>,
     includeAccessGroups: boolean,
     counts: Map<string, CategoryCounts>,
+    unreadCounts: Map<string, number>,
   ): CategoryNode[] {
     const byParent = new Map<string | null, CategoryEntity[]>();
 
@@ -284,6 +310,7 @@ export class CategoriesService {
           restricted,
           topicCount: nodeCounts.topicCount,
           commentCount: nodeCounts.commentCount,
+          unreadCount: unreadCounts.get(row.id) ?? 0,
           ...(includeAccessGroups ? { accessGroupIds } : {}),
           children: build(row.id),
         };

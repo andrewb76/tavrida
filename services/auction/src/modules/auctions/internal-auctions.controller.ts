@@ -242,6 +242,24 @@ export class InternalAuctionsController {
     });
   }
 
+  @Post(':id/views')
+  async recordView(@Param('id') id: string, @Body('userId') userId: string) {
+    await this.auctions.recordView(id, userId);
+    return { ok: true };
+  }
+
+  @Get(':id/views')
+  async getViews(@Param('id') id: string) {
+    const count = await this.auctions.getLotViewCount(id);
+    return { count };
+  }
+
+  @Get(':id/viewers')
+  async getViewers(@Param('id') id: string) {
+    const data = await this.auctions.getLotViewers(id);
+    return { data };
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.auctions.getById(id);

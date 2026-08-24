@@ -28,6 +28,7 @@ export type CategoryNode = {
   restricted?: boolean;
   topicCount?: number;
   commentCount?: number;
+  unreadCount?: number;
   accessGroupIds?: string[];
   children: CategoryNode[];
 };
@@ -590,4 +591,19 @@ export async function setAccessGroupMembers(
     throw new Error(err?.detail ?? 'Не удалось сохранить состав группы');
   }
   return (await res.json()) as { groupId: string; userIds: string[] };
+}
+
+export async function recordTopicView(topicId: string): Promise<void> {
+  const res = await fetch(
+    `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/views`,
+    {
+      method: 'POST',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify({}),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось записать просмотр');
+  }
 }

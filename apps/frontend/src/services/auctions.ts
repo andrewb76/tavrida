@@ -255,3 +255,25 @@ export async function createExpertAppraisal(
     input,
   );
 }
+
+export type LotViewers = {
+  data: Array<{ userId: string; viewedAt: string }>;
+};
+
+export async function recordLotView(auctionId: string): Promise<void> {
+  await authPost(`/auctions/${encodeURIComponent(auctionId)}/views`, {});
+}
+
+export async function getLotViews(
+  auctionId: string,
+): Promise<{ count: number }> {
+  return authGet<{ count: number }>(
+    `/auctions/${encodeURIComponent(auctionId)}/views`,
+  );
+}
+
+export async function getLotViewers(auctionId: string): Promise<LotViewers> {
+  return authGet<LotViewers>(
+    `/auctions/${encodeURIComponent(auctionId)}/viewers`,
+  );
+}

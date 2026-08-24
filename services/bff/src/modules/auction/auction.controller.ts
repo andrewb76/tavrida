@@ -404,6 +404,31 @@ export class AuctionController {
     });
   }
 
+  @Post(':id/views')
+  async recordView(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    await this.auction.recordView(id, user.sub);
+    return { ok: true };
+  }
+
+  @Get(':id/views')
+  async getViews(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.auction.getLotViews(id);
+  }
+
+  @Get(':id/viewers')
+  async getViewers(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const lot = await this.auction.getAuction(id);
+    const sellerId = typeof lot.sellerId === 'string' ? lot.sellerId : '';
+    const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    if (sellerId !== user.sub && !isAdmin) {
+      throw new ForbiddenException({
+        type: 'forbidden',
+        detail: 'Список зрителей доступен только владельцу лота',
+      });
+    }
+    return this.auction.getLotViewers(id);
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.auction.getAuction(id);

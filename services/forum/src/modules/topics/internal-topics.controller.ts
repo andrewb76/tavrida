@@ -14,6 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { TopicsService } from './topics.service';
+import { TopicViewsService } from './topic-views.service';
 
 class MediaAttachmentDto {
   @IsString()
@@ -167,7 +168,10 @@ class UpdateTopicRequestDto extends UpdateTopicDto {
 
 @Controller('internal/v1/topics')
 export class InternalTopicsController {
-  constructor(private readonly topics: TopicsService) {}
+  constructor(
+    private readonly topics: TopicsService,
+    private readonly topicViews: TopicViewsService,
+  ) {}
 
   @Get()
   list(@Query() query: ListTopicsQuery) {
@@ -232,5 +236,11 @@ export class InternalTopicsController {
       tags: body.tags,
       asModerator: body.asModerator,
     });
+  }
+
+  @Post(':id/views')
+  async recordView(@Param('id') id: string, @Body('userId') userId: string) {
+    await this.topicViews.recordView(id, userId);
+    return { ok: true };
   }
 }

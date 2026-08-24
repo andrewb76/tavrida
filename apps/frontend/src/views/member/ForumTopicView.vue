@@ -18,6 +18,7 @@ import {
   forumAuthorLabel,
   getTopic,
   listComments,
+  recordTopicView,
   updateTopic,
   type ForumComment,
   type ForumMeta,
@@ -167,6 +168,7 @@ async function load(id: string) {
     comments.value = commentRows;
     forumMeta.value = meta;
     bindWs(id);
+    recordTopicView(id).catch(() => {});
   } catch (e) {
     if (generation !== loadGeneration) return;
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';

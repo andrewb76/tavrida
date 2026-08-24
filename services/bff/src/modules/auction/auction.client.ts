@@ -60,6 +60,28 @@ export class AuctionClient {
     );
   }
 
+  recordView(auctionId: string, userId: string) {
+    return this.request<{ ok: boolean }>(
+      'POST',
+      `/internal/v1/auctions/${auctionId}/views`,
+      { userId },
+    );
+  }
+
+  getLotViews(auctionId: string) {
+    return this.request<{ count: number }>(
+      'GET',
+      `/internal/v1/auctions/${auctionId}/views`,
+    );
+  }
+
+  getLotViewers(auctionId: string) {
+    return this.request<{ data: Array<{ userId: string; viewedAt: string }> }>(
+      'GET',
+      `/internal/v1/auctions/${auctionId}/viewers`,
+    );
+  }
+
   promoteAuction(auctionId: string) {
     return this.request<Record<string, unknown>>(
       'POST',

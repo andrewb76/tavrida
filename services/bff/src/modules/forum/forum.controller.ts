@@ -324,6 +324,16 @@ export class ForumController {
     return this.authors.enrichOne(topic as { authorId: string });
   }
 
+  @Post('topics/:id/views')
+  @UseGuards(JwtAuthGuard)
+  async recordTopicView(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ) {
+    await this.forum.recordTopicView(id, user.sub);
+    return { ok: true };
+  }
+
   @Post('topics')
   @UseGuards(JwtAuthGuard)
   async createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
