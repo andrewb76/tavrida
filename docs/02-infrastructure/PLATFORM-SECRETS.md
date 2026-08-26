@@ -70,6 +70,10 @@
 | `NOVU_APPLICATION_IDENTIFIER` | нет | notifications, frontend | — | Public app id для Inbox (из Dashboard) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | нет | все NestJS | `http://localhost:4318` | OpenTelemetry collector; на Swarm → `http://alloy:4318` |
 | `OTEL_SERVICE_NAME` | нет | каждый сервис | имя сервиса | Идентификатор в трейсах |
+| `INFLUXDB_URL` | нет | presence | `http://localhost:8086` | InfluxDB API endpoint (presence analytics) |
+| `INFLUXDB_TOKEN` | **да** | presence | — | InfluxDB API token |
+| `INFLUXDB_ORG` | нет | presence | `tavrida` | InfluxDB organization |
+| `INFLUXDB_BUCKET` | нет | presence | `presence` | InfluxDB bucket |
 | `GRAFANA_CLOUD_PROMETHEUS_URL` | нет | Alloy (dev) | — | Mimir remote_write URL ([grafana-setup](../07-observability/grafana-setup.md)) |
 | `GRAFANA_CLOUD_PROMETHEUS_USERNAME` | нет | Alloy | — | Prometheus instance id |
 | `GRAFANA_CLOUD_LOKI_URL` | нет | Alloy | — | Loki push URL |
@@ -108,6 +112,7 @@
 | `MARKETPLACE_URL` | нет | `http://localhost:3011` | Upstream marketplace |
 | `PERIODS_URL` | нет | `http://localhost:3014` | Upstream periods (исторический справочник) |
 | `CHAT_URL` | нет | `http://localhost:3016` | Upstream chat (DIRECT/GROUP/TOPIC) |
+| `PRESENCE_URL` | нет | `http://localhost:3017` | Upstream presence (online/away/offline) |
 | `KETO_READ_URL` | нет | `http://localhost:4466` | Keto read API — admin check (invites quota) |
 | `KETO_NAMESPACE` | нет | `TavridaLot` | Keto namespace |
 | `KETO_PLATFORM_OBJECT` | нет | `platform:tavrida-lot` | Platform object id |
@@ -249,6 +254,23 @@
 | `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer `/internal/v1/*` |
 
 > Spec: [chat/README.md](../05-microservices/chat/README.md)
+
+---
+
+## 👁️ presence — порт 3017
+
+| Переменная | Секрет | Schema | Описание |
+|------------|--------|--------|----------|
+| `PORT` / `PRESENCE_PORT` | нет | — | `3017` |
+| `REDIS_URL` | **да** | — | Текущие статусы (hash `presence:{user_id}`) |
+| `INFLUXDB_URL` | нет | — | InfluxDB API (история + аналитика) |
+| `INFLUXDB_TOKEN` | **да** | — | InfluxDB API token |
+| `INFLUXDB_ORG` | нет | `tavrida` | InfluxDB organization |
+| `INFLUXDB_BUCKET` | нет | `presence` | InfluxDB bucket |
+| `SCALAR_CONFIG_URL` | нет | `http://localhost:3008` | Sync scalar-config параметров |
+| `INTERNAL_SERVICE_TOKEN` | **да (prod)** | — | Bearer `/internal/v1/*` |
+
+> Spec: [presence/README.md](../05-microservices/presence/README.md). Технический сервис: Redis + InfluxDB, без PostgreSQL.
 
 ---
 

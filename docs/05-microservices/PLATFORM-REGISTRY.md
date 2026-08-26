@@ -179,6 +179,18 @@ Default `rating.contextWeights`:
 | `webhooks.autoDisable.onDead` | boolean | `true` | global | Auto-disable endpoint после серии DEAD |
 | `webhooks.autoDisable.deadStreak` | number | `10` | global | Подряд DEAD до disable |
 
+### presence
+
+| Ключ | Тип | Default | Scope | Описание |
+|------|-----|---------|-------|----------|
+| `presence.heartbeat.intervalSeconds` | number | `30` | global | Интервал отправки heartbeat клиентом (сек) |
+| `presence.heartbeat.onlineTimeoutSeconds` | number | `90` | global | Время без heartbeat до offline (сек) |
+| `presence.heartbeat.awayAfterSeconds` | number | `300` | global | Время без активности до away (сек) |
+| `presence.snapshot.intervalSeconds` | number | `60` | global | Интервал периодических снапшотов (сек) |
+| `presence.analytics.rawRetentionDays` | number | `60` | global | Срок хранения сырых событий в InfluxDB (дни) |
+
+> Технический сервис: все параметры `is_tariffable = false`, plan-config не используется.
+
 ### scalar_config _(мета)_
 
 | Ключ | Тип | Default | Scope | Описание |

@@ -41,6 +41,7 @@
 | `periods`               | periods               | categories / periods                                          | Исторические периоды |
 | `chat`                  | chat                  | `chat`, `chat_member`, `message`, `message_attachment`, `outbox_message` | Приватные чаты |
 | `keto`                  | **Ory Keto** (infra)  | relation tuples (RBAC/ReBAC)                                  | Права доступа      |
+| `presence` (Redis + InfluxDB) | presence | Redis: `presence:{user_id}`; InfluxDB: `presence_change`, `presence_snapshot`, `session_duration` | Текущий статус (Redis), история (InfluxDB) |
 
 > **Retired schemas:** `financial_policy` → `plan_config`, `settings` → `scalar_config`. Canonical schemas перечислены выше.
 
@@ -70,6 +71,7 @@
 | `auction:{id}:bids`        | auction  | —    | Live bids cache  |
 | `ws:channel:{name}`        | BFF      | —    | Pub/sub relay    |
 | `idempotency:{key}`        | billing  | 24h  | Idempotency keys |
+| `presence:{user_id}`       | presence | —    | Текущий статус (hash: status, last_seen, visibility) |
 
 
 

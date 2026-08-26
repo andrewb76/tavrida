@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Ревью docs:** [docs-review.md](../13-maintenance/docs-review.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-07-28 (UI theme contrast bridge)
+**Последнее обновление индекса:** 2026-08-26 (presence service added)
 
 ---
 
@@ -42,6 +42,7 @@
 | **Notifications** | Novu adapter, self-host | [notifications/README.md](../05-microservices/notifications/README.md) → [ADR-019](../03-architecture/adr/019-novu-self-host.md) → [novu-local.md](../04-deployment/novu-local.md) | [ADR-004](../03-architecture/adr/004-notifications-adapter.md) · [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) | `:3010` · compose ✅ · onboarding **deferred** · mock |
 | **Периоды (история)** | иерархический справочник, timeline widget | [periods/README.md](../05-microservices/periods/README.md) | [MICROSERVICE-SPEC.md](../05-microservices/MICROSERVICE-SPEC.md) · platform-for-users | :3014 · admin UI · Crimea seed · d3 widget later |
 | **Webhooks (исходящие)** | outbound integrations | [webhooks/README.md](../05-microservices/webhooks/README.md) → [ADR-011](../03-architecture/adr/011-centralized-outbound-webhooks.md) | [event-catalog.md](../03-architecture/event-catalog.md) | docs only |
+| **Presence (online/away)** | статус пользователей, heartbeat, away detection | [presence/README.md](../05-microservices/presence/README.md) | [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) · [PLATFORM-SECRETS.md](../02-infrastructure/PLATFORM-SECRETS.md) · [10-data/README.md](../10-data/README.md) | Redis + InfluxDB · port 3017 · Visibility API + heartbeat · BFF proxy |
 | **События / messaging** | RabbitMQ, event names | [event-catalog.md](../03-architecture/event-catalog.md) → [messaging.md](../03-architecture/messaging.md) | [03-architecture/README.md](../03-architecture/README.md) | transactional outbox: auction, marketplace, forum, user-profile · confirms + retry/DLQ |
 | **API conventions** | errors, pagination, idempotency | [06-api/README.md](../06-api/README.md) | [invites-api.md](../06-api/invites-api.md) · [vanga-admin-api.md](../06-api/vanga-admin-api.md) · [bff/README.md](../05-microservices/bff/README.md) | canonical routes audited 2026-07-17 · full openapi.yaml TODO |
 | **Тестирование** | Unit/integration/contract/E2E, CI gates | [08-testing/README.md](../08-testing/README.md) → [IMPLEMENTATION-PLAN.md](../08-testing/IMPLEMENTATION-PLAN.md) | [platform-scenarios.md](../01-goal/platform-scenarios.md) · [e2e-playwright.md](../08-testing/e2e-playwright.md) · [github-actions.md](../04-deployment/github-actions.md) | unit ✅ · E2E smoke ✅ · T1–T4/T6 backlog |

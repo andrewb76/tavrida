@@ -85,6 +85,7 @@
 | 🔗 webhooks | ✅ spec ready | [webhooks](./05-microservices/webhooks/README.md) |
 | 🛒 marketplace | ✅ spec ready | [marketplace](./05-microservices/marketplace/README.md) |
 | 🎁 referral-rewards | ✅ spec ready | [referral-rewards](./05-microservices/referral-rewards/README.md) |
+| 👁️ presence | ✅ spec ready | [presence](./05-microservices/presence/README.md) |
 
 **Легенда:** 📝 draft/spec · 🚧 код в `services/` (каркас)
 
@@ -94,7 +95,7 @@
 
 | Сводка | |
 |--------|--|
-| Spec-ready сервисы | 14 (+ BFF) |
+| Spec-ready сервисы | 15 (+ BFF) |
 | GitHub Pages + автосайдбар | ✅ |
 | OpenAPI, legal тексты, link-check CI | ⏳ см. roadmap |
 | Реализация кода | 12 PostgreSQL NestJS services + Vue SPA; maturity differs by domain |

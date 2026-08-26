@@ -27,6 +27,7 @@
 | 🔮 vanga | 3013 | 📝 (BFF+UI sim) | ✅ spec draft | [vanga](./vanga/README.md) |
 | ⏳ periods | 3014 | 🚧 admin + seed | ✅ spec | [periods](./periods/README.md) |
 | 💬 chat | **3016** | 🚧 scaffold | ✅ spec | [chat](./chat/README.md) · [analysis](./chat/requirements/analysis.md) · [chat-api](../06-api/chat-api.md) |
+| 👁️ presence | **3017** | 📝 draft | ✅ spec | [presence](./presence/README.md) |
 
 > Спецификация новых сервисов: [MICROSERVICE-SPEC](./MICROSERVICE-SPEC.md) · Реестр переменных: [PLATFORM-REGISTRY](./PLATFORM-REGISTRY.md) · План дней: [WORK-PLAN-NEXT](../00-meta/WORK-PLAN-NEXT.md)
 
