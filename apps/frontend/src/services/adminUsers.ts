@@ -137,6 +137,7 @@ function normalizeAdminUserRow(raw: Partial<AdminUserRow> & { userId: string }):
     referral: { ...EMPTY_REFERRAL, ...(raw.referral ?? {}) },
     plan: { ...EMPTY_PLAN, ...(raw.plan ?? {}) },
     accessGroups: Array.isArray(raw.accessGroups) ? raw.accessGroups : [],
+    presenceStatus: raw.presenceStatus ?? 'offline',
   };
 }
 
