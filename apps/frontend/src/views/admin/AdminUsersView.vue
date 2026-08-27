@@ -457,6 +457,14 @@ async function confirmDeposit() {
               referrerpolicy="no-referrer"
               @error="avatarFailed[row.userId] = true"
             >
+            <span
+              v-if="row.presenceStatus === 'online'"
+              class="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-surface bg-green-500"
+            />
+            <span
+              v-else-if="row.presenceStatus === 'away'"
+              class="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-surface bg-amber-500"
+            />
           </div>
 
           <div class="min-w-0 flex-1">

@@ -14,6 +14,7 @@ import { IsNumber, IsOptional, IsString, MaxLength, MinLength } from 'class-vali
 import { AdminGuard } from '../auth/admin.guard';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PresenceClient } from '../presence/presence.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
 
 class UpsertProfileNoteDto {
@@ -42,7 +43,10 @@ class AdjustRatingDto {
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
-  constructor(private readonly profiles: UserProfileClient) {}
+  constructor(
+    private readonly profiles: UserProfileClient,
+    private readonly presence: PresenceClient,
+  ) {}
 
   @Get('notes')
   getNote(@CurrentUser() user: AuthUser, @Query('ownerId') ownerId: string) {
@@ -86,8 +90,11 @@ export class ProfileController {
   @Get('by-username/:username')
   async getByUsername(@Param('username') username: string) {
     const profile = await this.profiles.getByUsername(username);
-    const rating = await this.profiles.getRatingStats(profile.userId);
-    return { ...profile, rating };
+    const [rating, presenceResult] = await Promise.all([
+      this.profiles.getRatingStats(profile.userId),
+      this.presence.getStatus(profile.userId).catch(() => ({ status: 'offline' })),
+    ]);
+    return { ...profile, rating, presenceStatus: presenceResult.status };
   }
 
   @Get(':userId/rating/log')
@@ -144,10 +151,11 @@ export class ProfileController {
 
   @Get(':userId')
   async getPublicProfile(@Param('userId') userId: string) {
-    const [profile, rating] = await Promise.all([
+    const [profile, rating, presenceResult] = await Promise.all([
       this.profiles.getPublicProfile(userId),
       this.profiles.getRatingStats(userId),
+      this.presence.getStatus(userId).catch(() => ({ status: 'offline' })),
     ]);
-    return { ...profile, rating };
+    return { ...profile, rating, presenceStatus: presenceResult.status };
   }
 }

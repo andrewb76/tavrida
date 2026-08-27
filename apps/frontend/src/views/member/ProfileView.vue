@@ -611,6 +611,17 @@ async function copyInviteLink() {
             >
               @{{ publicProfile.username }}
             </p>
+            <p
+              v-if="publicProfile.presenceStatus && publicProfile.presenceStatus !== 'offline'"
+              class="profile-public-card__presence"
+              :class="{
+                'profile-public-card__presence--online': publicProfile.presenceStatus === 'online',
+                'profile-public-card__presence--away': publicProfile.presenceStatus === 'away',
+              }"
+            >
+              <span class="profile-public-card__presence-dot" />
+              {{ publicProfile.presenceStatus === 'online' ? 'В сети' : 'Отошёл(а)' }}
+            </p>
             <p class="profile-public-card__meta">
               Участник с {{ new Date(publicProfile.memberSince).toLocaleDateString('ru-RU') }}
             </p>
@@ -740,6 +751,31 @@ async function copyInviteLink() {
   margin: 0.15rem 0 0;
   font-size: 0.875rem;
   color: var(--color-text-muted);
+}
+
+.profile-public-card__presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.profile-public-card__presence--online {
+  color: #16a34a;
+}
+
+.profile-public-card__presence--away {
+  color: #d97706;
+}
+
+.profile-public-card__presence-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .profile-public-card__meta {

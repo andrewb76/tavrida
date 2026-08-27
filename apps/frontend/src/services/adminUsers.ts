@@ -54,6 +54,7 @@ export type AdminUserRow = {
     expiresAt: string | null;
   };
   accessGroups: AdminUserAccessGroup[];
+  presenceStatus: 'online' | 'away' | 'offline';
 };
 
 export type AdminWalletTransaction = {

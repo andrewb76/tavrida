@@ -21,6 +21,7 @@ export type PublicProfile = {
   isSuspended: boolean;
   memberSince: string;
   rating: ProfileRatingStats;
+  presenceStatus?: 'online' | 'away' | 'offline';
 };
 
 export type ProfileNote = {

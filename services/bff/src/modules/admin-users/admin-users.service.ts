@@ -18,6 +18,7 @@ import {
   isUnknownPlanLimit,
 } from '../invites/invite-quota.logic';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
+import { PresenceClient } from '../presence/presence.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class AdminUsersService {
     private readonly planConfig: PlanConfigClient,
     private readonly forum: ForumClient,
     private readonly logto: LogtoManagementService,
+    private readonly presence: PresenceClient,
   ) {}
 
   async listUsers(params: { offset?: number; limit?: number; q?: string }) {
@@ -40,12 +42,13 @@ export class AdminUsersService {
       ),
     ];
 
-    const [cardStatsRaw, membershipsRes, inviters] = await Promise.all([
+    const [cardStatsRaw, membershipsRes, inviters, presenceMap] = await Promise.all([
       this.profiles.getAdminCardStats(ids).catch(() => ({}) as Record<string, never>),
       this.forum.membershipsByUsers(ids).catch(() => ({ data: {} as Record<string, never> })),
       inviterIds.length
         ? this.profiles.lookupByIds(inviterIds).catch(() => [])
         : Promise.resolve([]),
+      this.presence.batch(ids).catch(() => [] as Array<{ user_id: string; status: string }>),
     ]);
 
     const cardStats: Record<string, (typeof cardStatsRaw)[string] | undefined> = cardStatsRaw;
@@ -128,6 +131,7 @@ export class AdminUsersService {
             expiresAt: subscription.expiresAt,
           },
           accessGroups: memberships[row.userId] ?? [],
+          presenceStatus: presenceMap.find((p) => p.user_id === row.userId)?.status ?? 'offline',
         };
       }),
     );
