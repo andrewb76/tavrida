@@ -622,6 +622,12 @@ async function copyInviteLink() {
               <span class="profile-public-card__presence-dot" />
               {{ publicProfile.presenceStatus === 'online' ? 'В сети' : 'Отошёл(а)' }}
             </p>
+            <p
+              v-else-if="publicProfile.presenceStatus === 'offline'"
+              class="profile-public-card__presence profile-public-card__presence--offline"
+            >
+              В сети недавно
+            </p>
             <p class="profile-public-card__meta">
               Участник с {{ new Date(publicProfile.memberSince).toLocaleDateString('ru-RU') }}
             </p>
@@ -768,6 +774,10 @@ async function copyInviteLink() {
 
 .profile-public-card__presence--away {
   color: #d97706;
+}
+
+.profile-public-card__presence--offline {
+  color: var(--color-text-muted);
 }
 
 .profile-public-card__presence-dot {
