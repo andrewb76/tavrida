@@ -1,55 +1,60 @@
-# Dev Swarm — platform services (images from GHCR)
+# Stage Swarm — platform services (images from GHCR)
 #
-# Secrets: sync via sync-secrets-dev.sh → *_FILE env in containers
-# Deploy: DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
-# Stack name: CLI only (`tavrida-dev`) — no top-level `name:` (stack deploy rejects it).
+# Secrets: sync via sync-secrets-stage.sh → *_FILE env in containers
+# Deploy: GIT_SHA=v1.2.3 DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-stage.sh
+# Stack name: CLI only (`tavrida-stage`) — no top-level `name:` (stack deploy rejects it).
+
+networks:
+  tavrida_stage_net:
+    driver: overlay
+    attachable: true
 
 secrets:
   internal_service_token:
     external: true
-    name: tavrida_dev_internal_service_token
+    name: tavrida_stage_internal_service_token
   rabbitmq_url:
     external: true
-    name: tavrida_dev_rabbitmq_url
+    name: tavrida_stage_rabbitmq_url
   billing_database_url:
     external: true
-    name: tavrida_dev_billing_database_url
+    name: tavrida_stage_billing_database_url
   plan_config_database_url:
     external: true
-    name: tavrida_dev_plan_config_database_url
+    name: tavrida_stage_plan_config_database_url
   auction_database_url:
     external: true
-    name: tavrida_dev_auction_database_url
+    name: tavrida_stage_auction_database_url
   subscriptions_database_url:
     external: true
-    name: tavrida_dev_subscriptions_database_url
+    name: tavrida_stage_subscriptions_database_url
   user_profile_database_url:
     external: true
-    name: tavrida_dev_user_profile_database_url
+    name: tavrida_stage_user_profile_database_url
   scalar_config_database_url:
     external: true
-    name: tavrida_dev_scalar_config_database_url
+    name: tavrida_stage_scalar_config_database_url
   forum_database_url:
     external: true
-    name: tavrida_dev_forum_database_url
+    name: tavrida_stage_forum_database_url
   periods_database_url:
     external: true
-    name: tavrida_dev_periods_database_url
+    name: tavrida_stage_periods_database_url
   marketplace_database_url:
     external: true
-    name: tavrida_dev_marketplace_database_url
+    name: tavrida_stage_marketplace_database_url
   notifications_database_url:
     external: true
-    name: tavrida_dev_notifications_database_url
+    name: tavrida_stage_notifications_database_url
   bff_database_url:
     external: true
-    name: tavrida_dev_bff_database_url
+    name: tavrida_stage_bff_database_url
   chat_database_url:
     external: true
-    name: tavrida_dev_chat_database_url
+    name: tavrida_stage_chat_database_url
   logto_m2m_app_secret:
     external: true
-    name: tavrida_dev_logto_m2m_app_secret
+    name: tavrida_stage_logto_m2m_app_secret
   minio_secret_key:
     external: true
     name: tavrida_dev_minio_root_password
@@ -65,8 +70,6 @@ x-nest-deploy: &nest-deploy
   restart_policy:
     condition: on-failure
     delay: 5s
-  # stop-first: one replica — never leave old+new both Desired=Running.
-  # start-first + unhealthy during deploy used to stack zombie tasks (N/1 in service ls).
   update_config:
     parallelism: 1
     delay: 10s
@@ -86,7 +89,7 @@ services:
       BILLING_PORT: '3001'
       DATABASE_URL_FILE: /run/secrets/billing_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -107,7 +110,7 @@ services:
       DATABASE_URL_FILE: /run/secrets/plan_config_database_url
       BILLING_URL: http://billing:3001
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -116,18 +119,16 @@ services:
     deploy:
       <<: *nest-deploy
 
-  # Hourly auto-renew: POST plan-config /internal/v1/subscription/renew/run
-  # (no docker.sock; simple loop — see docs/04-deployment/swarm-stacks.md)
   plan-config-renew:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     entrypoint: ['/bin/sh', '-c']
     command:
       - |
-        echo "plan-config-renew: starting (interval 3600s)"
+        echo "plan-config-renew (stage): starting (interval 3600s)"
         while true; do
           echo "plan-config-renew: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST renew/run"
           curl -sf -X POST \
@@ -142,17 +143,16 @@ services:
         condition: on-failure
         delay: 30s
 
-  # Hourly auction hygiene: activate due SCHEDULED + close due ACTIVE lots
   auction-close:
     image: curlimages/curl:8.12.1
     secrets:
       - internal_service_token
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     entrypoint: ['/bin/sh', '-c']
     command:
       - |
-        echo "auction-close: starting (interval 3600s)"
+        echo "auction-close (stage): starting (interval 3600s)"
         while true; do
           echo "auction-close: $$(date -u +%Y-%m-%dT%H:%M:%SZ) POST close/run"
           curl -sf -X POST \
@@ -179,7 +179,7 @@ services:
       DATABASE_URL_FILE: /run/secrets/auction_database_url
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -199,7 +199,7 @@ services:
       SUBSCRIPTIONS_PORT: '3004'
       DATABASE_URL_FILE: /run/secrets/subscriptions_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3004/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -219,7 +219,7 @@ services:
       USER_PROFILE_PORT: '3007'
       DATABASE_URL_FILE: /run/secrets/user_profile_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3007/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -239,7 +239,7 @@ services:
       SCALAR_CONFIG_PORT: '3008'
       DATABASE_URL_FILE: /run/secrets/scalar_config_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3008/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -260,7 +260,7 @@ services:
       DATABASE_URL_FILE: /run/secrets/forum_database_url
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3009/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -280,7 +280,7 @@ services:
       PERIODS_PORT: '3014'
       DATABASE_URL_FILE: /run/secrets/periods_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3014/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -300,7 +300,7 @@ services:
       MARKETPLACE_PORT: '3011'
       DATABASE_URL_FILE: /run/secrets/marketplace_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3011/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -318,9 +318,8 @@ services:
       <<: *nest-env
       NOTIFICATIONS_PORT: '3010'
       DATABASE_URL_FILE: /run/secrets/notifications_database_url
-      # NOVU_API_KEY optional — without it triggers run in mock mode
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -340,7 +339,7 @@ services:
       CHAT_PORT: '3016'
       DATABASE_URL_FILE: /run/secrets/chat_database_url
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -357,7 +356,7 @@ services:
       <<: *nest-env
       PRESENCE_PORT: '3017'
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3017/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -405,11 +404,9 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY_FILE: /run/secrets/minio_secret_key
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
-      # Browser presigned PUT must use public HTTPS (not http://minio:9000)
       MINIO_PRESIGN_ENDPOINT: https://s3.${DEV_DOMAIN}
-      VANGA_DEFAULTS_PATH: /app/config/vanga.defaults.yaml
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -419,25 +416,24 @@ services:
       <<: *nest-deploy
       labels:
         - traefik.enable=true
-        - traefik.http.routers.bff.rule=Host(`api.${DEV_DOMAIN}`)
-        - traefik.http.routers.bff.entrypoints=websecure
-        - traefik.http.routers.bff.tls.certresolver=le
-        - traefik.http.services.bff.loadbalancer.server.port=3000
+        - traefik.docker.network=${TRAEFIK_SWARM_NETWORK}
+        - traefik.http.routers.bff-stage.rule=Host(`api.${DEV_DOMAIN}`)
+        - traefik.http.routers.bff-stage.entrypoints=websecure
+        - traefik.http.routers.bff-stage.tls.certresolver=le
+        - traefik.http.services.bff-stage.loadbalancer.server.port=3000
 
   frontend:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-frontend:${GIT_SHA}
     networks:
-      - tavrida_net
+      - tavrida_stage_net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
       labels:
         - traefik.enable=true
-        - traefik.http.routers.frontend.rule=Host(`app.${DEV_DOMAIN}`)
-        - traefik.http.routers.frontend.entrypoints=websecure
-        - traefik.http.routers.frontend.tls.certresolver=le
-        - traefik.http.services.frontend.loadbalancer.server.port=80
-
-# Network `tavrida_net` is created by stack-infra.dev.yml (same stack deploy -c … -c …).
-# Do not mark it external here — merge would override infra and require a pre-existing network.
+        - traefik.docker.network=${TRAEFIK_SWARM_NETWORK}
+        - traefik.http.routers.frontend-stage.rule=Host(`app.${DEV_DOMAIN}`)
+        - traefik.http.routers.frontend-stage.entrypoints=websecure
+        - traefik.http.routers.frontend-stage.tls.certresolver=le
+        - traefik.http.services.frontend-stage.loadbalancer.server.port=80

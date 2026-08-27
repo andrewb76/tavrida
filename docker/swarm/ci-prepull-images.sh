@@ -48,6 +48,7 @@ IMAGES=(
   tavrida-marketplace
   tavrida-notifications
   tavrida-chat
+  tavrida-presence
   tavrida-bff
   tavrida-deal-feedback
   tavrida-frontend
@@ -121,6 +122,7 @@ IMAGES=(
   tavrida-marketplace
   tavrida-notifications
   tavrida-chat
+  tavrida-presence
   tavrida-bff
   tavrida-deal-feedback
   tavrida-frontend

@@ -2,29 +2,55 @@
 # Build and optionally push core service images to GHCR.
 #
 # Usage:
-#   export GHCR_OWNER=andrewb76 GIT_SHA=$(git rev-parse --short HEAD)
-#   ./docker/swarm/build-images.sh
+#   # Dev (default) — images tagged with git SHA + :dev floating tag
 #   ./docker/swarm/build-images.sh --push
+#
+#   # Stage — images tagged with git tag + :stage floating tag
+#   GIT_SHA=v1.2.3 ./docker/swarm/build-images.sh --push --env stage
+#
+#   # Explicit tag override
+#   ./docker/swarm/build-images.sh --push --tag v1.2.3 --env stage
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 REGISTRY="${GHCR_REGISTRY:-ghcr.io}"
 OWNER="${GHCR_OWNER:-${GITHUB_REPOSITORY_OWNER:-andrewb76}}"
-if [[ -n "${GIT_SHA:-}" ]]; then
+ENV="dev"
+PUSH=false
+EXPLICIT_TAG=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --push) PUSH=true; shift ;;
+    --env) ENV="$2"; shift 2 ;;
+    --tag) EXPLICIT_TAG="$2"; shift 2 ;;
+    -h|--help)
+      sed -n '2,/^set /p' "$0" | head -n -1 | sed 's/^# \?//'
+      exit 0
+      ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -n "$EXPLICIT_TAG" ]]; then
+  TAG="$EXPLICIT_TAG"
+elif [[ -n "${GIT_SHA:-}" ]]; then
   TAG="$GIT_SHA"
 elif [[ -n "${GITHUB_SHA:-}" ]]; then
   TAG="${GITHUB_SHA:0:7}"
 else
   TAG=latest
 fi
-PUSH=false
 
-if [[ "${1:-}" == "--push" ]]; then
-  PUSH=true
+FLOATING_TAG="$ENV"
+
+# DEV_DOMAIN is used for frontend build args; stage uses tavridalot.ru, dev uses evatorg.su
+if [[ "$ENV" == "stage" ]]; then
+  DEV_DOMAIN="${DEV_DOMAIN:-tavridalot.ru}"
+else
+  DEV_DOMAIN="${DEV_DOMAIN:-evatorg.su}"
 fi
-
-DEV_DOMAIN="${DEV_DOMAIN:-evatorg.su}"
 
 declare -A SERVICES=(
   [bff]="@tavrida/bff|services/bff"
@@ -40,6 +66,7 @@ declare -A SERVICES=(
   [deal-feedback]="@tavrida/deal-feedback|services/deal-feedback"
   [notifications]="@tavrida/notifications|services/notifications"
   [chat]="@tavrida/chat|services/chat"
+  [presence]="@tavrida/presence|services/presence"
 )
 
 build_service() {
@@ -54,8 +81,8 @@ build_service() {
   if $PUSH; then
     docker push "${image}"
     # Floating tag for current deploy / prune protection
-    docker tag "${image}" "${REGISTRY}/${OWNER}/tavrida-${name}:dev"
-    docker push "${REGISTRY}/${OWNER}/tavrida-${name}:dev"
+    docker tag "${image}" "${REGISTRY}/${OWNER}/tavrida-${name}:${FLOATING_TAG}"
+    docker push "${REGISTRY}/${OWNER}/tavrida-${name}:${FLOATING_TAG}"
   fi
 }
 
@@ -80,8 +107,8 @@ docker build -f "${ROOT}/docker/images/Dockerfile.frontend" \
   "${ROOT}"
 if $PUSH; then
   docker push "${frontend_image}"
-  docker tag "${frontend_image}" "${REGISTRY}/${OWNER}/tavrida-frontend:dev"
-  docker push "${REGISTRY}/${OWNER}/tavrida-frontend:dev"
+  docker tag "${frontend_image}" "${REGISTRY}/${OWNER}/tavrida-frontend:${FLOATING_TAG}"
+  docker push "${REGISTRY}/${OWNER}/tavrida-frontend:${FLOATING_TAG}"
 fi
 
-echo "Built tag: ${TAG} (+ :dev)" >&2
+echo "Built tag: ${TAG} (+ :${FLOATING_TAG})" >&2
