@@ -307,6 +307,14 @@ async function onAvatarSelected(e: Event) {
               class="chat-list__avatar-img"
             >
             <template v-else>{{ initials(chatListTitle(row)) }}</template>
+            <span
+              v-if="row.peer?.presenceStatus && row.peer.presenceStatus !== 'offline'"
+              class="chat-list__presence-dot"
+              :class="{
+                'chat-list__presence-dot--online': row.peer.presenceStatus === 'online',
+                'chat-list__presence-dot--away': row.peer.presenceStatus === 'away',
+              }"
+            />
           </span>
           <span class="chat-list__body">
             <span class="chat-list__top">
@@ -548,6 +556,7 @@ async function onAvatarSelected(e: Event) {
 }
 
 .chat-list__avatar {
+  position: relative;
   display: inline-flex;
   width: 3rem;
   height: 3rem;
@@ -559,13 +568,32 @@ async function onAvatarSelected(e: Event) {
   font-weight: 600;
   color: var(--color-primary-fg);
   background: hsl(var(--hue, 200) 42% 42%);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .chat-list__avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.chat-list__presence-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--token-bg);
+  background: var(--color-gray-400);
+}
+
+.chat-list__presence-dot--online {
+  background: #22c55e;
+}
+
+.chat-list__presence-dot--away {
+  background: #f59e0b;
 }
 
 .chat-list__body {

@@ -7,6 +7,7 @@ export type ChatPeer = {
   displayName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  presenceStatus?: 'online' | 'away' | 'offline';
 };
 
 export type ChatListItem = {
@@ -47,6 +48,7 @@ export type ChatMessageAuthor = {
   displayName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  presenceStatus?: 'online' | 'away' | 'offline';
 };
 
 export type ChatMessage = {

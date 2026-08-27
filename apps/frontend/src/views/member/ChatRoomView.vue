@@ -23,6 +23,7 @@ import {
   type MessageDeliveryStatus,
 } from '@/services/chats';
 import { useChatsStore } from '@/stores/chats';
+import { usePresenceStore, type PresenceStatus } from '@/stores/presence';
 import { useSessionStore } from '@/stores/session';
 import { UiIcon } from '@tavrida/ui';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
@@ -33,6 +34,7 @@ const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 const chatsStore = useChatsStore();
+const presenceStore = usePresenceStore();
 const ws = useWs();
 const upload = useMediaUpload('chat');
 
@@ -103,14 +105,26 @@ const canSend = computed(() => {
   return Boolean(body.value.trim() || upload.readyAttachments.value.length);
 });
 
+function presenceLabel(status: PresenceStatus | undefined): string {
+  if (status === 'online') return 'в сети';
+  if (status === 'away') return 'отошёл(а)';
+  return 'в сети недавно';
+}
+
 const subtitle = computed(() => {
   if (!chat.value) return '';
   if (typingPeer.value) return 'печатает…';
   if (chat.value.kind === 'TOPIC') return 'Чат темы';
   if (chat.value.kind === 'GROUP') return 'Группа';
   if (chat.value.self) return 'только вы';
-  if (chat.value.peer?.username) return `@${chat.value.peer.username}`;
-  return 'в сети недавно';
+  if (chat.value.peer?.username) {
+    const status = chat.value.peer.presenceStatus;
+    if (status && status !== 'offline') {
+      return `@${chat.value.peer.username} · ${presenceLabel(status)}`;
+    }
+    return `@${chat.value.peer.username}`;
+  }
+  return presenceLabel(chat.value.peer?.presenceStatus);
 });
 
 type TimelineItem =
@@ -229,6 +243,14 @@ function applyWsEvent(ev: {
     typingClearTimer = setTimeout(() => {
       typingPeer.value = false;
     }, Math.max(500, exp - Date.now()));
+    return;
+  }
+  if (ev.event === 'presence.changed') {
+    const uid = String(p.userId ?? '');
+    const status = p.status as PresenceStatus | undefined;
+    if (uid && status && chat.value?.peer?.userId === uid) {
+      presenceStore.setStatus(uid, status);
+    }
   }
 }
 
