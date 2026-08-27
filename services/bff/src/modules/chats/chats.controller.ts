@@ -30,6 +30,7 @@ import { MediaService } from '../media/media.service';
 import { PlanConfigClient } from '../plan-config/plan-config.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 import { UserProfileClient } from '../user-profile/user-profile.client';
+import { PresenceClient } from '../presence/presence.client';
 import {
   ChatClient,
   type ChatDto,
@@ -141,6 +142,7 @@ export class ChatsController {
     private readonly users: UserProfileClient,
     private readonly scalarConfig: ScalarConfigClient,
     private readonly media: MediaService,
+    private readonly presence: PresenceClient,
   ) {}
 
   @Get()
@@ -752,8 +754,12 @@ export class ChatsController {
           .filter((id): id is string => Boolean(id)),
       ),
     ];
-    const profiles = await this.users.lookupByIds(peerIds);
+    const [profiles, presences] = await Promise.all([
+      this.users.lookupByIds(peerIds),
+      this.presence.batch(peerIds).catch(() => []),
+    ]);
     const byId = new Map(profiles.map((p) => [p.userId, p]));
+    const presenceByUserId = new Map(presences.map((p) => [p.user_id, p.status]));
 
     return rows.map((row) => {
       const peer = row.peerUserId ? byId.get(row.peerUserId) ?? null : null;
@@ -765,6 +771,9 @@ export class ChatsController {
               displayName: peer.displayName,
               username: peer.username,
               avatarUrl: peer.avatarUrl,
+              presenceStatus: row.peerUserId
+                ? (presenceByUserId.get(row.peerUserId) ?? 'offline')
+                : undefined,
             }
           : null,
         displayTitle: this.displayTitleFor(row, peer),
@@ -774,16 +783,21 @@ export class ChatsController {
 
   private async enrichChat(chat: ChatDto) {
     const peerId = chat.peerUserId ?? null;
-    const peerRow =
+    const [peerRow, presenceResult] = await Promise.all([
       peerId != null
         ? (await this.users.lookupByIds([peerId]))[0] ?? null
-        : null;
+        : null,
+      peerId
+        ? this.presence.getStatus(peerId).catch(() => null)
+        : null,
+    ]);
     const peer = peerRow
       ? {
           userId: peerRow.userId,
           displayName: peerRow.displayName,
           username: peerRow.username,
           avatarUrl: peerRow.avatarUrl,
+          presenceStatus: presenceResult?.status ?? 'offline',
         }
       : null;
     return {

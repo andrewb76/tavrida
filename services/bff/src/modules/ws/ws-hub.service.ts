@@ -12,6 +12,7 @@ import { AuctionClient } from '../auction/auction.client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatClient } from '../chats/chat.client';
 import { ForumClient } from '../forum/forum.client';
+import { PresenceClient } from '../presence/presence.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
 
 type ClientMsg =
@@ -38,6 +39,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly forum: ForumClient,
     private readonly auction: AuctionClient,
     private readonly scalarConfig: ScalarConfigClient,
+    private readonly presence: PresenceClient,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -91,6 +93,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
       const user = await this.jwt.verifyAccessToken(token);
       await this.jwt.assertNotHardLocked(user.sub);
       this.sockets.set(socket, { userId: user.sub, channels: new Set() });
+      void this.presence.heartbeat(user.sub);
       socket.on('message', (raw) => {
         void this.onMessage(socket, raw.toString());
       });
@@ -230,6 +233,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     }
 
     const expiresAt = new Date(Date.now() + ttlSec * 1000).toISOString();
+    void this.presence.heartbeat(state.userId);
     const sockets = this.channelMembers.get(channel);
     if (!sockets) return;
     const frame = JSON.stringify({
@@ -254,6 +258,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
   private cleanup(socket: WebSocket): void {
     const state = this.sockets.get(socket);
     if (!state) return;
+    void this.presence.setVisibility(state.userId, 'hidden');
     for (const channel of state.channels) {
       this.unsubscribe(socket, state, channel);
     }

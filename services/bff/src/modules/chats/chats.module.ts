@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ForumClient } from '../forum/forum.client';
 import { MediaModule } from '../media/media.module';
+import { PresenceModule } from '../presence/presence.module';
 import { PlanConfigModule } from '../plan-config/plan-config.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
@@ -16,6 +17,7 @@ import { ChatsController } from './chats.controller';
     ScalarConfigModule,
     UserProfileModule,
     MediaModule,
+    PresenceModule,
   ],
   controllers: [ChatsController],
   providers: [ChatClient, ForumClient, ChatScalarBootstrapService],

@@ -4,6 +4,7 @@ import { AuctionModule } from '../auction/auction.module';
 import { ChatsModule } from '../chats/chats.module';
 import { ForumModule } from '../forum/forum.module';
 import { MediaModule } from '../media/media.module';
+import { PresenceModule } from '../presence/presence.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { AuctionWsRelayConsumer } from './auction-ws-relay.consumer';
@@ -20,6 +21,7 @@ import { WsHubService } from './ws-hub.service';
     ScalarConfigModule,
     MediaModule,
     UserProfileModule,
+    PresenceModule,
   ],
   providers: [
     WsHubService,
