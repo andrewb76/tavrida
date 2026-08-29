@@ -188,13 +188,40 @@ export async function getOrCreateSelfChat(): Promise<ChatDto> {
   return (await res.json()) as ChatDto;
 }
 
+export class PlanFeatureError extends Error {
+  readonly variableKey: string;
+  readonly planId: string;
+  constructor(message: string, variableKey: string, planId: string) {
+    super(message);
+    this.name = 'PlanFeatureError';
+    this.variableKey = variableKey;
+    this.planId = planId;
+  }
+}
+
 export async function openDirectChat(userId: string): Promise<ChatDto> {
   const res = await fetch(`${apiBase()}/chats/direct`, {
     method: 'POST',
     headers: await bffAuthHeaders(),
     body: JSON.stringify({ userId }),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Не удалось открыть чат'));
+  if (!res.ok) {
+    if (res.status === 403) {
+      const body = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        variableKey?: string;
+        planId?: string;
+      };
+      if (body.variableKey) {
+        throw new PlanFeatureError(
+          body.message ?? 'Функция недоступна для вашего тарифа',
+          body.variableKey,
+          body.planId ?? 'free',
+        );
+      }
+    }
+    throw new Error(await parseError(res, 'Не удалось открыть чат'));
+  }
   return (await res.json()) as ChatDto;
 }
 

@@ -14,7 +14,7 @@ import { isLogtoConfigured, logtoAccountUsernameUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
-import { openDirectChat } from '@/services/chats';
+import { openDirectChat, PlanFeatureError } from '@/services/chats';
 import { uploadFile } from '@/services/media';
 import { useSessionStore } from '@/stores/session';
 
@@ -305,7 +305,11 @@ async function writeMessage() {
     const chat = await openDirectChat(id);
     await router.push({ name: 'chat-room', params: { chatId: chat.id } });
   } catch (e) {
-    toast.error(e instanceof Error ? e.message : 'Не удалось открыть чат');
+    if (e instanceof PlanFeatureError) {
+      toast.error('Личные сообщения доступны на тарифах Basic и Pro. Откройте раздел «Подписки» для подробностей.', { duration: 10_000 });
+    } else {
+      toast.error(e instanceof Error ? e.message : 'Не удалось открыть чат');
+    }
   } finally {
     writing.value = false;
   }
