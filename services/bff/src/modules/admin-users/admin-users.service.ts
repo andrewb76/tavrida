@@ -48,7 +48,7 @@ export class AdminUsersService {
       inviterIds.length
         ? this.profiles.lookupByIds(inviterIds).catch(() => [])
         : Promise.resolve([]),
-      this.presence.batch(ids).catch(() => [] as Array<{ user_id: string; status: string }>),
+      this.presence.batch(ids).catch(() => [] as Array<{ user_id: string; status: string; last_seen: string | null }>),
     ]);
 
     const cardStats: Record<string, (typeof cardStatsRaw)[string] | undefined> = cardStatsRaw;
@@ -132,6 +132,7 @@ export class AdminUsersService {
           },
           accessGroups: memberships[row.userId] ?? [],
           presenceStatus: presenceMap.find((p) => p.user_id === row.userId)?.status ?? 'offline',
+          lastSeenAt: presenceMap.find((p) => p.user_id === row.userId)?.last_seen ?? null,
         };
       }),
     );

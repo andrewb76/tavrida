@@ -55,6 +55,7 @@ export type AdminUserRow = {
   };
   accessGroups: AdminUserAccessGroup[];
   presenceStatus: 'online' | 'away' | 'offline';
+  lastSeenAt: string | null;
 };
 
 export type AdminWalletTransaction = {
@@ -138,6 +139,7 @@ function normalizeAdminUserRow(raw: Partial<AdminUserRow> & { userId: string }):
     plan: { ...EMPTY_PLAN, ...(raw.plan ?? {}) },
     accessGroups: Array.isArray(raw.accessGroups) ? raw.accessGroups : [],
     presenceStatus: raw.presenceStatus ?? 'offline',
+    lastSeenAt: raw.lastSeenAt ?? null,
   };
 }
 

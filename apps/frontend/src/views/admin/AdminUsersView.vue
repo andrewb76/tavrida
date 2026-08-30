@@ -109,6 +109,29 @@ function coveragePct(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return 'только что';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} мин. назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ч. назад`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} дн. назад`;
+  const months = Math.floor(days / 30);
+  return `${months} мес. назад`;
+}
+
+function lastSeenLabel(row: AdminUserRow): string {
+  if (row.presenceStatus === 'online') return 'онлайн';
+  if (row.presenceStatus === 'away') return 'отошёл';
+  const relative = relativeTime(row.lastSeenAt);
+  if (relative) return `${fmtDate(row.lastSeenAt)} · ${relative}`;
+  return row.lastSeenAt ? fmtDate(row.lastSeenAt) : '';
+}
+
 function inviteQuotaLabel(row: AdminUserRow): string {
   const rem = row.invites.remaining;
   const lim = row.invites.monthlyLimit;
@@ -514,6 +537,12 @@ async function confirmDeposit() {
             <p class="mt-0.5 truncate text-xs text-text-muted">
               <span v-if="row.email">{{ row.email }} · </span>
               <code class="text-[11px]">{{ row.userId }}</code>
+            </p>
+            <p
+              v-if="lastSeenLabel(row)"
+              class="mt-0.5 text-[11px] text-text-muted"
+            >
+              {{ lastSeenLabel(row) }}
             </p>
           </div>
 
