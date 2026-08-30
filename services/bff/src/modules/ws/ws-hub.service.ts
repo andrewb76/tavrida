@@ -14,6 +14,7 @@ import { ChatClient } from '../chats/chat.client';
 import { ForumClient } from '../forum/forum.client';
 import { PresenceClient } from '../presence/presence.client';
 import { ScalarConfigClient } from '../scalar-config/scalar-config.client';
+import { UserProfileClient } from '../user-profile/user-profile.client';
 
 type ClientMsg =
   | { type: 'subscribe'; channel: string; requestId?: string }
@@ -31,6 +32,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
   private wss: WebSocketServer | null = null;
   private readonly sockets = new Map<WebSocket, SocketState>();
   private readonly channelMembers = new Map<string, Set<WebSocket>>();
+  private readonly lastSeenSyncedAt = new Map<string, number>();
 
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
@@ -40,6 +42,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly auction: AuctionClient,
     private readonly scalarConfig: ScalarConfigClient,
     private readonly presence: PresenceClient,
+    private readonly users: UserProfileClient,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -94,6 +97,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
       await this.jwt.assertNotHardLocked(user.sub);
       this.sockets.set(socket, { userId: user.sub, channels: new Set() });
       void this.presence.heartbeat(user.sub);
+      this.syncLastSeenToDb(user.sub);
       socket.on('message', (raw) => {
         void this.onMessage(socket, raw.toString());
       });
@@ -234,6 +238,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
 
     const expiresAt = new Date(Date.now() + ttlSec * 1000).toISOString();
     void this.presence.heartbeat(state.userId);
+    this.syncLastSeenToDb(state.userId);
     const sockets = this.channelMembers.get(channel);
     if (!sockets) return;
     const frame = JSON.stringify({
@@ -259,6 +264,7 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     const state = this.sockets.get(socket);
     if (!state) return;
     void this.presence.setVisibility(state.userId, 'hidden');
+    this.syncLastSeenToDb(state.userId);
     for (const channel of state.channels) {
       this.unsubscribe(socket, state, channel);
     }
@@ -269,6 +275,14 @@ export class WsHubService implements OnApplicationBootstrap, OnModuleDestroy {
     if (socket.readyState === socket.OPEN) {
       socket.send(JSON.stringify(payload));
     }
+  }
+
+  private syncLastSeenToDb(userId: string): void {
+    const now = Date.now();
+    const lastSync = this.lastSeenSyncedAt.get(userId) ?? 0;
+    if (now - lastSync < 5 * 60 * 1000) return;
+    this.lastSeenSyncedAt.set(userId, now);
+    void this.users.updateLastSeenAt(userId, new Date()).catch(() => {});
   }
 }
 

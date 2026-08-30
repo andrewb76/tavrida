@@ -125,7 +125,8 @@ export class PresenceService {
         this.influx.writeSessionDuration(userId, duration);
       }
     }
-    await this.redis.del(userId);
+    await this.redis.setStatus(userId, 'offline');
+    await this.redis.expire(userId, this.getOfflineRetentionSeconds());
     this.influx.writePresenceChange(userId, 'offline');
     this.logger.debug(`User ${userId} → offline`);
   }
@@ -136,5 +137,9 @@ export class PresenceService {
 
   private getAwayThresholdSeconds(): number {
     return Number(process.env.PRESENCE_AWAY_AFTER_SECONDS ?? 300);
+  }
+
+  private getOfflineRetentionSeconds(): number {
+    return Number(process.env.PRESENCE_OFFLINE_RETENTION_SECONDS ?? 86400);
   }
 }

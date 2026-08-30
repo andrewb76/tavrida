@@ -42,13 +42,14 @@ export class AdminUsersService {
       ),
     ];
 
-    const [cardStatsRaw, membershipsRes, inviters, presenceMap] = await Promise.all([
+    const [cardStatsRaw, membershipsRes, inviters, presenceMap, allProfiles] = await Promise.all([
       this.profiles.getAdminCardStats(ids).catch(() => ({}) as Record<string, never>),
       this.forum.membershipsByUsers(ids).catch(() => ({ data: {} as Record<string, never> })),
       inviterIds.length
         ? this.profiles.lookupByIds(inviterIds).catch(() => [])
         : Promise.resolve([]),
       this.presence.batch(ids).catch(() => [] as Array<{ user_id: string; status: string; last_seen: string | null }>),
+      this.profiles.lookupByIds(ids).catch(() => []),
     ]);
 
     const cardStats: Record<string, (typeof cardStatsRaw)[string] | undefined> = cardStatsRaw;
@@ -58,6 +59,9 @@ export class AdminUsersService {
         row.userId,
         row.displayName?.trim() || row.username?.trim() || null,
       ]),
+    );
+    const lastSeenAtById = new Map(
+      allProfiles.map((row) => [row.userId, row.lastSeenAt]),
     );
     const memberships = membershipsRes.data ?? {};
 
@@ -132,7 +136,9 @@ export class AdminUsersService {
           },
           accessGroups: memberships[row.userId] ?? [],
           presenceStatus: presenceMap.find((p) => p.user_id === row.userId)?.status ?? 'offline',
-          lastSeenAt: presenceMap.find((p) => p.user_id === row.userId)?.last_seen ?? null,
+          lastSeenAt: presenceMap.find((p) => p.user_id === row.userId)?.last_seen
+            ?? lastSeenAtById.get(row.userId)
+            ?? null,
         };
       }),
     );

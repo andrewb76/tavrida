@@ -224,6 +224,7 @@ export class UserProfileClient {
         displayName: string | null;
         username: string | null;
         avatarUrl: string | null;
+        lastSeenAt: string | null;
       }>;
     }>('POST', '/internal/v1/users/lookup', { ids: userIds });
     // Nest returns `{ data: [...] }`; tolerate a bare array if the shape changes.
@@ -353,6 +354,14 @@ export class UserProfileClient {
     return this.request<{ id: string; deleted: boolean }>(
       'DELETE',
       `/internal/v1/profile-notes/${encodeURIComponent(noteId)}?${qs}`,
+    );
+  }
+
+  async updateLastSeenAt(userId: string, lastSeenAt: Date): Promise<void> {
+    await this.request<{ ok: boolean }>(
+      'PATCH',
+      `/internal/v1/users/${encodeURIComponent(userId)}/last-seen-at`,
+      { lastSeenAt: lastSeenAt.toISOString() },
     );
   }
 

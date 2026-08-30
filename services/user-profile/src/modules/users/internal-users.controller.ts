@@ -94,6 +94,11 @@ class UpdateProfileBody {
   avatarUrl?: string | null;
 }
 
+class UpdateLastSeenBody {
+  @IsString()
+  lastSeenAt!: string;
+}
+
 @Controller('internal/v1/users')
 export class InternalUsersController {
   constructor(
@@ -180,5 +185,10 @@ export class InternalUsersController {
   @Post(':userId/mark-deleted')
   markDeleted(@Param('userId') userId: string) {
     return this.users.markDeleted(userId);
+  }
+
+  @Patch(':userId/last-seen-at')
+  updateLastSeenAt(@Param('userId') userId: string, @Body() body: UpdateLastSeenBody) {
+    return this.users.updateLastSeenAt(userId, new Date(body.lastSeenAt)).then(() => ({ ok: true }));
   }
 }

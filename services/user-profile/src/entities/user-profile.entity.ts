@@ -56,4 +56,7 @@ export class UserProfileEntity {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
+
+  @Column('timestamptz', { name: 'last_seen_at', nullable: true })
+  lastSeenAt!: Date | null;
 }

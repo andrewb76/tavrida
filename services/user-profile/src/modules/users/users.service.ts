@@ -49,6 +49,7 @@ export class UsersService {
       invitationAcceptedAt: row.invitationAcceptedAt?.toISOString() ?? null,
       deletedAt: row.deletedAt?.toISOString() ?? null,
       logtoSyncedAt: row.logtoSyncedAt?.toISOString() ?? null,
+      lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -298,5 +299,12 @@ export class UsersService {
     row.deletedAt = new Date();
     await this.profiles.save(row);
     return { userId, deleted: true, deletedAt: row.deletedAt.toISOString() };
+  }
+
+  async updateLastSeenAt(userId: string, lastSeenAt: Date): Promise<void> {
+    const row = await this.profiles.findOne({ where: { userId } });
+    if (!row) return;
+    row.lastSeenAt = lastSeenAt;
+    await this.profiles.save(row);
   }
 }

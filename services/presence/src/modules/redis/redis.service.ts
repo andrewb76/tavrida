@@ -104,4 +104,14 @@ export class RedisService implements OnModuleDestroy {
   async del(userId: string): Promise<void> {
     await this.client.del(this.key(userId));
   }
+
+  /** Update only the status field, preserving lastSeen and other data. */
+  async setStatus(userId: string, status: PresenceRecord['status']): Promise<void> {
+    await this.client.hset(this.key(userId), { status });
+  }
+
+  /** Set a TTL on the key. Used for offline keys to auto-expire. */
+  async expire(userId: string, seconds: number): Promise<void> {
+    await this.client.expire(this.key(userId), seconds);
+  }
 }
