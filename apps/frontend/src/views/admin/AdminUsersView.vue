@@ -26,6 +26,8 @@ const users = ref<AdminUserRow[]>([]);
 const session = useSessionStore();
 const router = useRouter();
 const total = ref(0);
+const page = ref(0);
+const limit = ref(20);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const search = ref('');
@@ -219,11 +221,17 @@ async function forceSync(row: AdminUserRow) {
   }
 }
 
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit.value)));
+
 async function load() {
   loading.value = true;
   error.value = null;
   try {
-    const result = await fetchAdminUsers({ q: search.value.trim() || undefined, limit: 100 });
+    const result = await fetchAdminUsers({
+      q: search.value.trim() || undefined,
+      offset: page.value * limit.value,
+      limit: limit.value,
+    });
     users.value = result.data;
     total.value = result.pagination.total;
     for (const row of result.data) initRoleDraft(row);
@@ -232,6 +240,16 @@ async function load() {
   } finally {
     loading.value = false;
   }
+}
+
+function goToPage(p: number) {
+  page.value = Math.max(0, Math.min(p, totalPages.value - 1));
+  void load();
+}
+
+function searchSubmit() {
+  page.value = 0;
+  void load();
 }
 
 onMounted(() => {
@@ -419,7 +437,7 @@ async function confirmDeposit() {
       </div>
       <form
         class="flex gap-2"
-        @submit.prevent="load"
+        @submit.prevent="searchSubmit"
       >
         <input
           v-model="search"
@@ -791,6 +809,31 @@ async function confirmDeposit() {
           </div>
         </dl>
       </article>
+    </div>
+
+    <div
+      v-if="!loading && !error && users.length > 0"
+      class="flex items-center justify-between text-sm"
+    >
+      <span class="text-text-muted">
+        {{ page * limit + 1 }}–{{ Math.min((page + 1) * limit, total) }} из {{ total }}
+      </span>
+      <div class="flex gap-1">
+        <UiButton
+          intent="secondary"
+          :disabled="page === 0"
+          @click="goToPage(page - 1)"
+        >
+          ←
+        </UiButton>
+        <UiButton
+          intent="secondary"
+          :disabled="page >= totalPages - 1"
+          @click="goToPage(page + 1)"
+        >
+          →
+        </UiButton>
+      </div>
     </div>
 
     <Teleport to="body">
