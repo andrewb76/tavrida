@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { listGroupMembers, type GroupMember } from '@/services/chats';
-import { usePresenceStore } from '@/stores/presence';
 import { UiIcon } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
 
@@ -13,7 +12,6 @@ const emit = defineEmits<{
   invite: [];
 }>();
 
-const presenceStore = usePresenceStore();
 const members = ref<GroupMember[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -51,8 +49,6 @@ const sortedMembers = computed(() => {
     return (a.displayName ?? a.username ?? '').localeCompare(b.displayName ?? b.username ?? '');
   });
 });
-
-const ownerCount = computed(() => members.value.filter((m) => m.role === 'OWNER').length);
 
 function presenceLabel(status: string | undefined): string {
   if (status === 'online') return 'в сети';
