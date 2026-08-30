@@ -334,6 +334,18 @@ export class ChatsService {
     return this.members.count({ where: { chatId, leftAt: IsNull() } });
   }
 
+  async listGroupMembers(chatId: string): Promise<{ userId: string; role: string; joinedAt: string }[]> {
+    const rows = await this.members.find({
+      where: { chatId, leftAt: IsNull() },
+      order: { role: 'ASC', joinedAt: 'ASC' },
+    });
+    return rows.map((r) => ({
+      userId: r.userId,
+      role: r.role,
+      joinedAt: r.joinedAt.toISOString(),
+    }));
+  }
+
   async countGroupsCreatedToday(ownerId: string): Promise<number> {
     const start = new Date();
     start.setHours(0, 0, 0, 0);

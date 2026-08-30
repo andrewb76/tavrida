@@ -5,6 +5,7 @@ import {
   getOrCreateSelfChat,
   hideChat,
   listChats,
+  spawnGroupFromDirect,
   unhideChat,
   updateGroupChat,
   type ChatKind,
@@ -30,6 +31,7 @@ const filter = ref<FilterKey>('all');
 const openingSelf = ref(false);
 const actionRow = ref<ChatListItem | null>(null);
 const actionBusy = ref(false);
+const spawning = ref(false);
 const avatarInput = ref<HTMLInputElement | null>(null);
 const avatarBusy = ref(false);
 
@@ -133,6 +135,24 @@ async function confirmUnhide() {
     toast.error(e instanceof Error ? e.message : 'Не удалось вернуть');
   } finally {
     actionBusy.value = false;
+  }
+}
+
+async function confirmSpawnGroup() {
+  const row = actionRow.value;
+  if (!row || spawning.value) return;
+  const groupTitle = window.prompt('Название группы', 'Группа')?.trim();
+  if (groupTitle === undefined) return;
+  spawning.value = true;
+  try {
+    const group = await spawnGroupFromDirect(row.id, { title: groupTitle || undefined });
+    toast.success('Группа создана');
+    actionRow.value = null;
+    await router.push({ name: 'chat-room', params: { chatId: group.id } });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : 'Не удалось создать группу');
+  } finally {
+    spawning.value = false;
   }
 }
 
@@ -408,9 +428,17 @@ async function onAvatarSelected(e: Event) {
             Убрать из списка
           </button>
           <button
+            v-if="actionRow.kind === 'DIRECT' && !showingHidden"
+            type="button"
+            :disabled="spawning"
+            @click="confirmSpawnGroup"
+          >
+            {{ spawning ? 'Создание…' : 'Создать группу' }}
+          </button>
+          <button
             type="button"
             class="chat-sheet__cancel"
-            :disabled="actionBusy || avatarBusy"
+            :disabled="actionBusy || avatarBusy || spawning"
             @click="closeActions"
           >
             Отмена
@@ -574,6 +602,7 @@ async function onAvatarSelected(e: Event) {
 .chat-list__avatar-img {
   width: 100%;
   height: 100%;
+  border-radius: 999px;
   object-fit: cover;
 }
 

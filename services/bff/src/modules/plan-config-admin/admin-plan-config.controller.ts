@@ -8,6 +8,7 @@ import {
   IsString,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -42,6 +43,7 @@ class PatchPlanBodyDto {
 
 class TierValueBodyDto {
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @Type(() => Number)
   @IsNumber()
   limitValue?: number | null;
@@ -54,6 +56,7 @@ class TierValueBodyDto {
   enumValues?: string[] | null;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @Type(() => Number)
   @IsNumber()
   @Min(0)

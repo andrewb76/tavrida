@@ -209,6 +209,13 @@ export class ChatClient {
     );
   }
 
+  listGroupMembers(chatId: string) {
+    return this.request<{ userId: string; role: string; joinedAt: string }[]>(
+      'GET',
+      `/internal/v1/chats/${chatId}/members`,
+    );
+  }
+
   get(chatId: string, userId: string) {
     const params = new URLSearchParams({ userId });
     return this.request<ChatDto>('GET', `/internal/v1/chats/${chatId}?${params}`);

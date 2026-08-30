@@ -13,6 +13,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { PlanVariablesService } from './plan-variables.service';
@@ -20,6 +21,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 class TierValueDto {
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsInt()
   limitValue?: number | null;
 
@@ -31,6 +33,7 @@ class TierValueDto {
   enumValues?: string[] | null;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsNumber()
   @Min(0)
   priceAmount?: number | null;

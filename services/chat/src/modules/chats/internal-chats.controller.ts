@@ -301,6 +301,11 @@ export class InternalChatsController {
     return this.chats.countGroupMembers(chatId).then((count) => ({ count }));
   }
 
+  @Get(':chatId/members')
+  listMembers(@Param('chatId', ParseUUIDPipe) chatId: string) {
+    return this.chats.listGroupMembers(chatId);
+  }
+
   @Get(':chatId')
   get(
     @Param('chatId', ParseUUIDPipe) chatId: string,

@@ -445,18 +445,20 @@ async function confirmDeposit() {
       >
         <!-- Header -->
         <div class="flex items-start gap-2.5">
-          <div
-            class="relative mt-0.5 flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary"
-          >
-            <span aria-hidden="true">{{ avatarInitial(row) }}</span>
-            <img
-              v-if="row.avatarUrl && !avatarFailed[row.userId]"
-              :src="row.avatarUrl"
-              :alt="displayLabel(row)"
-              class="absolute inset-0 size-full object-cover"
-              referrerpolicy="no-referrer"
-              @error="avatarFailed[row.userId] = true"
+          <div class="relative mt-0.5 shrink-0">
+            <div
+              class="relative flex size-9 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary"
             >
+              <span aria-hidden="true">{{ avatarInitial(row) }}</span>
+              <img
+                v-if="row.avatarUrl && !avatarFailed[row.userId]"
+                :src="row.avatarUrl"
+                :alt="displayLabel(row)"
+                class="absolute inset-0 size-full object-cover"
+                referrerpolicy="no-referrer"
+                @error="avatarFailed[row.userId] = true"
+              >
+            </div>
             <span
               v-if="row.presenceStatus === 'online'"
               class="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-surface bg-green-500"

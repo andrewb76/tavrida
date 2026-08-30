@@ -22,6 +22,8 @@ import {
   type ChatUserHit,
   type MessageDeliveryStatus,
 } from '@/services/chats';
+import GroupMembersPanel from '@/components/chat/GroupMembersPanel.vue';
+import InviteUserSheet from '@/components/chat/InviteUserSheet.vue';
 import { useChatsStore } from '@/stores/chats';
 import { usePresenceStore, type PresenceStatus } from '@/stores/presence';
 import { useSessionStore } from '@/stores/session';
@@ -67,6 +69,9 @@ const replyTo = ref<ChatMessage | null>(null);
 const editingId = ref<string | null>(null);
 const actionMsg = ref<ChatMessage | null>(null);
 const headerMenuOpen = ref(false);
+const showMembers = ref(false);
+const showInvite = ref(false);
+const membersPanelEl = ref<InstanceType<typeof GroupMembersPanel> | null>(null);
 
 const mentionHits = ref<ChatUserHit[]>([]);
 const mentionOpen = ref(false);
@@ -82,6 +87,15 @@ const title = computed(() => {
 const canSpawnGroup = computed(
   () => chat.value?.kind === 'DIRECT' && !chat.value.self,
 );
+
+const isGroup = computed(
+  () => chat.value?.kind === 'GROUP' || chat.value?.kind === 'TOPIC',
+);
+
+function onInvited() {
+  showInvite.value = false;
+  membersPanelEl.value?.reload();
+}
 
 const showStatus = computed(() => Boolean(chat.value && !chat.value.self));
 
@@ -715,7 +729,11 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           label="Назад"
         />
       </RouterLink>
-      <div class="chat-room__title-wrap">
+      <div
+        class="chat-room__title-wrap"
+        :class="isGroup ? 'chat-room__title-wrap--clickable' : ''"
+        @click="isGroup ? (showMembers = true) : undefined"
+      >
         <h1 class="chat-room__title">
           {{ title }}
         </h1>
@@ -733,6 +751,15 @@ function messageParts(msg: ChatMessage): BodyPart[] {
           </template>
         </p>
       </div>
+      <button
+        v-if="isGroup"
+        type="button"
+        class="chat-room__icon-btn"
+        title="Пригласить участника"
+        @click="showInvite = true"
+      >
+        <UiIcon name="plus" :size="20" label="Пригласить" />
+      </button>
       <div class="relative">
         <button
           v-if="canSpawnGroup"
@@ -1180,6 +1207,20 @@ function messageParts(msg: ChatMessage): BodyPart[] {
         </div>
       </div>
     </Teleport>
+
+    <GroupMembersPanel
+      v-if="showMembers && chatId"
+      ref="membersPanelEl"
+      :chat-id="chatId"
+      @close="showMembers = false"
+      @invite="showMembers = false; showInvite = true"
+    />
+    <InviteUserSheet
+      v-if="showInvite && chatId"
+      :chat-id="chatId"
+      @close="showInvite = false"
+      @invited="onInvited"
+    />
   </section>
 </template>
 
@@ -1220,6 +1261,14 @@ function messageParts(msg: ChatMessage): BodyPart[] {
 .chat-room__title-wrap {
   min-width: 0;
   flex: 1;
+}
+
+.chat-room__title-wrap--clickable {
+  cursor: pointer;
+}
+
+.chat-room__title-wrap--clickable:hover .chat-room__title {
+  color: var(--token-primary);
 }
 
 .chat-room__title {
@@ -1284,11 +1333,13 @@ function messageParts(msg: ChatMessage): BodyPart[] {
   text-align: left;
   padding: 0.75rem 0.75rem;
   border-radius: var(--token-radius-sm);
+  background: none;
+  cursor: pointer;
   font-size: 0.875rem;
 }
 
 .chat-room__menu button:hover {
-  background: var(--token-bg);
+  background: var(--color-bg-subtle);
 }
 
 .chat-room__banner {

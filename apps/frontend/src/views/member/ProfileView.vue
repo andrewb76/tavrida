@@ -12,6 +12,7 @@ import { toast } from 'vue-sonner';
 import { useAuth } from '@/composables/useAuth';
 import { isLogtoConfigured, logtoAccountUsernameUrl } from '@/config/logto';
 import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
+import { getSubscription, type UserSubscription } from '@/services/plans';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
 import { openDirectChat, PlanFeatureError } from '@/services/chats';
@@ -42,6 +43,7 @@ const inviteError = ref<string | null>(null);
 const lastCreated = ref<CreatedInvite | null>(null);
 const history = ref<InviteRecord[]>([]);
 const avatarLoadFailed = ref(false);
+const subscription = ref<UserSubscription | null>(null);
 
 const editing = ref(false);
 const editDisplayName = ref('');
@@ -121,6 +123,24 @@ async function refreshHistory() {
   history.value = await listInvites();
 }
 
+const PLAN_TITLES: Record<string, string> = { free: 'Бесплатно', basic: 'Базовый', pro: 'Про' };
+
+const planTitle = computed(() => PLAN_TITLES[subscription.value?.planId ?? ''] ?? subscription.value?.planId ?? '—');
+
+const daysLeft = computed(() => {
+  const exp = subscription.value?.expiresAt;
+  if (!exp) return null;
+  const diff = Math.ceil((new Date(exp).getTime() - Date.now()) / 864e5);
+  return diff > 0 ? diff : 0;
+});
+
+async function refreshSubscription() {
+  if (!isMe.value || !session.isMember) return;
+  try {
+    subscription.value = await getSubscription();
+  } catch { /* silent */ }
+}
+
 let profileGeneration = 0;
 let loadedProfileId: string | null = null;
 
@@ -168,6 +188,7 @@ async function loadDisplayedProfile() {
 onMounted(() => {
   void refreshProfile();
   void refreshHistory();
+  void refreshSubscription();
 
   const showSuccess = typeof route.query.show_success === 'string' ? route.query.show_success : null;
   if (showSuccess && isMe.value) {
@@ -296,19 +317,22 @@ async function create() {
 }
 
 const writing = ref(false);
+const planFeatureError = ref<string | null>(null);
 
 async function writeMessage() {
   const id = publicProfile.value?.userId ?? userId.value;
   if (!id || writing.value) return;
   writing.value = true;
+  planFeatureError.value = null;
   try {
     const chat = await openDirectChat(id);
     await router.push({ name: 'chat-room', params: { chatId: chat.id } });
   } catch (e) {
     if (e instanceof PlanFeatureError) {
-      toast.error('Личные сообщения доступны на тарифах Basic и Pro. Откройте раздел «Подписки» для подробностей.', { duration: 10_000 });
+      planFeatureError.value = 'Личные сообщения доступны на тарифах Basic и Pro. Откройте раздел «Подписки» для подробностей.';
+      toast.error(planFeatureError.value, { id: 'plan-feature', duration: 10_000 });
     } else {
-      toast.error(e instanceof Error ? e.message : 'Не удалось открыть чат');
+      toast.error(e instanceof Error ? e.message : 'Не удалось открыть чат', { id: 'write-chat' });
     }
   } finally {
     writing.value = false;
@@ -463,6 +487,38 @@ async function copyInviteLink() {
         :rating="publicProfile.rating"
         @updated="onRatingUpdated"
       />
+
+      <section
+        v-if="subscription"
+        class="profile-plan-card"
+      >
+        <div class="profile-plan-card__row">
+          <span class="profile-plan-card__label">Тариф</span>
+          <span class="profile-plan-card__value">{{ planTitle }}</span>
+        </div>
+        <div
+          v-if="subscription.expiresAt"
+          class="profile-plan-card__row"
+        >
+          <span class="profile-plan-card__label">Действует до</span>
+          <span class="profile-plan-card__value">
+            {{ new Date(subscription.expiresAt).toLocaleDateString('ru-RU') }}
+            <template v-if="daysLeft != null">
+              <span class="profile-plan-card__muted">({{ daysLeft }} {{ daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней' }})</span>
+            </template>
+          </span>
+        </div>
+        <div class="profile-plan-card__row">
+          <span class="profile-plan-card__label">Автопродление</span>
+          <span class="profile-plan-card__value">{{ subscription.autoRenew ? 'Вкл' : 'Выкл' }}</span>
+        </div>
+        <RouterLink
+          :to="{ name: 'plans' }"
+          class="profile-plan-card__link"
+        >
+          Изменить тариф
+        </RouterLink>
+      </section>
 
       <div class="space-y-4 border-b border-border pb-6">
         <div>
@@ -658,6 +714,13 @@ async function copyInviteLink() {
                   {{ hasPrivateNote ? 'Открыть заметку' : 'Добавить заметку' }}
                 </UiButton>
               </div>
+              <p
+                v-if="planFeatureError"
+                role="alert"
+                class="profile-public-card__plan-error"
+              >
+                {{ planFeatureError }}
+              </p>
             </div>
           </div>
         </section>
@@ -816,6 +879,16 @@ async function copyInviteLink() {
   margin-top: 0;
 }
 
+.profile-public-card__plan-error {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  font-size: 0.8125rem;
+  color: var(--color-error);
+}
+
 .profile-referral-link {
   display: inline-flex;
   align-items: center;
@@ -835,5 +908,48 @@ async function copyInviteLink() {
 
 .profile-referral-link:hover {
   background: var(--color-bg);
+}
+
+.profile-plan-card {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+}
+
+.profile-plan-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.profile-plan-card__label {
+  color: var(--color-text-muted);
+}
+
+.profile-plan-card__value {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.profile-plan-card__muted {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.profile-plan-card__link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.profile-plan-card__link:hover {
+  text-decoration: underline;
 }
 </style>

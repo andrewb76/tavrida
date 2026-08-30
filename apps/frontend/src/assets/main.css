@@ -58,3 +58,8 @@ html[data-theme='dark'] {
     background-attachment: scroll;
   }
 }
+
+/* vue-sonner v1.3.2 bug: sets --offset but CSS rule uses --offset-top */
+[data-sonner-toaster][data-y-position='top'] {
+  top: var(--offset, 72px) !important;
+}

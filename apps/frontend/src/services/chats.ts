@@ -422,3 +422,22 @@ export async function searchChatUsers(q: string): Promise<ChatUserHit[]> {
   const json = (await res.json()) as { data: ChatUserHit[] };
   return json.data ?? [];
 }
+
+export type GroupMember = {
+  userId: string;
+  role: string;
+  joinedAt: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  presenceStatus: 'online' | 'away' | 'offline';
+};
+
+export async function listGroupMembers(chatId: string): Promise<GroupMember[]> {
+  const res = await fetch(
+    `${apiBase()}/chats/${chatId}/members`,
+    { headers: await bffAuthHeaders(undefined, { json: false }) },
+  );
+  if (!res.ok) throw new Error(await parseError(res, 'Не удалось загрузить участников'));
+  return (await res.json()) as GroupMember[];
+}

@@ -257,6 +257,33 @@ export class ChatsController {
     }
   }
 
+  @Get(':chatId/members')
+  async listMembers(
+    @CurrentUser() user: AuthUser,
+    @Param('chatId', ParseUUIDPipe) chatId: string,
+  ) {
+    const rows = await this.chat.listGroupMembers(chatId);
+    const userIds = rows.map((r) => r.userId);
+    const [profiles, presences] = await Promise.all([
+      this.users.lookupByIds(userIds).catch(() => []),
+      this.presence.batch(userIds).catch(() => []),
+    ]);
+    const byId = new Map(profiles.map((p) => [p.userId, p]));
+    const presenceByUserId = new Map(presences.map((p) => [p.user_id, p.status]));
+    return rows.map((r) => {
+      const profile = byId.get(r.userId) ?? null;
+      return {
+        userId: r.userId,
+        role: r.role,
+        joinedAt: r.joinedAt,
+        displayName: profile?.displayName ?? null,
+        username: profile?.username ?? null,
+        avatarUrl: profile?.avatarUrl ?? null,
+        presenceStatus: (presenceByUserId.get(r.userId) ?? 'offline') as string,
+      };
+    });
+  }
+
   @Get(':chatId')
   async get(
     @CurrentUser() user: AuthUser,

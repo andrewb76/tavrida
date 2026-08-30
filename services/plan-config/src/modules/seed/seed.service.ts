@@ -27,6 +27,7 @@ export class SeedService implements OnModuleInit {
   async onModuleInit() {
     await this.seedPlansAndVariables();
     await this.syncVariableCatalog();
+    await this.ensureTiersForAllPlans();
     await this.purgeLegacyPlanVariableKeys();
   }
 
@@ -162,6 +163,39 @@ export class SeedService implements OnModuleInit {
           isEnabled: values.isEnabled ?? true,
         }),
       );
+    }
+  }
+
+  /** Ensure every seeded variable has tier rows for all plans. */
+  private async ensureTiersForAllPlans() {
+    let created = 0;
+
+    for (const row of SEED_PLAN_VARIABLE_TIERS) {
+      const variable = await this.variables.findOne({ where: { key: row.variableKey } });
+      if (!variable) continue;
+
+      for (const planId of ['free', 'basic', 'pro'] as const) {
+        const existing = await this.tiers.findOne({ where: { planId, variableKey: row.variableKey } });
+        if (existing) continue;
+
+        const values = row[planId];
+        await this.tiers.save(
+          this.tiers.create({
+            planId,
+            variableKey: row.variableKey,
+            limitValue: values.limitValue ?? null,
+            isFeatureEnabled: values.isFeatureEnabled ?? false,
+            enumValues: values.enumValues ?? null,
+            priceAmount: values.priceAmount != null ? values.priceAmount.toFixed(2) : null,
+            isEnabled: values.isEnabled ?? true,
+          }),
+        );
+        created += 1;
+      }
+    }
+
+    if (created > 0) {
+      this.logger.log(`Ensured tier rows for all plans: +${created} missing tier(s) created`);
     }
   }
 
