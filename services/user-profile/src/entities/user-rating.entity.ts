@@ -23,6 +23,12 @@ export class UserRatingEntity {
   @Column('int', { name: 'pending_sales', default: 0 })
   pendingSales!: number;
 
+  @Column('int', { name: 'post_count', default: 0 })
+  postCount!: number;
+
+  @Column('int', { name: 'comment_count', default: 0 })
+  commentCount!: number;
+
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
 }

@@ -277,6 +277,25 @@ export async function clearForumVote(input: {
   return (await res.json()) as ForumVoteResult;
 }
 
+export type ForumVoteVoter = {
+  userId: string;
+  value: 1 | -1;
+  reason: string | null;
+  createdAt: string;
+};
+
+export async function listVoteVoters(
+  contentType: 'topic' | 'comment',
+  contentId: string,
+): Promise<ForumVoteVoter[]> {
+  const res = await fetch(
+    `${apiBase()}/forum/votes/voters/${contentType}/${contentId}`,
+    { headers: await forumJsonHeaders() },
+  );
+  if (!res.ok) throw new Error('Не удалось загрузить голосующих');
+  return (await res.json()) as ForumVoteVoter[];
+}
+
 export type ForumReactionBucket = {
   emojiKey: string;
   count: number;
@@ -606,5 +625,75 @@ export async function recordTopicView(topicId: string): Promise<void> {
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(err?.detail ?? 'Не удалось записать просмотр');
+  }
+}
+
+// ── Medals ──────────────────────────────────────────────────────────
+
+export type ForumMedal = {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl: string | null;
+  dispPosition: number;
+};
+
+export type ForumUserMedal = {
+  medalId: string;
+  medalName: string;
+  medalIconUrl: string | null;
+  awardedAt: string;
+  awardedBy: string | null;
+  reason: string | null;
+};
+
+export async function listMedals(): Promise<ForumMedal[]> {
+  const res = await fetch(`${apiBase()}/forum/medals`, {
+    headers: await forumJsonHeaders(),
+  });
+  if (!res.ok) throw new Error('Не удалось загрузить медали');
+  return (await res.json()) as ForumMedal[];
+}
+
+export async function listUserMedals(userId: string): Promise<ForumUserMedal[]> {
+  const res = await fetch(
+    `${apiBase()}/forum/medals/users/${encodeURIComponent(userId)}`,
+    { headers: await forumJsonHeaders() },
+  );
+  if (!res.ok) throw new Error('Не удалось загрузить медали пользователя');
+  return (await res.json()) as ForumUserMedal[];
+}
+
+export async function awardMedal(input: {
+  userId: string;
+  medalId: string;
+  reason?: string;
+}): Promise<ForumUserMedal> {
+  const res = await fetch(
+    `${apiBase()}/forum/admin/medals/users/${encodeURIComponent(input.userId)}`,
+    {
+      method: 'POST',
+      headers: await forumJsonHeaders(),
+      body: JSON.stringify({ medalId: input.medalId, reason: input.reason }),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось наградить медалью');
+  }
+  return (await res.json()) as ForumUserMedal;
+}
+
+export async function revokeMedal(userId: string, medalId: string): Promise<void> {
+  const res = await fetch(
+    `${apiBase()}/forum/admin/medals/users/${encodeURIComponent(userId)}/${medalId}`,
+    {
+      method: 'DELETE',
+      headers: await forumJsonHeaders(),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось отозвать медаль');
   }
 }

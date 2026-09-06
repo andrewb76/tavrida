@@ -9,6 +9,7 @@ import ForumTopicTags from '@/components/forum/ForumTopicTags.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import EventSubscribeButton from '@/components/subscriptions/EventSubscribeButton.vue';
 import TopicChatSheet from '@/components/chat/TopicChatSheet.vue';
+import MedalBadges from '@/components/profile/MedalBadges.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
@@ -354,6 +355,11 @@ async function submitTopicComment() {
           />
           <div class="forum-topic__author-text">
             <span class="forum-topic__author-name">{{ forumAuthorLabel(topic.author) }}</span>
+            <MedalBadges
+              v-if="topic.author?.userId"
+              :user-id="topic.author.userId"
+              :limit="3"
+            />
             <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           </div>
           <div

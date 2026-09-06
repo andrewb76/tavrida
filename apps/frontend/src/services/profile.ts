@@ -1,5 +1,14 @@
 import { bffAuthHeaders } from './apiAuth';
 
+export type ForumRank = 'newcomer' | 'user' | 'regular' | 'veteran';
+
+export const FORUM_RANK_LABELS: Record<ForumRank, string> = {
+  newcomer: 'Новичок',
+  user: 'Пользователь',
+  regular: 'Бывалый',
+  veteran: 'Постоялец',
+};
+
 export type ProfileRatingStats = {
   userId: string;
   totalRating: number;
@@ -11,6 +20,9 @@ export type ProfileRatingStats = {
   verifiedSales: number;
   pendingSales: number;
   feedbackCoverage: number | null;
+  postCount: number;
+  commentCount: number;
+  rank: ForumRank;
 };
 
 export type PublicProfile = {

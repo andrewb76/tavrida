@@ -77,6 +77,19 @@ export class VotesService {
     return map;
   }
 
+  async listVoters(contentId: string, contentType: ForumContentType) {
+    const rows = await this.votes.find({
+      where: { contentId, contentType },
+      order: { createdAt: 'ASC' },
+    });
+    return rows.map((r) => ({
+      userId: r.userId,
+      value: r.value,
+      reason: r.reason,
+      createdAt: r.createdAt,
+    }));
+  }
+
   async cast(input: {
     contentId: string;
     contentType: ForumContentType;

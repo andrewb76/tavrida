@@ -362,6 +362,43 @@ export class ForumClient {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/votes/clear', input);
   }
 
+  listVoters(contentType: 'topic' | 'comment', contentId: string) {
+    return this.request<Array<Record<string, unknown>>>(
+      'GET',
+      `/internal/v1/votes/voters/${contentType}/${contentId}`,
+    );
+  }
+
+  listMedals() {
+    return this.request<Array<Record<string, unknown>>>('GET', '/internal/v1/medals');
+  }
+
+  listUserMedals(userId: string) {
+    return this.request<Array<Record<string, unknown>>>('GET', `/internal/v1/medals/${encodeURIComponent(userId)}`);
+  }
+
+  async listMedalsByUsers(userIds: string[]): Promise<Record<string, Array<Record<string, unknown>>>> {
+    const out: Record<string, Array<Record<string, unknown>>> = {};
+    await Promise.all(
+      userIds.map(async (id) => {
+        try {
+          out[id] = await this.listUserMedals(id);
+        } catch {
+          out[id] = [];
+        }
+      }),
+    );
+    return out;
+  }
+
+  awardMedal(input: { userId: string; medalId: string; awardedBy?: string; reason?: string }) {
+    return this.request<Record<string, unknown>>('POST', `/internal/v1/medals/${encodeURIComponent(input.userId)}`, input);
+  }
+
+  revokeMedal(userId: string, medalId: string) {
+    return this.request<Record<string, unknown>>('DELETE', `/internal/v1/medals/${encodeURIComponent(userId)}/${medalId}`);
+  }
+
   private async request<T>(
     method: string,
     path: string,

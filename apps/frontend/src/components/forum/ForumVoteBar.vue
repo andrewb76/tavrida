@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { castForumVote, clearForumVote } from '@/services/forum';
+import VoteVotersPopover from '@/components/forum/VoteVotersPopover.vue';
 import { UiIcon } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -148,10 +149,17 @@ function apply(result: {
           :size="16"
         />
       </button>
-      <span
-        class="forum-vote__score"
-        :title="`+${plusCount} / −${minusCount}`"
-      >{{ score }}</span>
+      <VoteVotersPopover
+        :content-type="contentType"
+        :content-id="contentId"
+        :plus-count="plusCount"
+        :minus-count="minusCount"
+      >
+        <span
+          class="forum-vote__score"
+          :title="`+${plusCount} / −${minusCount}`"
+        >{{ score }}</span>
+      </VoteVotersPopover>
       <button
         type="button"
         class="forum-vote__btn"

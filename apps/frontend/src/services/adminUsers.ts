@@ -1,4 +1,5 @@
 import { bffAuthHeaders } from './apiAuth';
+import type { ForumRank, ForumUserMedal } from './forum';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 
@@ -36,7 +37,11 @@ export type AdminUserRow = {
     feedbackCoverage: number | null;
     banUntil: string | null;
     isLimited: boolean;
+    postCount: number;
+    commentCount: number;
+    rank: ForumRank;
   };
+  medals: ForumUserMedal[];
   invites: {
     issued: number;
     thisMonth: number;
@@ -95,6 +100,9 @@ const EMPTY_RATING: AdminUserRow['rating'] = {
   feedbackCoverage: null,
   banUntil: null,
   isLimited: false,
+  postCount: 0,
+  commentCount: 0,
+  rank: 'newcomer',
 };
 
 const EMPTY_INVITES: AdminUserRow['invites'] = {
@@ -134,6 +142,7 @@ function normalizeAdminUserRow(raw: Partial<AdminUserRow> & { userId: string }):
     balance: typeof raw.balance === 'number' ? raw.balance : 0,
     currency: raw.currency ?? 'RUB',
     rating: { ...EMPTY_RATING, ...(raw.rating ?? {}) },
+    medals: Array.isArray(raw.medals) ? raw.medals : [],
     invites: { ...EMPTY_INVITES, ...(raw.invites ?? {}) },
     referral: { ...EMPTY_REFERRAL, ...(raw.referral ?? {}) },
     plan: { ...EMPTY_PLAN, ...(raw.plan ?? {}) },

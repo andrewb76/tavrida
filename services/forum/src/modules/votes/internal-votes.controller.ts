@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import type { ForumContentType } from '../../entities/reaction.entity';
@@ -58,5 +58,13 @@ export class InternalVotesController {
   @Post('clear')
   clear(@Body() body: ClearVoteDto) {
     return this.votes.clear(body);
+  }
+
+  @Get('voters/:contentType/:contentId')
+  listVoters(
+    @Param('contentType') contentType: ForumContentType,
+    @Param('contentId') contentId: string,
+  ) {
+    return this.votes.listVoters(contentId, contentType);
   }
 }

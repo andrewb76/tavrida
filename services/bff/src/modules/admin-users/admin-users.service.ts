@@ -42,7 +42,7 @@ export class AdminUsersService {
       ),
     ];
 
-    const [cardStatsRaw, membershipsRes, inviters, presenceMap, allProfiles] = await Promise.all([
+    const [cardStatsRaw, membershipsRes, inviters, presenceMap, allProfiles, medalsByUser] = await Promise.all([
       this.profiles.getAdminCardStats(ids).catch(() => ({}) as Record<string, never>),
       this.forum.membershipsByUsers(ids).catch(() => ({ data: {} as Record<string, never> })),
       inviterIds.length
@@ -50,6 +50,7 @@ export class AdminUsersService {
         : Promise.resolve([]),
       this.presence.batch(ids).catch(() => [] as Array<{ user_id: string; status: string; last_seen: string | null }>),
       this.profiles.lookupByIds(ids).catch(() => []),
+      this.forum.listMedalsByUsers(ids).catch(() => ({} as Record<string, Array<Record<string, unknown>>>)),
     ]);
 
     const cardStats: Record<string, (typeof cardStatsRaw)[string] | undefined> = cardStatsRaw;
@@ -117,7 +118,19 @@ export class AdminUsersService {
             feedbackCoverage: stats?.feedbackCoverage ?? null,
             banUntil: stats?.banUntil ?? null,
             isLimited: stats?.isLimited ?? false,
+            postCount: stats?.postCount ?? 0,
+            commentCount: stats?.commentCount ?? 0,
+            rank: (stats?.rank as 'newcomer' | 'user' | 'regular' | 'veteran') ?? 'newcomer',
           },
+          medals: (medalsByUser[row.userId] ?? []).map((m) => ({
+            medalId: m.medalId ?? m.id,
+            medalName: m.medalName ?? m.name ?? null,
+            medalDescription: m.medalDescription ?? m.description ?? null,
+            medalIcon: m.medalIcon ?? m.icon ?? null,
+            awardedAt: m.awardedAt ?? m.createdAt ?? null,
+            awardedBy: m.awardedBy ?? null,
+            reason: m.reason ?? null,
+          })),
           invites: {
             issued: stats?.invitesIssued ?? 0,
             thisMonth: stats?.invitesThisMonth ?? 0,

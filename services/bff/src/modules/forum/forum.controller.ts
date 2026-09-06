@@ -590,6 +590,14 @@ export class ForumController {
     return result;
   }
 
+  @Get('votes/voters/:contentType/:contentId')
+  async listVoters(
+    @Param('contentType') contentType: 'topic' | 'comment',
+    @Param('contentId') contentId: string,
+  ) {
+    return this.forum.listVoters(contentType, contentId);
+  }
+
   private async applyForumVoteKarma(input: {
     authorId: string;
     actorId: string;
@@ -626,5 +634,41 @@ export class ForumController {
         }`,
       );
     }
+  }
+
+  // ── Medals ──────────────────────────────────────────────────────────
+
+  @Get('medals')
+  listMedals() {
+    return this.forum.listMedals();
+  }
+
+  @Get('medals/users/:userId')
+  listUserMedals(@Param('userId') userId: string) {
+    return this.forum.listUserMedals(userId);
+  }
+
+  @Post('admin/medals/users/:userId')
+  @UseGuards(JwtAuthGuard)
+  async awardMedal(
+    @CurrentUser() user: AuthUser,
+    @Param('userId') userId: string,
+    @Body() body: { medalId: string; reason?: string },
+  ) {
+    return this.forum.awardMedal({
+      userId,
+      medalId: body.medalId,
+      awardedBy: user.sub,
+      reason: body.reason,
+    });
+  }
+
+  @Delete('admin/medals/users/:userId/:medalId')
+  @UseGuards(JwtAuthGuard)
+  revokeMedal(
+    @Param('userId') userId: string,
+    @Param('medalId') medalId: string,
+  ) {
+    return this.forum.revokeMedal(userId, medalId);
   }
 }

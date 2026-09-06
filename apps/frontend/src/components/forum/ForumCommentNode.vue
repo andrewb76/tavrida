@@ -4,6 +4,7 @@ import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
+import MedalBadges from '@/components/profile/MedalBadges.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
@@ -205,6 +206,11 @@ async function onDelete() {
         />
         <div class="forum-comment__header-text">
           <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
+          <MedalBadges
+            v-if="node.author?.userId"
+            :user-id="node.author.userId"
+            :limit="2"
+          />
           <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
         </div>
         <div

@@ -9,6 +9,22 @@ import {
 } from '../../entities/reputation-change-log.entity';
 import { UserRatingEntity } from '../../entities/user-rating.entity';
 
+export type ForumRank = 'newcomer' | 'user' | 'regular' | 'veteran';
+
+const RANK_THRESHOLDS: { rank: ForumRank; minPosts: number }[] = [
+  { rank: 'veteran', minPosts: 300 },
+  { rank: 'regular', minPosts: 100 },
+  { rank: 'user', minPosts: 30 },
+  { rank: 'newcomer', minPosts: 0 },
+];
+
+export function getRankForPostCount(postCount: number): ForumRank {
+  for (const t of RANK_THRESHOLDS) {
+    if (postCount >= t.minPosts) return t.rank;
+  }
+  return 'newcomer';
+}
+
 export type UserRatingStats = {
   userId: string;
   totalRating: number;
@@ -20,6 +36,9 @@ export type UserRatingStats = {
   verifiedSales: number;
   pendingSales: number;
   feedbackCoverage: number | null;
+  postCount: number;
+  commentCount: number;
+  rank: ForumRank;
 };
 
 export type ReputationLogEntry = {
@@ -152,6 +171,8 @@ export class RatingsService {
       referralRating: '0.00',
       verifiedSales: 0,
       pendingSales: 0,
+      postCount: 0,
+      commentCount: 0,
     });
     return this.ratings.save(row);
   }
@@ -164,6 +185,8 @@ export class RatingsService {
     const verifiedSales = row.verifiedSales;
     const pendingSales = row.pendingSales;
     const salesTotal = verifiedSales + pendingSales;
+    const postCount = row.postCount ?? 0;
+    const commentCount = row.commentCount ?? 0;
 
     return {
       userId: row.userId,
@@ -176,6 +199,9 @@ export class RatingsService {
       verifiedSales,
       pendingSales,
       feedbackCoverage: salesTotal > 0 ? verifiedSales / salesTotal : null,
+      postCount,
+      commentCount,
+      rank: getRankForPostCount(postCount),
     };
   }
 

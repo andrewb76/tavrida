@@ -44,6 +44,9 @@ export type AdminCardUserStats = {
   invitesThisMonth: number;
   referralL1: number;
   referralL2: number;
+  postCount: number;
+  commentCount: number;
+  rank: string;
 };
 
 @Injectable()

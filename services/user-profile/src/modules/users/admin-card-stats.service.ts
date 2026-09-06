@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 import { InviteCodeEntity } from '../../entities/invite-code.entity';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 import { UserRatingEntity } from '../../entities/user-rating.entity';
+import { getRankForPostCount, type ForumRank } from '../ratings/ratings.service';
 
 export type ReferralUser = {
   userId: string;
@@ -30,6 +31,9 @@ export type AdminCardUserStats = {
   invitesThisMonth: number;
   referralL1: number;
   referralL2: number;
+  postCount: number;
+  commentCount: number;
+  rank: ForumRank;
 };
 
 const EMPTY_RATING = {
@@ -67,6 +71,9 @@ export class AdminCardStatsService {
         invitesThisMonth: 0,
         referralL1: 0,
         referralL2: 0,
+        postCount: 0,
+        commentCount: 0,
+        rank: 'newcomer',
       };
     }
     if (!unique.length) return out;
@@ -179,6 +186,8 @@ export class AdminCardStatsService {
     const verifiedSales = row.verifiedSales;
     const pendingSales = row.pendingSales;
     const salesTotal = verifiedSales + pendingSales;
+    const postCount = row.postCount ?? 0;
+    const commentCount = row.commentCount ?? 0;
 
     return {
       totalRating,
@@ -190,6 +199,9 @@ export class AdminCardStatsService {
       verifiedSales,
       pendingSales,
       feedbackCoverage: salesTotal > 0 ? verifiedSales / salesTotal : null,
+      postCount,
+      commentCount,
+      rank: getRankForPostCount(postCount),
     };
   }
 }

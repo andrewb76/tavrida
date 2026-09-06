@@ -12,7 +12,7 @@ import {
   type AdminUserRow,
   type PlatformRole,
 } from '@/services/adminUsers';
-import { formatKarma, formatRating } from '@/services/profile';
+import { formatKarma, formatRating, FORUM_RANK_LABELS, type ForumRank } from '@/services/profile';
 import { formatMoney } from '@/services/wallet';
 import { UiButton } from '@tavrida/ui';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -109,6 +109,10 @@ function fmtDay(iso: string | null | undefined): string {
 function coveragePct(value: number | null): string {
   if (value == null) return '—';
   return `${Math.round(value * 100)}%`;
+}
+
+function rankLabel(rank: ForumRank): string {
+  return FORUM_RANK_LABELS[rank] ?? rank;
 }
 
 function relativeTime(iso: string | null | undefined): string {
@@ -714,6 +718,30 @@ async function confirmDeposit() {
             <dd class="tabular-nums text-text">
               {{ row.rating.verifiedSales }}/{{ row.rating.pendingSales }}
               · {{ coveragePct(row.rating.feedbackCoverage) }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-text-muted">
+              Тем / комментов
+            </dt>
+            <dd class="tabular-nums text-text">
+              {{ row.rating.postCount }} / {{ row.rating.commentCount }}
+              <span class="text-text-muted">· {{ rankLabel(row.rating.rank) }}</span>
+            </dd>
+          </div>
+          <div v-if="row.medals.length > 0">
+            <dt class="text-text-muted">
+              Медали
+            </dt>
+            <dd class="text-text">
+              <span
+                v-for="m in row.medals"
+                :key="m.medalId"
+                class="inline-block mr-1 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded"
+                :title="m.medalName"
+              >
+                {{ m.medalName }}
+              </span>
             </dd>
           </div>
           <div>

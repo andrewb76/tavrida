@@ -3,6 +3,7 @@ import PlaceholderPage from '@/components/PlaceholderPage.vue';
 import ProfileAvatarPreviewModal from '@/components/profile/ProfileAvatarPreviewModal.vue';
 import ProfilePrivateNoteModal from '@/components/profile/ProfilePrivateNoteModal.vue';
 import ProfileRatingStats from '@/components/profile/ProfileRatingStats.vue';
+import MedalBadges from '@/components/profile/MedalBadges.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { UiButton } from '@tavrida/ui';
 import { useLogto } from '@logto/vue';
@@ -486,6 +487,11 @@ async function copyInviteLink() {
         v-if="publicProfile?.rating"
         :rating="publicProfile.rating"
         @updated="onRatingUpdated"
+      />
+
+      <MedalBadges
+        v-if="publicProfile?.userId"
+        :user-id="publicProfile.userId"
       />
 
       <section

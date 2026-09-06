@@ -57,6 +57,8 @@ describe('RatingsService', () => {
         referralRating: '0.00',
         verifiedSales: 2,
         pendingSales: 1,
+        postCount: 0,
+        commentCount: 0,
         updatedAt: new Date('2026-01-01'),
       },
     ]);

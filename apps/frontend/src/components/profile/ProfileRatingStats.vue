@@ -7,6 +7,7 @@ import {
   adjustProfileRating,
   formatKarma,
   formatRating,
+  FORUM_RANK_LABELS,
   type ProfileRatingStats,
 } from '@/services/profile';
 import { useSessionStore } from '@/stores/session';
@@ -133,6 +134,16 @@ async function applyDelta(patch: { karmaDelta?: number; ratingDelta?: number }) 
             +
           </UiButton>
         </div>
+      </div>
+
+      <div class="profile-rating-stats__item">
+        <span class="profile-rating-stats__label">Ранг</span>
+        <span class="profile-rating-stats__value">
+          {{ FORUM_RANK_LABELS[rating.rank] ?? rating.rank }}
+        </span>
+        <span class="profile-rating-stats__hint">
+          {{ rating.postCount }} тем · {{ rating.commentCount }} комментариев
+        </span>
       </div>
     </div>
 

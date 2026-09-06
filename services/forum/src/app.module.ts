@@ -11,13 +11,16 @@ import { CommentClosureEntity } from './entities/comment-closure.entity';
 import { CommentEntity } from './entities/comment.entity';
 import { ContentTagEntity } from './entities/content-tag.entity';
 import { ContentVoteEntity } from './entities/content-vote.entity';
+import { MedalEntity } from './entities/medal.entity';
 import { ReactionEntity } from './entities/reaction.entity';
 import { TagEntity } from './entities/tag.entity';
 import { TopicEntity } from './entities/topic.entity';
+import { UserMedalEntity } from './entities/user-medal.entity';
 import { AccessGroupsModule } from './modules/access-groups/access-groups.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { HealthController } from './modules/health/health.controller';
+import { MedalsModule } from './modules/medals/medals.module';
 import { ReactionsModule } from './modules/reactions/reactions.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { TagsModule } from './modules/tags/tags.module';
@@ -57,6 +60,8 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
         ContentVoteEntity,
         TagEntity,
         ContentTagEntity,
+        MedalEntity,
+        UserMedalEntity,
         OutboxMessageEntity,
       ],
       migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
@@ -71,6 +76,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
     ReactionsModule,
     VotesModule,
     TagsModule,
+    MedalsModule,
     SeedModule,
   ],
   controllers: [HealthController],
