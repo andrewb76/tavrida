@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { MedalEntity } from '../../entities/medal.entity';
 import { UserMedalEntity } from '../../entities/user-medal.entity';
 
@@ -50,7 +50,7 @@ export class MedalsService {
     if (rows.length === 0) return [];
 
     const medalIds = [...new Set(rows.map((r) => r.medalId))];
-    const medalRows = await this.medals.findBy({ id: medalIds } as any);
+    const medalRows = await this.medals.findBy({ id: In(medalIds) });
     const medalMap = new Map(medalRows.map((m) => [m.id, m]));
 
     return rows.map((r) => {
