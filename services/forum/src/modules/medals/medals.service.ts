@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { MedalEntity } from '../../entities/medal.entity';
 import { UserMedalEntity } from '../../entities/user-medal.entity';
 
@@ -122,6 +123,36 @@ export class MedalsService {
       awardedBy: row.awardedBy,
       reason: row.reason,
     };
+  }
+
+  async create(input: { name: string; description?: string; iconUrl?: string; dispPosition?: number }): Promise<MedalDto> {
+    const row = this.medals.create({
+      id: randomUUID(),
+      name: input.name,
+      description: input.description ?? '',
+      iconUrl: input.iconUrl ?? null,
+      dispPosition: input.dispPosition ?? 0,
+    });
+    await this.medals.save(row);
+    return { id: row.id, name: row.name, description: row.description, iconUrl: row.iconUrl, dispPosition: row.dispPosition };
+  }
+
+  async update(id: string, input: { name?: string; description?: string; iconUrl?: string; dispPosition?: number }): Promise<MedalDto> {
+    const row = await this.medals.findOne({ where: { id } });
+    if (!row) throw new NotFoundException({ type: 'not-found', detail: `Medal ${id} not found` });
+    if (input.name !== undefined) row.name = input.name;
+    if (input.description !== undefined) row.description = input.description;
+    if (input.iconUrl !== undefined) row.iconUrl = input.iconUrl;
+    if (input.dispPosition !== undefined) row.dispPosition = input.dispPosition;
+    await this.medals.save(row);
+    return { id: row.id, name: row.name, description: row.description, iconUrl: row.iconUrl, dispPosition: row.dispPosition };
+  }
+
+  async remove(id: string): Promise<void> {
+    const row = await this.medals.findOne({ where: { id } });
+    if (!row) throw new NotFoundException({ type: 'not-found', detail: `Medal ${id} not found` });
+    await this.userMedals.delete({ medalId: id });
+    await this.medals.remove(row);
   }
 
   async revoke(userId: string, medalId: string): Promise<void> {

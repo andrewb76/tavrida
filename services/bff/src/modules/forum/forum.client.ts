@@ -399,6 +399,18 @@ export class ForumClient {
     return this.request<Record<string, unknown>>('DELETE', `/internal/v1/medals/${encodeURIComponent(userId)}/${medalId}`);
   }
 
+  createMedal(input: { name: string; description?: string; iconUrl?: string; dispPosition?: number }) {
+    return this.request<Record<string, unknown>>('POST', '/internal/v1/medals', input);
+  }
+
+  updateMedal(id: string, input: { name?: string; description?: string; iconUrl?: string; dispPosition?: number }) {
+    return this.request<Record<string, unknown>>('PUT', `/internal/v1/medals/${id}`, input);
+  }
+
+  deleteMedal(id: string) {
+    return this.request<Record<string, unknown>>('DELETE', `/internal/v1/medals/${id}`);
+  }
+
   private async request<T>(
     method: string,
     path: string,

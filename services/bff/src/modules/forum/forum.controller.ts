@@ -671,4 +671,22 @@ export class ForumController {
   ) {
     return this.forum.revokeMedal(userId, medalId);
   }
+
+  @Post('admin/medals')
+  @UseGuards(JwtAuthGuard)
+  createMedal(@Body() body: { name: string; description?: string; iconUrl?: string; dispPosition?: number }) {
+    return this.forum.createMedal(body);
+  }
+
+  @Put('admin/medals/:id')
+  @UseGuards(JwtAuthGuard)
+  updateMedal(@Param('id') id: string, @Body() body: { name?: string; description?: string; iconUrl?: string; dispPosition?: number }) {
+    return this.forum.updateMedal(id, body);
+  }
+
+  @Delete('admin/medals/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteMedal(@Param('id') id: string) {
+    return this.forum.deleteMedal(id);
+  }
 }

@@ -697,3 +697,31 @@ export async function revokeMedal(userId: string, medalId: string): Promise<void
     throw new Error(err?.detail ?? 'Не удалось отозвать медаль');
   }
 }
+
+export async function createMedal(input: { name: string; description?: string; iconUrl?: string; dispPosition?: number }): Promise<ForumMedal> {
+  const res = await fetch(`${apiBase()}/forum/admin/medals`, {
+    method: 'POST',
+    headers: await forumJsonHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error('Не удалось создать медаль');
+  return (await res.json()) as ForumMedal;
+}
+
+export async function updateMedal(id: string, input: { name?: string; description?: string; iconUrl?: string; dispPosition?: number }): Promise<ForumMedal> {
+  const res = await fetch(`${apiBase()}/forum/admin/medals/${id}`, {
+    method: 'PUT',
+    headers: await forumJsonHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error('Не удалось обновить медаль');
+  return (await res.json()) as ForumMedal;
+}
+
+export async function deleteMedal(id: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/forum/admin/medals/${id}`, {
+    method: 'DELETE',
+    headers: await forumJsonHeaders(),
+  });
+  if (!res.ok) throw new Error('Не удалось удалить медаль');
+}
