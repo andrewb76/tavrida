@@ -57,7 +57,7 @@ watch(() => props.userId, load);
           :src="m.medalIconUrl"
           :alt="m.medalName"
           class="medal-badges__icon"
-        />
+        >
         <span
           v-else
           class="medal-badges__emoji"

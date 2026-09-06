@@ -48,10 +48,6 @@ const stats = computed(() => {
   return medalCount;
 });
 
-function medalName(id: string): string {
-  return medals.value.find((m) => m.id === id)?.name ?? id;
-}
-
 async function load() {
   loading.value = true;
   try {
@@ -112,7 +108,9 @@ onMounted(load);
 
 <template>
   <div class="admin-medals">
-    <h1 class="admin-medals__title">Медали</h1>
+    <h1 class="admin-medals__title">
+      Медали
+    </h1>
 
     <div
       v-if="loading"
@@ -123,7 +121,9 @@ onMounted(load);
 
     <template v-else>
       <section class="admin-medals__catalog">
-        <h2 class="admin-medals__subtitle">Каталог медалей</h2>
+        <h2 class="admin-medals__subtitle">
+          Каталог медалей
+        </h2>
         <div class="admin-medals__grid">
           <div
             v-for="m in medals"
@@ -143,14 +143,16 @@ onMounted(load);
       </section>
 
       <section class="admin-medals__award">
-        <h2 class="admin-medals__subtitle">Вручить медаль</h2>
+        <h2 class="admin-medals__subtitle">
+          Вручить медаль
+        </h2>
         <div class="admin-medals__award-form">
           <input
             v-model="awardUserId"
             type="text"
             placeholder="User ID"
             class="admin-medals__input"
-          />
+          >
           <select
             v-model="selectedMedal"
             class="admin-medals__select"
@@ -174,7 +176,7 @@ onMounted(load);
             type="text"
             placeholder="Причина (необязательно)"
             class="admin-medals__input"
-          />
+          >
           <UiButton
             :disabled="awarding || !awardUserId || !selectedMedal"
             @click="awardMedal"
@@ -194,7 +196,7 @@ onMounted(load);
           type="text"
           placeholder="Поиск по имени, логину, email…"
           class="admin-medals__search"
-        />
+        >
         <div class="admin-medals__table-wrap">
           <table class="admin-medals__table">
             <thead>
