@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import UserAvatar from '@/components/user/UserAvatar.vue';
+import MarkdownBody from '@/components/media/MarkdownBody.vue';
+import ForumBreadcrumbs from '@/components/forum/ForumBreadcrumbs.vue';
+import { imageProxyPresets } from '@/utils/imageProxy';
 import {
   forumAuthorLabel,
   listCategories,
@@ -126,11 +129,7 @@ function authorOf(topic: TopicSummary) {
   <section class="forum-list">
     <header class="forum-list__header">
       <div>
-        <p class="forum-list__back">
-          <RouterLink to="/forum">
-            ← К разделам форума
-          </RouterLink>
-        </p>
+        <ForumBreadcrumbs :category-id="categoryId" />
         <h1>{{ draftsOnly ? 'Мои черновики' : 'Темы' }}</h1>
         <p class="forum-list__lead">
           <template v-if="draftsOnly">
@@ -264,7 +263,12 @@ function authorOf(topic: TopicSummary) {
               class="forum-list__pin"
             >📌</span>
           </div>
-          <p>{{ topic.excerpt }}</p>
+          <div class="forum-list__excerpt">
+            <MarkdownBody
+              :body="topic.excerpt"
+              :image-resize="imageProxyPresets.forumListThumb"
+            />
+          </div>
           <ul
             v-if="topic.tags?.length"
             class="forum-list__tags"
@@ -293,20 +297,6 @@ function authorOf(topic: TopicSummary) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-}
-
-.forum-list__back {
-  margin: 0 0 0.35rem;
-  font-size: 0.9rem;
-}
-
-.forum-list__back a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.forum-list__back a:hover {
-  text-decoration: underline;
 }
 
 .forum-list__actions {
@@ -409,6 +399,33 @@ function authorOf(topic: TopicSummary) {
 .forum-list__item-body p {
   margin: 0.5rem 0 0;
   color: var(--color-text-muted);
+}
+
+.forum-list__excerpt {
+  margin: 0.5rem 0 0;
+  max-height: 5.5rem;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.forum-list__excerpt :deep(.markdown-body) {
+  margin: 0;
+}
+
+.forum-list__excerpt :deep(img) {
+  max-width: 80px;
+  max-height: 60px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin: 0 0.25rem 0.15rem 0;
+}
+
+.forum-list__excerpt :deep(blockquote),
+.forum-list__excerpt :deep(pre),
+.forum-list__excerpt :deep(table) {
+  display: none;
 }
 
 .forum-list__tags {

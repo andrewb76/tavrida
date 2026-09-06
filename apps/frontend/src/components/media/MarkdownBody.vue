@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { renderForumMarkdown } from '@/utils/renderForumMarkdown';
+import type { ImageProxyResize } from '@tavrida/object-storage';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   body: string;
-}>();
+  imageResize?: ImageProxyResize;
+}>(), {
+  imageResize: undefined,
+});
 
-const html = computed(() => renderForumMarkdown(props.body));
+const html = computed(() => renderForumMarkdown(props.body, props.imageResize));
 </script>
 
 <template>

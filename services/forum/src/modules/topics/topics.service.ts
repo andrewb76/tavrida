@@ -384,7 +384,7 @@ export class TopicsService {
       categoryId: row.categoryId,
       authorId: row.authorId,
       title: row.title,
-      excerpt: row.body.slice(0, 200),
+      excerpt: row.body.slice(0, 500),
       isPinned: row.isPinned,
       status: row.status,
       publishedAt: row.publishedAt?.toISOString() ?? null,

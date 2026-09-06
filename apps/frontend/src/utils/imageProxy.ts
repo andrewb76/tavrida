@@ -44,4 +44,5 @@ export const imageProxyPresets = {
   galleryMain: { width: 900, height: 675, resizingType: 'fill' as const },
   galleryThumb: { width: 160, height: 120, resizingType: 'fill' as const },
   markdownImage: { width: 900, height: 0, resizingType: 'fit' as const },
+  forumListThumb: { width: 120, height: 90, resizingType: 'fill' as const },
 };

@@ -1,6 +1,7 @@
 import MarkdownIt from 'markdown-it';
 import DOMPurify, { type Config } from 'dompurify';
 import { imageProxyPresets, proxiedMediaUrl } from './imageProxy.js';
+import type { ImageProxyResize } from '@tavrida/object-storage';
 
 const markdown = new MarkdownIt({
   html: false,
@@ -60,14 +61,6 @@ function ensureSanitizeHooks() {
     if (node.tagName === 'IMG') {
       node.setAttribute('loading', 'lazy');
       node.setAttribute('decoding', 'async');
-
-      const src = node.getAttribute('src');
-      if (src) {
-        const proxied = proxiedMediaUrl(src, imageProxyPresets.markdownImage);
-        if (proxied && proxied !== src) {
-          node.setAttribute('src', proxied);
-        }
-      }
     }
   });
 
@@ -75,11 +68,14 @@ function ensureSanitizeHooks() {
 }
 
 /** Rewrites owned MinIO image src attributes in rendered forum HTML. */
-export function rewriteOwnedMediaImagesInHtml(html: string): string {
+export function rewriteOwnedMediaImagesInHtml(
+  html: string,
+  resize: ImageProxyResize = imageProxyPresets.markdownImage,
+): string {
   if (!html) return html;
 
   return html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (match, prefix, src, suffix) => {
-    const proxied = proxiedMediaUrl(src, imageProxyPresets.markdownImage);
+    const proxied = proxiedMediaUrl(src, resize);
     return proxied && proxied !== src ? `${prefix}${proxied}${suffix}` : match;
   });
 }
@@ -99,6 +95,9 @@ export function sanitizeForumHtml(html: string): string {
   return String(DOMPurify.sanitize(html, SANITIZE_CONFIG));
 }
 
-export function renderForumMarkdown(body: string): string {
-  return rewriteOwnedMediaImagesInHtml(sanitizeForumHtml(parseForumMarkdown(body)));
+export function renderForumMarkdown(
+  body: string,
+  imageResize?: ImageProxyResize,
+): string {
+  return rewriteOwnedMediaImagesInHtml(sanitizeForumHtml(parseForumMarkdown(body)), imageResize);
 }

@@ -3,6 +3,7 @@ import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
+import ForumBreadcrumbs from '@/components/forum/ForumBreadcrumbs.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumTopicTags from '@/components/forum/ForumTopicTags.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
@@ -338,6 +339,10 @@ async function submitTopicComment() {
     </p>
 
     <template v-else-if="topic">
+      <ForumBreadcrumbs
+        :category-id="topic.categoryId"
+        :topic-title="topic.title"
+      />
       <article class="forum-topic__head">
         <header class="forum-topic__author-row">
           <UserAvatar
