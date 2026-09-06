@@ -43,7 +43,11 @@ function createHarness(rows: UserRatingEntity[]) {
     },
   } as unknown as Repository<ReputationChangeLogEntity>;
 
-  return { service: new RatingsService(ratings, logs), store, logStore };
+  const config = {
+    get: (key: string) => process.env[key] ?? null,
+  } as unknown as import('@nestjs/config').ConfigService;
+
+  return { service: new RatingsService(ratings, logs, config), store, logStore };
 }
 
 describe('RatingsService', () => {

@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { InviteCodeEntity } from '../../entities/invite-code.entity';
 import { UserProfileEntity } from '../../entities/user-profile.entity';
 import { UserRatingEntity } from '../../entities/user-rating.entity';
-import { getRankForPostCount, type ForumRank } from '../ratings/ratings.service';
+import {
+  DEFAULT_COMMENT_MULTIPLIER,
+  DEFAULT_POST_MULTIPLIER,
+  computeRankScore,
+  getRankForWeightedScore,
+  type ForumRank,
+} from '../ratings/ratings.service';
 
 export type ReferralUser = {
   userId: string;
@@ -50,6 +57,9 @@ const EMPTY_RATING = {
 
 @Injectable()
 export class AdminCardStatsService {
+  private readonly postMultiplier: number;
+  private readonly commentMultiplier: number;
+
   constructor(
     @InjectRepository(UserProfileEntity)
     private readonly profiles: Repository<UserProfileEntity>,
@@ -57,7 +67,11 @@ export class AdminCardStatsService {
     private readonly ratings: Repository<UserRatingEntity>,
     @InjectRepository(InviteCodeEntity)
     private readonly inviteCodes: Repository<InviteCodeEntity>,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.postMultiplier = Number(config.get('RANK_POST_MULTIPLIER')) || DEFAULT_POST_MULTIPLIER;
+    this.commentMultiplier = Number(config.get('RANK_COMMENT_MULTIPLIER')) || DEFAULT_COMMENT_MULTIPLIER;
+  }
 
   async getStatsForUsers(userIds: string[]): Promise<Record<string, AdminCardUserStats>> {
     const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))].slice(0, 100);
@@ -188,6 +202,7 @@ export class AdminCardStatsService {
     const salesTotal = verifiedSales + pendingSales;
     const postCount = row.postCount ?? 0;
     const commentCount = row.commentCount ?? 0;
+    const rankScore = computeRankScore(postCount, commentCount, this.postMultiplier, this.commentMultiplier);
 
     return {
       totalRating,
@@ -201,7 +216,7 @@ export class AdminCardStatsService {
       feedbackCoverage: salesTotal > 0 ? verifiedSales / salesTotal : null,
       postCount,
       commentCount,
-      rank: getRankForPostCount(postCount),
+      rank: getRankForWeightedScore(rankScore),
     };
   }
 }

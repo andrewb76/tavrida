@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
@@ -11,18 +12,30 @@ import { UserRatingEntity } from '../../entities/user-rating.entity';
 
 export type ForumRank = 'newcomer' | 'user' | 'regular' | 'veteran';
 
-const RANK_THRESHOLDS: { rank: ForumRank; minPosts: number }[] = [
-  { rank: 'veteran', minPosts: 300 },
-  { rank: 'regular', minPosts: 100 },
-  { rank: 'user', minPosts: 30 },
-  { rank: 'newcomer', minPosts: 0 },
+const RANK_THRESHOLDS: { rank: ForumRank; minScore: number }[] = [
+  { rank: 'veteran', minScore: 300 },
+  { rank: 'regular', minScore: 100 },
+  { rank: 'user', minScore: 30 },
+  { rank: 'newcomer', minScore: 0 },
 ];
 
-export function getRankForPostCount(postCount: number): ForumRank {
+export function getRankForWeightedScore(score: number): ForumRank {
   for (const t of RANK_THRESHOLDS) {
-    if (postCount >= t.minPosts) return t.rank;
+    if (score >= t.minScore) return t.rank;
   }
   return 'newcomer';
+}
+
+export const DEFAULT_POST_MULTIPLIER = 1.0;
+export const DEFAULT_COMMENT_MULTIPLIER = 0.2;
+
+export function computeRankScore(
+  postCount: number,
+  commentCount: number,
+  postMultiplier: number,
+  commentMultiplier: number,
+): number {
+  return postCount * postMultiplier + commentCount * commentMultiplier;
 }
 
 export type UserRatingStats = {
@@ -56,12 +69,19 @@ export type ReputationLogEntry = {
 
 @Injectable()
 export class RatingsService {
+  private readonly postMultiplier: number;
+  private readonly commentMultiplier: number;
+
   constructor(
     @InjectRepository(UserRatingEntity)
     private readonly ratings: Repository<UserRatingEntity>,
     @InjectRepository(ReputationChangeLogEntity)
     private readonly logs: Repository<ReputationChangeLogEntity>,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.postMultiplier = Number(config.get('RANK_POST_MULTIPLIER')) || DEFAULT_POST_MULTIPLIER;
+    this.commentMultiplier = Number(config.get('RANK_COMMENT_MULTIPLIER')) || DEFAULT_COMMENT_MULTIPLIER;
+  }
 
   async getStats(userId: string): Promise<UserRatingStats> {
     const row = await this.ensure(userId);
@@ -187,6 +207,7 @@ export class RatingsService {
     const salesTotal = verifiedSales + pendingSales;
     const postCount = row.postCount ?? 0;
     const commentCount = row.commentCount ?? 0;
+    const rankScore = computeRankScore(postCount, commentCount, this.postMultiplier, this.commentMultiplier);
 
     return {
       userId: row.userId,
@@ -201,7 +222,7 @@ export class RatingsService {
       feedbackCoverage: salesTotal > 0 ? verifiedSales / salesTotal : null,
       postCount,
       commentCount,
-      rank: getRankForPostCount(postCount),
+      rank: getRankForWeightedScore(rankScore),
     };
   }
 

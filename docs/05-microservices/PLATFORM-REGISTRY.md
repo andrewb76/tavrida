@@ -89,6 +89,11 @@ Default `rating.contextWeights`:
 | `forum.markdown.sanitizeLevel` | enum | `strict` | global | `strict` \| `documentation` |
 | `forum.tags.bannedSlugs` | string[] | `[]` | global | Запрещённые slug тегов |
 
+> **Ранжирование** (env vars user-profile сервиса):
+> `RANK_POST_MULTIPLIER` (default `1.0`) — вес поста в score ранга;
+> `RANK_COMMENT_MULTIPLIER` (default `0.2`) — вес комментария.
+> Подробнее: [karma-and-rating.md §10](../01-goal/karma-and-rating.md#10-ранги-уровни-участников)
+
 ### chat
 
 > Решения: [chat/requirements/analysis.md](./chat/requirements/analysis.md)
