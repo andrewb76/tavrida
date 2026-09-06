@@ -83,6 +83,7 @@ export class VotesService {
     userId: string;
     value: 1 | -1;
     changeWindowMinutes: number;
+    reason?: string;
   }) {
     const content = await this.loadContent(input.contentId, input.contentType);
     if (content.authorId === input.userId) {
@@ -111,6 +112,7 @@ export class VotesService {
             contentType: input.contentType,
             userId: input.userId,
             value: input.value,
+            reason: input.reason ?? null,
           }),
         );
         await this.applyCounterDelta(manager, input.contentType, input.contentId, {
@@ -120,11 +122,16 @@ export class VotesService {
         previousValue = null;
       } else if (existing.value === input.value) {
         previousValue = existing.value;
+        if (input.reason !== undefined) {
+          existing.reason = input.reason ?? null;
+          await voteRepo.save(existing);
+        }
       } else {
         this.assertCanChange(existing.createdAt, input.changeWindowMinutes);
         previousValue = existing.value;
         const prev = existing.value;
         existing.value = input.value;
+        existing.reason = input.reason ?? existing.reason;
         await voteRepo.save(existing);
         await this.applyCounterDelta(manager, input.contentType, input.contentId, {
           plus: (input.value === 1 ? 1 : 0) - (prev === 1 ? 1 : 0),

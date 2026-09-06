@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import type { ForumContentType } from '../../entities/reaction.entity';
 import { VotesService } from './votes.service';
 
@@ -23,6 +23,11 @@ class CastVoteDto {
   @Type(() => Number)
   @IsInt()
   changeWindowMinutes!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  reason?: string;
 }
 
 class ClearVoteDto {

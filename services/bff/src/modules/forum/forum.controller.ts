@@ -132,6 +132,11 @@ class CastVoteDto {
   @IsInt()
   @IsIn([1, -1])
   value!: 1 | -1;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  reason?: string;
 }
 
 class ClearVoteDto {
@@ -547,6 +552,7 @@ export class ForumController {
       contentType: result.contentType,
       previousVote: result.previousValue,
       nextVote: result.myVote,
+      reason: body.reason,
     });
 
     return result;
@@ -591,6 +597,7 @@ export class ForumController {
     contentType: 'topic' | 'comment';
     previousVote: 1 | -1 | null;
     nextVote: 1 | -1 | null;
+    reason?: string;
   }) {
     const weights = await this.forumSettings.voteKarmaWeights();
     const karmaDelta = forumVoteKarmaDelta(
@@ -601,13 +608,16 @@ export class ForumController {
     );
     if (Math.abs(karmaDelta) < 1e-9) return;
 
+    const note = input.reason
+      || `${input.contentType} vote ${input.previousVote ?? 0}→${input.nextVote ?? 0}`;
+
     try {
       await this.profiles.adjustRating(input.authorId, {
         karmaDelta,
         actorId: input.actorId,
         source: 'FORUM_VOTE',
         referenceId: input.contentId,
-        note: `${input.contentType} vote ${input.previousVote ?? 0}→${input.nextVote ?? 0}`,
+        note,
       });
     } catch (error) {
       this.logger.warn(

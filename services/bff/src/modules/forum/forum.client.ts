@@ -348,6 +348,7 @@ export class ForumClient {
     userId: string;
     value: 1 | -1;
     changeWindowMinutes: number;
+    reason?: string;
   }) {
     return this.request<Record<string, unknown>>('POST', '/internal/v1/votes', input);
   }

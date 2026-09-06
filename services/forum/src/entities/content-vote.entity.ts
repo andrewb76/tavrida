@@ -23,6 +23,10 @@ export class ContentVoteEntity {
   @Column('smallint')
   value!: 1 | -1;
 
+  /** Optional text reason (e.g. "Спасибо за отчёт"). */
+  @Column('varchar', { length: 512, nullable: true })
+  reason!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

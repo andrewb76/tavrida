@@ -34,6 +34,8 @@ const minusCount = ref(props.minusCount);
 const myVote = ref<1 | -1 | null>(props.myVote);
 const canChange = ref(props.canChange);
 const busy = ref(false);
+const reasonOpen = ref(false);
+const reasonText = ref('');
 
 watch(
   () => [props.plusCount, props.minusCount, props.myVote, props.canChange] as const,
@@ -47,6 +49,11 @@ watch(
 
 const score = computed(() => plusCount.value - minusCount.value);
 
+function toggleReason() {
+  reasonOpen.value = !reasonOpen.value;
+  if (!reasonOpen.value) reasonText.value = '';
+}
+
 async function onPlus() {
   if (props.disabled || busy.value) return;
   if (myVote.value === 1) {
@@ -54,7 +61,13 @@ async function onPlus() {
     await clear();
     return;
   }
-  await cast(1);
+  if (reasonOpen.value && reasonText.value.trim()) {
+    await cast(1, reasonText.value.trim());
+    reasonOpen.value = false;
+    reasonText.value = '';
+  } else {
+    await cast(1);
+  }
 }
 
 async function onMinus() {
@@ -67,13 +80,14 @@ async function onMinus() {
   await cast(-1);
 }
 
-async function cast(value: 1 | -1) {
+async function cast(value: 1 | -1, reason?: string) {
   busy.value = true;
   try {
     const result = await castForumVote({
       contentId: props.contentId,
       contentType: props.contentType,
       value,
+      reason,
     });
     apply(result);
   } catch (e) {
@@ -114,47 +128,78 @@ function apply(result: {
 </script>
 
 <template>
-  <div
-    class="forum-vote"
-    role="group"
-    aria-label="Оценка"
-  >
-    <button
-      type="button"
-      class="forum-vote__btn"
-      :class="{ 'is-active': myVote === 1 }"
-      :disabled="disabled || busy || (myVote != null && myVote !== 1 && !canChange)"
-      :aria-pressed="myVote === 1"
-      title="Плюс"
-      @click="onPlus"
+  <div class="forum-vote-wrap">
+    <div
+      class="forum-vote"
+      role="group"
+      aria-label="Оценка"
     >
-      <UiIcon
-        name="thumbsUp"
-        :size="16"
-      />
-    </button>
-    <span
-      class="forum-vote__score"
-      :title="`+${plusCount} / −${minusCount}`"
-    >{{ score }}</span>
-    <button
-      type="button"
-      class="forum-vote__btn"
-      :class="{ 'is-active': myVote === -1 }"
-      :disabled="disabled || busy || (myVote != null && myVote !== -1 && !canChange)"
-      :aria-pressed="myVote === -1"
-      title="Минус"
-      @click="onMinus"
+      <button
+        type="button"
+        class="forum-vote__btn"
+        :class="{ 'is-active': myVote === 1 }"
+        :disabled="disabled || busy || (myVote != null && myVote !== 1 && !canChange)"
+        :aria-pressed="myVote === 1"
+        title="Плюс"
+        @click="onPlus"
+      >
+        <UiIcon
+          name="thumbsUp"
+          :size="16"
+        />
+      </button>
+      <span
+        class="forum-vote__score"
+        :title="`+${plusCount} / −${minusCount}`"
+      >{{ score }}</span>
+      <button
+        type="button"
+        class="forum-vote__btn"
+        :class="{ 'is-active': myVote === -1 }"
+        :disabled="disabled || busy || (myVote != null && myVote !== -1 && !canChange)"
+        :aria-pressed="myVote === -1"
+        title="Минус"
+        @click="onMinus"
+      >
+        <UiIcon
+          name="thumbsDown"
+          :size="16"
+        />
+      </button>
+      <button
+        v-if="!disabled && myVote !== 1"
+        type="button"
+        class="forum-vote__reason-toggle"
+        :class="{ 'is-active': reasonOpen }"
+        title="Добавить причину"
+        @click="toggleReason"
+      >
+        ✎
+      </button>
+    </div>
+    <div
+      v-if="reasonOpen"
+      class="forum-vote-reason"
     >
-      <UiIcon
-        name="thumbsDown"
-        :size="16"
-      />
-    </button>
+      <input
+        v-model="reasonText"
+        type="text"
+        class="forum-vote-reason__input"
+        placeholder="Спасибо за…"
+        maxlength="512"
+        @keydown.enter.prevent="onPlus"
+      >
+    </div>
   </div>
 </template>
 
 <style scoped>
+.forum-vote-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .forum-vote {
   display: inline-flex;
   align-items: center;
@@ -191,5 +236,58 @@ function apply(result: {
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
+}
+
+.forum-vote__reason-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.forum-vote:hover .forum-vote__reason-toggle,
+.forum-vote__reason-toggle.is-active {
+  opacity: 1;
+}
+
+.forum-vote__reason-toggle:hover {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.forum-vote-reason {
+  display: flex;
+}
+
+.forum-vote-reason__input {
+  width: 100%;
+  max-width: 18rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.forum-vote-reason__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.forum-vote-reason__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 </style>

@@ -247,6 +247,7 @@ export async function castForumVote(input: {
   contentId: string;
   contentType: 'topic' | 'comment';
   value: 1 | -1;
+  reason?: string;
 }): Promise<ForumVoteResult> {
   const res = await fetch(`${apiBase()}/forum/votes`, {
     method: 'POST',
