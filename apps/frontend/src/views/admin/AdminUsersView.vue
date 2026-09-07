@@ -554,6 +554,15 @@ async function confirmDeposit() {
                 class="rounded bg-violet-100 px-1 py-px text-[10px] font-medium text-violet-900"
                 :title="row.rating.banUntil ? `banUntil ${fmtDate(row.rating.banUntil)}` : 'isLimited'"
               >rating-ban</span>
+              <img
+                v-for="m in row.medals"
+                :key="m.medalId"
+                v-if="m.medalIconUrl"
+                :src="m.medalIconUrl"
+                :alt="m.medalName"
+                :title="m.medalName"
+                class="size-4 rounded-sm object-contain"
+              >
             </div>
 
             <p class="mt-0.5 truncate text-xs text-text-muted">
@@ -727,21 +736,6 @@ async function confirmDeposit() {
             <dd class="tabular-nums text-text">
               {{ row.rating.postCount }} / {{ row.rating.commentCount }}
               <span class="text-text-muted">· {{ rankLabel(row.rating.rank) }}</span>
-            </dd>
-          </div>
-          <div v-if="row.medals.length > 0">
-            <dt class="text-text-muted">
-              Медали
-            </dt>
-            <dd class="text-text">
-              <span
-                v-for="m in row.medals"
-                :key="m.medalId"
-                class="inline-block mr-1 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded"
-                :title="m.medalName"
-              >
-                {{ m.medalName }}
-              </span>
             </dd>
           </div>
           <div>
