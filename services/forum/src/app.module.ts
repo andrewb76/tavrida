@@ -26,6 +26,7 @@ import { ReactionsModule } from './modules/reactions/reactions.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TopicsModule } from './modules/topics/topics.module';
+import { UserProfileClientModule } from './modules/user-profile-client/user-profile-client.module';
 import { VotesModule } from './modules/votes/votes.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
@@ -80,6 +81,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
     TagsModule,
     MedalsModule,
     SeedModule,
+    UserProfileClientModule,
   ],
   controllers: [HealthController],
 })

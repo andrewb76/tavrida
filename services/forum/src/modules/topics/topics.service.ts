@@ -15,6 +15,7 @@ import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsPublisher } from '../events/forum-events.publisher';
 import { CategoriesService } from '../categories/categories.service';
 import { TagsService } from '../tags/tags.service';
+import { UserProfileClient } from '../user-profile-client/user-profile.client';
 import { VotesService } from '../votes/votes.service';
 
 export type TopicStatus = 'DRAFT' | 'PUBLISHED';
@@ -32,6 +33,7 @@ export class TopicsService {
     private readonly votes: VotesService,
     private readonly tags: TagsService,
     private readonly events: ForumEventsPublisher,
+    private readonly userProfile: UserProfileClient,
   ) {}
 
   async list(input: {
@@ -221,6 +223,7 @@ export class TopicsService {
         });
       });
       this.events.flush();
+      this.userProfile.adjustCounts(input.authorId, { postDelta: 1 }).catch(() => {});
     } else {
       await this.topics.save(row);
     }
@@ -320,6 +323,7 @@ export class TopicsService {
         topicId: row.id,
         actorId: input.authorId,
       });
+      this.userProfile.adjustCounts(row.authorId, { postDelta: 1 }).catch(() => {});
     } else {
       await this.topics.save(row);
     }
@@ -340,6 +344,9 @@ export class TopicsService {
     }
     row.deletedAt = new Date();
     await this.topics.save(row);
+    if (row.status === 'PUBLISHED') {
+      this.userProfile.adjustCounts(row.authorId, { postDelta: -1 }).catch(() => {});
+    }
     return { ok: true, topicId: row.id, deletedAt: row.deletedAt.toISOString() };
   }
 

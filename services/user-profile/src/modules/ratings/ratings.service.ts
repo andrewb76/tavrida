@@ -101,6 +101,17 @@ export class RatingsService {
     return { data: rows.map((row) => this.toLogEntry(row)) };
   }
 
+  async adjustCounts(
+    userId: string,
+    input: { postDelta?: number; commentDelta?: number },
+  ): Promise<{ postCount: number; commentCount: number }> {
+    const row = await this.ensure(userId);
+    if (input.postDelta) row.postCount = Math.max(0, (row.postCount ?? 0) + input.postDelta);
+    if (input.commentDelta) row.commentCount = Math.max(0, (row.commentCount ?? 0) + input.commentDelta);
+    if (input.postDelta || input.commentDelta) await this.ratings.save(row);
+    return { postCount: row.postCount ?? 0, commentCount: row.commentCount ?? 0 };
+  }
+
   async adjust(
     userId: string,
     input: {

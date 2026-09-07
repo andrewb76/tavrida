@@ -16,6 +16,16 @@ class AdjustRatingBody {
   ratingDelta?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  postDelta?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  commentDelta?: number;
+
+  @IsOptional()
   @IsString()
   @MinLength(1)
   actorId?: string;
@@ -62,5 +72,13 @@ export class InternalRatingsController {
   @Post(':userId/adjust')
   adjust(@Param('userId') userId: string, @Body() body: AdjustRatingBody) {
     return this.ratings.adjust(userId, body);
+  }
+
+  @Post(':userId/counts')
+  adjustCounts(
+    @Param('userId') userId: string,
+    @Body() body: { postDelta?: number; commentDelta?: number },
+  ) {
+    return this.ratings.adjustCounts(userId, body);
   }
 }

@@ -11,6 +11,7 @@ import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsPublisher } from '../events/forum-events.publisher';
 import { CategoriesService } from '../categories/categories.service';
+import { UserProfileClient } from '../user-profile-client/user-profile.client';
 import { VotesService } from '../votes/votes.service';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class CommentsService {
     private readonly config: ConfigService,
     private readonly votes: VotesService,
     private readonly events: ForumEventsPublisher,
+    private readonly userProfile: UserProfileClient,
   ) {}
 
   async listByTopic(
@@ -215,6 +217,7 @@ export class CommentsService {
       };
     }).then((created) => {
       this.events.flush();
+      this.userProfile.adjustCounts(input.authorId, { commentDelta: 1 }).catch(() => {});
       return created;
     });
   }
@@ -317,6 +320,9 @@ export class CommentsService {
 
     // Denormalized counter on topic
     await this.topics.decrement({ id: input.topicId }, 'commentCount', 1);
+
+    // Decrement user's comment count
+    this.userProfile.adjustCounts(comment.authorId, { commentDelta: -1 }).catch(() => {});
 
     return {
       ok: true,
