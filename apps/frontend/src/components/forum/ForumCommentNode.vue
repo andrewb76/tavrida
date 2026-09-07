@@ -4,22 +4,23 @@ import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
-import MedalBadges from '@/components/profile/MedalBadges.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { useMediaUpload } from '@/composables/useMediaUpload';
 import {
   createComment,
   deleteComment,
   forumAuthorLabel,
+  listUserMedals,
   promoteCommentToTopic,
   updateComment,
   type CommentTreeNode,
   type ForumComment,
+  type ForumUserMedal,
 } from '@/services/forum';
 import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
 
@@ -60,6 +61,20 @@ const canDelete = computed(() => {
   if (!props.currentUserId || isDeleted.value) return false;
   return session.isModerator;
 });
+
+const commentMedals = ref<ForumUserMedal[]>([]);
+const commentMedalsOverflow = computed(() => Math.max(0, commentMedals.value.length - 2));
+
+async function loadMedals() {
+  const userId = props.node.author?.userId ?? props.node.authorId;
+  if (!userId) { commentMedals.value = []; return; }
+  try {
+    commentMedals.value = await listUserMedals(userId);
+  } catch { commentMedals.value = []; }
+}
+
+onMounted(loadMedals);
+watch(() => props.node.author?.userId ?? props.node.authorId, loadMedals);
 
 const deleting = ref(false);
 
@@ -205,12 +220,23 @@ async function onDelete() {
           size="sm"
         />
         <div class="forum-comment__header-text">
-          <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
-          <MedalBadges
-            v-if="node.author?.userId"
-            :user-id="node.author.userId"
-            :limit="2"
-          />
+          <div class="forum-comment__author-row">
+            <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
+            <img
+              v-for="m in commentMedals"
+              :key="m.medalId"
+              v-if="m.medalIconUrl"
+              :src="m.medalIconUrl"
+              :alt="m.medalName"
+              :title="m.reason ? `${m.medalName} — ${m.reason}` : m.medalName"
+              class="forum-comment__medal-icon"
+            >
+            <span
+              v-if="commentMedalsOverflow > 0"
+              class="forum-comment__medal-more"
+              :title="commentMedals.slice(2).map(m => m.medalName).join(', ')"
+            >+{{ commentMedalsOverflow }}</span>
+          </div>
           <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
         </div>
         <div
@@ -478,10 +504,29 @@ async function onDelete() {
   flex: 1;
 }
 
+.forum-comment__author-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
 .forum-comment__author {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.forum-comment__medal-icon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.125rem;
+  object-fit: contain;
+}
+
+.forum-comment__medal-more {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
 }
 
 .forum-comment__time {
