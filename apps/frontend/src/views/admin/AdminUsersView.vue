@@ -115,6 +115,10 @@ function rankLabel(rank: ForumRank): string {
   return FORUM_RANK_LABELS[rank] ?? rank;
 }
 
+function medalsWithIcon(row: AdminUserRow) {
+  return row.medals.filter(m => m.medalIconUrl);
+}
+
 function relativeTime(iso: string | null | undefined): string {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -555,10 +559,9 @@ async function confirmDeposit() {
                 :title="row.rating.banUntil ? `banUntil ${fmtDate(row.rating.banUntil)}` : 'isLimited'"
               >rating-ban</span>
               <img
-                v-for="m in row.medals"
+                v-for="m in medalsWithIcon(row)"
                 :key="m.medalId"
-                v-if="m.medalIconUrl"
-                :src="m.medalIconUrl"
+                :src="m.medalIconUrl!"
                 :alt="m.medalName"
                 :title="m.medalName"
                 class="size-4 rounded-sm object-contain"

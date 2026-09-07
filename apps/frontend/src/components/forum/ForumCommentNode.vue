@@ -63,6 +63,7 @@ const canDelete = computed(() => {
 });
 
 const commentMedals = ref<ForumUserMedal[]>([]);
+const commentMedalsWithIcon = computed(() => commentMedals.value.filter(m => m.medalIconUrl));
 const commentMedalsOverflow = computed(() => Math.max(0, commentMedals.value.length - 2));
 
 async function loadMedals() {
@@ -223,10 +224,9 @@ async function onDelete() {
           <div class="forum-comment__author-row">
             <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
             <img
-              v-for="m in commentMedals"
+              v-for="m in commentMedalsWithIcon"
               :key="m.medalId"
-              v-if="m.medalIconUrl"
-              :src="m.medalIconUrl"
+              :src="m.medalIconUrl!"
               :alt="m.medalName"
               :title="m.reason ? `${m.medalName} — ${m.reason}` : m.medalName"
               class="forum-comment__medal-icon"
