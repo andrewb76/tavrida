@@ -5,7 +5,7 @@ export class MedalTables1784247200000 implements MigrationInterface {
 
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "forum"."medal" (
+      CREATE TABLE IF NOT EXISTS "forum"."medal" (
         "id"           uuid NOT NULL,
         "name"         varchar(200) NOT NULL,
         "description"  text NOT NULL DEFAULT '',
@@ -17,7 +17,7 @@ export class MedalTables1784247200000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "forum"."user_medal" (
+      CREATE TABLE IF NOT EXISTS "forum"."user_medal" (
         "user_id"    varchar(128) NOT NULL,
         "medal_id"   uuid NOT NULL,
         "awarded_at" timestamptz NOT NULL DEFAULT now(),
@@ -29,10 +29,10 @@ export class MedalTables1784247200000 implements MigrationInterface {
     `);
 
     await queryRunner.query(
-      'CREATE INDEX "idx_user_medal_user" ON "forum"."user_medal" ("user_id")',
+      'CREATE INDEX IF NOT EXISTS "idx_user_medal_user" ON "forum"."user_medal" ("user_id")',
     );
     await queryRunner.query(
-      'CREATE INDEX "idx_user_medal_medal" ON "forum"."user_medal" ("medal_id")',
+      'CREATE INDEX IF NOT EXISTS "idx_user_medal_medal" ON "forum"."user_medal" ("medal_id")',
     );
   }
 

@@ -15,6 +15,7 @@ import { MedalEntity } from './entities/medal.entity';
 import { ReactionEntity } from './entities/reaction.entity';
 import { TagEntity } from './entities/tag.entity';
 import { TopicEntity } from './entities/topic.entity';
+import { TopicViewEntity } from './entities/topic-view.entity';
 import { UserMedalEntity } from './entities/user-medal.entity';
 import { AccessGroupsModule } from './modules/access-groups/access-groups.module';
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -54,6 +55,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
         AccessGroupMemberEntity,
         CategoryAccessGroupEntity,
         TopicEntity,
+        TopicViewEntity,
         CommentEntity,
         CommentClosureEntity,
         ReactionEntity,

@@ -5,7 +5,7 @@ export class AddTopicView1784247000000 implements MigrationInterface {
 
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "forum"."topic_view" (
+      `CREATE TABLE IF NOT EXISTS "forum"."topic_view" (
         "topic_id"  uuid NOT NULL,
         "user_id"   varchar(128) NOT NULL,
         "viewed_at" timestamptz  NOT NULL DEFAULT now(),
@@ -14,10 +14,10 @@ export class AddTopicView1784247000000 implements MigrationInterface {
       )`,
     );
     await queryRunner.query(
-      'CREATE INDEX "idx_topic_view_topic" ON "forum"."topic_view" ("topic_id")',
+      'CREATE INDEX IF NOT EXISTS "idx_topic_view_topic" ON "forum"."topic_view" ("topic_id")',
     );
     await queryRunner.query(
-      'CREATE INDEX "idx_topic_view_user" ON "forum"."topic_view" ("user_id")',
+      'CREATE INDEX IF NOT EXISTS "idx_topic_view_user" ON "forum"."topic_view" ("user_id")',
     );
   }
 
