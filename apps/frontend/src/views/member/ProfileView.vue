@@ -736,6 +736,8 @@ async function copyInviteLink() {
           @updated="onRatingUpdated"
         />
 
+        <MedalBadges :user-id="publicProfile.userId" />
+
         <RouterLink
           :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
           class="profile-referral-link"
