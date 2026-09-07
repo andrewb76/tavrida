@@ -77,8 +77,8 @@ async function loadForum() {
   loadingForum.value = true;
   forumError.value = null;
   try {
-    const list = await listTopics();
-    topics.value = list.slice(0, 5);
+    const { data } = await listTopics();
+    topics.value = data.slice(0, 5);
   } catch (e) {
     forumError.value = e instanceof Error ? e.message : 'Не удалось загрузить форум';
     topics.value = [];

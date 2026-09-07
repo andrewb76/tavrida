@@ -1,5 +1,6 @@
 import { bffAuthHeaders } from './apiAuth';
-import type { ForumRank, ForumUserMedal } from './forum';
+import type { ForumUserMedal } from './forum';
+import type { ForumRank } from './profile';
 
 export type PlatformRole = 'member' | 'admin' | 'moderator' | 'expert';
 

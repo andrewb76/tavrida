@@ -292,7 +292,7 @@ function onCommentDeleted(commentId: string) {
 async function onCommentPromoted() {
   // Subtree moved to the new topic — reload flat list from API.
   try {
-    comments.value = await listComments(topicId.value);
+    comments.value = (await listComments(topicId.value)).data;
   } catch {
     /* keep local state if refresh fails */
   }

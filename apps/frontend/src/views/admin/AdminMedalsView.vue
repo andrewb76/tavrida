@@ -9,7 +9,7 @@ import {
   revokeMedal,
   type ForumMedal,
 } from '@/services/forum';
-import { listAdminUsers, type AdminUserRow } from '@/services/adminUsers';
+import { fetchAdminUsers, type AdminUserRow } from '@/services/adminUsers';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -183,7 +183,7 @@ async function submitDeleteMedal(id: string) {
 async function load() {
   loading.value = true;
   try {
-    const [m, u] = await Promise.all([listMedals(), listAdminUsers({ limit: 500 })]);
+    const [m, u] = await Promise.all([listMedals(), fetchAdminUsers({ limit: 500 })]);
     medals.value = m;
     allUsers.value = u.data ?? [];
   } catch (e) {
