@@ -168,6 +168,9 @@ export class CommentsService {
         }),
       );
 
+      // Denormalized counter on topic
+      await manager.increment(TopicEntity, { id: input.topicId }, 'commentCount', 1);
+
       if (input.parentId) {
         const ancestors = await manager.find(CommentClosureEntity, {
           where: { descendantId: input.parentId },
@@ -311,6 +314,10 @@ export class CommentsService {
     }
     comment.deletedAt = new Date();
     await this.comments.save(comment);
+
+    // Denormalized counter on topic
+    await this.topics.decrement({ id: input.topicId }, 'commentCount', 1);
+
     return {
       ok: true,
       commentId: comment.id,
@@ -354,6 +361,10 @@ export class CommentsService {
 
       comment.promotedTopicId = newTopic.id;
       await manager.save(comment);
+
+      // Denormalized counters: source loses moved comments, new topic gains them
+      await manager.decrement(TopicEntity, { id: sourceTopic.id }, 'commentCount', moveIds.length);
+      await manager.increment(TopicEntity, { id: newTopic.id }, 'commentCount', moveIds.length);
 
       await this.events.enqueueTopicPublished(manager, {
         topicId: newTopic.id,

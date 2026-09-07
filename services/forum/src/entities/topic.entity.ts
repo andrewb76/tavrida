@@ -37,6 +37,10 @@ export class TopicEntity {
   @Column('int', { name: 'vote_minus_count', default: 0 })
   voteMinusCount!: number;
 
+  /** Denormalized comment count (incremented/decremented with comment CRUD). */
+  @Column('int', { name: 'comment_count', default: 0 })
+  commentCount!: number;
+
   /** Denormalized tag slugs (SoT: forum.tag + forum.content_tag). */
   @Column('jsonb', { default: () => "'[]'" })
   tags!: string[];

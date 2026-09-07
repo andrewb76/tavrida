@@ -58,6 +58,7 @@ export type TopicSummary = {
   votePlusCount?: number;
   voteMinusCount?: number;
   score?: number;
+  commentCount?: number;
   createdAt: string;
   updatedAt: string;
 };

@@ -299,6 +299,10 @@ function authorOf(topic: TopicSummary) {
               #{{ tag }}
             </li>
           </ul>
+          <span
+            v-if="topic.commentCount"
+            class="forum-list__comments"
+          >💬 {{ topic.commentCount }}</span>
         </RouterLink>
       </li>
     </ul>
@@ -493,6 +497,15 @@ function authorOf(topic: TopicSummary) {
   border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
   border-radius: 4px;
   padding: 0.1rem 0.35rem;
+}
+
+.forum-list__comments {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .forum-list__pagination {

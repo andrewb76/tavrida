@@ -397,6 +397,7 @@ export class TopicsService {
       votePlusCount: row.votePlusCount ?? 0,
       voteMinusCount: row.voteMinusCount ?? 0,
       score: (row.votePlusCount ?? 0) - (row.voteMinusCount ?? 0),
+      commentCount: row.commentCount ?? 0,
       tags: tagItems?.map((t) => t.slug) ?? row.tags ?? [],
       tagItems: tagItems ?? undefined,
       createdAt: row.createdAt.toISOString(),
