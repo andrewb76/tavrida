@@ -61,9 +61,26 @@ const access = ref<AccessState | null>(null);
 const accessError = ref<string | null>(null);
 const accessSaving = ref(false);
 
-const parentTitle = computed(() => {
-  if (!form.value?.parentId) return null;
-  return flattenCategories(tree.value).find((c) => c.id === form.value?.parentId)?.title ?? null;
+function getDescendantIds(nodes: CategoryNode[], targetId: string): string[] {
+  for (const node of nodes) {
+    if (node.id === targetId) {
+      const ids: string[] = [];
+      const collect = (n: CategoryNode[]) => {
+        for (const c of n) { ids.push(c.id); collect(c.children); }
+      };
+      collect(node.children);
+      return ids;
+    }
+    const found = getDescendantIds(node.children, targetId);
+    if (found.length) return found;
+  }
+  return [];
+}
+
+const availableParents = computed(() => {
+  const excludeId = form.value?.categoryId;
+  const excludeIds = excludeId ? new Set([excludeId, ...getDescendantIds(tree.value, excludeId)]) : new Set<string>();
+  return flattenCategories(tree.value).filter((c) => !excludeIds.has(c.id));
 });
 
 async function loadTree() {
@@ -450,7 +467,6 @@ async function saveAccess() {
     <UiModal
       v-model:open="formOpen"
       :title="form?.mode === 'create' ? 'Новый раздел' : 'Редактирование'"
-      :description="parentTitle ? `Родитель: ${parentTitle}` : undefined"
     >
       <form
         class="grid gap-4"
@@ -511,6 +527,20 @@ async function saveAccess() {
             step="1"
             class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
+        </label>
+        <label class="grid gap-1.5 text-sm text-text">
+          Родитель
+          <select
+            v-model="form!.parentId"
+            class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option :value="null">— Корневой раздел —</option>
+            <option
+              v-for="cat in availableParents"
+              :key="cat.id"
+              :value="cat.id"
+            >{{ cat.title }}</option>
+          </select>
         </label>
         <p
           v-if="formError"
