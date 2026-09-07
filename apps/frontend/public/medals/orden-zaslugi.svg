@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Ribbon -->
+  <path d="M24 44 L20 60 L28 54 L32 62 L36 54 L44 60 L40 44" fill="#00008B" opacity="0.9"/>
+  <!-- Outer star rays -->
+  <polygon points="32,4 35,20 50,10 38,22 54,24 38,28 50,38 35,28 32,44 29,28 14,38 26,28 10,24 26,22 14,10 29,20" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+  <!-- Inner circle -->
+  <circle cx="32" cy="24" r="9" fill="#FFF8DC" stroke="#DAA520" stroke-width="1.5"/>
+  <!-- Crown -->
+  <path d="M26 22 L28 18 L30 21 L32 17 L34 21 L36 18 L38 22 Z" fill="#FFD700" stroke="#B8860B" stroke-width="0.8"/>
+  <!-- Base -->
+  <rect x="28" y="22" width="8" height="4" fill="#FFD700" rx="1"/>
+</svg>

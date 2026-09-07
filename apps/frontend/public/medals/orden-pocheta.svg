@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Ribbon -->
+  <path d="M24 44 L20 60 L28 54 L32 62 L36 54 L44 60 L40 44" fill="#4B0082" opacity="0.9"/>
+  <!-- Medal body - cross shape -->
+  <rect x="26" y="8" width="12" height="36" rx="2" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>
+  <rect x="14" y="18" width="36" height="12" rx="2" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>
+  <!-- Center circle -->
+  <circle cx="32" cy="24" r="7" fill="#FFF8DC" stroke="#DAA520" stroke-width="1"/>
+  <!-- Laurel -->
+  <path d="M28 24 Q32 20 36 24" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <path d="M29 26 Q32 23 35 26" fill="none" stroke="#556B2F" stroke-width="1"/>
+</svg>

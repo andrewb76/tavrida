@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Ribbon -->
+  <path d="M24 42 L20 60 L28 52 L32 62 L36 52 L44 60 L40 42" fill="#8B5E3C" opacity="0.9"/>
+  <!-- Medal body -->
+  <circle cx="32" cy="28" r="20" fill="#CD7F32" stroke="#A0522D" stroke-width="2"/>
+  <circle cx="32" cy="28" r="16" fill="none" stroke="#DEB887" stroke-width="1.5"/>
+  <!-- Star -->
+  <polygon points="32,14 34.5,22 43,22 36,27 38.5,35 32,30 25.5,35 28,27 21,22 29.5,22" fill="#DEB887"/>
+  <!-- Number -->
+  <text x="32" y="50" text-anchor="middle" font-size="10" font-weight="bold" fill="#8B5E3C" font-family="serif">III</text>
+</svg>

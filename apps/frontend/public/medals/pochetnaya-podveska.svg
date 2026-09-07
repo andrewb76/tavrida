@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Ribbon top -->
+  <rect x="24" y="0" width="16" height="12" rx="2" fill="#8B0000"/>
+  <rect x="26" y="0" width="4" height="12" fill="#FFD700" opacity="0.6"/>
+  <rect x="34" y="0" width="4" height="12" fill="#FFD700" opacity="0.6"/>
+  <!-- Chain links -->
+  <line x1="32" y1="12" x2="32" y2="18" stroke="#DAA520" stroke-width="2"/>
+  <!-- Pendant body -->
+  <path d="M32 18 L46 28 L42 46 L22 46 L18 28 Z" fill="#DAA520" stroke="#B8860B" stroke-width="1.5"/>
+  <path d="M32 22 L42 30 L39 42 L25 42 L22 30 Z" fill="#FFF8DC" opacity="0.3"/>
+  <!-- Laurel wreath -->
+  <path d="M27 32 Q32 26 37 32" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <path d="M29 35 Q32 30 35 35" fill="none" stroke="#556B2F" stroke-width="1"/>
+  <!-- Star in center -->
+  <polygon points="32,31 33,34 36,34 33.5,36 34.5,39 32,37 29.5,39 30.5,36 28,34 31,34" fill="#FFD700"/>
+</svg>
