@@ -48,6 +48,9 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 /** Bumps when WS reaction events arrive — ForumReactionBar refreshes. */
 const reactionEpoch = ref(0);
+const commentsTotal = ref(0);
+const commentsLoadingMore = ref(false);
+const COMMENTS_PAGE = 100;
 
 const editingTopic = ref(false);
 const topicTitleDraft = ref('');
@@ -156,18 +159,20 @@ async function load(id: string) {
   error.value = null;
   topic.value = null;
   comments.value = [];
+  commentsTotal.value = 0;
   editingTopic.value = false;
   postError.value = null;
   unbindWs();
   try {
-    const [topicRow, commentRows, meta] = await Promise.all([
+    const [topicRow, commentResult, meta] = await Promise.all([
       getTopic(id),
-      listComments(id),
+      listComments(id, { limit: COMMENTS_PAGE, offset: 0 }),
       fetchForumMeta(),
     ]);
     if (generation !== loadGeneration || id !== topicId.value) return;
     topic.value = topicRow;
-    comments.value = commentRows;
+    comments.value = commentResult.data;
+    commentsTotal.value = commentResult.total;
     forumMeta.value = meta;
     bindWs(id);
     recordTopicView(id).catch(() => {});
@@ -176,6 +181,25 @@ async function load(id: string) {
     error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
   } finally {
     if (generation === loadGeneration) loading.value = false;
+  }
+}
+
+async function loadMoreComments() {
+  const id = topicId.value;
+  if (!id || commentsLoadingMore.value) return;
+  commentsLoadingMore.value = true;
+  try {
+    const result = await listComments(id, {
+      limit: COMMENTS_PAGE,
+      offset: comments.value.length,
+    });
+    if (topicId.value !== id) return;
+    comments.value = [...comments.value, ...result.data];
+    commentsTotal.value = result.total;
+  } catch {
+    /* silent */
+  } finally {
+    commentsLoadingMore.value = false;
   }
 }
 
@@ -557,7 +581,15 @@ async function submitTopicComment() {
         v-if="!isDraft"
         class="forum-topic__comments"
       >
-        <h2>Комментарии ({{ comments.length }})</h2>
+        <h2>
+          Комментарии ({{ commentsTotal }})
+          <span
+            v-if="comments.length < commentsTotal"
+            class="forum-topic__comments-loaded"
+          >
+            · показано {{ comments.length }}
+          </span>
+        </h2>
 
         <ul
           v-if="commentTree.length"
@@ -579,6 +611,19 @@ async function submitTopicComment() {
             @promoted="onCommentPromoted"
           />
         </ul>
+
+        <div
+          v-if="comments.length < commentsTotal"
+          class="forum-topic__load-more"
+        >
+          <UiButton
+            intent="secondary"
+            :disabled="commentsLoadingMore"
+            @click="loadMoreComments"
+          >
+            {{ commentsLoadingMore ? 'Загрузка…' : `Показать ещё (${comments.length} из ${commentsTotal})` }}
+          </UiButton>
+        </div>
         <p
           v-else
           class="forum-topic__empty"
@@ -794,5 +839,17 @@ async function submitTopicComment() {
 
 .forum-topic__error {
   color: var(--color-error);
+}
+
+.forum-topic__comments-loaded {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.forum-topic__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0;
 }
 </style>

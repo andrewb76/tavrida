@@ -37,6 +37,7 @@ export class TopicsService {
   async list(input: {
     categoryId?: string;
     limit?: number;
+    offset?: number;
     status?: TopicStatus;
     authorId?: string;
     viewerId?: string;
@@ -45,6 +46,7 @@ export class TopicsService {
     q?: string;
   }) {
     const take = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    const skip = Math.max(input.offset ?? 0, 0);
     const status: TopicStatus = input.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
     const access = { viewerId: input.viewerId, isAdmin: input.isAdmin };
     const q = this.normalizeSearchQuery(input.q);
@@ -66,13 +68,14 @@ export class TopicsService {
         .andWhere('topic.author_id = :authorId', { authorId: input.authorId })
         .andWhere('topic.deleted_at IS NULL')
         .orderBy('topic.updated_at', 'DESC')
+        .skip(skip)
         .take(take);
       if (input.categoryId) {
         qb.andWhere('topic.category_id = :categoryId', { categoryId: input.categoryId });
       }
       this.applySearchFilter(qb, q);
-      const rows = await qb.getMany();
-      return { data: rows.map((row) => this.toSummary(row)) };
+      const [rows, total] = await qb.getManyAndCount();
+      return { data: rows.map((row) => this.toSummary(row)), total };
     }
 
     const qb = this.topics
@@ -81,21 +84,24 @@ export class TopicsService {
       .andWhere('topic.deleted_at IS NULL')
       .orderBy('topic.is_pinned', 'DESC')
       .addOrderBy('topic.created_at', 'DESC')
+      .skip(skip)
       .take(take);
     if (input.categoryId) {
       qb.andWhere('topic.category_id = :categoryId', { categoryId: input.categoryId });
     }
     this.applySearchFilter(qb, q);
 
-    const rows = await qb.getMany();
+    const [rows, total] = await qb.getManyAndCount();
 
     if (input.categoryId || input.isAdmin) {
-      return { data: rows.map((row) => this.toSummary(row)) };
+      return { data: rows.map((row) => this.toSummary(row)), total };
     }
 
     const allowed = new Set(await this.categoryAcl.listAccessibleCategoryIds(access));
+    const filtered = rows.filter((row) => allowed.has(row.categoryId));
     return {
-      data: rows.filter((row) => allowed.has(row.categoryId)).map((row) => this.toSummary(row)),
+      data: filtered.map((row) => this.toSummary(row)),
+      total,
     };
   }
 

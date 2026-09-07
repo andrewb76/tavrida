@@ -68,7 +68,16 @@ class ListTopicsQuery {
   categoryId?: string;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
   limit?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
 
   @IsOptional()
   @IsIn(['DRAFT', 'PUBLISHED'])
@@ -178,6 +187,7 @@ export class InternalTopicsController {
     return this.topics.list({
       categoryId: query.categoryId,
       limit: query.limit,
+      offset: query.offset,
       status: query.status,
       authorId: query.authorId,
       viewerId: query.viewerId,

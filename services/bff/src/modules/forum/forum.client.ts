@@ -119,6 +119,7 @@ export class ForumClient {
   listTopics(query: {
     categoryId?: string;
     limit?: number;
+    offset?: number;
     status?: 'DRAFT' | 'PUBLISHED';
     authorId?: string;
     viewerId?: string;
@@ -128,13 +129,14 @@ export class ForumClient {
     const params = new URLSearchParams();
     if (query.categoryId) params.set('categoryId', query.categoryId);
     if (query.limit != null) params.set('limit', String(query.limit));
+    if (query.offset != null) params.set('offset', String(query.offset));
     if (query.status) params.set('status', query.status);
     if (query.authorId) params.set('authorId', query.authorId);
     if (query.viewerId) params.set('viewerId', query.viewerId);
     if (query.isAdmin) params.set('isAdmin', '1');
     if (query.q) params.set('q', query.q);
     const suffix = params.size ? `?${params.toString()}` : '';
-    return this.request<{ data: unknown[] }>('GET', `/internal/v1/topics${suffix}`);
+    return this.request<{ data: unknown[]; total: number }>('GET', `/internal/v1/topics${suffix}`);
   }
 
   getTopic(
@@ -199,6 +201,7 @@ export class ForumClient {
   listComments(
     topicId: string,
     viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
+    pagination?: { limit?: number; offset?: number },
   ) {
     const params = new URLSearchParams();
     if (viewer?.userId) params.set('viewerId', viewer.userId);
@@ -206,8 +209,10 @@ export class ForumClient {
       params.set('changeWindowMinutes', String(viewer.changeWindowMinutes));
     }
     if (viewer?.isAdmin) params.set('isAdmin', '1');
+    if (pagination?.limit != null) params.set('limit', String(pagination.limit));
+    if (pagination?.offset != null) params.set('offset', String(pagination.offset));
     const q = params.size ? `?${params}` : '';
-    return this.request<{ data: unknown[] }>(
+    return this.request<{ data: unknown[]; total: number }>(
       'GET',
       `/internal/v1/topics/${topicId}/comments${q}`,
     );

@@ -124,15 +124,24 @@ export class InternalCommentsController {
     @Query('viewerId') viewerId?: string,
     @Query('changeWindowMinutes') changeWindowMinutes?: string,
     @Query('isAdmin') isAdmin?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ) {
-    return this.comments.listByTopic(topicId, {
-      userId: viewerId,
-      changeWindowMinutes:
-        changeWindowMinutes != null && changeWindowMinutes !== ''
-          ? Number(changeWindowMinutes)
-          : undefined,
-      isAdmin: isAdmin === '1' || isAdmin === 'true',
-    });
+    return this.comments.listByTopic(
+      topicId,
+      {
+        userId: viewerId,
+        changeWindowMinutes:
+          changeWindowMinutes != null && changeWindowMinutes !== ''
+            ? Number(changeWindowMinutes)
+            : undefined,
+        isAdmin: isAdmin === '1' || isAdmin === 'true',
+      },
+      {
+        limit: limit != null ? Number(limit) : undefined,
+        offset: offset != null ? Number(offset) : undefined,
+      },
+    );
   }
 
   @Post()

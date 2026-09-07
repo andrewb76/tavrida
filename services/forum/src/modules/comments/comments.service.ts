@@ -32,6 +32,7 @@ export class CommentsService {
   async listByTopic(
     topicId: string,
     viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
+    pagination?: { limit?: number; offset?: number },
   ) {
     const topic = await this.topics.findOne({ where: { id: topicId } });
     if (
@@ -46,10 +47,17 @@ export class CommentsService {
       isAdmin: viewer?.isAdmin,
     });
 
-    const rows = await this.comments.find({
+    const take = pagination?.limit != null ? Math.min(Math.max(pagination.limit, 1), 200) : undefined;
+    const skip = pagination?.offset != null ? Math.max(pagination.offset, 0) : undefined;
+
+    const findOptions: Parameters<typeof this.comments.find>[0] = {
       where: { topicId },
-      order: { createdAt: 'ASC' },
-    });
+      order: { createdAt: 'ASC' as const },
+    };
+    if (take != null) findOptions.take = take;
+    if (skip != null) findOptions.skip = skip;
+
+    const [rows, total] = await this.comments.findAndCount(findOptions);
 
     const changeWindowMinutes = viewer?.changeWindowMinutes ?? 3;
     const mineById = await this.votes.findMineMany(
@@ -87,6 +95,7 @@ export class CommentsService {
           updatedAt: row.updatedAt.toISOString(),
         };
       }),
+      total,
     };
   }
 

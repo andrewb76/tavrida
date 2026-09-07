@@ -93,18 +93,22 @@ export async function listTopics(options?: {
   categoryId?: string;
   status?: 'DRAFT' | 'PUBLISHED';
   q?: string;
-}): Promise<TopicSummary[]> {
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: TopicSummary[]; total: number }> {
   const params = new URLSearchParams();
   if (options?.categoryId) params.set('categoryId', options.categoryId);
   if (options?.status) params.set('status', options.status);
   if (options?.q) params.set('q', options.q);
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  if (options?.offset != null) params.set('offset', String(options.offset));
   const suffix = params.size ? `?${params}` : '';
   const res = await fetch(`${apiBase()}/forum/topics${suffix}`, {
     headers: options?.status === 'DRAFT' ? await forumAuthHeaders() : await forumAuthHeaders(true),
   });
   if (!res.ok) throw new Error('Не удалось загрузить темы');
-  const json = (await res.json()) as { data: TopicSummary[] };
-  return json.data;
+  const json = (await res.json()) as { data: TopicSummary[]; total: number };
+  return json;
 }
 
 export async function fetchForumMeta(): Promise<ForumMeta> {
@@ -173,13 +177,20 @@ export async function deleteTopic(topicId: string): Promise<void> {
   }
 }
 
-export async function listComments(topicId: string): Promise<ForumComment[]> {
-  const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments`, {
+export async function listComments(
+  topicId: string,
+  options?: { limit?: number; offset?: number },
+): Promise<{ data: ForumComment[]; total: number }> {
+  const params = new URLSearchParams();
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  if (options?.offset != null) params.set('offset', String(options.offset));
+  const suffix = params.size ? `?${params}` : '';
+  const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments${suffix}`, {
     headers: await forumAuthHeaders(true),
   });
   if (!res.ok) throw new Error('Не удалось загрузить комментарии');
-  const json = (await res.json()) as { data: ForumComment[] };
-  return json.data;
+  const json = (await res.json()) as { data: ForumComment[]; total: number };
+  return json;
 }
 
 export async function createComment(

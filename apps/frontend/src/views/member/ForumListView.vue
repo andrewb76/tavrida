@@ -22,6 +22,9 @@ const topics = ref<TopicSummary[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const total = ref(0);
+const page = ref(0);
+const PAGE_SIZE = 20;
 
 const draftsOnly = computed(() => route.query.status === 'DRAFT');
 
@@ -54,17 +57,21 @@ async function load(
   selectedCategoryId: string | undefined,
   drafts: boolean,
   q: string | undefined,
+  pageNum: number,
 ) {
   const generation = ++loadGeneration;
   loading.value = true;
   error.value = null;
   topics.value = [];
   try {
-    const [topicList, categoryTree] = await Promise.all([
+    const offset = pageNum * PAGE_SIZE;
+    const [topicResult, categoryTree] = await Promise.all([
       listTopics({
         categoryId: selectedCategoryId,
         status: drafts ? 'DRAFT' : undefined,
         q,
+        limit: PAGE_SIZE,
+        offset,
       }),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(),
     ]);
@@ -72,11 +79,13 @@ async function load(
       generation !== loadGeneration ||
       selectedCategoryId !== categoryId.value ||
       drafts !== draftsOnly.value ||
-      q !== searchQ.value
+      q !== searchQ.value ||
+      pageNum !== page.value
     ) {
       return;
     }
-    topics.value = topicList;
+    topics.value = topicResult.data;
+    total.value = topicResult.total;
     if (!categories.value.length) categories.value = categoryTree;
   } catch (e) {
     if (generation !== loadGeneration) return;
@@ -86,11 +95,21 @@ async function load(
   }
 }
 
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)));
+
 watch(
   [categoryId, draftsOnly, searchQ],
-  ([id, drafts, q]) => void load(id, drafts, q),
+  () => {
+    page.value = 0;
+    void load(categoryId.value, draftsOnly.value, searchQ.value, 0);
+  },
   { immediate: true },
 );
+
+function goToPage(p: number) {
+  page.value = Math.max(0, Math.min(p, totalPages.value - 1));
+  void load(categoryId.value, draftsOnly.value, searchQ.value, page.value);
+}
 
 function listQuery(extra: Record<string, string> = {}) {
   const query: Record<string, string> = { ...extra };
@@ -283,6 +302,29 @@ function authorOf(topic: TopicSummary) {
         </RouterLink>
       </li>
     </ul>
+
+    <div
+      v-if="!loading && !error && topics.length > 0 && totalPages > 1"
+      class="forum-list__pagination"
+    >
+      <UiButton
+        intent="secondary"
+        :disabled="page === 0"
+        @click="goToPage(page - 1)"
+      >
+        ← Назад
+      </UiButton>
+      <span class="forum-list__page-info">
+        {{ page + 1 }} / {{ totalPages }}
+      </span>
+      <UiButton
+        intent="secondary"
+        :disabled="page >= totalPages - 1"
+        @click="goToPage(page + 1)"
+      >
+        Далее →
+      </UiButton>
+    </div>
   </section>
 </template>
 
@@ -451,5 +493,18 @@ function authorOf(topic: TopicSummary) {
   border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
   border-radius: 4px;
   padding: 0.1rem 0.35rem;
+}
+
+.forum-list__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.forum-list__page-info {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
 </style>

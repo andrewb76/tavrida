@@ -290,6 +290,7 @@ export class ForumController {
     @Req() req: Request & { user?: AuthUser },
     @Query('categoryId') categoryId?: string,
     @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
     @Query('status') status?: string,
     @Query('q') q?: string,
   ) {
@@ -305,6 +306,7 @@ export class ForumController {
     const res = await this.forum.listTopics({
       categoryId,
       limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
       status: wantDrafts ? 'DRAFT' : 'PUBLISHED',
       authorId: wantDrafts ? req.user!.sub : undefined,
       viewerId: userId,
@@ -312,7 +314,7 @@ export class ForumController {
       q,
     });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
-    return { data };
+    return { data, total: res.total };
   }
 
   @Get('topics/:id')
@@ -393,17 +395,22 @@ export class ForumController {
 
   @Get('topics/:id/comments')
   @UseGuards(OptionalJwtAuthGuard)
-  async listComments(@Param('id') topicId: string, @Req() req: Request & { user?: AuthUser }) {
+  async listComments(
+    @Param('id') topicId: string,
+    @Req() req: Request & { user?: AuthUser },
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
     const changeWindowMinutes = await this.forumSettings.voteChangeWindowMinutes();
     const userId = req.user?.sub;
     const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
-    const res = await this.forum.listComments(topicId, {
-      userId,
-      changeWindowMinutes,
-      isAdmin,
-    });
+    const res = await this.forum.listComments(
+      topicId,
+      { userId, changeWindowMinutes, isAdmin },
+      { limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined },
+    );
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
-    return { data };
+    return { data, total: res.total };
   }
 
   @Post('topics/:id/comments')
