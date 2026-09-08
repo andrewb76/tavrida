@@ -11,7 +11,7 @@ import {
   type CategoryNode,
   type TopicSummary,
 } from '@/services/forum';
-import { UiButton } from '@tavrida/ui';
+import { UiButton, UiIcon } from '@tavrida/ui';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
@@ -293,7 +293,10 @@ function authorOf(topic: TopicSummary) {
               :title="topic.isPinned ? 'Открепить' : 'Закрепить'"
               @click.prevent="togglePin(topic)"
             >
-              📌
+              <UiIcon
+                name="pin"
+                :size="16"
+              />
             </button>
           </div>
           <div class="forum-list__excerpt">

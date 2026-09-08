@@ -30,6 +30,7 @@ export const uiIcons = {
   edit: 'lucide:pencil',
   trash: 'lucide:trash-2',
   promote: 'lucide:split',
+  pin: 'lucide:pin',
   tag: 'lucide:tag',
   thumbsUp: 'lucide:thumbs-up',
   thumbsDown: 'lucide:thumbs-down',

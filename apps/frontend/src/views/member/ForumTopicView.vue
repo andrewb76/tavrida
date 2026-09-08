@@ -475,7 +475,10 @@ async function submitTopicComment() {
               :title="topic?.isPinned ? 'Открепить' : 'Закрепить'"
               @click="togglePin"
             >
-              📌
+              <UiIcon
+                name="pin"
+                :size="18"
+              />
             </UiButton>
             <UiButton
               v-if="isDraft && canEditTopic && !editingTopic"

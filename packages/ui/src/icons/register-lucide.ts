@@ -20,6 +20,7 @@ import moreHorizontal from '@iconify-icons/lucide/more-horizontal';
 import packageIcon from '@iconify-icons/lucide/package';
 import paperclip from '@iconify-icons/lucide/paperclip';
 import pencil from '@iconify-icons/lucide/pencil';
+import pin from '@iconify-icons/lucide/pin';
 import plus from '@iconify-icons/lucide/plus';
 import reply from '@iconify-icons/lucide/reply';
 import search from '@iconify-icons/lucide/search';
@@ -66,6 +67,7 @@ const SUBSET: Record<string, typeof home> = {
   'lucide:more-horizontal': moreHorizontal,
   'lucide:paperclip': paperclip,
   'lucide:pencil': pencil,
+  'lucide:pin': pin,
   'lucide:reply': reply,
   'lucide:send': send,
   'lucide:split': split,
