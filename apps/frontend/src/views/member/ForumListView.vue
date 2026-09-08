@@ -7,7 +7,6 @@ import {
   forumAuthorLabel,
   listCategories,
   listTopics,
-  toggleTopicPin,
   type CategoryNode,
   type TopicSummary,
 } from '@/services/forum';
@@ -110,13 +109,6 @@ watch(
 function goToPage(p: number) {
   page.value = Math.max(0, Math.min(p, totalPages.value - 1));
   void load(categoryId.value, draftsOnly.value, searchQ.value, page.value);
-}
-
-async function togglePin(topic: TopicSummary) {
-  try {
-    const result = await toggleTopicPin(topic.id);
-    topic.isPinned = result.isPinned;
-  } catch { /* ignore */ }
 }
 
 function listQuery(extra: Record<string, string> = {}) {
@@ -280,24 +272,17 @@ function authorOf(topic: TopicSummary) {
           class="forum-list__item-body"
         >
           <div class="forum-list__title-row">
+            <UiIcon
+              v-if="topic.isPinned"
+              name="pin"
+              :size="16"
+              class="forum-list__pin-icon"
+            />
             <strong>{{ topic.title }}</strong>
             <span
               v-if="topic.status === 'DRAFT'"
               class="forum-list__draft"
             >Черновик</span>
-            <button
-              v-if="session.isModerator"
-              type="button"
-              class="forum-list__pin-btn"
-              :class="{ 'forum-list__pin-btn--active': topic.isPinned }"
-              :title="topic.isPinned ? 'Открепить' : 'Закрепить'"
-              @click.prevent="togglePin(topic)"
-            >
-              <UiIcon
-                name="pin"
-                :size="16"
-              />
-            </button>
           </div>
           <div class="forum-list__excerpt">
             <MarkdownBody
@@ -502,20 +487,9 @@ function authorOf(topic: TopicSummary) {
   color: var(--color-text-muted);
 }
 
-.forum-list__pin-btn {
+.forum-list__pin-icon {
   flex: none;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-size: 0.875rem;
-  line-height: 1;
-  opacity: 0.35;
-  transition: opacity 0.15s;
-}
-.forum-list__pin-btn:hover,
-.forum-list__pin-btn--active {
-  opacity: 1;
+  color: var(--color-text-muted);
 }
 
 .forum-list__draft {
