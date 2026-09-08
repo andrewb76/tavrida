@@ -198,6 +198,10 @@ export class ForumClient {
     return this.request<{ ok: boolean }>('DELETE', `/internal/v1/topics/${topicId}`, input);
   }
 
+  pinTopic(topicId: string, asModerator?: boolean) {
+    return this.request<{ id: string; isPinned: boolean }>('POST', `/internal/v1/topics/${topicId}/pin`, { asModerator });
+  }
+
   listComments(
     topicId: string,
     viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },

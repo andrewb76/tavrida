@@ -350,6 +350,22 @@ export class TopicsService {
     return { ok: true, topicId: row.id, deletedAt: row.deletedAt.toISOString() };
   }
 
+  async togglePinned(input: { topicId: string; asModerator?: boolean }) {
+    if (!input.asModerator) {
+      throw new BadRequestException({
+        type: 'forbidden',
+        detail: 'Закреплять темы могут только администратор и модератор',
+      });
+    }
+    const row = await this.topics.findOne({ where: { id: input.topicId } });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ type: 'not-found', detail: `Topic ${input.topicId} not found` });
+    }
+    row.isPinned = !row.isPinned;
+    await this.topics.save(row);
+    return { id: row.id, isPinned: row.isPinned };
+  }
+
   async updateTags(input: {
     topicId: string;
     authorId: string;

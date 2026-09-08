@@ -393,6 +393,13 @@ export class ForumController {
     });
   }
 
+  @Post('topics/:id/pin')
+  @UseGuards(JwtAuthGuard)
+  async togglePin(@CurrentUser() user: AuthUser, @Param('id') topicId: string) {
+    await this.requireForumStaff(user.sub);
+    return this.forum.pinTopic(topicId, true);
+  }
+
   @Get('topics/:id/comments')
   @UseGuards(OptionalJwtAuthGuard)
   async listComments(

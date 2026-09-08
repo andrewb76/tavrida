@@ -21,6 +21,7 @@ import {
   getTopic,
   listComments,
   recordTopicView,
+  toggleTopicPin,
   updateTopic,
   type ForumComment,
   type ForumMeta,
@@ -82,6 +83,16 @@ const canDeleteTopic = computed(() => {
   if (!topic.value || !session.userId) return false;
   return session.isModerator;
 });
+
+const canPinTopic = computed(() => session.isModerator);
+
+async function togglePin() {
+  if (!topic.value) return;
+  try {
+    const result = await toggleTopicPin(topic.value.id);
+    topic.value.isPinned = result.isPinned;
+  } catch { /* ignore */ }
+}
 
 const deletingTopic = ref(false);
 
@@ -454,6 +465,17 @@ async function submitTopicComment() {
                 name="trash"
                 :size="18"
               />
+            </UiButton>
+            <UiButton
+              v-if="canPinTopic && !editingTopic"
+              intent="ghost"
+              size="icon"
+              type="button"
+              :aria-label="topic?.isPinned ? 'Открепить' : 'Закрепить'"
+              :title="topic?.isPinned ? 'Открепить' : 'Закрепить'"
+              @click="togglePin"
+            >
+              📌
             </UiButton>
             <UiButton
               v-if="isDraft && canEditTopic && !editingTopic"

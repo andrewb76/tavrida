@@ -178,6 +178,19 @@ export async function deleteTopic(topicId: string): Promise<void> {
   }
 }
 
+export async function toggleTopicPin(topicId: string): Promise<{ id: string; isPinned: boolean }> {
+  const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/pin`, {
+    method: 'POST',
+    headers: await forumJsonHeaders(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(err?.detail ?? 'Не удалось изменить статус закрепления');
+  }
+  return (await res.json()) as { id: string; isPinned: boolean };
+}
+
 export async function listComments(
   topicId: string,
   options?: { limit?: number; offset?: number },

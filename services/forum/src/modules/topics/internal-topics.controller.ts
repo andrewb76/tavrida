@@ -248,6 +248,11 @@ export class InternalTopicsController {
     });
   }
 
+  @Post(':id/pin')
+  togglePin(@Param('id') id: string, @Body('asModerator') asModerator?: boolean) {
+    return this.topics.togglePinned({ topicId: id, asModerator });
+  }
+
   @Post(':id/views')
   async recordView(@Param('id') id: string, @Body('userId') userId: string) {
     await this.topicViews.recordView(id, userId);
