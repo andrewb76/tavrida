@@ -32,7 +32,7 @@
 | `category` | Иерархия; `policy` jsonb (allowComments, …) |
 | `category_access_group` | Группы доступа ACL: пусто = всем; иначе OR по группам + admin ([category-acl.md](./category-acl.md)) |
 | `access_group` / `access_group_member` | Группы и состав для ACL |
-| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; `deletedAt` (soft-delete staff); vote counters |
+| `topic` | Тема; `status` (`DRAFT`/`PUBLISHED`), `publishedAt`; `deletedAt` (soft-delete staff); vote counters; `commentCount` (denormalized); `isPinned` |
 | `comment` | Комментарий; `promotedTopicId`; `deletedAt`; vote counters |
 | `comment_closure` | Closure table для дерева |
 | `reaction` | emoji-реакции (`emojiKey`) |
@@ -68,6 +68,14 @@
 | GET/POST | `/forum/topics` | Список (published; `?categoryId`, `?q` ILIKE title/body, `?status=DRAFT` — свои) / создание (`status`) |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
 | DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
+| POST | `/forum/topics/{id}/pin` | Toggle `isPinned` (staff-only) |
+| GET | `/forum/medals` | Список медалей |
+| GET | `/forum/medals/users/{userId}` | Медали пользователя |
+| POST | `/admin/forum/medals` | Создать медаль (admin) |
+| PUT | `/admin/forum/medals/{id}` | Редактировать медаль (admin) |
+| DELETE | `/admin/forum/medals/{id}` | Удалить медаль (admin) |
+| POST | `/admin/forum/medals/users/{userId}` | Наградить медалью (admin) |
+| DELETE | `/admin/forum/medals/users/{userId}/{medalId}` | Отозвать медаль (admin) |
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
 | PUT | `/forum/topics/{id}/tags` | Заменить теги (автор **или** staff) |
