@@ -442,3 +442,4 @@ services:
 
 # Network `tavrida_net` is created by stack-infra.dev.yml (same stack deploy -c … -c …).
 # Do not mark it external here — merge would override infra and require a pre-existing network.
+
