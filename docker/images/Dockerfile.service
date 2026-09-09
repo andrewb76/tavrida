@@ -32,13 +32,64 @@ RUN pnpm install --frozen-lockfile --ignore-scripts \
 
 # --- Assemble /deploy ---
 # 1. Copy built service dist + package.json.
-# 2. Collect ALL external production deps (service deps + workspace package deps).
+# 2. Collect external production deps reachable from the service's dependency tree only.
 # 3. Install with npm (flat node_modules, no symlinks, no workspace junk).
 # 4. Copy workspace package dist into node_modules/@tavrida/*.
 ARG SERVICE_DIR
 RUN mkdir -p /deploy && cp -r /repo/${SERVICE_DIR}/dist /deploy/dist && cp /repo/${SERVICE_DIR}/package.json /deploy/package.json
-RUN cd /deploy && node -e "const fs=require('fs'),p=require('path');const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));const ws=new Map();for(const d of fs.readdirSync('/repo/packages',{withFileTypes:true})){if(!d.isDirectory())continue;const dir=p.join('/repo/packages',d.name);const pj=p.join(dir,'package.json');if(!fs.existsSync(pj))continue;const m=JSON.parse(fs.readFileSync(pj,'utf8'));ws.set(m.name,{dir,deps:m.dependencies||{}});}const wsNames=new Set(ws.keys());const all={};const add=(deps)=>{for(const[n,v] of Object.entries(deps||{}))if(!wsNames.has(n)&&!all[n])all[n]=v;};add(pkg.dependencies);for(const{deps} of ws.values())add(deps);fs.writeFileSync('package.json',JSON.stringify({name:pkg.name,version:'0.0.0',private:true,dependencies:all},null,2));console.log('Installing',Object.keys(all).length,'external deps');" && npm install --omit=dev --ignore-scripts 2>&1 && rm -f package.json package-lock.json
-RUN cd /deploy && node -e "const fs=require('fs'),p=require('path');for(const d of fs.readdirSync('/repo/packages',{withFileTypes:true})){if(!d.isDirectory())continue;const dir=p.join('/repo/packages',d.name);const pj=p.join(dir,'package.json');if(!fs.existsSync(pj))continue;const name=JSON.parse(fs.readFileSync(pj,'utf8')).name;const dest=p.join('/deploy/node_modules',name);fs.mkdirSync(dest,{recursive:true});const dist=p.join(dir,'dist');if(fs.existsSync(dist))fs.cpSync(dist,p.join(dest,'dist'),{recursive:true});fs.copyFileSync(pj,p.join(dest,'package.json'));console.log('copied',name);}"
+RUN cd /deploy && node -e " \
+  const fs=require('fs'),p=require('path'); \
+  const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); \
+  const ws=new Map(); \
+  for(const d of fs.readdirSync('/repo/packages',{withFileTypes:true})){ \
+    if(!d.isDirectory())continue; \
+    const dir=p.join('/repo/packages',d.name); \
+    const pj=p.join(dir,'package.json'); \
+    if(!fs.existsSync(pj))continue; \
+    const m=JSON.parse(fs.readFileSync(pj,'utf8')); \
+    ws.set(m.name,{dir,deps:m.dependencies||{}}); \
+  } \
+  const wsNames=new Set(ws.keys()); \
+  const all={}; \
+  const visited=new Set(); \
+  const add=(name,version)=>{ \
+    if(visited.has(name))return; \
+    visited.add(name); \
+    if(!wsNames.has(name)){ \
+      if(version)all[name]=version; \
+      return; \
+    } \
+    const w=ws.get(name); \
+    if(!w)return; \
+    for(const[n,v] of Object.entries(w.deps))add(n,v); \
+  }; \
+  for(const[n,v] of Object.entries(pkg.dependencies||{}))add(n,v); \
+  fs.writeFileSync('package.json',JSON.stringify({name:pkg.name,version:'0.0.0',private:true,dependencies:all},null,2)); \
+  console.log('Installing',Object.keys(all).length,'external deps (transitive from service only)');" && npm install --omit=dev --ignore-scripts 2>&1 && rm -f package.json package-lock.json
+RUN cd /deploy && node -e " \
+  const fs=require('fs'),p=require('path'); \
+  const origPkg=JSON.parse(fs.readFileSync('/repo/${SERVICE_DIR}/package.json','utf8')); \
+  const ws=new Map(); \
+  for(const d of fs.readdirSync('/repo/packages',{withFileTypes:true})){ \
+    if(!d.isDirectory())continue; \
+    const dir=p.join('/repo/packages',d.name); \
+    const pj=p.join(dir,'package.json'); \
+    if(!fs.existsSync(pj))continue; \
+    const m=JSON.parse(fs.readFileSync(pj,'utf8')); \
+    ws.set(m.name,{dir,deps:m.dependencies||{}}); \
+  } \
+  const needed=new Set(); \
+  const walk=(deps)=>{for(const[n] of Object.entries(deps||{})){if(!needed.has(n)){needed.add(n);const w=ws.get(n);if(w)walk(w.deps)}}}; \
+  walk(origPkg.dependencies); \
+  for(const[name,w] of ws){ \
+    if(!needed.has(name))continue; \
+    const dest=p.join('/deploy/node_modules',name); \
+    fs.mkdirSync(dest,{recursive:true}); \
+    const dist=p.join(w.dir,'dist'); \
+    if(fs.existsSync(dist))fs.cpSync(dist,p.join(dest,'dist'),{recursive:true}); \
+    fs.copyFileSync(p.join(w.dir,'package.json'),p.join(dest,'package.json')); \
+    console.log('copied',name); \
+  }"
 
 FROM node:22-alpine AS runtime
 ARG SERVICE_DIR
