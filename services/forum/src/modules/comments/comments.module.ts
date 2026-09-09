@@ -6,6 +6,7 @@ import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsModule } from '../events/forum-events.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { VotesModule } from '../votes/votes.module';
+import { UserProfileClientModule } from '../user-profile-client/user-profile-client.module';
 import { CommentsService } from './comments.service';
 import { InternalCommentsController } from './internal-comments.controller';
 
@@ -15,6 +16,7 @@ import { InternalCommentsController } from './internal-comments.controller';
     CategoriesModule,
     VotesModule,
     ForumEventsModule,
+    UserProfileClientModule,
   ],
   controllers: [InternalCommentsController],
   providers: [CommentsService],
