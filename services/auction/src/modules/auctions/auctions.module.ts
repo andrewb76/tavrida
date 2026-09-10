@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuctionCategoryEntity } from '../../entities/auction-category.entity';
 import { AuctionEntity } from '../../entities/auction.entity';
 import { BidEntity } from '../../entities/bid.entity';
 import { ExpertAppraisalEntity } from '../../entities/expert-appraisal.entity';
@@ -10,7 +11,7 @@ import { AuctionsService } from './auctions.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AuctionEntity, BidEntity, ExpertAppraisalEntity, LotViewEntity]),
+    TypeOrmModule.forFeature([AuctionEntity, BidEntity, ExpertAppraisalEntity, LotViewEntity, AuctionCategoryEntity]),
   ],
   controllers: [InternalAuctionsController],
   providers: [AuctionsService, AuctionEventsPublisher],

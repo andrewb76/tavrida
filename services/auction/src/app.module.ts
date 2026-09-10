@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OutboxMessageEntity } from '@tavrida/outbox';
 import { resolve } from 'node:path';
+import { AuctionCategoryEntity } from './entities/auction-category.entity';
 import { AuctionEntity } from './entities/auction.entity';
 import { BidEntity } from './entities/bid.entity';
 import { ExpertAppraisalEntity } from './entities/expert-appraisal.entity';
@@ -31,7 +32,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
             database: process.env.DB_NAME ?? 'tavrida_lot',
           }),
       schema: 'auction',
-      entities: [AuctionEntity, BidEntity, ExpertAppraisalEntity, OutboxMessageEntity],
+      entities: [AuctionEntity, BidEntity, ExpertAppraisalEntity, OutboxMessageEntity, AuctionCategoryEntity],
       migrations: [resolve(__dirname, 'migrations', '*.{js,ts}')],
       migrationsTableName: 'auction_migrations',
       migrationsRun: process.env.NODE_ENV === 'production',

@@ -302,7 +302,13 @@ services:
       - |
         set -e
         export DB_URL="postgres://${POSTGRES_USER}:$$(cat /run/secrets/postgres_password)@postgres:5432/logto"
-        npm run cli db seed -- --swe
+        APP_COUNT=$$(npm run cli -- silent db query "SELECT count(*) as c FROM applications" 2>/dev/null | grep -o '[0-9]*' || echo "0")
+        if [ "$$APP_COUNT" = "0" ]; then
+          echo "Empty DB detected, running seed..."
+          npm run cli db seed -- --swe
+        else
+          echo "DB has $$APP_COUNT apps, skipping seed"
+        fi
         exec npm start
     environment:
       TRUST_PROXY_HEADER: 'true'
