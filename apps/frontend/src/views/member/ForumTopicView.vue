@@ -523,7 +523,7 @@ async function submitTopicComment() {
             <textarea
               v-model="topicBodyDraft"
               rows="8"
-              maxlength="10000"
+              :maxlength="session.isAdmin ? undefined : 10000"
               required
               class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text transition-colors placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="**жирный**, *курсив*, списки, ссылки, `код`, ```блоки кода```"

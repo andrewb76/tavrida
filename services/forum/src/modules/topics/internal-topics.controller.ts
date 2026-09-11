@@ -48,7 +48,6 @@ class CreateTopicDto {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body!: string;
 
   @IsOptional()
@@ -135,7 +134,6 @@ class UpdateTopicDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body?: string;
 
   @IsOptional()

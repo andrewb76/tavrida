@@ -45,6 +45,8 @@ import { ForumAuthorsService } from './forum-authors.service';
 import { forumVoteKarmaDelta } from './forum-vote-karma';
 import { ForumSettingsReader } from '../scalar-config/forum-settings.reader';
 
+const BODY_MAX_LENGTH = 10_000;
+
 class MediaAttachmentDto {
   @IsString()
   @MinLength(1)
@@ -77,7 +79,6 @@ class CreateTopicDto {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body!: string;
 
   @IsOptional()
@@ -94,7 +95,6 @@ class CreateTopicDto {
 class CreateCommentDto {
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body!: string;
 
   @IsOptional()
@@ -157,7 +157,6 @@ class UpdateTopicDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body?: string;
 
   @IsOptional()
@@ -175,7 +174,6 @@ class UpdateCommentDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @MaxLength(10000)
   body?: string;
 
   @IsOptional()
@@ -347,6 +345,12 @@ export class ForumController {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
+      });
+    }
     return this.authors.enrichOne(
       await this.forum.createTopic({
         ...body,
@@ -371,6 +375,12 @@ export class ForumController {
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);
+    if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
+      });
+    }
     return this.authors.enrichOne(
       await this.forum.updateTopic(topicId, {
         ...body,
@@ -430,6 +440,12 @@ export class ForumController {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
     this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
+      });
+    }
     return this.authors.enrichOne(
       await this.forum.createComment(topicId, {
         ...body,
@@ -455,6 +471,12 @@ export class ForumController {
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);
+    if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
+      throw new BadRequestException({
+        type: 'validation',
+        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
+      });
+    }
     return this.authors.enrichOne(
       await this.forum.updateComment(topicId, commentId, {
         ...body,
