@@ -3,6 +3,8 @@ import './config/hydrate-secrets';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
 import { assertInternalAuthConfigured } from '@tavrida/internal-auth';
 import { AppModule } from './app.module';
 import { ensureDatabaseSchema } from './config/ensure-database';
@@ -19,9 +21,13 @@ function parseCorsOrigins(): string[] | boolean {
 async function bootstrap() {
   await ensureDatabaseSchema();
 
-  const app = await NestFactory.create(AppModule, {
+  const server = express();
+  server.use(express.json({ limit: '10mb' }));
+  server.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
     rawBody: true,
-    bodyParser: { limit: '10mb' },
+    bodyParser: false,
   });
   assertInternalAuthConfigured(process.env);
   const config = app.get(ConfigService);

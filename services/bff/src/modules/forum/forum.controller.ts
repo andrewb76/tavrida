@@ -225,6 +225,7 @@ export class ForumController {
     body: string,
     attachments: MediaAttachment[] | undefined,
     limits: { countMax: number; sizeMaxBytes: number },
+    isAdmin = false,
   ) {
     try {
       assertMediaAttachmentsAllowed({
@@ -235,7 +236,7 @@ export class ForumController {
         maxCount: limits.countMax,
         maxSizeBytes: limits.sizeMaxBytes,
       });
-      if (body.includes('![')) {
+      if (!isAdmin && body.includes('![')) {
         assertMarkdownMediaUrlsAllowed({
           body,
           userId,
@@ -343,8 +344,8 @@ export class ForumController {
   @UseGuards(JwtAuthGuard)
   async createTopic(@CurrentUser() user: AuthUser, @Body() body: CreateTopicDto) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    this.validateForumMedia(user.sub, body.body, body.attachments, limits, isAdmin);
     if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
       throw new BadRequestException({
         type: 'validation',
@@ -370,11 +371,11 @@ export class ForumController {
     @Body() body: UpdateTopicDto,
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    if (body.body) {
-      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
-    }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);
+    if (body.body) {
+      this.validateForumMedia(user.sub, body.body, body.attachments, limits, asModerator);
+    }
     if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
       throw new BadRequestException({
         type: 'validation',
@@ -438,8 +439,8 @@ export class ForumController {
     @Body() body: CreateCommentDto,
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    this.validateForumMedia(user.sub, body.body, body.attachments, limits);
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
+    this.validateForumMedia(user.sub, body.body, body.attachments, limits, isAdmin);
     if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
       throw new BadRequestException({
         type: 'validation',
@@ -466,11 +467,11 @@ export class ForumController {
     @Body() body: UpdateCommentDto,
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    if (body.body) {
-      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
-    }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);
+    if (body.body) {
+      this.validateForumMedia(user.sub, body.body, body.attachments, limits, asModerator);
+    }
     if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
       throw new BadRequestException({
         type: 'validation',
