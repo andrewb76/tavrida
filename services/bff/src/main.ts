@@ -19,7 +19,10 @@ function parseCorsOrigins(): string[] | boolean {
 async function bootstrap() {
   await ensureDatabaseSchema();
 
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+    bodyParser: { limit: '10mb' },
+  });
   assertInternalAuthConfigured(process.env);
   const config = app.get(ConfigService);
   const authMode = resolveAuthMode({
