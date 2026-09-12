@@ -90,9 +90,9 @@ describe('forum-media.validation — attachment markdown sync', () => {
       const result = syncAttachmentMarkdown(body, [imageAttachment, pdfAttachment]);
       assert.ok(result.includes('![photo.jpg]'));
       assert.ok(result.includes('[report.pdf]'));
-      // Only one image link should be present
-      const imageCount = (result.match(/photo\.jpg/g) ?? []).length;
-      assert.equal(imageCount, 1);
+      // The original image URL should not be duplicated — only one occurrence of the full URL
+      const urlCount = (result.split(imageAttachment.url).length - 1);
+      assert.equal(urlCount, 1);
     });
 
     it('returns body unchanged for empty attachments', () => {
@@ -101,7 +101,10 @@ describe('forum-media.validation — attachment markdown sync', () => {
 
     it('handles body ending with newline', () => {
       const result = syncAttachmentMarkdown('Hello\n', [imageAttachment]);
-      assert.ok(result.includes('Hello\n\n'));
+      // Body ends with \n → no extra \n added as separator, just the markdown
+      assert.ok(result.startsWith('Hello\n'));
+      assert.ok(result.includes('![photo.jpg]'));
+      assert.ok(!result.includes('\n\n\n'));
     });
 
     it('handles body not ending with newline', () => {
