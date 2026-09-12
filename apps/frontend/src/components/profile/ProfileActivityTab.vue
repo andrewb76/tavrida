@@ -52,8 +52,8 @@ function formatDelta(value: number): string {
               }"
             >{{ formatDelta(entry.delta) }}</span>
           </div>
-          <p v-if="entry.reason" class="profile-activity__reason">
-            {{ entry.reason }}
+          <p v-if="entry.note" class="profile-activity__reason">
+            {{ entry.note }}
           </p>
           <span class="profile-activity__date">{{ new Date(entry.createdAt).toLocaleString('ru-RU') }}</span>
         </li>
