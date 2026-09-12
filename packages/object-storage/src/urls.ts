@@ -84,7 +84,7 @@ export function extractMarkdownImageUrls(body: string): string[] {
   const pattern = /!\[[^\]]*]\(([^)]+)\)/g;
   for (const match of body.matchAll(pattern)) {
     const raw = match[1]?.trim();
-    if (raw) urls.push(raw);
+    if (raw && /^https?:\/\//i.test(raw)) urls.push(raw);
   }
   return urls;
 }
