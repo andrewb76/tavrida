@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { DataSource, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
-import { validateForumContent } from '../../common/forum-media.validation';
+import { validateForumContent, syncAttachmentMarkdown } from '../../common/forum-media.validation';
 import { CategoryEntity } from '../../entities/category.entity';
 import { TopicEntity } from '../../entities/topic.entity';
 import { ForumEventsPublisher } from '../events/forum-events.publisher';
@@ -201,13 +201,15 @@ export class TopicsService {
       },
     });
 
+    const bodyWithAttachments = syncAttachmentMarkdown(input.body.trim(), attachments);
+
     const now = new Date();
     const row = this.topics.create({
       id: randomUUID(),
       categoryId: input.categoryId,
       authorId: input.authorId,
       title: input.title.trim(),
-      body: input.body.trim(),
+      body: bodyWithAttachments,
       attachments,
       isPinned: false,
       tags: [],
@@ -245,6 +247,7 @@ export class TopicsService {
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
     asModerator?: boolean;
+    restoreAttachments?: boolean;
   }) {
     const row = await this.topics.findOne({ where: { id: input.topicId } });
     if (!row || row.deletedAt) {
@@ -304,6 +307,16 @@ export class TopicsService {
           maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
         },
       });
+    }
+
+    // Sync attachment markdown links into body
+    if (input.attachments !== undefined) {
+      row.body = syncAttachmentMarkdown(row.body, row.attachments ?? []);
+    }
+
+    // Restore: add any missing attachment markdown links to body
+    if (input.restoreAttachments && row.attachments?.length) {
+      row.body = syncAttachmentMarkdown(row.body, row.attachments);
     }
 
     if (publishing) {

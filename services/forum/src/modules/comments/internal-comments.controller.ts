@@ -84,6 +84,10 @@ class UpdateCommentDto {
   @ValidateNested({ each: true })
   @Type(() => MediaAttachmentDto)
   attachments?: MediaAttachmentDto[];
+
+  @IsOptional()
+  @IsBoolean()
+  restoreAttachments?: boolean;
 }
 
 class UpdateCommentRequestDto extends UpdateCommentDto {

@@ -113,3 +113,49 @@ export function formatFileSize(bytes: number): string {
 export function isImageAttachment(attachment: MediaAttachment): boolean {
   return attachment.contentType.startsWith('image/');
 }
+
+// ── Attachment markdown sync ─────────────────────────────────────────
+
+/** Extract all URLs from markdown image/link syntax (![...](url) and [...](url)). */
+export function extractMarkdownUrls(body: string): string[] {
+  const regex = /!?\[[^\]]*\]\(([^)]+)\)/g;
+  const urls: string[] = [];
+  let match;
+  while ((match = regex.exec(body)) !== null) {
+    urls.push(match[1]);
+  }
+  return urls;
+}
+
+/**
+ * Ensure all attachment URLs are present in body as markdown links.
+ * Adds missing ones at the end. Does not duplicate existing URLs.
+ */
+export function syncAttachmentMarkdown(body: string, attachments: MediaAttachment[]): string {
+  if (!attachments.length) return body;
+
+  const existingUrls = extractMarkdownUrls(body);
+  const missing = attachments.filter((a) => !existingUrls.includes(a.url));
+  if (!missing.length) return body;
+
+  const markdown = missing
+    .map((a) => {
+      if (isImageAttachment(a)) {
+        return `![${a.filename}](${a.url})`;
+      }
+      return `[${a.filename}](${a.url})`;
+    })
+    .join('\n');
+
+  const separator = body.endsWith('\n') ? '' : '\n\n';
+  return body + separator + markdown;
+}
+
+/**
+ * Check whether every attachment URL is already present in the body as a markdown link.
+ */
+export function allAttachmentUrlsPresent(body: string, attachments: MediaAttachment[]): boolean {
+  if (!attachments.length) return true;
+  const existingUrls = extractMarkdownUrls(body);
+  return attachments.every((a) => existingUrls.includes(a.url));
+}

@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { DataSource, In, Repository } from 'typeorm';
 import type { MediaAttachment } from '@tavrida/object-storage';
 import { assertForumEditAllowed } from '../../common/forum-edit-window';
-import { validateForumContent } from '../../common/forum-media.validation';
+import { validateForumContent, syncAttachmentMarkdown } from '../../common/forum-media.validation';
 import { CommentClosureEntity } from '../../entities/comment-closure.entity';
 import { CommentEntity } from '../../entities/comment.entity';
 import { TopicEntity } from '../../entities/topic.entity';
@@ -185,13 +185,15 @@ export class CommentsService {
       },
     });
 
+    const bodyWithAttachments = syncAttachmentMarkdown(input.body.trim(), attachments);
+
     return this.dataSource.transaction(async (manager) => {
       const comment = manager.create(CommentEntity, {
         id: randomUUID(),
         topicId: input.topicId,
         authorId: input.authorId,
         parentId: input.parentId ?? null,
-        body: input.body.trim(),
+        body: bodyWithAttachments,
         attachments,
         promotedTopicId: null,
       });
@@ -267,6 +269,7 @@ export class CommentsService {
     maxAttachmentCount?: number;
     maxAttachmentSizeBytes?: number;
     asModerator?: boolean;
+    restoreAttachments?: boolean;
   }) {
     const comment = await this.comments.findOne({
       where: { id: input.commentId, topicId: input.topicId },
@@ -307,6 +310,16 @@ export class CommentsService {
         maxAttachmentSizeBytes: input.maxAttachmentSizeBytes ?? 2 * 1024 * 1024,
       },
     });
+
+    // Sync attachment markdown links into body
+    if (input.attachments !== undefined) {
+      comment.body = syncAttachmentMarkdown(comment.body, comment.attachments ?? []);
+    }
+
+    // Restore: add any missing attachment markdown links to body
+    if (input.restoreAttachments && comment.attachments?.length) {
+      comment.body = syncAttachmentMarkdown(comment.body, comment.attachments);
+    }
 
     await this.comments.save(comment);
 

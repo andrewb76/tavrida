@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
@@ -30,6 +29,7 @@ import {
 } from '@/services/forum';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
+import { syncAttachmentMarkdown, allAttachmentUrlsPresent } from '@/services/media';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
@@ -232,6 +232,16 @@ function cancelTopicEdit() {
   editingTopic.value = false;
   topicEditError.value = null;
 }
+
+function restoreTopicAttachments() {
+  if (!topic.value) return;
+  topicBodyDraft.value = syncAttachmentMarkdown(topicBodyDraft.value, topic.value.attachments ?? []);
+}
+
+const topicHasAllLinks = computed(() => {
+  if (!topic.value) return true;
+  return allAttachmentUrlsPresent(topicBodyDraft.value, topic.value.attachments ?? []);
+});
 
 async function saveTopicEdit() {
   if (!topic.value || !topicTitleDraft.value.trim() || !topicBodyDraft.value.trim()) return;
@@ -535,6 +545,20 @@ async function submitTopicComment() {
           >
             {{ topicEditError }}
           </p>
+          <div
+            v-if="(topic.attachments?.length ?? 0) > 0 && !topicHasAllLinks"
+            class="forum-topic__restore-hint"
+          >
+            <UiButton
+              intent="secondary"
+              size="sm"
+              type="button"
+              @click="restoreTopicAttachments"
+            >
+              Восстановить ссылки на вложения
+            </UiButton>
+            <span class="text-xs text-text-muted">Некоторые вложения отсутствуют в тексте</span>
+          </div>
           <div class="forum-topic__edit-actions">
             <UiButton
               intent="primary"
@@ -566,11 +590,6 @@ async function submitTopicComment() {
           </h1>
           <MarkdownBody :body="topic.body" />
         </template>
-        <AttachmentList
-          v-if="topic.attachments?.length"
-          :attachments="topic.attachments"
-          variant="forum"
-        />
         <ForumTopicTags
           :topic-id="topic.id"
           :tags="topic.tags ?? []"
@@ -785,6 +804,16 @@ async function submitTopicComment() {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.forum-topic__restore-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 }
 
 .forum-topic__head h1,

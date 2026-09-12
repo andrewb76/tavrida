@@ -154,6 +154,7 @@ export async function updateTopic(
     body?: string;
     status?: 'DRAFT' | 'PUBLISHED';
     attachments?: MediaAttachment[];
+    restoreAttachments?: boolean;
   },
 ): Promise<TopicDetail> {
   const res = await fetch(`${apiBase()}/forum/topics/${encodeURIComponent(topicId)}`, {
@@ -245,7 +246,7 @@ export async function createComment(
 export async function updateComment(
   topicId: string,
   commentId: string,
-  input: { body?: string; attachments?: MediaAttachment[] },
+  input: { body?: string; attachments?: MediaAttachment[]; restoreAttachments?: boolean },
 ): Promise<ForumComment> {
   const res = await fetch(
     `${apiBase()}/forum/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,

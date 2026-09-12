@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AttachmentList from '@/components/media/AttachmentList.vue';
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
@@ -20,6 +19,7 @@ import {
 import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
+import { syncAttachmentMarkdown, allAttachmentUrlsPresent } from '@/services/media';
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
@@ -119,6 +119,14 @@ function cancelEdit() {
   editing.value = false;
   editError.value = null;
 }
+
+function restoreCommentAttachments() {
+  editBody.value = syncAttachmentMarkdown(editBody.value, props.node.attachments ?? []);
+}
+
+const commentHasAllLinks = computed(() => {
+  return allAttachmentUrlsPresent(editBody.value, props.node.attachments ?? []);
+});
 
 async function saveEdit() {
   if (!editBody.value.trim()) return;
@@ -344,6 +352,20 @@ async function onDelete() {
           >
             {{ editError }}
           </p>
+          <div
+            v-if="(node.attachments?.length ?? 0) > 0 && !commentHasAllLinks"
+            class="forum-comment__restore-hint"
+          >
+            <UiButton
+              intent="secondary"
+              size="sm"
+              type="button"
+              @click="restoreCommentAttachments"
+            >
+              Восстановить ссылки на вложения
+            </UiButton>
+            <span class="text-xs text-text-muted">Некоторые вложения отсутствуют в тексте</span>
+          </div>
           <div class="forum-comment__edit-actions">
             <UiButton
               intent="primary"
@@ -367,11 +389,6 @@ async function onDelete() {
         <MarkdownBody
           v-else
           :body="node.body"
-        />
-        <AttachmentList
-          v-if="node.attachments?.length"
-          :attachments="node.attachments"
-          variant="forum"
         />
 
         <div class="forum-comment__toolbar">
@@ -588,6 +605,15 @@ async function onDelete() {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.forum-comment__restore-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 }
 
 .forum-comment__attachments {

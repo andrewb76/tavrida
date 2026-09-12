@@ -49,6 +49,7 @@
 | Чат в теме | ❌ | ❌ | ✅ | `forum.author.13topic.chatEnabled` → реализация в сервисе [`chat`](../../chat/requirements/analysis.md) (`kind=TOPIC`) |
 | Обсуждение лота #N | ❌ | ❌ | ✅ | `forum.auctionTopicLink` |
 | Вложения, медиа, длина | см. реестр | см. реестр | см. реестр | `forum.attachments*`, `forum.embeddedMedia`, `forum.postLengthMax` |
+| Восстановление ссылок на вложения | ✅ | ✅ | ✅ | Кнопка в форме редактирования добавляет недостающие markdown-ссылки в конец body |
 
 ¹ `forum.postsPerDay` — лимит **topic + comment** в сутки (префикс `forum.`, не сущность `post`; см. ADR-005).
 
