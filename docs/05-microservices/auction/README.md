@@ -131,6 +131,9 @@ stateDiagram-v2
 |--------|------|----------|
 | GET | `/auctions` | Список лотов — [catalog-listing](./requirements/catalog-listing.md) |
 | GET | `/auctions/{id}` | Детали + текущая цена |
+| POST | `/auctions/{id}/views` | Записать просмотр (auth) |
+| GET | `/auctions/{id}/views` | Количество просмотров (auth) |
+| GET | `/auctions/{id}/viewers` | Список зрителей (только владелец / admin) |
 | POST | `/auctions` | Создание (seller) |
 | POST | `/auctions/{id}/bids` | Ставка (English) / accept ask (Dutch → immediate ENDED) |
 | GET | `/auctions/{id}/bids` | История ставок |

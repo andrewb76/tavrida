@@ -94,6 +94,7 @@ export async function listTopics(options?: {
   categoryId?: string;
   status?: 'DRAFT' | 'PUBLISHED';
   q?: string;
+  authorId?: string;
   limit?: number;
   offset?: number;
 }): Promise<{ data: TopicSummary[]; total: number }> {
@@ -101,6 +102,7 @@ export async function listTopics(options?: {
   if (options?.categoryId) params.set('categoryId', options.categoryId);
   if (options?.status) params.set('status', options.status);
   if (options?.q) params.set('q', options.q);
+  if (options?.authorId) params.set('authorId', options.authorId);
   if (options?.limit != null) params.set('limit', String(options.limit));
   if (options?.offset != null) params.set('offset', String(options.offset));
   const suffix = params.size ? `?${params}` : '';
@@ -200,6 +202,23 @@ export async function listComments(
   if (options?.offset != null) params.set('offset', String(options.offset));
   const suffix = params.size ? `?${params}` : '';
   const res = await fetch(`${apiBase()}/forum/topics/${topicId}/comments${suffix}`, {
+    headers: await forumAuthHeaders(true),
+  });
+  if (!res.ok) throw new Error('Не удалось загрузить комментарии');
+  const json = (await res.json()) as { data: ForumComment[]; total: number };
+  return json;
+}
+
+export async function listCommentsByAuthor(
+  authorId: string,
+  options?: { limit?: number; offset?: number },
+): Promise<{ data: ForumComment[]; total: number }> {
+  const params = new URLSearchParams();
+  params.set('authorId', authorId);
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  if (options?.offset != null) params.set('offset', String(options.offset));
+  const suffix = params.size ? `?${params}` : '';
+  const res = await fetch(`${apiBase()}/forum/comments${suffix}`, {
     headers: await forumAuthHeaders(true),
   });
   if (!res.ok) throw new Error('Не удалось загрузить комментарии');

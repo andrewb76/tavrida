@@ -10,26 +10,42 @@
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Header card | Avatar, name, bio | Public |
-| Stats | Rating, deals, karma | Click rating/karma → log modal |
-| Tabs | Аукционы, Форум, Услуги | Activity lists |
-| Owner | Edit bio/avatar | `PATCH /profile/me` |
+| Header card | Avatar, name, username, presence | Public; click avatar → zoom |
+| Stats | Rating, karma, rank, medal badges | Click rating/karma → log modal |
+| Tabs | Обзор, Публикации, Комментарии, Активность | Content tabs with counts badges |
+| Overview | Completion meter, top contributions, subscription, invites | Owner-only invite section |
+| Posts tab | User's published topics (paginated) | `GET /forum/topics?authorId=X` |
+| Comments tab | User's comments across topics (paginated) | `GET /forum/comments?authorId=X` |
+| Activity tab | Karma/rating log, referral tree | `GET /profile/{id}/rating/log` |
+| Owner | Edit bio/avatar, change username | `PATCH /profile/me` + Logto redirect |
 | Private note | On **other** profiles | Author-only, invisible to others |
 
 **States:** loading · user not found · banned badge.
 
-**API:** `GET /profile/{id}`
+**API:** `GET /profile/{id}`, `GET /forum/topics?authorId=X`, `GET /forum/comments?authorId=X`
 
 ### ASCII
 
 ```
 ┌─────────────────────────────────────┐
 │ [Avatar]  displayName               │
-│ ★ 4.8 · 20 сделок · karma 128       │  ← click ★ / karma → log popup
-│ ░░ heatmap (activity grid)          │
+│ @username · В сети                   │
+│ ★ 4.8 · karma +12 · Новичок         │
+│ 0 тем · 0 комментариев              │
 ├─────────────────────────────────────┤
-│ [ Аукционы ] [ Форум ] [ Услуги ]   │
-│ Activity list …                     │
+│ [ Обзор ] [ Публикации ] [ Коммент. ] [ Актив. ] │
+│                                     │
+│ Заполненность профиля: 75%          │
+│ ░░░░░░░░░░░░░░░░░░░░ 75%            │
+│ ✓ Аватар  ✓ Имя  ✓ Username  ○ Подписка │
+│                                     │
+│ По голосам:                         │
+│  1. Title … 👍 12                   │
+│  2. Title … 👍 8                    │
+│                                     │
+│ Тариф: Про · до 09.10.2026          │
+│ Пригласить в俱乐部:                 │
+│ [email input] [Создать инвайт]      │
 └─────────────────────────────────────┘
 ```
 
@@ -38,16 +54,24 @@
 ```yaml
 ProfilePage:
   - ProfileHeader
-      - Avatar
-      - DisplayName
-      - Bio
+      - Avatar (click → zoom preview)
+      - DisplayName / Username
+      - PresenceStatus
       - RatingStats
-      - KarmaBadge
-      - ActivityHeatmap
+      - MedalBadges
   - ProfileTabs
-      - AuctionActivityList
-      - ForumActivityList
-      - MarketplaceActivityList
+      - OverviewTab
+          - ProfileCompletionMeter
+          - ProfileTopContributions
+          - SubscriptionCard (owner)
+          - InviteSection (owner)
+      - PostsTab
+          - ProfilePostsTab (paginated topics by authorId)
+      - CommentsTab
+          - ProfileCommentsTab (paginated comments by authorId)
+      - ActivityTab
+          - ProfileActivityTab (karma/rating log)
+          - ReferralTreeLink
   - ProfileEditForm (owner)
   - PrivateNoteWidget (viewer ≠ subject)
 ```

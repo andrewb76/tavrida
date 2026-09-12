@@ -101,6 +101,41 @@ export class CommentsService {
     };
   }
 
+  async listByAuthor(
+    authorId: string,
+    pagination?: { limit?: number; offset?: number },
+  ) {
+    const take = pagination?.limit != null ? Math.min(Math.max(pagination.limit, 1), 200) : 20;
+    const skip = pagination?.offset != null ? Math.max(pagination.offset, 0) : 0;
+
+    const qb = this.comments
+      .createQueryBuilder('comment')
+      .where('comment.author_id = :authorId', { authorId })
+      .andWhere('comment.deleted_at IS NULL')
+      .orderBy('comment.created_at', 'DESC')
+      .skip(skip)
+      .take(take);
+
+    const [rows, total] = await qb.getManyAndCount();
+
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        topicId: row.topicId,
+        authorId: row.authorId,
+        parentId: row.parentId,
+        body: row.body,
+        attachments: row.attachments ?? [],
+        promotedTopicId: row.promotedTopicId,
+        votePlusCount: row.votePlusCount ?? 0,
+        voteMinusCount: row.voteMinusCount ?? 0,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+      })),
+      total,
+    };
+  }
+
   async create(input: {
     topicId: string;
     authorId: string;

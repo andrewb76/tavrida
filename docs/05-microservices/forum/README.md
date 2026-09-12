@@ -65,7 +65,7 @@
 | GET | `/forum/categories` | Дерево с ACL (optional JWT); на узле `topicCount` / `commentCount` (published + non-deleted); admin видит `accessGroupIds` |
 | GET/PUT | `/admin/forum/categories/{id}/access-groups` | Привязка групп (admin) · [category-acl.md](./category-acl.md) |
 | CRUD | `/admin/forum/access-groups` (+ `/members`) | Группы доступа и состав |
-| GET/POST | `/forum/topics` | Список (published; `?categoryId`, `?q` ILIKE title/body, `?status=DRAFT` — свои) / создание (`status`) |
+| GET/POST | `/forum/topics` | Список (`?categoryId`, `?q` ILIKE title/body, `?status=DRAFT` — свои, `?authorId` — по автору) / создание (`status`) |
 | GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
 | DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
 | POST | `/forum/topics/{id}/pin` | Toggle `isPinned` (staff-only) |
@@ -80,6 +80,7 @@
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
 | PUT | `/forum/topics/{id}/tags` | Заменить теги (автор **или** staff) |
 | GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth; удалённые — placeholder |
+| GET | `/forum/comments` | Комментарии пользователя跨-topic (`?authorId`, `?limit`, `?offset`) |
 | PATCH | `/forum/topics/{id}/comments/{commentId}` | Edit (автор в окне **или** staff) |
 | DELETE | `/forum/topics/{id}/comments/{commentId}` | Soft-delete комментария (**только** staff) |
 | POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + subtree (**только** admin/moderator) |

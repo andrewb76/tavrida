@@ -292,6 +292,7 @@ export class ForumController {
     @Query('offset') offset?: string,
     @Query('status') status?: string,
     @Query('q') q?: string,
+    @Query('authorId') authorId?: string,
   ) {
     const wantDrafts = status === 'DRAFT';
     if (wantDrafts && !req.user?.sub) {
@@ -307,7 +308,7 @@ export class ForumController {
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
       status: wantDrafts ? 'DRAFT' : 'PUBLISHED',
-      authorId: wantDrafts ? req.user!.sub : undefined,
+      authorId: wantDrafts ? req.user!.sub : authorId,
       viewerId: userId,
       isAdmin,
       q,
@@ -427,6 +428,27 @@ export class ForumController {
       { userId, changeWindowMinutes, isAdmin },
       { limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined },
     );
+    const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
+    return { data, total: res.total };
+  }
+
+  @Get('comments')
+  @UseGuards(OptionalJwtAuthGuard)
+  async listCommentsByAuthor(
+    @Query('authorId') authorId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    if (!authorId) {
+      throw new BadRequestException({
+        type: 'validation-error',
+        detail: 'authorId is required',
+      });
+    }
+    const res = await this.forum.listCommentsByAuthor(authorId, {
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
     const data = await this.authors.enrichMany(res.data as Array<{ authorId: string }>);
     return { data, total: res.total };
   }

@@ -3,6 +3,12 @@ import PlaceholderPage from '@/components/PlaceholderPage.vue';
 import ProfileAvatarPreviewModal from '@/components/profile/ProfileAvatarPreviewModal.vue';
 import ProfilePrivateNoteModal from '@/components/profile/ProfilePrivateNoteModal.vue';
 import ProfileRatingStats from '@/components/profile/ProfileRatingStats.vue';
+import ProfileTabs, { type ProfileTab } from '@/components/profile/ProfileTabs.vue';
+import ProfilePostsTab from '@/components/profile/ProfilePostsTab.vue';
+import ProfileCommentsTab from '@/components/profile/ProfileCommentsTab.vue';
+import ProfileActivityTab from '@/components/profile/ProfileActivityTab.vue';
+import ProfileCompletionMeter from '@/components/profile/ProfileCompletionMeter.vue';
+import ProfileTopContributions from '@/components/profile/ProfileTopContributions.vue';
 import MedalBadges from '@/components/profile/MedalBadges.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
 import { UiButton } from '@tavrida/ui';
@@ -45,6 +51,11 @@ const lastCreated = ref<CreatedInvite | null>(null);
 const history = ref<InviteRecord[]>([]);
 const avatarLoadFailed = ref(false);
 const subscription = ref<UserSubscription | null>(null);
+const activeTab = ref<ProfileTab>('overview');
+
+const profileIdForTabs = computed(() =>
+  isMe.value ? effectiveProfileId.value : (userId.value ?? ''),
+);
 
 const editing = ref(false);
 const editDisplayName = ref('');
@@ -353,6 +364,7 @@ async function copyInviteLink() {
     :title="isMe ? 'Мой профиль' : publicLabel"
     :description="isMe ? 'Рейтинг, heatmap (d3), активность.' : 'Публичная визитка участника клуба.'"
   >
+    <!-- MY PROFILE: header card -->
     <template v-if="isMe">
       <section class="mb-6 flex items-center gap-4 rounded-lg border border-border bg-bg p-4">
         <button
@@ -483,153 +495,197 @@ async function copyInviteLink() {
         </div>
       </section>
 
-      <ProfileRatingStats
-        v-if="publicProfile?.rating"
-        :rating="publicProfile.rating"
-        @updated="onRatingUpdated"
-      />
-
-      <MedalBadges
-        v-if="publicProfile?.userId"
-        :user-id="publicProfile.userId"
-      />
-
-      <section
-        v-if="subscription"
-        class="profile-plan-card"
+      <!-- Tabs -->
+      <ProfileTabs
+        :counts="{ posts: publicProfile?.rating?.postCount, comments: publicProfile?.rating?.commentCount }"
+        @update:tab="activeTab = $event"
       >
-        <div class="profile-plan-card__row">
-          <span class="profile-plan-card__label">Тариф</span>
-          <span class="profile-plan-card__value">{{ planTitle }}</span>
-        </div>
-        <div
-          v-if="subscription.expiresAt"
-          class="profile-plan-card__row"
-        >
-          <span class="profile-plan-card__label">Действует до</span>
-          <span class="profile-plan-card__value">
-            {{ new Date(subscription.expiresAt).toLocaleDateString('ru-RU') }}
-            <template v-if="daysLeft != null">
-              <span class="profile-plan-card__muted">({{ daysLeft }} {{ daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней' }})</span>
-            </template>
-          </span>
-        </div>
-        <div class="profile-plan-card__row">
-          <span class="profile-plan-card__label">Автопродление</span>
-          <span class="profile-plan-card__value">{{ subscription.autoRenew ? 'Вкл' : 'Выкл' }}</span>
-        </div>
-        <RouterLink
-          :to="{ name: 'plans' }"
-          class="profile-plan-card__link"
-        >
-          Изменить тариф
-        </RouterLink>
-      </section>
+        <template #overview>
+          <ProfileCompletionMeter
+            v-if="publicProfile"
+            :profile="publicProfile"
+            :subscription="subscription"
+            :is-me="true"
+          />
 
-      <div class="space-y-4 border-b border-border pb-6">
-        <div>
-          <p class="text-sm font-medium text-text">
-            Пригласить в клуб
-          </p>
-          <p class="mt-1 text-sm text-text-muted">
-            Создайте ссылку и отправьте другу. После регистрации через Logto он сразу попадёт в клуб.
-          </p>
-        </div>
+          <ProfileRatingStats
+            v-if="publicProfile?.rating"
+            :rating="publicProfile.rating"
+            @updated="onRatingUpdated"
+            class="mt-4"
+          />
 
-        <div class="flex items-center gap-2">
-          <input
-            v-model="inviteEmail"
-            type="email"
-            required
-            placeholder="Email приглашаемого"
-            class="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+          <MedalBadges
+            v-if="publicProfile?.userId"
+            :user-id="publicProfile.userId"
+            class="mt-4"
+          />
+
+          <ProfileTopContributions
+            v-if="publicProfile?.userId"
+            :user-id="publicProfile.userId"
+            class="mt-4"
+          />
+
+          <section
+            v-if="subscription"
+            class="profile-plan-card mt-4"
           >
-          <UiButton
-            intent="primary"
-            :disabled="loading || !canCreateInvite || !inviteEmail.trim()"
-            @click="create"
+            <div class="profile-plan-card__row">
+              <span class="profile-plan-card__label">Тариф</span>
+              <span class="profile-plan-card__value">{{ planTitle }}</span>
+            </div>
+            <div
+              v-if="subscription.expiresAt"
+              class="profile-plan-card__row"
+            >
+              <span class="profile-plan-card__label">Действует до</span>
+              <span class="profile-plan-card__value">
+                {{ new Date(subscription.expiresAt).toLocaleDateString('ru-RU') }}
+                <template v-if="daysLeft != null">
+                  <span class="profile-plan-card__muted">({{ daysLeft }} {{ daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней' }})</span>
+                </template>
+              </span>
+            </div>
+            <div class="profile-plan-card__row">
+              <span class="profile-plan-card__label">Автопродление</span>
+              <span class="profile-plan-card__value">{{ subscription.autoRenew ? 'Вкл' : 'Выкл' }}</span>
+            </div>
+            <RouterLink
+              :to="{ name: 'plans' }"
+              class="profile-plan-card__link"
+            >
+              Изменить тариф
+            </RouterLink>
+          </section>
+
+          <div class="mt-4 space-y-4 border-b border-border pb-6">
+            <div>
+              <p class="text-sm font-medium text-text">
+                Пригласить в клуб
+              </p>
+              <p class="mt-1 text-sm text-text-muted">
+                Создайте ссылку и отправьте другу. После регистрации через Logto он сразу попадёт в клуб.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input
+                v-model="inviteEmail"
+                type="email"
+                required
+                placeholder="Email приглашаемого"
+                class="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              >
+              <UiButton
+                intent="primary"
+                :disabled="loading || !canCreateInvite || !inviteEmail.trim()"
+                @click="create"
+              >
+                {{ loading ? 'Создаём…' : 'Создать инвайт' }}
+              </UiButton>
+              <RouterLink
+                v-if="effectiveProfileId"
+                :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
+                class="profile-referral-link"
+              >
+                Реферальное дерево
+              </RouterLink>
+            </div>
+
+            <p
+              v-if="inviteError"
+              role="alert"
+              class="rounded-md border border-error/40 bg-error/10 px-3 py-2 text-sm text-error"
+            >
+              {{ inviteError }}
+            </p>
+
+            <p
+              v-if="isMe && session.isLoading"
+              class="text-sm text-text-muted"
+            >
+              Проверяем сессию…
+            </p>
+            <p
+              v-else-if="isMe && !session.isMember"
+              class="text-sm text-text-muted"
+            >
+              <UiButton
+                intent="ghost"
+                size="sm"
+                @click="auth.signIn('/profile/me')"
+              >
+                Войти, чтобы создавать инвайты
+              </UiButton>
+            </p>
+
+            <div
+              v-if="lastCreated"
+              class="space-y-3 rounded-lg border border-border bg-bg p-4"
+            >
+              <p class="text-sm font-medium text-text">
+                Ссылка для приглашения
+              </p>
+              <p class="break-all rounded-md bg-surface px-3 py-2 font-mono text-sm text-text">
+                {{ lastCreated.link }}
+              </p>
+              <UiButton
+                intent="secondary"
+                size="sm"
+                @click="copyInviteLink"
+              >
+                Копировать ссылку инвайта
+              </UiButton>
+              <p class="text-xs text-text-muted">
+                Действует до {{ new Date(lastCreated.expiresAt).toLocaleDateString('ru-RU') }}
+              </p>
+            </div>
+          </div>
+
+          <ul
+            v-if="history.length"
+            class="mt-4 space-y-2"
           >
-            {{ loading ? 'Создаём…' : 'Создать инвайт' }}
-          </UiButton>
+            <li class="text-xs font-medium uppercase tracking-wide text-text-muted">
+              Недавние инвайты
+            </li>
+            <li
+              v-for="item in history.slice(0, 5)"
+              :key="item.code"
+              class="flex items-center justify-between gap-2 text-sm"
+            >
+              <code class="font-mono text-text-muted">{{ item.code }}</code>
+              <span class="text-xs text-text-muted">
+                {{ new Date(item.createdAt).toLocaleDateString('ru-RU') }}
+              </span>
+            </li>
+          </ul>
+        </template>
+
+        <template #posts>
+          <ProfilePostsTab v-if="profileIdForTabs" :user-id="profileIdForTabs" />
+        </template>
+
+        <template #comments>
+          <ProfileCommentsTab v-if="profileIdForTabs" :user-id="profileIdForTabs" />
+        </template>
+
+        <template #activity>
+          <ProfileActivityTab v-if="profileIdForTabs" :user-id="profileIdForTabs" />
+
           <RouterLink
             v-if="effectiveProfileId"
             :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
-            class="profile-referral-link"
+            class="profile-referral-link mt-4 inline-flex"
           >
             Реферальное дерево
           </RouterLink>
-        </div>
-
-        <p
-          v-if="inviteError"
-          role="alert"
-          class="rounded-md border border-error/40 bg-error/10 px-3 py-2 text-sm text-error"
-        >
-          {{ inviteError }}
-        </p>
-
-        <p
-          v-if="isMe && session.isLoading"
-          class="text-sm text-text-muted"
-        >
-          Проверяем сессию…
-        </p>
-        <p
-          v-else-if="isMe && !session.isMember"
-          class="text-sm text-text-muted"
-        >
-          <UiButton
-            intent="ghost"
-            size="sm"
-            @click="auth.signIn('/profile/me')"
-          >
-            Войти, чтобы создавать инвайты
-          </UiButton>
-        </p>
-
-        <div
-          v-if="lastCreated"
-          class="space-y-3 rounded-lg border border-border bg-bg p-4"
-        >
-          <p class="text-sm font-medium text-text">
-            Ссылка для приглашения
-          </p>
-          <p class="break-all rounded-md bg-surface px-3 py-2 font-mono text-sm text-text">
-            {{ lastCreated.link }}
-          </p>
-          <UiButton
-            intent="secondary"
-            size="sm"
-            @click="copyInviteLink"
-          >
-            Копировать ссылку инвайта
-          </UiButton>
-          <p class="text-xs text-text-muted">
-            Действует до {{ new Date(lastCreated.expiresAt).toLocaleDateString('ru-RU') }}
-          </p>
-        </div>
-      </div>
-
-      <ul
-        v-if="history.length"
-        class="space-y-2"
-      >
-        <li class="text-xs font-medium uppercase tracking-wide text-text-muted">
-          Недавние инвайты
-        </li>
-        <li
-          v-for="item in history.slice(0, 5)"
-          :key="item.code"
-          class="flex items-center justify-between gap-2 text-sm"
-        >
-          <code class="font-mono text-text-muted">{{ item.code }}</code>
-          <span class="text-xs text-text-muted">
-            {{ new Date(item.createdAt).toLocaleDateString('ru-RU') }}
-          </span>
-        </li>
-      </ul>
+        </template>
+      </ProfileTabs>
     </template>
 
+    <!-- PUBLIC PROFILE: header card -->
     <template v-else>
       <p
         v-if="publicLoading"
@@ -731,19 +787,48 @@ async function copyInviteLink() {
           </div>
         </section>
 
-        <ProfileRatingStats
-          :rating="publicProfile.rating"
-          @updated="onRatingUpdated"
-        />
-
-        <MedalBadges :user-id="publicProfile.userId" />
-
-        <RouterLink
-          :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
-          class="profile-referral-link"
+        <!-- Tabs -->
+        <ProfileTabs
+          :counts="{ posts: publicProfile.rating?.postCount, comments: publicProfile.rating?.commentCount }"
+          @update:tab="activeTab = $event"
         >
-          Реферальное дерево
-        </RouterLink>
+          <template #overview>
+            <ProfileRatingStats
+              :rating="publicProfile.rating"
+              @updated="onRatingUpdated"
+            />
+
+            <MedalBadges :user-id="publicProfile.userId" class="mt-4" />
+
+            <ProfileTopContributions :user-id="publicProfile.userId" class="mt-4" />
+
+            <RouterLink
+              :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
+              class="profile-referral-link mt-4 inline-flex"
+            >
+              Реферальное дерево
+            </RouterLink>
+          </template>
+
+          <template #posts>
+            <ProfilePostsTab :user-id="publicProfile.userId" />
+          </template>
+
+          <template #comments>
+            <ProfileCommentsTab :user-id="publicProfile.userId" />
+          </template>
+
+          <template #activity>
+            <ProfileActivityTab :user-id="publicProfile.userId" />
+
+            <RouterLink
+              :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
+              class="profile-referral-link mt-4 inline-flex"
+            >
+              Реферальное дерево
+            </RouterLink>
+          </template>
+        </ProfileTabs>
 
         <ProfilePrivateNoteModal
           v-model:open="noteModalOpen"

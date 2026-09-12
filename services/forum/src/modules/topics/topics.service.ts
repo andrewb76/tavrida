@@ -91,6 +91,9 @@ export class TopicsService {
     if (input.categoryId) {
       qb.andWhere('topic.category_id = :categoryId', { categoryId: input.categoryId });
     }
+    if (input.authorId) {
+      qb.andWhere('topic.author_id = :authorId', { authorId: input.authorId });
+    }
     this.applySearchFilter(qb, q);
 
     const [rows, total] = await qb.getManyAndCount();

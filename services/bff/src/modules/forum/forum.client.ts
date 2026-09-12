@@ -222,6 +222,20 @@ export class ForumClient {
     );
   }
 
+  listCommentsByAuthor(
+    authorId: string,
+    pagination?: { limit?: number; offset?: number },
+  ) {
+    const params = new URLSearchParams();
+    params.set('authorId', authorId);
+    if (pagination?.limit != null) params.set('limit', String(pagination.limit));
+    if (pagination?.offset != null) params.set('offset', String(pagination.offset));
+    return this.request<{ data: unknown[]; total: number }>(
+      'GET',
+      `/internal/v1/comments?${params.toString()}`,
+    );
+  }
+
   createComment(
     topicId: string,
     input: {

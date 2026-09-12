@@ -9,6 +9,7 @@ import { VotesModule } from '../votes/votes.module';
 import { UserProfileClientModule } from '../user-profile-client/user-profile-client.module';
 import { CommentsService } from './comments.service';
 import { InternalCommentsController } from './internal-comments.controller';
+import { CommentsSearchController } from './comments-search.controller';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { InternalCommentsController } from './internal-comments.controller';
     ForumEventsModule,
     UserProfileClientModule,
   ],
-  controllers: [InternalCommentsController],
+  controllers: [InternalCommentsController, CommentsSearchController],
   providers: [CommentsService],
 })
 export class CommentsModule {}

@@ -35,6 +35,7 @@ import { useSessionStore } from '@/stores/session';
 import { UiButton, UiModal } from '@tavrida/ui';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 const route = useRoute();
 const session = useSessionStore();
@@ -199,7 +200,9 @@ async function load(id: string) {
         if (generation === loadGeneration) sellerProfile.value = p;
       })
       .catch(() => {});
-    recordLotView(id).catch(() => {});
+    recordLotView(id).catch((e) => {
+      console.warn('[lot-view] failed to record:', e);
+    });
     getLotViews(id)
       .then((v) => {
         if (generation === loadGeneration) viewCount.value = v.count;
@@ -355,7 +358,13 @@ async function onSubmitExpert() {
           {{ promoteError }}
         </p>
         <div class="lot-page__meta">
-          <span class="lot-page__seller">👤 {{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</span>
+          <span class="lot-page__seller">👤 <RouterLink
+            v-if="lot"
+            :to="{ name: 'profile-user', params: { userId: lot.sellerId } }"
+            class="lot-page__seller-link"
+          >{{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</RouterLink>
+          <template v-else>{{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</template>
+          </span>
           <span
             v-if="categoryTitle"
             class="lot-page__category"
@@ -879,6 +888,15 @@ async function onSubmitExpert() {
 
 .lot-page__views {
   font-size: 0.85rem;
+}
+
+.lot-page__seller-link {
+  color: var(--token-primary);
+  text-decoration: none;
+}
+
+.lot-page__seller-link:hover {
+  text-decoration: underline;
 }
 
 .lot-page__viewers-btn {
