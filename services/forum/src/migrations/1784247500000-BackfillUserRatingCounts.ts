@@ -4,6 +4,10 @@ export class BackfillUserRatingCounts1784247500000 implements MigrationInterface
   name = 'BackfillUserRatingCounts1784247500000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Add columns if they don't exist (may have been created by user-profile service already)
+    await queryRunner.query(`ALTER TABLE user_profile.user_rating ADD COLUMN IF NOT EXISTS post_count int NOT NULL DEFAULT 0`);
+    await queryRunner.query(`ALTER TABLE user_profile.user_rating ADD COLUMN IF NOT EXISTS comment_count int NOT NULL DEFAULT 0`);
+
     // Backfill postCount: count published, non-deleted topics per author
     await queryRunner.query(`
       INSERT INTO user_profile.user_rating (user_id, post_count, comment_count, total_rating, karma, referral_karma, referral_rating, verified_sales, pending_sales)
