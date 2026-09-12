@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+# pre-push hook — runs lint + typecheck for changed packages
+# To skip: git push --no-verify
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+echo -e "${YELLOW}[pre-push] Running checks...${NC}"
+
+# Read push info from stdin (local_ref local_sha remote_ref remote_sha)
+LOCAL_SHA=""
+REMOTE_SHA=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Only check pushes to branches (not tag pushes)
+  if [[ "$remote_ref" == refs/heads/* ]]; then
+    REMOTE_SHA="$remote_sha"
+  fi
+done
+
+# If remote_sha is all zeros (new branch), compare against main/dev
+if [[ -z "$REMOTE_SHA" || "$REMOTE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+  REMOTE_SHA=$(git rev-parse origin/dev 2>/dev/null || git rev-parse origin/main 2>/dev/null || echo "")
+fi
+
+if [[ -z "$REMOTE_SHA" || -z "$LOCAL_SHA" ]]; then
+  echo -e "${GREEN}[pre-push] Could not determine diff range, skipping checks.${NC}"
+  exit 0
+fi
+
+# Get changed files
+CHANGED=$(git diff --name-only "$REMOTE_SHA"..."$LOCAL_SHA" 2>/dev/null || echo "")
+
+if [[ -z "$CHANGED" ]]; then
+  echo -e "${GREEN}[pre-push] No changed files, skipping checks.${NC}"
+  exit 0
+fi
+
+# Detect affected packages from file paths
+declare -A PACKAGES
+
+while IFS= read -r file; do
+  case "$file" in
+    apps/frontend/*)       PACKAGES["frontend"]="apps/frontend" ;;
+    services/bff/*)        PACKAGES["bff"]="services/bff" ;;
+    services/auction/*)    PACKAGES["auction"]="services/auction" ;;
+    services/forum/*)      PACKAGES["forum"]="services/forum" ;;
+    services/billing/*)    PACKAGES["billing"]="services/billing" ;;
+    services/user-profile/*) PACKAGES["user-profile"]="services/user-profile" ;;
+    services/subscriptions/*) PACKAGES["subscriptions"]="services/subscriptions" ;;
+    services/chat/*)       PACKAGES["chat"]="services/chat" ;;
+    services/marketplace/*) PACKAGES["marketplace"]="services/marketplace" ;;
+    services/notifications/*) PACKAGES["notifications"]="services/notifications" ;;
+    services/scalar-config/*) PACKAGES["scalar-config"]="services/scalar-config" ;;
+    services/plan-config/*) PACKAGES["plan-config"]="services/plan-config" ;;
+    packages/*)            PACKAGES["packages"]="packages" ;;
+  esac
+done <<< "$CHANGED"
+
+if [[ ${#PACKAGES[@]} -eq 0 ]]; then
+  echo -e "${GREEN}[pre-push] No package changes detected, skipping checks.${NC}"
+  exit 0
+fi
+
+FAILED=0
+
+# 1. TypeScript check
+echo -e "${YELLOW}[pre-push] TypeScript check...${NC}"
+for name in "${!PACKAGES[@]}"; do
+  dir="${PACKAGES[$name]}"
+  tsconfig="$dir/tsconfig.json"
+  if [[ -f "$tsconfig" ]]; then
+    echo -e "  Checking ${dir}..."
+    if ! node_modules/.bin/tsc --noEmit --project "$tsconfig" 2>&1; then
+      echo -e "${RED}  ✗ TypeScript failed for ${dir}${NC}"
+      FAILED=1
+    else
+      echo -e "${GREEN}  ✓ ${dir}${NC}"
+    fi
+  fi
+done
+
+# 2. Lint changed files
+echo -e "${YELLOW}[pre-push] Lint check...${NC}"
+LINT_FILES=""
+while IFS= read -r file; do
+  case "$file" in
+    *.ts|*.vue|*.js|*.mjs)
+      if [[ -f "$file" ]]; then
+        LINT_FILES="$LINT_FILES $file"
+      fi
+      ;;
+  esac
+done <<< "$CHANGED"
+
+if [[ -n "$LINT_FILES" ]]; then
+  # Run eslint on changed files (use config from tools/config)
+  if ! node_modules/.bin/eslint --config tools/config/eslint.config.js $LINT_FILES 2>&1; then
+    echo -e "${RED}  ✗ Lint failed${NC}"
+    FAILED=1
+  else
+    echo -e "${GREEN}  ✓ Lint passed${NC}"
+  fi
+fi
+
+# 3. Build (compile TypeScript) before tests
+echo -e "${YELLOW}[pre-push] Build check...${NC}"
+for name in "${!PACKAGES[@]}"; do
+  dir="${PACKAGES[$name]}"
+  tsconfig="$dir/tsconfig.json"
+  if [[ -f "$tsconfig" ]]; then
+    echo -e "  Building ${dir}..."
+    if ! node_modules/.bin/tsc --project "$tsconfig" 2>&1; then
+      echo -e "${RED}  ✗ Build failed for ${dir}${NC}"
+      FAILED=1
+    else
+      echo -e "${GREEN}  ✓ ${dir}${NC}"
+    fi
+  fi
+done
+
+# 4. Run tests
+echo -e "${YELLOW}[pre-push] Running tests...${NC}"
+for name in "${!PACKAGES[@]}"; do
+  dir="${PACKAGES[$name]}"
+  TEST_FILES=$(find "$dir/dist" -name '*.test.js' 2>/dev/null || true)
+  if [[ -n "$TEST_FILES" ]]; then
+    echo -e "  Testing ${dir}..."
+    if ! node --test $TEST_FILES 2>&1; then
+      echo -e "${RED}  ✗ Tests failed for ${dir}${NC}"
+      FAILED=1
+    else
+      echo -e "${GREEN}  ✓ ${dir}${NC}"
+    fi
+  fi
+done
+
+echo ""
+if [[ $FAILED -ne 0 ]]; then
+  echo -e "${RED}[pre-push] ✗ Checks failed. Push aborted.${NC}"
+  echo -e "${RED}To skip: git push --no-verify${NC}"
+  exit 1
+else
+  echo -e "${GREEN}[pre-push] ✓ All checks passed.${NC}"
+  exit 0
+fi

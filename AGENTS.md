@@ -73,6 +73,28 @@ pnpm exec turbo run build --filter=@tavrida/billing
 
 **Перед commit:** локально `turbo run test` (затронутые пакеты или весь workspace) — см. `.cursor/rules/pre-commit-tests.mdc`. Не полагаться только на CI.
 
+## Pre-push checklist
+
+**Перед `git push` ОБЯЗАТЕЛЬНО выполнить все пункты:**
+
+1. **TypeScript** — `node_modules/.bin/tsc --noEmit --project <service>/tsconfig.json` для каждого затронутого пакета
+2. **Lint** — `pnpm lint` (полный) или `node_modules/.bin/eslint <changed-files>` для конкретных файлов
+3. **Test** — `node --test <service>/dist/**/*.test.js` для затронутых сервисов
+4. **Build** — `node_modules/.bin/tsc --project <service>/tsconfig.json` (компиляция перед тестами)
+
+Если хотя бы одна проверка не прошла — **НЕ пушить**, исправить и повторить.
+
+### Git hook (pre-push)
+
+В `.githooks/pre-push` есть хук который автоматически проверяет TypeScript + Lint + Tests перед пушем.
+
+**Первая настройка:**
+```bash
+git config core.hooksPath .githooks
+```
+
+Хук проверяет только затронутые пакеты. Пропуск: `git push --no-verify`.
+
 ## Environment variables
 
 Runtime secrets and infra env vars: [docs/02-infrastructure/PLATFORM-SECRETS.md](docs/02-infrastructure/PLATFORM-SECRETS.md)  
