@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-export type ProfileTab = 'overview' | 'posts' | 'comments' | 'activity';
+export type ProfileTab = 'overview' | 'posts' | 'comments' | 'activity' | 'invites' | 'referral-tree';
 
 defineProps<{
   counts?: { posts?: number; comments?: number };
@@ -14,6 +14,8 @@ const tabs: Array<{ id: ProfileTab; label: string; key?: 'posts' | 'comments' }>
   { id: 'posts', label: 'Публикации', key: 'posts' },
   { id: 'comments', label: 'Комментарии', key: 'comments' },
   { id: 'activity', label: 'Активность' },
+  { id: 'invites', label: 'Инвайты' },
+  { id: 'referral-tree', label: 'Реферальное дерево' },
 ];
 
 const emit = defineEmits<{ (e: 'update:tab', tab: ProfileTab): void }>();

@@ -767,7 +767,7 @@ async function confirmDeposit() {
             </dt>
             <dd class="tabular-nums text-text">
               <RouterLink
-                :to="{ name: 'referral-tree', params: { userId: row.userId } }"
+                :to="{ name: 'profile-user', params: { userId: row.userId } }"
                 class="text-primary hover:underline"
               >
                 L1 {{ row.referral.l1 }} · L2 {{ row.referral.l2 }}

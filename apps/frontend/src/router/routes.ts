@@ -93,12 +93,6 @@ const memberChildren: RouteRecordRaw[] = [
     meta: { title: 'Профиль', requiresMember: true },
   },
   {
-    path: 'profile/:userId/referrals',
-    name: 'referral-tree',
-    component: () => import('@/views/member/ReferralTreeView.vue'),
-    meta: { title: 'Реферальное дерево', requiresMember: true },
-  },
-  {
     path: 'invites',
     redirect: { name: 'profile-me' },
   },

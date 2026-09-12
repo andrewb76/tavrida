@@ -7,6 +7,8 @@ import ProfileTabs, { type ProfileTab } from '@/components/profile/ProfileTabs.v
 import ProfilePostsTab from '@/components/profile/ProfilePostsTab.vue';
 import ProfileCommentsTab from '@/components/profile/ProfileCommentsTab.vue';
 import ProfileActivityTab from '@/components/profile/ProfileActivityTab.vue';
+import ProfileInvitesTab from '@/components/profile/ProfileInvitesTab.vue';
+import ProfileReferralTreeTab from '@/components/profile/ProfileReferralTreeTab.vue';
 import ProfileCompletionMeter from '@/components/profile/ProfileCompletionMeter.vue';
 import ProfileTopContributions from '@/components/profile/ProfileTopContributions.vue';
 import MedalBadges from '@/components/profile/MedalBadges.vue';
@@ -16,9 +18,7 @@ import { useLogto } from '@logto/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
-import { useAuth } from '@/composables/useAuth';
 import { isLogtoConfigured, logtoAccountUsernameUrl } from '@/config/logto';
-import { createInvite, listInvites, type CreatedInvite, type InviteRecord } from '@/services/invite';
 import { getSubscription, type UserSubscription } from '@/services/plans';
 import { syncLogtoProfile } from '@/services/logtoProfile';
 import { fetchPublicProfile, publicProfileLabel, type ProfileNote, type PublicProfile, updateMyProfile } from '@/services/profile';
@@ -29,7 +29,6 @@ import { useSessionStore } from '@/stores/session';
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
-const auth = useAuth();
 const logto = isLogtoConfigured() ? useLogto() : null;
 const noteModalOpen = ref(false);
 const hasPrivateNote = ref(false);
@@ -44,11 +43,6 @@ const logtoUsernameUrl = computed(() =>
     : null,
 );
 
-const loading = ref(false);
-const inviteEmail = ref('');
-const inviteError = ref<string | null>(null);
-const lastCreated = ref<CreatedInvite | null>(null);
-const history = ref<InviteRecord[]>([]);
 const avatarLoadFailed = ref(false);
 const subscription = ref<UserSubscription | null>(null);
 const activeTab = ref<ProfileTab>('overview');
@@ -63,27 +57,6 @@ const editAvatarUrl = ref('');
 const avatarInput = ref<HTMLInputElement | null>(null);
 const avatarBusy = ref(false);
 const saving = ref(false);
-
-/** BFF often returns English `detail`; keep toast/inline readable in RU. */
-function inviteErrorMessage(e: unknown): string {
-  const raw = e instanceof Error ? e.message : 'Не удалось создать инвайт';
-  if (/monthly invite limit reached/i.test(raw)) {
-    const n = raw.match(/\((\d+)\)/)?.[1];
-    return n
-      ? `Месячный лимит инвайтов исчерпан (${n})`
-      : 'Месячный лимит инвайтов исчерпан';
-  }
-  if (/not enforceable/i.test(raw)) {
-    return 'Лимит инвайтов не настроен — обратитесь к администратору';
-  }
-  if (/create invite failed/i.test(raw)) {
-    return 'Не удалось создать инвайт. Попробуйте позже.';
-  }
-  if (/email is required/i.test(raw)) {
-    return 'Укажите email приглашаемого';
-  }
-  return raw;
-}
 
 const publicProfile = ref<PublicProfile | null>(null);
 const publicLoading = ref(false);
@@ -105,10 +78,6 @@ const effectiveEmail = computed(() =>
   session.isImpersonating ? undefined : session.email,
 );
 
-const canCreateInvite = computed(
-  () => isMe.value && session.isMember && !session.isLoading,
-);
-
 const avatarInitial = computed(() => {
   const source = effectiveDisplayName.value.trim() || effectiveProfileId.value || '?';
   return source.charAt(0).toUpperCase();
@@ -128,11 +97,6 @@ watch(
 async function refreshProfile() {
   if (!isMe.value || session.isImpersonating || !logto?.isAuthenticated.value) return;
   await syncLogtoProfile(logto, session);
-}
-
-async function refreshHistory() {
-  if (!canCreateInvite.value) return;
-  history.value = await listInvites();
 }
 
 const PLAN_TITLES: Record<string, string> = { free: 'Бесплатно', basic: 'Базовый', pro: 'Про' };
@@ -199,7 +163,6 @@ async function loadDisplayedProfile() {
 
 onMounted(() => {
   void refreshProfile();
-  void refreshHistory();
   void refreshSubscription();
 
   const showSuccess = typeof route.query.show_success === 'string' ? route.query.show_success : null;
@@ -304,30 +267,6 @@ async function onAvatarSelected(e: Event) {
   }
 }
 
-async function create() {
-  if (!canCreateInvite.value) {
-    inviteError.value = 'Сначала войдите в аккаунт';
-    toast.error(inviteError.value, { duration: Infinity });
-    return;
-  }
-
-  loading.value = true;
-  inviteError.value = null;
-  try {
-    lastCreated.value = await createInvite({ email: inviteEmail.value || undefined });
-    inviteEmail.value = '';
-    history.value = await listInvites();
-    toast.success('Инвайт создан');
-  } catch (e) {
-    const message = inviteErrorMessage(e);
-    inviteError.value = message;
-    // Keep visible: toast alone was disappearing before the user could read it.
-    toast.error(message, { duration: Infinity });
-  } finally {
-    loading.value = false;
-  }
-}
-
 const writing = ref(false);
 const planFeatureError = ref<string | null>(null);
 
@@ -349,12 +288,6 @@ async function writeMessage() {
   } finally {
     writing.value = false;
   }
-}
-
-async function copyInviteLink() {
-  if (!lastCreated.value?.link) return;
-  await navigator.clipboard.writeText(lastCreated.value.link);
-  toast.success('Ссылка скопирована');
 }
 </script>
 
@@ -558,109 +491,6 @@ async function copyInviteLink() {
               Изменить тариф
             </RouterLink>
           </section>
-
-          <div class="mt-4 space-y-4 border-b border-border pb-6">
-            <div>
-              <p class="text-sm font-medium text-text">
-                Пригласить в клуб
-              </p>
-              <p class="mt-1 text-sm text-text-muted">
-                Создайте ссылку и отправьте другу. После регистрации через Logto он сразу попадёт в клуб.
-              </p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <input
-                v-model="inviteEmail"
-                type="email"
-                required
-                placeholder="Email приглашаемого"
-                class="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
-              >
-              <UiButton
-                intent="primary"
-                :disabled="loading || !canCreateInvite || !inviteEmail.trim()"
-                @click="create"
-              >
-                {{ loading ? 'Создаём…' : 'Создать инвайт' }}
-              </UiButton>
-              <RouterLink
-                v-if="effectiveProfileId"
-                :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
-                class="profile-referral-link"
-              >
-                Реферальное дерево
-              </RouterLink>
-            </div>
-
-            <p
-              v-if="inviteError"
-              role="alert"
-              class="rounded-md border border-error/40 bg-error/10 px-3 py-2 text-sm text-error"
-            >
-              {{ inviteError }}
-            </p>
-
-            <p
-              v-if="isMe && session.isLoading"
-              class="text-sm text-text-muted"
-            >
-              Проверяем сессию…
-            </p>
-            <p
-              v-else-if="isMe && !session.isMember"
-              class="text-sm text-text-muted"
-            >
-              <UiButton
-                intent="ghost"
-                size="sm"
-                @click="auth.signIn('/profile/me')"
-              >
-                Войти, чтобы создавать инвайты
-              </UiButton>
-            </p>
-
-            <div
-              v-if="lastCreated"
-              class="space-y-3 rounded-lg border border-border bg-bg p-4"
-            >
-              <p class="text-sm font-medium text-text">
-                Ссылка для приглашения
-              </p>
-              <p class="break-all rounded-md bg-surface px-3 py-2 font-mono text-sm text-text">
-                {{ lastCreated.link }}
-              </p>
-              <UiButton
-                intent="secondary"
-                size="sm"
-                @click="copyInviteLink"
-              >
-                Копировать ссылку инвайта
-              </UiButton>
-              <p class="text-xs text-text-muted">
-                Действует до {{ new Date(lastCreated.expiresAt).toLocaleDateString('ru-RU') }}
-              </p>
-            </div>
-          </div>
-
-          <ul
-            v-if="history.length"
-            class="mt-4 space-y-2"
-          >
-            <li class="text-xs font-medium uppercase tracking-wide text-text-muted">
-              Недавние инвайты
-            </li>
-            <li
-              v-for="item in history.slice(0, 5)"
-              :key="item.code"
-              class="flex items-center justify-between gap-2 text-sm"
-            >
-              <code class="font-mono text-text-muted">{{ item.code }}</code>
-              <span class="text-xs text-text-muted">
-                {{ new Date(item.createdAt).toLocaleDateString('ru-RU') }}
-              </span>
-            </li>
-          </ul>
         </template>
 
         <template #posts>
@@ -673,14 +503,22 @@ async function copyInviteLink() {
 
         <template #activity>
           <ProfileActivityTab v-if="profileIdForTabs" :user-id="profileIdForTabs" />
+        </template>
 
-          <RouterLink
-            v-if="effectiveProfileId"
-            :to="{ name: 'referral-tree', params: { userId: effectiveProfileId } }"
-            class="profile-referral-link mt-4 inline-flex"
-          >
-            Реферальное дерево
-          </RouterLink>
+        <template #invites>
+          <ProfileInvitesTab
+            v-if="profileIdForTabs"
+            :user-id="profileIdForTabs"
+            :is-owner="isMe"
+            :is-admin="session.isAdmin"
+          />
+        </template>
+
+        <template #referral-tree>
+          <ProfileReferralTreeTab
+            v-if="profileIdForTabs"
+            :user-id="profileIdForTabs"
+          />
         </template>
       </ProfileTabs>
     </template>
@@ -801,13 +639,6 @@ async function copyInviteLink() {
             <MedalBadges :user-id="publicProfile.userId" class="mt-4" />
 
             <ProfileTopContributions :user-id="publicProfile.userId" class="mt-4" />
-
-            <RouterLink
-              :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
-              class="profile-referral-link mt-4 inline-flex"
-            >
-              Реферальное дерево
-            </RouterLink>
           </template>
 
           <template #posts>
@@ -820,13 +651,18 @@ async function copyInviteLink() {
 
           <template #activity>
             <ProfileActivityTab :user-id="publicProfile.userId" />
+          </template>
 
-            <RouterLink
-              :to="{ name: 'referral-tree', params: { userId: publicProfile.userId } }"
-              class="profile-referral-link mt-4 inline-flex"
-            >
-              Реферальное дерево
-            </RouterLink>
+          <template #invites>
+            <ProfileInvitesTab
+              :user-id="publicProfile.userId"
+              :is-owner="false"
+              :is-admin="session.isAdmin"
+            />
+          </template>
+
+          <template #referral-tree>
+            <ProfileReferralTreeTab :user-id="publicProfile.userId" />
           </template>
         </ProfileTabs>
 
@@ -980,27 +816,6 @@ async function copyInviteLink() {
   background: color-mix(in srgb, var(--color-error) 10%, transparent);
   font-size: 0.8125rem;
   color: var(--color-error);
-}
-
-.profile-referral-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-surface);
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  white-space: nowrap;
-}
-
-.profile-referral-link:hover {
-  background: var(--color-bg);
 }
 
 .profile-plan-card {

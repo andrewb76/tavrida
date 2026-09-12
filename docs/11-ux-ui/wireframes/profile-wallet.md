@@ -12,11 +12,13 @@
 |------|----------|-----------|
 | Header card | Avatar, name, username, presence | Public; click avatar → zoom |
 | Stats | Rating, karma, rank, medal badges | Click rating/karma → log modal |
-| Tabs | Обзор, Публикации, Комментарии, Активность | Content tabs with counts badges |
-| Overview | Completion meter, top contributions, subscription, invites | Owner-only invite section |
+| Tabs | Обзор, Публикации, Комментарии, Активность, Инвайты, Реферальное дерево | Content tabs with counts badges |
+| Overview | Completion meter, top contributions, subscription | Owner-only sections |
 | Posts tab | User's published topics (paginated) | `GET /forum/topics?authorId=X` |
 | Comments tab | User's comments across topics (paginated) | `GET /forum/comments?authorId=X` |
-| Activity tab | Karma/rating log, referral tree | `GET /profile/{id}/rating/log` |
+| Activity tab | Karma/rating log | `GET /profile/{id}/rating/log` |
+| Invites tab | Create invite, invite history | Owner + admin; `POST /invites`, `GET /invites` |
+| Referral tree tab | L1/L2 referral list inline | `GET /profile/{id}/referrals` |
 | Owner | Edit bio/avatar, change username | `PATCH /profile/me` + Logto redirect |
 | Private note | On **other** profiles | Author-only, invisible to others |
 
@@ -33,7 +35,7 @@
 │ ★ 4.8 · karma +12 · Новичок         │
 │ 0 тем · 0 комментариев              │
 ├─────────────────────────────────────┤
-│ [ Обзор ] [ Публикации ] [ Коммент. ] [ Актив. ] │
+│ [ Обзор ] [ Публ. ] [ Коммент. ] [ Актив. ] [ Инвайты ] [ Дерево ] │
 │                                     │
 │ Заполненность профиля: 75%          │
 │ ░░░░░░░░░░░░░░░░░░░░ 75%            │
@@ -44,8 +46,6 @@
 │  2. Title … 👍 8                    │
 │                                     │
 │ Тариф: Про · до 09.10.2026          │
-│ Пригласить в俱乐部:                 │
-│ [email input] [Создать инвайт]      │
 └─────────────────────────────────────┘
 ```
 
@@ -64,14 +64,16 @@ ProfilePage:
           - ProfileCompletionMeter
           - ProfileTopContributions
           - SubscriptionCard (owner)
-          - InviteSection (owner)
       - PostsTab
           - ProfilePostsTab (paginated topics by authorId)
       - CommentsTab
           - ProfileCommentsTab (paginated comments by authorId)
       - ActivityTab
           - ProfileActivityTab (karma/rating log)
-          - ReferralTreeLink
+      - InvitesTab
+          - ProfileInvitesTab (create invite, history; owner + admin)
+      - ReferralTreeTab
+          - ProfileReferralTreeTab (L1/L2 list inline)
   - ProfileEditForm (owner)
   - PrivateNoteWidget (viewer ≠ subject)
 ```
