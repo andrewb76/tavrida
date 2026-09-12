@@ -121,7 +121,15 @@ function cancelEdit() {
 }
 
 function restoreCommentAttachments() {
-  editBody.value = syncAttachmentMarkdown(editBody.value, props.node.attachments ?? []);
+  const attachments = props.node.attachments ?? [];
+  const before = editBody.value;
+  editBody.value = syncAttachmentMarkdown(before, attachments);
+  if (commentHasAllLinks.value) {
+    toast.success('Все вложения присутствуют в документе');
+  } else {
+    const missing = attachments.filter(a => !allAttachmentUrlsPresent(before, [a])).length;
+    toast.success(`Добавлено ${missing} отсутствующих вложений`);
+  }
 }
 
 const commentHasAllLinks = computed(() => {
@@ -352,21 +360,16 @@ async function onDelete() {
           >
             {{ editError }}
           </p>
-          <div
-            v-if="(node.attachments?.length ?? 0) > 0 && !commentHasAllLinks"
-            class="forum-comment__restore-hint"
-          >
+          <div class="forum-comment__edit-actions">
             <UiButton
+              v-if="(node.attachments?.length ?? 0) > 0"
               intent="secondary"
               size="sm"
               type="button"
               @click="restoreCommentAttachments"
             >
-              Восстановить ссылки на вложения
+              {{ commentHasAllLinks ? 'Все вложения в тексте' : 'Восстановить ссылки на вложения' }}
             </UiButton>
-            <span class="text-xs text-text-muted">Некоторые вложения отсутствуют в тексте</span>
-          </div>
-          <div class="forum-comment__edit-actions">
             <UiButton
               intent="primary"
               size="sm"
@@ -605,15 +608,6 @@ async function onDelete() {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.forum-comment__restore-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 }
 
 .forum-comment__attachments {

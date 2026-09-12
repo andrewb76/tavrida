@@ -235,7 +235,15 @@ function cancelTopicEdit() {
 
 function restoreTopicAttachments() {
   if (!topic.value) return;
-  topicBodyDraft.value = syncAttachmentMarkdown(topicBodyDraft.value, topic.value.attachments ?? []);
+  const attachments = topic.value.attachments ?? [];
+  const before = topicBodyDraft.value;
+  topicBodyDraft.value = syncAttachmentMarkdown(before, attachments);
+  if (topicHasAllLinks.value) {
+    toast.success('Все вложения присутствуют в документе');
+  } else {
+    const missing = attachments.filter(a => !allAttachmentUrlsPresent(before, [a])).length;
+    toast.success(`Добавлено ${missing} отсутствующих вложений`);
+  }
 }
 
 const topicHasAllLinks = computed(() => {
@@ -545,21 +553,16 @@ async function submitTopicComment() {
           >
             {{ topicEditError }}
           </p>
-          <div
-            v-if="(topic.attachments?.length ?? 0) > 0 && !topicHasAllLinks"
-            class="forum-topic__restore-hint"
-          >
+          <div class="forum-topic__edit-actions">
             <UiButton
+              v-if="(topic.attachments?.length ?? 0) > 0"
               intent="secondary"
               size="sm"
               type="button"
               @click="restoreTopicAttachments"
             >
-              Восстановить ссылки на вложения
+              {{ topicHasAllLinks ? 'Все вложения в тексте' : 'Восстановить ссылки на вложения' }}
             </UiButton>
-            <span class="text-xs text-text-muted">Некоторые вложения отсутствуют в тексте</span>
-          </div>
-          <div class="forum-topic__edit-actions">
             <UiButton
               intent="primary"
               size="sm"
@@ -804,16 +807,6 @@ async function submitTopicComment() {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-}
-
-.forum-topic__restore-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 }
 
 .forum-topic__head h1,
