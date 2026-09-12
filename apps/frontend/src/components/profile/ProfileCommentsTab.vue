@@ -34,9 +34,15 @@ watch(() => props.userId, load, { immediate: true });
 
 <template>
   <div class="profile-comments">
-    <p v-if="loading" class="profile-comments__status">Загрузка…</p>
-    <p v-else-if="error" class="profile-comments__status profile-comments__status--error">{{ error }}</p>
-    <p v-else-if="comments.length === 0" class="profile-comments__status">Комментариев пока нет</p>
+    <p v-if="loading" class="profile-comments__status">
+      Загрузка…
+    </p>
+    <p v-else-if="error" class="profile-comments__status profile-comments__status--error">
+      {{ error }}
+    </p>
+    <p v-else-if="comments.length === 0" class="profile-comments__status">
+      Комментариев пока нет
+    </p>
     <template v-else>
       <ul class="profile-comments__list">
         <li v-for="c in comments" :key="c.id" class="profile-comments__item">
@@ -46,7 +52,9 @@ watch(() => props.userId, load, { immediate: true });
           >
             Тема #{{ c.topicId.slice(0, 8) }}
           </RouterLink>
-          <p class="profile-comments__body">{{ c.body }}</p>
+          <p class="profile-comments__body">
+            {{ c.body }}
+          </p>
           <div class="profile-comments__meta">
             <span v-if="c.votePlusCount || c.voteMinusCount" class="profile-comments__votes">
               ▲ {{ c.votePlusCount }} ▼ {{ c.voteMinusCount }}
@@ -61,14 +69,18 @@ watch(() => props.userId, load, { immediate: true });
           :disabled="page === 0"
           class="profile-comments__page-btn"
           @click="page--; load()"
-        >← Назад</button>
+        >
+          ← Назад
+        </button>
         <span class="profile-comments__page-info">{{ page + 1 }} / {{ Math.ceil(total / pageSize) }}</span>
         <button
           type="button"
           :disabled="(page + 1) * pageSize >= total"
           class="profile-comments__page-btn"
           @click="page++; load()"
-        >Вперёд →</button>
+        >
+          Вперёд →
+        </button>
       </div>
     </template>
   </div>

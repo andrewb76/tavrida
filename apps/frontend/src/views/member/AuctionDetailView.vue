@@ -35,7 +35,6 @@ import { useSessionStore } from '@/stores/session';
 import { UiButton, UiModal } from '@tavrida/ui';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { toast } from 'vue-sonner';
 
 const route = useRoute();
 const session = useSessionStore();
@@ -363,7 +362,7 @@ async function onSubmitExpert() {
             :to="{ name: 'profile-user', params: { userId: lot.sellerId } }"
             class="lot-page__seller-link"
           >{{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</RouterLink>
-          <template v-else>{{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</template>
+            <template v-else>{{ sellerProfile ? publicProfileLabel(sellerProfile) : '…' }}</template>
           </span>
           <span
             v-if="categoryTitle"

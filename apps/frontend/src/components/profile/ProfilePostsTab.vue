@@ -32,15 +32,19 @@ async function load() {
 }
 
 watch(() => props.userId, load, { immediate: true });
-
-const totalPages = Math.ceil(total.value / pageSize);
 </script>
 
 <template>
   <div class="profile-posts">
-    <p v-if="loading" class="profile-posts__status">Загрузка…</p>
-    <p v-else-if="error" class="profile-posts__status profile-posts__status--error">{{ error }}</p>
-    <p v-else-if="posts.length === 0" class="profile-posts__status">Публикаций пока нет</p>
+    <p v-if="loading" class="profile-posts__status">
+      Загрузка…
+    </p>
+    <p v-else-if="error" class="profile-posts__status profile-posts__status--error">
+      {{ error }}
+    </p>
+    <p v-else-if="posts.length === 0" class="profile-posts__status">
+      Публикаций пока нет
+    </p>
     <template v-else>
       <ul class="profile-posts__list">
         <li v-for="post in posts" :key="post.id" class="profile-posts__item">
@@ -54,7 +58,9 @@ const totalPages = Math.ceil(total.value / pageSize);
               <span class="profile-posts__date">{{ new Date(post.createdAt).toLocaleDateString('ru-RU') }}</span>
             </span>
           </RouterLink>
-          <p v-if="post.excerpt" class="profile-posts__excerpt">{{ post.excerpt }}</p>
+          <p v-if="post.excerpt" class="profile-posts__excerpt">
+            {{ post.excerpt }}
+          </p>
         </li>
       </ul>
       <div v-if="total > pageSize" class="profile-posts__pager">
@@ -63,14 +69,18 @@ const totalPages = Math.ceil(total.value / pageSize);
           :disabled="page === 0"
           class="profile-posts__page-btn"
           @click="page--; load()"
-        >← Назад</button>
+        >
+          ← Назад
+        </button>
         <span class="profile-posts__page-info">{{ page + 1 }} / {{ Math.ceil(total / pageSize) }}</span>
         <button
           type="button"
           :disabled="(page + 1) * pageSize >= total"
           class="profile-posts__page-btn"
           @click="page++; load()"
-        >Вперёд →</button>
+        >
+          Вперёд →
+        </button>
       </div>
     </template>
   </div>

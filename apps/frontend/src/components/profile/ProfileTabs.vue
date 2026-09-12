@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 export type ProfileTab = 'overview' | 'posts' | 'comments' | 'activity';
 
-const props = defineProps<{
+defineProps<{
   counts?: { posts?: number; comments?: number };
 }>();
 
 const activeTab = ref<ProfileTab>('overview');
 
-const tabs: Array<{ id: ProfileTab; label: string; key?: keyof NonNullable<typeof props.counts> }> = [
+const tabs: Array<{ id: ProfileTab; label: string; key?: 'posts' | 'comments' }> = [
   { id: 'overview', label: 'Обзор' },
   { id: 'posts', label: 'Публикации', key: 'posts' },
   { id: 'comments', label: 'Комментарии', key: 'comments' },

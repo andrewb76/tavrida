@@ -41,10 +41,14 @@ onMounted(load);
 
 <template>
   <div class="profile-top">
-    <p v-if="loading" class="profile-top__status">Загрузка…</p>
+    <p v-if="loading" class="profile-top__status">
+      Загрузка…
+    </p>
     <template v-else-if="topics.length > 0">
       <div v-if="topByVotes.length" class="profile-top__section">
-        <h4 class="profile-top__heading">По голосам</h4>
+        <h4 class="profile-top__heading">
+          По голосам
+        </h4>
         <ul class="profile-top__list">
           <li v-for="t in topByVotes" :key="t.id" class="profile-top__item">
             <RouterLink :to="{ name: 'forum-topic', params: { id: t.id } }" class="profile-top__link">
@@ -55,7 +59,9 @@ onMounted(load);
         </ul>
       </div>
       <div v-if="topByComments.length" class="profile-top__section">
-        <h4 class="profile-top__heading">По комментариям</h4>
+        <h4 class="profile-top__heading">
+          По комментариям
+        </h4>
         <ul class="profile-top__list">
           <li v-for="t in topByComments" :key="t.id" class="profile-top__item">
             <RouterLink :to="{ name: 'forum-topic', params: { id: t.id } }" class="profile-top__link">

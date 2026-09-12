@@ -27,8 +27,8 @@ function createHarness(existingComments: Array<Record<string, unknown>> = []) {
       const qb = {
         where: (_w: string, p: Record<string, unknown>) => { _params = { ..._params, ...p }; return qb; },
         andWhere: (_w: string, p: Record<string, unknown>) => { _params = { ..._params, ...p }; return qb; },
-        orderBy: (_o: string) => qb,
-        addOrderBy: (_o: string) => qb,
+        orderBy: () => qb,
+        addOrderBy: () => qb,
         skip: (s: number) => { _skip = s; return qb; },
         take: (t: number) => { _take = t; return qb; },
         getManyAndCount: async () => {

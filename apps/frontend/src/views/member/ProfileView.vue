@@ -511,8 +511,8 @@ async function copyInviteLink() {
           <ProfileRatingStats
             v-if="publicProfile?.rating"
             :rating="publicProfile.rating"
-            @updated="onRatingUpdated"
             class="mt-4"
+            @updated="onRatingUpdated"
           />
 
           <MedalBadges

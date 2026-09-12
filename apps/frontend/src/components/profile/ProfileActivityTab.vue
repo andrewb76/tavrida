@@ -30,9 +30,15 @@ function formatDelta(value: number): string {
 
 <template>
   <div class="profile-activity">
-    <p v-if="loading" class="profile-activity__status">Загрузка…</p>
-    <p v-else-if="error" class="profile-activity__status profile-activity__status--error">{{ error }}</p>
-    <p v-else-if="entries.length === 0" class="profile-activity__status">Записей пока нет</p>
+    <p v-if="loading" class="profile-activity__status">
+      Загрузка…
+    </p>
+    <p v-else-if="error" class="profile-activity__status profile-activity__status--error">
+      {{ error }}
+    </p>
+    <p v-else-if="entries.length === 0" class="profile-activity__status">
+      Записей пока нет
+    </p>
     <template v-else>
       <ul class="profile-activity__list">
         <li v-for="(entry, i) in entries" :key="i" class="profile-activity__item">
@@ -46,7 +52,9 @@ function formatDelta(value: number): string {
               }"
             >{{ formatDelta(entry.delta) }}</span>
           </div>
-          <p v-if="entry.reason" class="profile-activity__reason">{{ entry.reason }}</p>
+          <p v-if="entry.reason" class="profile-activity__reason">
+            {{ entry.reason }}
+          </p>
           <span class="profile-activity__date">{{ new Date(entry.createdAt).toLocaleString('ru-RU') }}</span>
         </li>
       </ul>
