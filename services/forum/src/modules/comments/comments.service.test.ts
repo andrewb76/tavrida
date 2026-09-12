@@ -8,7 +8,7 @@ function createHarness(existingComments: Array<Record<string, unknown>> = []) {
 
   const commentsRepo = {
     find: async () => store,
-    findAndCount: async ({ where, order, skip, take }: Record<string, unknown>) => {
+    findAndCount: async ({ where, skip, take }: Record<string, unknown>) => {
       let filtered = [...store];
       if (where && typeof where === 'object') {
         for (const [key, value] of Object.entries(where)) {
@@ -21,16 +21,14 @@ function createHarness(existingComments: Array<Record<string, unknown>> = []) {
       return [filtered, total] as const;
     },
     createQueryBuilder: () => {
-      let _where = '';
       let _params: Record<string, unknown> = {};
-      let _orderBy = '';
       let _skip = 0;
       let _take = 20;
       const qb = {
-        where: (w: string, p: Record<string, unknown>) => { _where = w; _params = { ..._params, ...p }; return qb; },
-        andWhere: (w: string, p: Record<string, unknown>) => { _where += ' AND ' + w; _params = { ..._params, ...p }; return qb; },
-        orderBy: (o: string) => { _orderBy = o; return qb; },
-        addOrderBy: (o: string) => { _orderBy += ', ' + o; return qb; },
+        where: (_w: string, p: Record<string, unknown>) => { _params = { ..._params, ...p }; return qb; },
+        andWhere: (_w: string, p: Record<string, unknown>) => { _params = { ..._params, ...p }; return qb; },
+        orderBy: (_o: string) => qb,
+        addOrderBy: (_o: string) => qb,
         skip: (s: number) => { _skip = s; return qb; },
         take: (t: number) => { _take = t; return qb; },
         getManyAndCount: async () => {
