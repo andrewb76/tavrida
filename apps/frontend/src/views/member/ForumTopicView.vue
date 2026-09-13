@@ -708,6 +708,12 @@ async function submitTopicComment() {
               <span>{{ commentAttachmentsExpanded ? '▼' : '▶' }}</span>
             </button>
             <div v-if="commentAttachmentsExpanded">
+              <p
+                v-if="commentUpload.globalError.value"
+                class="forum-topic__error"
+              >
+                {{ commentUpload.globalError.value }}
+              </p>
               <MediaUploader
                 :items="commentUpload.items.value"
                 :accept="commentUpload.limits.value?.accept ?? 'image/*,.pdf'"

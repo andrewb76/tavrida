@@ -443,6 +443,12 @@ async function onDelete() {
               <span>{{ replyAttachmentsExpanded ? '▼' : '▶' }}</span>
             </button>
             <div v-if="replyAttachmentsExpanded">
+              <p
+                v-if="replyUpload.globalError.value"
+                class="forum-comment__error"
+              >
+                {{ replyUpload.globalError.value }}
+              </p>
               <MediaUploader
                 :items="replyUpload.items.value"
                 :accept="replyUpload.limits.value?.accept ?? 'image/*,.pdf'"
