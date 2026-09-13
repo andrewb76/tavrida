@@ -598,6 +598,7 @@ async function submitTopicComment() {
           :tags="topic.tags ?? []"
           :tag-items="topic.tagItems"
           :can-edit="Boolean(session.userId && (topic.authorId === session.userId || session.isModerator))"
+          :editing="editingTopic"
           @updated="onTopicTagsUpdated"
         />
         <div

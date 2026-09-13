@@ -14,6 +14,7 @@ const props = defineProps<{
   tags: string[];
   tagItems?: ForumTagItem[];
   canEdit: boolean;
+  editing?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -143,7 +144,7 @@ function pickSuggestion(item: ForumTagItem) {
           compact
         />
         <button
-          v-if="canEdit"
+          v-if="canEdit && editing"
           type="button"
           class="forum-tags__remove"
           :disabled="saving"
@@ -160,7 +161,7 @@ function pickSuggestion(item: ForumTagItem) {
     >Без тегов</span>
 
     <form
-      v-if="canEdit"
+      v-if="canEdit && editing"
       class="forum-tags__add"
       @submit.prevent="addTag"
     >
