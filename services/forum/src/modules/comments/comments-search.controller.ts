@@ -1,11 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
 import { CommentsService } from './comments.service';
 
 class ListCommentsByAuthorQuery {
   @IsString()
-  @Min(1)
+  @MinLength(1)
   authorId!: string;
 
   @IsOptional()
