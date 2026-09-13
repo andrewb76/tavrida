@@ -214,10 +214,7 @@ export class ForumController {
 
   private async requireForumStaff(userId: string): Promise<true> {
     if (await this.keto.isForumStaff(userId)) return true;
-    throw new ForbiddenException({
-      type: 'forbidden',
-      detail: 'Нужна роль администратора или модератора',
-    });
+    throw new ForbiddenException('Нужна роль администратора или модератора');
   }
 
   private validateForumMedia(
@@ -249,7 +246,7 @@ export class ForumController {
         err && typeof err === 'object' && 'detail' in err && typeof err.detail === 'string'
           ? err.detail
           : 'Недопустимые вложения';
-      throw new BadRequestException({ type: 'validation', detail });
+      throw new BadRequestException(detail);
     }
   }
 
@@ -296,10 +293,7 @@ export class ForumController {
   ) {
     const wantDrafts = status === 'DRAFT';
     if (wantDrafts && !req.user?.sub) {
-      throw new BadRequestException({
-        type: 'unauthorized',
-        detail: 'Для списка черновиков нужна авторизация',
-      });
+      throw new BadRequestException('Для списка черновиков нужна авторизация');
     }
     const userId = req.user?.sub;
     const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
@@ -348,10 +342,9 @@ export class ForumController {
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
     this.validateForumMedia(user.sub, body.body, body.attachments, limits, isAdmin);
     if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
-      throw new BadRequestException({
-        type: 'validation',
-        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
-      });
+      throw new BadRequestException(
+        `Текст превышает лимит в ${BODY_MAX_LENGTH} символов. Укоротите сообщение или разделите на несколько.`,
+      );
     }
     return this.authors.enrichOne(
       await this.forum.createTopic({
@@ -378,10 +371,9 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits, asModerator);
     }
     if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
-      throw new BadRequestException({
-        type: 'validation',
-        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
-      });
+      throw new BadRequestException(
+        `Текст превышает лимит в ${BODY_MAX_LENGTH} символов. Укоротите сообщение или разделите на несколько.`,
+      );
     }
     return this.authors.enrichOne(
       await this.forum.updateTopic(topicId, {
@@ -440,10 +432,7 @@ export class ForumController {
     @Query('offset') offset?: string,
   ) {
     if (!authorId) {
-      throw new BadRequestException({
-        type: 'validation-error',
-        detail: 'authorId is required',
-      });
+      throw new BadRequestException('authorId is required');
     }
     const res = await this.forum.listCommentsByAuthor(authorId, {
       limit: limit ? Number(limit) : undefined,
@@ -464,10 +453,9 @@ export class ForumController {
     const isAdmin = await this.keto.isPlatformAdmin(user.sub);
     this.validateForumMedia(user.sub, body.body, body.attachments, limits, isAdmin);
     if (!isAdmin && body.body.length > BODY_MAX_LENGTH) {
-      throw new BadRequestException({
-        type: 'validation',
-        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
-      });
+      throw new BadRequestException(
+        `Текст превышает лимит в ${BODY_MAX_LENGTH} символов. Укоротите сообщение или разделите на несколько.`,
+      );
     }
     return this.authors.enrichOne(
       await this.forum.createComment(topicId, {
@@ -495,10 +483,9 @@ export class ForumController {
       this.validateForumMedia(user.sub, body.body, body.attachments, limits, asModerator);
     }
     if (body.body && !asModerator && body.body.length > BODY_MAX_LENGTH) {
-      throw new BadRequestException({
-        type: 'validation',
-        detail: `Body exceeds ${BODY_MAX_LENGTH} characters. Admins can post unlimited content.`,
-      });
+      throw new BadRequestException(
+        `Текст превышает лимит в ${BODY_MAX_LENGTH} символов. Укоротите сообщение или разделите на несколько.`,
+      );
     }
     return this.authors.enrichOne(
       await this.forum.updateComment(topicId, commentId, {

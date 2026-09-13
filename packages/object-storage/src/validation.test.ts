@@ -58,7 +58,7 @@ describe('object-storage validation', () => {
           maxCount: 1,
         }),
       (err: unknown) => {
-        assert.equal((err as { detail: string }).detail, 'Максимум 1 файлов');
+        assert.equal((err as { detail: string }).detail, 'Можно прикрепить не более 1 файлов');
         return true;
       },
     );

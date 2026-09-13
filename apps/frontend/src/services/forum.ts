@@ -18,6 +18,13 @@ async function forumJsonHeaders(): Promise<Record<string, string>> {
   return bffAuthHeaders();
 }
 
+async function throwForumError(res: Response, fallback: string): Promise<never> {
+  const body = (await res.json().catch(() => null)) as
+    | { detail?: string; message?: string }
+    | null;
+  throw new Error(body?.detail ?? body?.message ?? fallback);
+}
+
 export type CategoryNode = {
   id: string;
   slug: string;
@@ -140,10 +147,7 @@ export async function createTopic(input: {
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось создать тему');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось создать тему');
   return (await res.json()) as TopicDetail;
 }
 
@@ -162,10 +166,7 @@ export async function updateTopic(
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось обновить тему');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось обновить тему');
   return (await res.json()) as TopicDetail;
 }
 
@@ -175,10 +176,7 @@ export async function deleteTopic(topicId: string): Promise<void> {
     headers: await forumJsonHeaders(),
     body: JSON.stringify({}),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось удалить тему');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось удалить тему');
 }
 
 export async function toggleTopicPin(topicId: string): Promise<{ id: string; isPinned: boolean }> {
@@ -187,10 +185,7 @@ export async function toggleTopicPin(topicId: string): Promise<{ id: string; isP
     headers: await forumJsonHeaders(),
     body: JSON.stringify({}),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось изменить статус закрепления');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось изменить статус закрепления');
   return (await res.json()) as { id: string; isPinned: boolean };
 }
 
@@ -236,10 +231,7 @@ export async function createComment(
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось отправить комментарий');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось отправить комментарий');
   return (await res.json()) as ForumComment;
 }
 
@@ -256,10 +248,7 @@ export async function updateComment(
       body: JSON.stringify(input),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось обновить комментарий');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось обновить комментарий');
   return (await res.json()) as ForumComment;
 }
 
@@ -272,10 +261,7 @@ export async function deleteComment(topicId: string, commentId: string): Promise
       body: JSON.stringify({}),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось удалить комментарий');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось удалить комментарий');
 }
 
 export type ForumVoteResult = {
@@ -299,10 +285,7 @@ export async function castForumVote(input: {
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось проголосовать');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось проголосовать');
   return (await res.json()) as ForumVoteResult;
 }
 
@@ -315,10 +298,7 @@ export async function clearForumVote(input: {
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось снять голос');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось снять голос');
   return (await res.json()) as ForumVoteResult;
 }
 
@@ -373,10 +353,7 @@ export async function upsertForumReaction(input: {
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось поставить реакцию');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось поставить реакцию');
   return (await res.json()) as {
     emojiKey: string | null;
     cleared?: boolean;
@@ -404,10 +381,7 @@ export async function promoteCommentToTopic(
       body: JSON.stringify(input ?? {}),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось выделить в тему');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось выделить в тему');
   return (await res.json()) as {
     commentId: string;
     sourceTopicId: string;
@@ -423,10 +397,7 @@ export async function updateTopicTags(topicId: string, tags: string[]): Promise<
     headers: await forumJsonHeaders(),
     body: JSON.stringify({ tags }),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось обновить теги');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось обновить теги');
   return (await res.json()) as TopicDetail;
 }
 
@@ -490,10 +461,7 @@ export async function createCategory(input: CategoryFormInput): Promise<Category
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось создать категорию');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось создать категорию');
   return (await res.json()) as CategoryRecord;
 }
 
@@ -506,10 +474,7 @@ export async function updateCategory(
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось обновить категорию');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось обновить категорию');
   return (await res.json()) as CategoryRecord;
 }
 
@@ -518,10 +483,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
     method: 'DELETE',
     headers: await forumAuthHeaders(),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось удалить категорию');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось удалить категорию');
 }
 
 export async function getCategoryAccessGroups(
@@ -531,10 +493,7 @@ export async function getCategoryAccessGroups(
     `${apiBase()}/admin/forum/categories/${encodeURIComponent(categoryId)}/access-groups`,
     { headers: await forumAuthHeaders() },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось загрузить доступ');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось загрузить доступ');
   return (await res.json()) as { categoryId: string; groupIds: string[] };
 }
 
@@ -550,10 +509,7 @@ export async function setCategoryAccessGroups(
       body: JSON.stringify({ groupIds }),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось сохранить доступ');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось сохранить доступ');
   return (await res.json()) as { categoryId: string; groupIds: string[] };
 }
 
@@ -568,10 +524,7 @@ export async function listAccessGroups(): Promise<AccessGroup[]> {
   const res = await fetch(`${apiBase()}/admin/forum/access-groups`, {
     headers: await forumAuthHeaders(),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось загрузить группы доступа');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось загрузить группы доступа');
   const json = (await res.json()) as { data: AccessGroup[] };
   return json.data;
 }
@@ -585,10 +538,7 @@ export async function createAccessGroup(input: {
     headers: await forumJsonHeaders(),
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось создать группу');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось создать группу');
   return (await res.json()) as AccessGroup;
 }
 
@@ -604,10 +554,7 @@ export async function updateAccessGroup(
       body: JSON.stringify(input),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось обновить группу');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось обновить группу');
   return (await res.json()) as AccessGroup;
 }
 
@@ -619,10 +566,7 @@ export async function deleteAccessGroup(groupId: string): Promise<void> {
       headers: await forumAuthHeaders(),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось удалить группу');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось удалить группу');
 }
 
 export async function getAccessGroupMembers(
@@ -632,10 +576,7 @@ export async function getAccessGroupMembers(
     `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}/members`,
     { headers: await forumAuthHeaders() },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось загрузить состав группы');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось загрузить состав группы');
   return (await res.json()) as { groupId: string; userIds: string[] };
 }
 
@@ -651,10 +592,7 @@ export async function setAccessGroupMembers(
       body: JSON.stringify({ userIds }),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось сохранить состав группы');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось сохранить состав группы');
   return (await res.json()) as { groupId: string; userIds: string[] };
 }
 
@@ -667,10 +605,7 @@ export async function recordTopicView(topicId: string): Promise<void> {
       body: JSON.stringify({}),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось записать просмотр');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось записать просмотр');
 }
 
 // ── Medals ──────────────────────────────────────────────────────────
@@ -722,10 +657,7 @@ export async function awardMedal(input: {
       body: JSON.stringify({ medalId: input.medalId, reason: input.reason }),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось наградить медалью');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось наградить медалью');
   return (await res.json()) as ForumUserMedal;
 }
 
@@ -737,10 +669,7 @@ export async function revokeMedal(userId: string, medalId: string): Promise<void
       headers: await forumJsonHeaders(),
     },
   );
-  if (!res.ok) {
-    const err = (await res.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(err?.detail ?? 'Не удалось отозвать медаль');
-  }
+  if (!res.ok) await throwForumError(res, 'Не удалось отозвать медаль');
 }
 
 export async function createMedal(input: { name: string; description?: string; iconUrl?: string; dispPosition?: number }): Promise<ForumMedal> {

@@ -22,6 +22,11 @@ export function sizeLimitToBytes(sizeMaxMb: number | null | undefined, fallbackM
   return mb * 1024 * 1024;
 }
 
+function formatSizeMb(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return mb % 1 === 0 ? `${mb} МБ` : `${mb.toFixed(1)} МБ`;
+}
+
 export function assertMediaUrlsAllowed(input: {
   urls: string[];
   userId: string;
@@ -31,12 +36,14 @@ export function assertMediaUrlsAllowed(input: {
 }): void {
   const unique = [...new Set(input.urls)];
   if (unique.length > input.maxCount) {
-    throw mediaValidationError(`Максимум ${input.maxCount} файлов`);
+    throw mediaValidationError(`Можно прикрепить не более ${input.maxCount} файлов`);
   }
 
   for (const url of unique) {
     if (!isOwnedMediaUrl(url, input.userId, input.publicBaseUrl)) {
-      throw mediaValidationError('Недопустимый URL медиафайла');
+      throw mediaValidationError(
+        'Картинки можно добавлять только через «Вложения». Ссылки на внешние сайты не допускаются.',
+      );
     }
   }
 }
@@ -50,7 +57,7 @@ export function assertMediaAttachmentsAllowed(input: {
   maxSizeBytes: number;
 }): void {
   if (input.attachments.length > input.maxCount) {
-    throw mediaValidationError(`Максимум ${input.maxCount} вложений`);
+    throw mediaValidationError(`Можно прикрепить не более ${input.maxCount} файлов`);
   }
 
   const seen = new Set<string>();
@@ -59,13 +66,19 @@ export function assertMediaAttachmentsAllowed(input: {
     seen.add(attachment.url);
 
     if (!isOwnedMediaUrl(attachment.url, input.userId, input.publicBaseUrl)) {
-      throw mediaValidationError(`Недопустимый URL вложения: ${attachment.filename}`);
+      throw mediaValidationError(
+        'Картинки можно добавлять только через «Вложения». Ссылки на внешние сайты не допускаются.',
+      );
     }
     if (!isAllowedContentType(input.domain, attachment.contentType)) {
-      throw mediaValidationError(`Недопустимый тип файла: ${attachment.filename}`);
+      throw mediaValidationError(
+        `Файл «${attachment.filename}» не поддерживается. Допустимые форматы: изображения (JPG, PNG, GIF, WebP) и PDF.`,
+      );
     }
     if (attachment.sizeBytes < 1 || attachment.sizeBytes > input.maxSizeBytes) {
-      throw mediaValidationError(`Размер файла вне лимита: ${attachment.filename}`);
+      throw mediaValidationError(
+        `Файл «${attachment.filename}» весит ${formatSizeMb(attachment.sizeBytes)}, а максимальный размер — ${formatSizeMb(input.maxSizeBytes)}.`,
+      );
     }
     if (!attachment.filename.trim()) {
       throw mediaValidationError('Имя файла обязательно');
