@@ -74,17 +74,30 @@ export async function confirmUploadIntent(uploadId: string): Promise<ConfirmedUp
   });
 }
 
+function guessContentType(file: File): string {
+  if (file.type && file.type !== 'application/octet-stream') return file.type;
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'svg') return 'image/svg+xml';
+  return 'application/octet-stream';
+}
+
 export async function uploadFile(domain: MediaDomain, file: File): Promise<MediaAttachment> {
+  const contentType = guessContentType(file);
   const intent = await createUploadIntent({
     domain,
     filename: file.name,
-    contentType: file.type || 'application/octet-stream',
+    contentType,
     sizeBytes: file.size,
   });
 
   const putRes = await fetch(intent.presignedPutUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    headers: { 'Content-Type': contentType },
     body: file,
   });
   if (!putRes.ok) {
