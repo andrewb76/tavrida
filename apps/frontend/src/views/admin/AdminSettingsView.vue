@@ -16,7 +16,6 @@ import {
 const loading = ref(true);
 const savingPlans = ref(false);
 const savingSystemValues = ref(false);
-const savingSystemValues = ref(false);
 const error = ref('');
 
 const plans = ref<SettingsPlan[]>([]);
@@ -88,8 +87,8 @@ async function savePlans() {
         return createSettingsPlan({
           id: form.id,
           title: form.title,
-          monthlyPrice: Number(form.monthlyPrice),
-          yearlyPrice: Number(form.yearlyPrice),
+          monthlyPrice: form.monthlyPrice,
+          yearlyPrice: form.yearlyPrice,
           isActive: form.isActive,
         }).catch(() =>
           fetchSettingsPlans().then((rows) => {
@@ -98,8 +97,8 @@ async function savePlans() {
               return import('@/services/settingsAdmin').then((m) =>
                 m.updateSettingsPlan(form.id, {
                   title: form.title,
-                  monthlyPrice: Number(form.monthlyPrice),
-                  yearlyPrice: Number(form.yearlyPrice),
+                  monthlyPrice: form.monthlyPrice,
+                  yearlyPrice: form.yearlyPrice,
                   isActive: form.isActive,
                 }),
               );
