@@ -218,15 +218,15 @@ async function main() {
       const result = await pgClient.query(
         `INSERT INTO "auction"."auction"
          (id, seller_id, category_id, title, description, type, status,
-          starting_price, current_price, bid_increment, reserve_price,
+          starting_price, current_price, bid_increment, reserve_price, buy_now_price,
           currency, starts_at, ends_at, winner_id, bid_count, images)
-         VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'RUB', $11, $12, $13, $14, $15)
+         VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'RUB', $12, $13, $14, $15, $16)
          ON CONFLICT (id) DO NOTHING
          RETURNING id`,
         [
           sellerId, categoryId, auc.title, auc.description || '', type, status,
           auc.minimum_bid || 0, auc.current_bid || 0, auc.increment || 1,
-          auc.reserve_price || null,
+          auc.reserve_price || null, auc.buy_now > 0 ? auc.buy_now : null,
           startsAt, endsAt, winnerId, auc.num_bids || 0,
           JSON.stringify(images),
         ]

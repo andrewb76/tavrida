@@ -62,6 +62,7 @@
 | `startingPrice` | decimal | Стартовая цена |
 | `currentPrice` | decimal | Текущая (последняя ставка или starting) |
 | `reservePrice` | decimal nullable | Резерв (если включён) |
+| `buyNowPrice` | decimal nullable | Блиц-цена (Buy It Now). `NULL` = без BIN |
 | `bidIncrement` | decimal | Шаг ставки |
 | `currency` | varchar(3) | `RUB` |
 | `startsAt`, `endsAt` | timestamptz | Окно торгов |
@@ -186,6 +187,8 @@ Create-time reserve/promotion и их idempotent charge — внутри `POST /
   "type": "ENGLISH",
   "startingPrice": 1000,
   "bidIncrement": 100,
+  "reservePrice": 3000,
+  "buyNowPrice": 5000,
   "startsAt": "2026-07-10T10:00:00Z",
   "endsAt": "2026-07-12T10:00:00Z",
   "images": ["https://…"]
@@ -194,6 +197,11 @@ Create-time reserve/promotion и их idempotent charge — внутри `POST /
 
 → `201` + produce `auction.created`
 
+**Валидация `buyNowPrice` (ENGLISH only):**
+- `buyNowPrice >= startingPrice`
+- `buyNowPrice >= reservePrice` (если задана)
+- Если `type != ENGLISH` → `buyNowPrice` игнируется
+
 ### `POST /api/v1/auctions/{id}/bids`
 
 **Pre-checks:**
@@ -201,12 +209,20 @@ Create-time reserve/promotion и их idempotent charge — внутри `POST /
 1. `auction.bidder.bid.hourlyMax`,
    `auction.bidder.participation.activeMax`
 2. Auction `status === ACTIVE`, `now < endsAt`
-3. `amount >= currentPrice + bidIncrement` (English)
-4. Anti-sniping: optional extend `endsAt` if bid in last N minutes (settings TBD)
+3. `amount >= currentPrice + bidIncrement` (English) — **если не BIN**
+4. Anti-sniping: optional extend `endsAt` if bid in last N minutes (settings TBD) — **не применяется к BIN**
 
 ```json
 { "amount": 1500 }
 ```
+
+**Buy It Now (BIN) логика:**
+
+Если `amount == auction.buyNowPrice` И `bidCount == 0` И `type == ENGLISH`:
+- Лот завершается немедленно: `status = ENDED`, `winnerId = bidder`
+- Публикуется `auction.bought_now` (см. [ADR-021](../../03-architecture/adr/021-buy-it-now.md))
+- Anti-sniping **не применяется**
+- `POST /bids` с обычной ставкой (≠ buyNowPrice) — стандартная логика
 
 → `201` + transactional outbox `auction.bid_placed`; BFF WS → `bid.placed` на `auction:{id}`.
 
@@ -256,6 +272,7 @@ plan-config хранит матрицу; до register auction параметр�
 | `auction.bidder.auctionTypes.allowed` | enum | ENGLISH | all | all | Доступные типы торгов |
 | `auction.seller.promotion.enabled` | feature | false | false | true | Продвижение |
 | `auction.seller.reservePrice.enabled` | feature | false | false | true | Резервная цена |
+| `auction.seller.buyNow.enabled` | feature | true | true | true | Блиц-покупка (Buy It Now) |
 | `auction.member.search.scope` | enum | TITLE | FULL_TEXT | FILTERS | Scope каталога |
 
 Платные разовые charge — см. [financial-features.md](./requirements/financial-features.md).
@@ -268,6 +285,7 @@ plan-config хранит матрицу; до register auction параметр�
 |-----------|-------|-------|
 | produce | `auction.created` | Лот опубликован |
 | produce | `auction.bid_placed` | Успешная ставка |
+| produce | `auction.bought_now` | Блиц-покупка (BIN) — лот продан немедленно |
 | produce | `auction.completed` | Торги завершены (→ WS `auction.ended`) |
 | produce | `auction.expert_appraisal_added` | Expert POST |
 | consume | `rating.user_banned` | Блокировка ставок bidder |
@@ -310,6 +328,44 @@ plan-config хранит матрицу; до register auction параметр�
 > [PLATFORM-SECRETS.md](../../02-infrastructure/PLATFORM-SECRETS.md)
 
 ## 📎 Связанные разделы
+
+- [financial-features](./requirements/financial-features.md)
+- [catalog-listing](./requirements/catalog-listing.md)
+- [plan-config](../plan-config/README.md)
+- [billing](../billing/README.md)
+- [deal-feedback](../deal_feedback/README.md)
+- [06-api — auctions](../../06-api/README.md)
+
+## 🔜 Backlog: Buy It Now (блиц-покупка)
+
+> **Статус:** ADR принят → [ADR-021](../../03-architecture/adr/021-buy-it-now.md) · **Приоритет:** TBD
+
+**Суть:** владелец лота устанавливает фиксированную цену, по которой первый желающий может купить лот немедленно без торгов.
+
+**Модель (eBay-style temporary BIN):**
+- Доступен только для **English** аукционов (Dutch и так подразумевает fixed price)
+- BIN-кнопка показывается пока **нет ставок**
+- После первой ставки BIN **исчезает** → лот становится обычным аукционом
+- Если покупатель принимает BIN → лот продан сразу, статус `ENDED`, `winnerId = buyer`
+
+**Ограничения:**
+- `buyNowPrice >= startingPrice` (不低于 стартовой)
+- `buyNowPrice >= reservePrice` (если задана)
+- BIN-кнопка не показывается если `status != ACTIVE` или `now >= endsAt`
+
+**Изменения в сущностях:**
+- `AuctionEntity`: новое поле `buyNowPrice` (numeric nullable)
+- `BidAuctionSnapshot`: добавить `buyNowPrice`
+- `validatePlaceBid`: новая ветка — если `amount == buyNowPrice` → `completeImmediately: true`
+
+**API:**
+- `POST /auctions/{id}/bids` с `amount == buyNowPrice` →立即 завершение
+
+**UI:**
+- Detail page: кнопка «Купить сразу · {price}» рядом со «Сделать ставку»
+- После первой ставки кнопка исчезает (или серая с тултипом «Ставки уже идут»)
+
+**Связано:** reservePrice, bidIncrement, anti-sniping
 
 - [financial-features](./requirements/financial-features.md)
 - [catalog-listing](./requirements/catalog-listing.md)

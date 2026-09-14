@@ -22,6 +22,7 @@
 | `auction.seller.lot.durationMaxHours` | 72 | 336 | ∞ | Макс. длительность аукциона (часов) |
 | `auction.seller.promotion.enabled` | ❌ | ❌ | ✅ | Возможность «раскрутить» аукцион |
 | `auction.seller.reservePrice.enabled` | ❌ | ❌ | ✅ | Установка резервной цены |
+| `auction.seller.buyNow.enabled` | ✅ | ✅ | ✅ | Блиц-покупка (Buy It Now) |
 | `auction.bidder.auctionTypes.allowed` | ENGLISH | ENGLISH, DUTCH | all | Доступные типы аукционов |
 | `auction.seller.durationPreset.customEnabled` | ❌ | ❌ | ✅ | Настройка шаблонов длительности |
 | `auction.seller.analytics.dashboardEnabled` | ❌ | ❌ | ✅ | Статистика по аукционам (просмотры, ставки) |

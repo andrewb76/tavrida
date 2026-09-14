@@ -44,6 +44,9 @@ export class AuctionEntity {
   @Column('numeric', { name: 'reserve_price', precision: 12, scale: 2, nullable: true })
   reservePrice!: string | null;
 
+  @Column('numeric', { name: 'buy_now_price', precision: 12, scale: 2, nullable: true })
+  buyNowPrice!: string | null;
+
   @Column('varchar', { length: 3, default: 'RUB' })
   currency!: string;
 

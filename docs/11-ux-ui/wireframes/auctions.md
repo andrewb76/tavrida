@@ -79,7 +79,7 @@ AuctionCatalogPage:
 | Status | Timer, price; English: bid count; Dutch: «Цена снижается» / «Куплен» | WS + countdown |
 | Tabs | Описание \| Ставки\|Покупки \| Экспертиза | Lazy load; на Dutch вкладка «Покупки» |
 | Bid list | History | WS `bid.placed` prepend; Dutch ≤1 принятие |
-| Sticky CTA | English «Сделать ставку» · Dutch «Купить…» | Modal → POST bid / accept |
+| Sticky CTA | English «Сделать ставку» · Dutch «Купить…» + **«Купить сразу · {price}»** | Modal → POST bid / accept; BIN visible only if `buyNowAvailable && bidCount == 0` |
 | Owner | Edit, Promote, Cancel | seller only |
 | Pro | Forum topic link | paywall |
 
@@ -101,9 +101,15 @@ AuctionCatalogPage:
 │ [ Описание ] [ Ставки ] [ Эксперт ] │
 │ (tab content)                       │
 ├─────────────────────────────────────┤
+│ [      Купить сразу · 5 000 ₽    ]  │  ← BIN (если доступен)
 │ [      Сделать ставку  1 550 ₽   ]  │
 └─────────────────────────────────────┘
 ```
+
+**Buy It Now (BIN) поведение:**
+- Кнопка «Купить сразу · {price}» показывается **только** если `buyNowAvailable == true`
+- После первой ставки (`bidCount > 0`) кнопка **исчезает**
+- Нажатие → подтверждение → `POST /bids` с `amount == buyNowPrice` → лот завершён
 
 ### Component tree
 
@@ -127,6 +133,7 @@ LotPage:
   - LotOwnerActions
   - ForumLinkBlock
   - StickyBidBar
+      - BuyNowButton → BuyNowConfirmModal
       - BidButton → BidModal
   - AppBottomNav
 ```
@@ -191,7 +198,7 @@ BidModal:
 | Step 2 | Title, description, category | Validation |
 | Step 3 | Type (English / Dutch per plan) | plan-config check |
 | Step 4 | Start price, increment, schedule | |
-| Step 5 | Reserve (Pro+100₽), promote checkbox | Optional charges |
+| Step 5 | Reserve (Pro+100₽), **Buy Now price**, promote checkbox | Optional charges; BIN price >= startingPrice |
 | Submit | Create | Show `auctionsCreatedPerDay` remaining |
 
 **States:** draft validation errors · limit reached · success redirect.
@@ -208,7 +215,7 @@ BidModal:
 │ 2. Название · описание · категория  │
 │ 3. Тип: English ▼                   │
 │ 4. Цена · шаг · даты                │
-│ 5. ☐ Резерв  ☐ Продвижение          │
+│ 5. ☐ Резерв  ☐ Блиц-цена · ☐ Продвижение │
 ├─────────────────────────────────────┤
 │ Осталось лотов сегодня: 2/3         │
 │ [        Создать аукцион          ] │
@@ -226,6 +233,8 @@ CreateLotPage:
       - AuctionTypeSelect
       - PricingScheduleStep
       - OptionalPaidFeaturesStep
+          - ReservePriceToggle
+          - BuyNowPriceInput
       - DailyLimitHint
       - SubmitButton
 ```

@@ -224,6 +224,7 @@ Default `rating.contextWeights`:
 | `auction.bidder.bid.hourlyMax` | limit | 20 | 100 | ∞ | Ставок в час (антибот) |
 | `auction.seller.promotion.enabled` | feature | false | false | true | Доступ к продвижению (тариф) |
 | `auction.seller.reservePrice.enabled` | feature | false | false | true | Резервная цена (тариф) |
+| `auction.seller.buyNow.enabled` | feature | true | true | true | Блиц-покупка (Buy It Now) |
 | `auction.seller.durationPreset.customEnabled` | feature | false | false | true | Свои шаблоны длительности |
 | `auction.seller.analytics.dashboardEnabled` | feature | false | false | true | Статистика по лотам |
 | `auction.bidder.auctionTypes.allowed` | enum | `ENGLISH` | `ENGLISH,DUTCH` | `all` | Доступные типы аукционов |
