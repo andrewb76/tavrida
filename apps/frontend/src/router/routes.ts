@@ -210,6 +210,12 @@ const memberChildren: RouteRecordRaw[] = [
         component: () => import('@/views/admin/AdminMedalsView.vue'),
         meta: { title: 'Медали', requiresMember: true, requiresAdmin: true },
       },
+      {
+        path: 'settings',
+        name: 'admin-settings',
+        component: () => import('@/views/admin/AdminSettingsView.vue'),
+        meta: { title: 'Настройки', requiresMember: true, requiresAdmin: true },
+      },
     ],
   },
 ];

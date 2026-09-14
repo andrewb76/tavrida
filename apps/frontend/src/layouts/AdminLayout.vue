@@ -12,6 +12,7 @@ const tabs = [
   { name: 'admin-periods', to: '/admin/periods', label: 'Периоды' },
   { name: 'admin-roles', to: '/admin/roles', label: 'Мои роли' },
   { name: 'admin-medals', to: '/admin/medals', label: 'Медали' },
+  { name: 'admin-settings', to: '/admin/settings', label: 'Настройки' },
 ];
 
 function isActive(name: string) {

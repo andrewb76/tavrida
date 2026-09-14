@@ -41,7 +41,8 @@ max-alice/
 │   ├── notifications/         port 3010
 │   ├── marketplace/           port 3011
 │   ├── periods/               port 3014
-│   └── chat/                  port 3016
+│   ├── chat/                  port 3016
+│   └── settings/              port 3020 (unified: system-var, tarif-var, limited-user-var, user-var)
 ├── tools/config/              ESLint + legacy tsconfig paths
 ├── e2e/                       Playwright E2E tests (pnpm workspace member)
 ├── docker/

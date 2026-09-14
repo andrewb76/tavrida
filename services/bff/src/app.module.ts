@@ -27,6 +27,7 @@ import { DealFeedbackModule } from './modules/deal-feedback/deal-feedback.module
 import { ChatsModule } from './modules/chats/chats.module';
 import { PresenceModule } from './modules/presence/presence.module';
 import { WsModule } from './modules/ws/ws.module';
+import { SettingsAdminModule } from './modules/settings-admin/settings-admin.module';
 
 const repoRootEnv = (file: string) => resolve(__dirname, '../../..', file);
 const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -78,6 +79,7 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
     WsModule,
     MediaModule,
     LogtoWebhooksModule,
+    SettingsAdminModule,
   ],
   controllers: [HealthController],
 })
