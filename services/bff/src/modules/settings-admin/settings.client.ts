@@ -22,11 +22,11 @@ export class SettingsClient {
     return this.request('GET', '/internal/v1/plans/all');
   }
 
-  async createPlan(body: Record<string, unknown>): Promise<unknown> {
+  async createPlan(body: unknown): Promise<unknown> {
     return this.request('POST', '/internal/v1/plans', body);
   }
 
-  async updatePlan(id: string, body: Record<string, unknown>): Promise<unknown> {
+  async updatePlan(id: string, body: unknown): Promise<unknown> {
     return this.request('PATCH', `/internal/v1/plans/${id}`, body);
   }
 
@@ -39,7 +39,7 @@ export class SettingsClient {
     return this.request('GET', `/internal/v1/parameters${qs}`);
   }
 
-  async registerParameter(body: Record<string, unknown>): Promise<unknown> {
+  async registerParameter(body: unknown): Promise<unknown> {
     return this.request('POST', '/internal/v1/parameters/register', body);
   }
 
@@ -51,7 +51,7 @@ export class SettingsClient {
     return this.request('GET', `/internal/v1/system-values/${domain}`);
   }
 
-  async patchSystemValues(domain: string, body: Record<string, unknown>): Promise<unknown> {
+  async patchSystemValues(domain: string, body: unknown): Promise<unknown> {
     return this.request('POST', `/internal/v1/system-values/${domain}`, body);
   }
 
@@ -63,7 +63,7 @@ export class SettingsClient {
     return this.request('GET', `/internal/v1/user-values/${userId}/${key}`);
   }
 
-  async setUserValue(userId: string, key: string, body: Record<string, unknown>): Promise<unknown> {
+  async setUserValue(userId: string, key: string, body: unknown): Promise<unknown> {
     return this.request('PATCH', `/internal/v1/user-values/${userId}/${key}`, body);
   }
 
@@ -76,7 +76,7 @@ export class SettingsClient {
     return this.request('GET', `/internal/v1/plan-values${qs}`);
   }
 
-  async setPlanValue(planId: string, key: string, body: Record<string, unknown>): Promise<unknown> {
+  async setPlanValue(planId: string, key: string, body: unknown): Promise<unknown> {
     return this.request('PATCH', `/internal/v1/plan-values/${planId}/${key}`, body);
   }
 
@@ -90,11 +90,11 @@ export class SettingsClient {
     return this.request('GET', `/internal/v1/limits/state?${qs}`);
   }
 
-  async checkLimit(body: Record<string, unknown>): Promise<unknown> {
+  async checkLimit(body: unknown): Promise<unknown> {
     return this.request('POST', '/internal/v1/limits/check', body);
   }
 
-  async consumeLimit(body: Record<string, unknown>): Promise<unknown> {
+  async consumeLimit(body: unknown): Promise<unknown> {
     return this.request('POST', '/internal/v1/limits/consume', body);
   }
 

@@ -9,9 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { Type } from 'class-transformer';
 import {
-  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -20,7 +18,6 @@ import {
   IsOptional,
   IsString,
   Min,
-  ValidateNested,
 } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';

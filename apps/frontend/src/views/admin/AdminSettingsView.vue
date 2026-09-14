@@ -5,13 +5,10 @@ import { toast } from 'vue-sonner';
 import {
   CATEGORY_LABELS,
   createSettingsPlan,
-  deleteSettingsPlan,
   fetchSettingsParameters,
   fetchSettingsPlans,
   fetchSystemValues,
-  fetchPlanValues,
   patchSystemValues,
-  setPlanValue,
   type SettingsParameter,
   type SettingsPlan,
 } from '@/services/settingsAdmin';
@@ -19,19 +16,17 @@ import {
 const loading = ref(true);
 const savingPlans = ref(false);
 const savingSystemValues = ref(false);
-const savingPlanValues = ref<string | null>(null);
+const savingSystemValues = ref(false);
 const error = ref('');
 
 const plans = ref<SettingsPlan[]>([]);
 const parameters = ref<SettingsParameter[]>([]);
 const systemValues = ref<Record<string, Record<string, unknown>>>({});
-const planValues = ref<Record<string, Record<string, unknown>>>({});
 
 const activeCategory = ref<string>('system-var');
 
 const planForms = reactive<Record<string, SettingsPlan>>({});
 const systemValueForms = reactive<Record<string, Record<string, string>>>({});
-const planValueForms = reactive<Record<string, Record<string, string>>>({});
 
 const categoryTabs = computed(() => {
   const cats = [...new Set(parameters.value.map((p) => p.category))].sort();
@@ -41,11 +36,6 @@ const categoryTabs = computed(() => {
 const filteredParameters = computed(() =>
   parameters.value.filter((p) => p.category === activeCategory.value),
 );
-
-const serviceTabs = computed(() => {
-  const services = [...new Set(filteredParameters.value.map((p) => p.service))].sort();
-  return services;
-});
 
 function syncPlanForms(rows: SettingsPlan[]) {
   for (const plan of rows) {
@@ -163,30 +153,6 @@ async function saveSystemValues(domain: string) {
     toast.error(error.value);
   } finally {
     savingSystemValues.value = false;
-  }
-}
-
-async function savePlanValue(planId: string, key: string) {
-  savingPlanValues.value = `${planId}:${key}`;
-  error.value = '';
-  try {
-    const raw = planValueForms[planId]?.[key] ?? '';
-    const orig = planValues.value[planId]?.[key];
-    let value: unknown;
-    if (typeof orig === 'number') {
-      value = Number(raw) || 0;
-    } else if (typeof orig === 'boolean') {
-      value = raw === 'true';
-    } else {
-      value = raw;
-    }
-    await setPlanValue(planId, key, value);
-    toast.success(`Значение ${key} для ${planId} сохранено`);
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка сохранения значения';
-    toast.error(error.value);
-  } finally {
-    savingPlanValues.value = null;
   }
 }
 
