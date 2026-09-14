@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ParameterEntity } from '../../entities/parameter.entity';
 import { PlanValueEntity } from '../../entities/plan-value.entity';
-import { UserSubscriptionEntity } from '../../entities/user-subscription.entity';
 import { PlanService } from './plan.service';
 
 @Injectable()

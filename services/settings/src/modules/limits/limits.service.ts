@@ -18,13 +18,6 @@ import type {
   PurchaseLimitDto,
 } from './dto/limits.dto';
 
-const PERIOD_MS: Record<LimitPeriod, number> = {
-  hour: 60 * 60 * 1000,
-  day: 24 * 60 * 60 * 1000,
-  week: 7 * 24 * 60 * 60 * 1000,
-  month: 30 * 24 * 60 * 60 * 1000,
-};
-
 export interface PeriodConsumeResult {
   period: LimitPeriod;
   ok: boolean;
