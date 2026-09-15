@@ -1238,6 +1238,8 @@ async function onSubmitExpert() {
 
 .lot-page__expert-form textarea,
 .lot-page__expert-form input {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--token-border);
   border-radius: 8px;
@@ -1295,6 +1297,8 @@ async function onSubmitExpert() {
 }
 
 .lot-page__modal-input input {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--token-border);
   border-radius: 8px;

@@ -410,6 +410,8 @@ function applyProFilters() {
 
 .auction-filters__drawer input,
 .auction-filters__drawer select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;

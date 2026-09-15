@@ -523,6 +523,8 @@ async function submit() {
 .create-lot__section input,
 .create-lot__section textarea,
 .create-lot__section select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;

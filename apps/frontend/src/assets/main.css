@@ -47,6 +47,8 @@ html[data-theme='dark'] {
   select,
   input:not([type='checkbox']):not([type='radio']),
   textarea {
+    width: 100%;
+    max-width: 100%;
     background-color: var(--color-surface);
     color: var(--color-text);
   }
