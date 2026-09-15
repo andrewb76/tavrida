@@ -454,6 +454,12 @@ async function submit() {
   max-width: 720px;
 }
 
+@media (min-width: 640px) {
+  .create-lot {
+    gap: 1.25rem;
+  }
+}
+
 .create-lot__header {
   display: flex;
   justify-content: space-between;
@@ -484,9 +490,16 @@ async function submit() {
 .create-lot__section {
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: 0.75rem;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
+}
+
+@media (min-width: 640px) {
+  .create-lot__section {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
 }
 
 .create-lot__section legend {
@@ -496,24 +509,46 @@ async function submit() {
 
 .create-lot__section label {
   display: grid;
-  gap: 0.25rem;
-  font-size: 0.9rem;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .create-lot__section label {
+    gap: 0.25rem;
+    font-size: 0.9rem;
+  }
 }
 
 .create-lot__section input,
 .create-lot__section textarea,
 .create-lot__section select {
-  padding: 0.5rem 0.65rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text);
 }
 
+@media (min-width: 640px) {
+  .create-lot__section input,
+  .create-lot__section textarea,
+  .create-lot__section select {
+    padding: 0.5rem 0.65rem;
+  }
+}
+
 .create-lot__row {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .create-lot__row {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
 }
 
 .create-lot__hint {

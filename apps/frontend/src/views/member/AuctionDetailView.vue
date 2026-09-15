@@ -809,9 +809,15 @@ async function onSubmitExpert() {
  */
 .lot-page {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
   padding-bottom: 5rem;
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page {
+    gap: 1rem;
+  }
 }
 
 .lot-page__top {
@@ -842,15 +848,28 @@ async function onSubmitExpert() {
 .lot-page__gallery-main {
   display: grid;
   place-items: center;
-  min-height: 120px;
-  max-height: 280px;
+  min-height: 100px;
+  max-height: 200px;
+}
+
+@media (min-width: 640px) {
+  .lot-page__gallery-main {
+    min-height: 120px;
+    max-height: 280px;
+  }
 }
 
 .lot-page__gallery-img {
   width: 100%;
-  max-height: 280px;
+  max-height: 200px;
   height: auto;
   object-fit: contain;
+}
+
+@media (min-width: 640px) {
+  .lot-page__gallery-img {
+    max-height: 280px;
+  }
 }
 
 .lot-page__gallery-placeholder {
@@ -901,9 +920,15 @@ async function onSubmitExpert() {
 
 .lot-page__head h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   flex: 1 1 12rem;
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page__head h1 {
+    font-size: 1.5rem;
+  }
 }
 
 .lot-page__meta {
@@ -970,12 +995,19 @@ async function onSubmitExpert() {
 .lot-page__status-bar {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  gap: 0.6rem;
+  padding: 0.7rem 0.75rem;
   border-radius: 10px;
   border: 1px solid var(--token-border);
   background: var(--token-surface);
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page__status-bar {
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
 }
 
 .lot-page__status-main {
@@ -1045,20 +1077,34 @@ async function onSubmitExpert() {
 }
 
 .lot-page__price {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page__price {
+    font-size: 1.2rem;
+  }
 }
 
 .lot-page__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
   margin: 0;
-  padding: 0.85rem 1rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--token-border);
   border-radius: 10px;
   background: var(--token-surface);
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page__facts {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
 }
 
 .lot-page__facts div {
@@ -1082,15 +1128,24 @@ async function onSubmitExpert() {
   display: flex;
   gap: 0.35rem;
   border-bottom: 1px solid var(--token-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lot-page__tabs button {
   border: 0;
   background: transparent;
-  padding: 0.6rem 0.9rem;
+  padding: 0.5rem 0.7rem;
   cursor: pointer;
   color: var(--token-text-muted);
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .lot-page__tabs button {
+    padding: 0.6rem 0.9rem;
+  }
 }
 
 .lot-page__tab--active {
@@ -1107,10 +1162,17 @@ async function onSubmitExpert() {
 .lot-page__panel {
   border: 1px solid var(--token-border);
   border-radius: 10px;
-  padding: 1rem;
-  min-height: 120px;
+  padding: 0.75rem;
+  min-height: 100px;
   background: var(--token-surface);
   color: var(--token-text);
+}
+
+@media (min-width: 640px) {
+  .lot-page__panel {
+    padding: 1rem;
+    min-height: 120px;
+  }
 }
 
 .lot-page__description {

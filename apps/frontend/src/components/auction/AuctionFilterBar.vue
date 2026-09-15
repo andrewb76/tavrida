@@ -254,27 +254,45 @@ function applyProFilters() {
 .auction-filters {
   display: grid;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-surface);
 }
 
+@media (min-width: 640px) {
+  .auction-filters {
+    padding: 1rem;
+  }
+}
+
 .auction-filters__row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.35rem;
   align-items: center;
+}
+
+@media (min-width: 640px) {
+  .auction-filters__row {
+    gap: 0.5rem;
+  }
 }
 
 .auction-filters__search {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex: 1 1 220px;
+  flex: 1 1 100%;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.35rem 0.6rem;
+}
+
+@media (min-width: 640px) {
+  .auction-filters__search {
+    flex: 1 1 220px;
+  }
 }
 
 .auction-filters__search input {
@@ -285,12 +303,20 @@ function applyProFilters() {
 }
 
 .auction-filters__select {
-  min-width: 160px;
+  min-width: 0;
+  flex: 1 1 100%;
   padding: 0.45rem 0.6rem;
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+@media (min-width: 640px) {
+  .auction-filters__select {
+    min-width: 160px;
+    flex: 0 0 auto;
+  }
 }
 
 .auction-filters__chips {
@@ -303,8 +329,16 @@ function applyProFilters() {
   border: 1px solid var(--color-border);
   background: transparent;
   border-radius: 999px;
-  padding: 0.3rem 0.75rem;
+  padding: 0.25rem 0.6rem;
   cursor: pointer;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .auction-filters__chip {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.9rem;
+  }
 }
 
 .auction-filters__chip--active {
@@ -324,11 +358,20 @@ function applyProFilters() {
   border: 1px solid var(--color-border);
   background: transparent;
   border-radius: 8px;
-  padding: 0.4rem 0.7rem;
+  padding: 0.35rem 0.6rem;
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .auction-filters__pro,
+  .auction-filters__reset,
+  .auction-filters__apply {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9rem;
+  }
 }
 
 .auction-filters__pro--locked {
@@ -336,12 +379,27 @@ function applyProFilters() {
 }
 
 .auction-filters__drawer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
   padding-top: 0.25rem;
   border-top: 1px dashed var(--color-border);
+}
+
+.auction-filters__drawer > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 640px) {
+  .auction-filters__drawer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .auction-filters__drawer > :last-child {
+    grid-column: auto;
+  }
 }
 
 .auction-filters__drawer label {
