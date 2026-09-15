@@ -34,6 +34,8 @@ const startsAtLocal = ref('');
 const endsAtLocal = ref('');
 const reserveEnabled = ref(false);
 const reservePrice = ref(1000);
+const buyNowEnabled = ref(false);
+const buyNowPrice = ref(2000);
 const promote = ref(false);
 const photoUpload = useMediaUpload('auction');
 
@@ -163,6 +165,9 @@ async function submit() {
 
   if (options.value.reserveEnabled && reserveEnabled.value) {
     payload.reservePrice = reservePrice.value;
+  }
+  if (buyNowEnabled.value) {
+    payload.buyNowPrice = buyNowPrice.value;
   }
 
   try {
@@ -400,6 +405,23 @@ async function submit() {
             disabled
           >
           🔒 Продвижение — Pro
+        </label>
+
+        <label class="create-lot__check">
+          <input
+            v-model="buyNowEnabled"
+            type="checkbox"
+          >
+          Купить сразу (без торгов)
+        </label>
+        <label v-if="buyNowEnabled">
+          Цена «Купить сразу» (₽)
+          <input
+            v-model.number="buyNowPrice"
+            type="number"
+            :min="startingPrice"
+            required
+          >
         </label>
       </fieldset>
 

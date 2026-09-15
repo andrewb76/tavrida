@@ -14,6 +14,7 @@ export type CreateAuctionInput = {
   endsAt: string;
   images?: string[];
   reservePrice?: number | null;
+  buyNowPrice?: number | null;
   promote?: boolean;
   maxDurationHours?: number | null;
   allowedTypes?: AuctionType[];
@@ -75,6 +76,13 @@ function validateCreateAuctionTypeAndReserve(input: CreateAuctionInput): void {
     throw new BadRequestException({
       type: 'validation',
       detail: 'Резервная цена не может быть ниже стартовой',
+    });
+  }
+
+  if (input.buyNowPrice != null && input.buyNowPrice < input.startingPrice) {
+    throw new BadRequestException({
+      type: 'validation',
+      detail: 'Цена «Купить сразу» не может быть ниже стартовой',
     });
   }
 }

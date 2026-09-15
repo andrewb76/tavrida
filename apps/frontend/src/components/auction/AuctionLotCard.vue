@@ -72,6 +72,10 @@ const priceHint = computed(() =>
         >{{ priceHint }}</span>
         {{ formatMoney(lot.currentPrice, lot.currency) }}
         <span
+          v-if="lot.buyNowPrice != null"
+          class="ml-1 text-xs text-accent"
+        >· сразу {{ formatMoney(lot.buyNowPrice, lot.currency) }}</span>
+        <span
           v-if="!isDutch && lot.bidCount > 0"
           class="ml-1 text-text-muted"
         >· {{ lot.bidCount }} {{ lot.bidCount === 1 ? 'ставка' : 'ставок' }}</span>

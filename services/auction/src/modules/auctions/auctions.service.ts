@@ -79,6 +79,7 @@ export class AuctionsService {
       currentPrice: String(input.startingPrice),
       bidIncrement: String(input.bidIncrement),
       reservePrice: input.reservePrice != null ? String(input.reservePrice) : null,
+      buyNowPrice: input.buyNowPrice != null ? String(input.buyNowPrice) : null,
       currency: 'RUB',
       startsAt,
       endsAt,

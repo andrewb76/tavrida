@@ -13,6 +13,7 @@ export type AuctionCard = {
   id: string;
   title: string;
   currentPrice: number;
+  buyNowPrice: number | null;
   currency: string;
   status: string;
   type: string;
@@ -65,6 +66,7 @@ export type AuctionDetail = {
   endsAt: string | null;
   promotedUntil: string | null;
   reservePrice: number | null;
+  buyNowPrice: number | null;
   images: string[];
   bidCount: number;
   hasExpertAppraisal: boolean;
@@ -182,6 +184,7 @@ export type CreateAuctionInput = {
   endsAt: string;
   images?: string[];
   reservePrice?: number;
+  buyNowPrice?: number;
   promote?: boolean;
 };
 

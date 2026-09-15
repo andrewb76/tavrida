@@ -245,6 +245,22 @@ async function confirmBid() {
   }
 }
 
+async function confirmBuyNow() {
+  if (!lot.value || lot.value.buyNowPrice == null) return;
+  bidSubmitting.value = true;
+  bidError.value = null;
+  try {
+    const result = await placeBid(lot.value.id, lot.value.buyNowPrice);
+    lot.value = result.auction;
+    bids.value = await listAuctionBids(lot.value.id);
+    if (result.auction.isLive) startCountdown();
+  } catch (e) {
+    bidError.value = e instanceof Error ? e.message : 'Не удалось купить лот';
+  } finally {
+    bidSubmitting.value = false;
+  }
+}
+
 async function onPromote() {
   if (!lot.value || !canPromote.value) return;
   promoteSubmitting.value = true;
@@ -458,6 +474,10 @@ async function onSubmitExpert() {
           <dt>Резерв</dt>
           <dd>{{ formatMoney(lot.reservePrice, lot.currency) }}</dd>
         </div>
+        <div v-if="lot.buyNowPrice != null">
+          <dt>Купить сразу</dt>
+          <dd>{{ formatMoney(lot.buyNowPrice, lot.currency) }}</dd>
+        </div>
         <div v-if="lot.startsAt">
           <dt>Начало</dt>
           <dd>{{ new Date(lot.startsAt).toLocaleString('ru-RU') }}</dd>
@@ -639,6 +659,15 @@ async function onSubmitExpert() {
         class="lot-page__sticky"
       >
         <UiButton
+          v-if="lot.buyNowPrice != null && !isDutch"
+          intent="primary"
+          class="lot-page__bid-cta"
+          @click="confirmBuyNow"
+        >
+          Купить сразу · {{ formatMoney(lot.buyNowPrice, lot.currency) }}
+        </UiButton>
+        <UiButton
+          v-else
           intent="primary"
           class="lot-page__bid-cta"
           @click="bidOpen = true"

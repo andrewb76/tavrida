@@ -120,6 +120,12 @@ class CreateAuctionDto {
   reservePrice?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  buyNowPrice?: number;
+
+  @IsOptional()
   @Type(() => Boolean)
   @IsBoolean()
   promote?: boolean;

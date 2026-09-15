@@ -22,6 +22,7 @@ export type CreateAuctionBody = {
   endsAt: string;
   images?: string[];
   reservePrice?: number;
+  buyNowPrice?: number;
   promote?: boolean;
 };
 
