@@ -402,6 +402,9 @@ function authorOf(topic: TopicSummary) {
   padding: 1rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .forum-list__card:hover {
@@ -442,6 +445,7 @@ function authorOf(topic: TopicSummary) {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .forum-list__item-body p {
@@ -453,6 +457,8 @@ function authorOf(topic: TopicSummary) {
   margin: 0.5rem 0 0;
   max-height: 5.5rem;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
   line-height: 1.45;
@@ -522,5 +528,15 @@ function authorOf(topic: TopicSummary) {
 .forum-list__page-info {
   font-size: 0.875rem;
   color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .forum-list__card {
+    padding: 0.75rem;
+  }
+
+  .forum-list__header {
+    flex-wrap: wrap;
+  }
 }
 </style>
