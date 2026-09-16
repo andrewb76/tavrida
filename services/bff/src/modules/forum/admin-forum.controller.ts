@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminForumService } from './admin-forum.service';
 import { ForumClient } from './forum.client';
 
 class CreateForumCategoryDto {
@@ -107,7 +108,10 @@ class SetAccessGroupMembersDto {
 @Controller('admin/forum')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminForumController {
-  constructor(private readonly forum: ForumClient) {}
+  constructor(
+    private readonly forum: ForumClient,
+    private readonly adminForum: AdminForumService,
+  ) {}
 
   @Get('access-groups')
   listAccessGroups() {
@@ -132,6 +136,11 @@ export class AdminForumController {
   @Get('access-groups/:id/members')
   getAccessGroupMembers(@Param('id') id: string) {
     return this.forum.getAccessGroupMembers(id);
+  }
+
+  @Get('access-groups/:id/members/details')
+  getAccessGroupMembersDetails(@Param('id') id: string) {
+    return this.adminForum.getMembersWithDetails(id);
   }
 
   @Put('access-groups/:id/members')

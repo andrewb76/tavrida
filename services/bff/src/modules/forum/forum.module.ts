@@ -7,6 +7,7 @@ import { MediaModule } from '../media/media.module';
 import { ScalarConfigModule } from '../scalar-config/scalar-config.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { AdminForumController } from './admin-forum.controller';
+import { AdminForumService } from './admin-forum.service';
 import { ForumAuthorsService } from './forum-authors.service';
 import { ForumScalarBootstrapService } from './forum-scalar-bootstrap.service';
 import { ForumClient } from './forum.client';
@@ -22,7 +23,13 @@ import { ForumController } from './forum.controller';
     KetoModule,
   ],
   controllers: [ForumController, AdminForumController],
-  providers: [ForumClient, ForumAuthorsService, ForumScalarBootstrapService, AdminGuard],
+  providers: [
+    ForumClient,
+    ForumAuthorsService,
+    ForumScalarBootstrapService,
+    AdminForumService,
+    AdminGuard,
+  ],
   exports: [ForumClient],
 })
 export class ForumModule {}

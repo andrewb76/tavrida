@@ -2,15 +2,17 @@
 import {
   createAccessGroup,
   deleteAccessGroup,
-  getAccessGroupMembers,
+  getAccessGroupMembersDetails,
   listAccessGroups,
   setAccessGroupMembers,
   updateAccessGroup,
   type AccessGroup,
+  type AccessGroupMemberDetails,
 } from '@/services/forum';
 import { fetchAdminUsers, type AdminUserRow } from '@/services/adminUsers';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref } from 'vue';
+import UserAvatar from '@/components/user/UserAvatar.vue';
 
 const groups = ref<AccessGroup[]>([]);
 const loading = ref(true);
@@ -28,7 +30,8 @@ const formError = ref<string | null>(null);
 const membersPanel = ref<{
   groupId: string;
   title: string;
-  userIdsText: string;
+  members: AccessGroupMemberDetails[];
+  pendingUserIds: string[];
   search: string;
   searchHits: AdminUserRow[];
 } | null>(null);
@@ -122,11 +125,12 @@ async function openMembers(group: AccessGroup) {
   form.value = null;
   membersError.value = null;
   try {
-    const res = await getAccessGroupMembers(group.id);
+    const res = await getAccessGroupMembersDetails(group.id);
     membersPanel.value = {
       groupId: group.id,
       title: group.name,
-      userIdsText: res.userIds.join('\n'),
+      members: res.members,
+      pendingUserIds: res.members.map((m) => m.userId),
       search: '',
       searchHits: [],
     };
@@ -140,6 +144,12 @@ function closeMembers() {
   membersError.value = null;
 }
 
+function removeMember(userId: string) {
+  if (!membersPanel.value) return;
+  membersPanel.value.pendingUserIds = membersPanel.value.pendingUserIds.filter((id) => id !== userId);
+  membersPanel.value.members = membersPanel.value.members.filter((m) => m.userId !== userId);
+}
+
 async function searchUsers() {
   if (!membersPanel.value?.search.trim()) {
     if (membersPanel.value) membersPanel.value.searchHits = [];
@@ -147,20 +157,28 @@ async function searchUsers() {
   }
   try {
     const res = await fetchAdminUsers({ q: membersPanel.value.search.trim(), limit: 10 });
-    membersPanel.value.searchHits = res.data;
+    membersPanel.value.searchHits = res.data.filter(
+      (u) => !membersPanel.value?.pendingUserIds.includes(u.userId),
+    );
   } catch {
-    membersPanel.value.searchHits = [];
+    if (membersPanel.value) membersPanel.value.searchHits = [];
   }
 }
 
-function addUserId(userId: string) {
+function addMember(user: AdminUserRow) {
   if (!membersPanel.value) return;
-  const lines = membersPanel.value.userIdsText
-    .split(/[\n,]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!lines.includes(userId)) lines.push(userId);
-  membersPanel.value.userIdsText = lines.join('\n');
+  if (membersPanel.value.pendingUserIds.includes(user.userId)) return;
+
+  membersPanel.value.pendingUserIds.push(user.userId);
+  membersPanel.value.members.push({
+    userId: user.userId,
+    displayName: user.displayName,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    lastSeenAt: null,
+  });
+  membersPanel.value.search = '';
+  membersPanel.value.searchHits = [];
 }
 
 async function saveMembers() {
@@ -168,11 +186,7 @@ async function saveMembers() {
   membersSaving.value = true;
   membersError.value = null;
   try {
-    const userIds = membersPanel.value.userIdsText
-      .split(/[\n,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    await setAccessGroupMembers(membersPanel.value.groupId, userIds);
+    await setAccessGroupMembers(membersPanel.value.groupId, membersPanel.value.pendingUserIds);
     closeMembers();
     await load();
   } catch (e) {
@@ -180,6 +194,32 @@ async function saveMembers() {
   } finally {
     membersSaving.value = false;
   }
+}
+
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return 'только что';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} мин. назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ч. назад`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} дн. назад`;
+  const months = Math.floor(days / 30);
+  return `${months} мес. назад`;
+}
+
+function memberDisplayName(member: AccessGroupMemberDetails): string {
+  return member.displayName || member.username || 'Без имени';
+}
+
+function memberSubtitle(member: AccessGroupMemberDetails): string {
+  const parts: string[] = [];
+  if (member.username) parts.push(`@${member.username}`);
+  if (member.lastSeenAt) parts.push(relativeTime(member.lastSeenAt));
+  return parts.join(' · ');
 }
 </script>
 
@@ -258,47 +298,94 @@ async function saveMembers() {
 
     <div
       v-if="membersPanel"
-      class="access-groups__panel"
+      class="access-groups__panel access-groups__panel--members"
     >
-      <h3>Состав: {{ membersPanel.title }}</h3>
-      <p class="text-sm text-text-muted">
-        User ID (Logto), по одному на строку.
-      </p>
-      <label>
-        Поиск участника
+      <div class="access-groups__panel-header">
+        <h3>Состав: {{ membersPanel.title }}</h3>
+        <span class="access-groups__member-count">
+          {{ membersPanel.pendingUserIds.length }} уч.
+        </span>
+      </div>
+
+      <div class="access-groups__search">
         <input
           v-model="membersPanel.search"
           type="search"
-          placeholder="Имя или @username"
+          placeholder="Поиск участника по имени или @username…"
           @input="searchUsers"
         >
-      </label>
+        <ul
+          v-if="membersPanel.searchHits.length"
+          class="access-groups__hits"
+        >
+          <li
+            v-for="u in membersPanel.searchHits"
+            :key="u.userId"
+          >
+            <button
+              type="button"
+              class="access-groups__hit"
+              @click="addMember(u)"
+            >
+              <UserAvatar
+                :avatar-url="u.avatarUrl"
+                :label="u.displayName || u.username || u.email || u.userId"
+                size="sm"
+              />
+              <div class="access-groups__hit-info">
+                <span class="access-groups__hit-name">
+                  {{ u.displayName || u.username || u.email || u.userId }}
+                </span>
+                <span class="access-groups__hit-id">{{ u.userId }}</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </div>
+
       <ul
-        v-if="membersPanel.searchHits.length"
-        class="access-groups__hits"
+        v-if="membersPanel.members.length"
+        class="access-groups__member-list"
       >
         <li
-          v-for="u in membersPanel.searchHits"
-          :key="u.userId"
+          v-for="member in membersPanel.members"
+          :key="member.userId"
+          class="access-groups__member-card"
         >
+          <UserAvatar
+            :avatar-url="member.avatarUrl"
+            :label="memberDisplayName(member)"
+            size="sm"
+            :user-id="member.userId"
+          />
+          <div class="access-groups__member-info">
+            <span class="access-groups__member-name">
+              {{ memberDisplayName(member) }}
+            </span>
+            <span
+              v-if="memberSubtitle(member)"
+              class="access-groups__member-sub"
+            >
+              {{ memberSubtitle(member) }}
+            </span>
+          </div>
           <button
             type="button"
-            class="access-groups__hit"
-            @click="addUserId(u.userId)"
+            class="access-groups__member-remove"
+            title="Удалить из группы"
+            @click="removeMember(member.userId)"
           >
-            {{ u.displayName || u.username || u.email || u.userId }}
-            <span class="access-groups__hit-id">{{ u.userId }}</span>
+            ✕
           </button>
         </li>
       </ul>
-      <label>
-        User ID
-        <textarea
-          v-model="membersPanel.userIdsText"
-          rows="6"
-          placeholder="пусто = никого в группе"
-        />
-      </label>
+      <p
+        v-else
+        class="access-groups__empty"
+      >
+        Нет участников. Найдите пользователя через поиск выше.
+      </p>
+
       <p
         v-if="membersError"
         class="access-groups__error"
@@ -416,6 +503,25 @@ async function saveMembers() {
   max-width: 36rem;
 }
 
+.access-groups__panel--members {
+  max-width: 40rem;
+}
+
+.access-groups__panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.access-groups__panel-header h3 {
+  margin: 0;
+}
+
+.access-groups__member-count {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
 .access-groups__form {
   display: grid;
   gap: 0.85rem;
@@ -441,7 +547,66 @@ async function saveMembers() {
   gap: 0.5rem;
 }
 
+.access-groups__search {
+  position: relative;
+}
+
 .access-groups__hits {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.access-groups__hit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.access-groups__hit:hover {
+  background: var(--color-bg);
+}
+
+.access-groups__hit-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.access-groups__hit-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.access-groups__hit-id {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.access-groups__member-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -449,28 +614,61 @@ async function saveMembers() {
   gap: 0.35rem;
 }
 
-.access-groups__hit {
+.access-groups__member-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  width: 100%;
-  text-align: left;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface);
-  padding: 0.4rem 0.6rem;
-  cursor: pointer;
-  font: inherit;
 }
 
-.access-groups__hit:hover {
-  border-color: var(--color-primary);
+.access-groups__member-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.access-groups__hit-id {
+.access-groups__member-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.access-groups__member-sub {
   font-size: 0.75rem;
   color: var(--color-text-muted);
-  word-break: break-all;
+}
+
+.access-groups__member-remove {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.access-groups__member-remove:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.access-groups__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
 
 .access-groups__list {

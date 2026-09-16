@@ -520,6 +520,14 @@ export type AccessGroup = {
   memberCount?: number;
 };
 
+export type AccessGroupMemberDetails = {
+  userId: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  lastSeenAt: string | null;
+};
+
 export async function listAccessGroups(): Promise<AccessGroup[]> {
   const res = await fetch(`${apiBase()}/admin/forum/access-groups`, {
     headers: await forumAuthHeaders(),
@@ -578,6 +586,17 @@ export async function getAccessGroupMembers(
   );
   if (!res.ok) await throwForumError(res, 'Не удалось загрузить состав группы');
   return (await res.json()) as { groupId: string; userIds: string[] };
+}
+
+export async function getAccessGroupMembersDetails(
+  groupId: string,
+): Promise<{ groupId: string; members: AccessGroupMemberDetails[] }> {
+  const res = await fetch(
+    `${apiBase()}/admin/forum/access-groups/${encodeURIComponent(groupId)}/members/details`,
+    { headers: await forumAuthHeaders() },
+  );
+  if (!res.ok) await throwForumError(res, 'Не удалось загрузить состав группы');
+  return (await res.json()) as { groupId: string; members: AccessGroupMemberDetails[] };
 }
 
 export async function setAccessGroupMembers(
