@@ -301,6 +301,7 @@ export class TopicsService {
       await this.topics.save(row);
     }
 
+    this.categoryAcl.invalidateCountsCache();
     return this.toDetail(row);
   }
 
@@ -412,6 +413,7 @@ export class TopicsService {
       await this.topics.save(row);
     }
 
+    this.categoryAcl.invalidateCountsCache();
     return this.toDetail(row);
   }
 
@@ -431,6 +433,7 @@ export class TopicsService {
     if (row.status === 'PUBLISHED') {
       this.userProfile.adjustCounts(row.authorId, { postDelta: -1 }).catch(() => {});
     }
+    this.categoryAcl.invalidateCountsCache();
     return { ok: true, topicId: row.id, deletedAt: row.deletedAt.toISOString() };
   }
 

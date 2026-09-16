@@ -20,11 +20,11 @@ export type CategoryNode = {
   parentId: string | null;
   sortOrder: number;
   restricted: boolean;
-  /** Published topics in this category (not subtree). */
+  /** Published topics in this category and all descendants. */
   topicCount: number;
-  /** Non-deleted comments on those published topics (not subtree). */
+  /** Non-deleted comments on published topics in this subtree. */
   commentCount: number;
-  /** Topics the current viewer has not opened yet. 0 when not authenticated. */
+  /** Topics the current viewer has not opened yet (subtree). 0 when not authenticated. */
   unreadCount: number;
   accessGroupIds?: string[];
   children: CategoryNode[];
@@ -41,8 +41,12 @@ export type CategoryAccessViewer = {
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+const COUNTS_CACHE_TTL_MS = 60_000;
+
 @Injectable()
 export class CategoriesService {
+  private countsCache: { data: Map<string, CategoryCounts>; ts: number } | null = null;
+
   constructor(
     @InjectRepository(CategoryEntity)
     private readonly categories: Repository<CategoryEntity>,
@@ -63,15 +67,16 @@ export class CategoriesService {
     const unreadCounts = access.viewerId
       ? await this.loadUnreadCountsByCategory(access.viewerId)
       : new Map<string, number>();
-    return {
-      data: this.buildTree(
-        visible,
-        groupsByCategory,
-        Boolean(access.includeAccessGroups),
-        counts,
-        unreadCounts,
-      ),
-    };
+    const tree = this.buildTree(
+      visible,
+      groupsByCategory,
+      Boolean(access.includeAccessGroups),
+      counts,
+      unreadCounts,
+    );
+    this.accumulateCounts(tree, counts);
+    this.accumulateUnreadCounts(tree, unreadCounts);
+    return { data: tree };
   }
 
   /** Category ids the viewer may use (empty groups or OR member / admin). */
@@ -248,7 +253,16 @@ export class CategoriesService {
     return linked.some((groupId) => viewerGroupIds.has(groupId));
   }
 
+  /** Call after topic create/delete to reset counts cache. */
+  invalidateCountsCache() {
+    this.countsCache = null;
+  }
+
   private async loadCountsByCategory(): Promise<Map<string, CategoryCounts>> {
+    if (this.countsCache && Date.now() - this.countsCache.ts < COUNTS_CACHE_TTL_MS) {
+      return this.countsCache.data;
+    }
+
     const topicRows = (await this.dataSource.query(
       `SELECT category_id AS "categoryId", COUNT(*)::int AS "topicCount"
        FROM forum.topic
@@ -278,10 +292,48 @@ export class CategoriesService {
       prev.commentCount = Number(row.commentCount) || 0;
       counts.set(row.categoryId, prev);
     }
+
+    this.countsCache = { data: counts, ts: Date.now() };
     return counts;
   }
 
+  /** Recursively accumulate counts from children into parent nodes. */
+  private accumulateCounts(
+    nodes: CategoryNode[],
+    flat: Map<string, CategoryCounts>,
+  ): void {
+    for (const node of nodes) {
+      this.accumulateCounts(node.children, flat);
+      const own = flat.get(node.id) ?? { topicCount: 0, commentCount: 0 };
+      for (const child of node.children) {
+        own.topicCount += child.topicCount;
+        own.commentCount += child.commentCount;
+      }
+      node.topicCount = own.topicCount;
+      node.commentCount = own.commentCount;
+    }
+  }
+
+  /** Recursively accumulate unread counts from children into parent nodes. */
+  private accumulateUnreadCounts(nodes: CategoryNode[], flat: Map<string, number>): void {
+    for (const node of nodes) {
+      this.accumulateUnreadCounts(node.children, flat);
+      const own = flat.get(node.id) ?? 0;
+      for (const child of node.children) {
+        node.unreadCount += child.unreadCount;
+      }
+      node.unreadCount += own;
+    }
+  }
+
+  private unreadCache: Map<string, { data: Map<string, number>; ts: number }> = new Map();
+
   private async loadUnreadCountsByCategory(viewerId: string): Promise<Map<string, number>> {
+    const cached = this.unreadCache.get(viewerId);
+    if (cached && Date.now() - cached.ts < COUNTS_CACHE_TTL_MS) {
+      return cached.data;
+    }
+
     const rows = (await this.dataSource.query(
       `SELECT t.category_id AS "categoryId", COUNT(*)::int AS "unreadCount"
        FROM forum.topic t
@@ -297,6 +349,7 @@ export class CategoriesService {
     for (const row of rows) {
       counts.set(row.categoryId, Number(row.unreadCount) || 0);
     }
+    this.unreadCache.set(viewerId, { data: counts, ts: Date.now() });
     return counts;
   }
 
