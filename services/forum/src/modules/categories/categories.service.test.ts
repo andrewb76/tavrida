@@ -264,8 +264,8 @@ describe('CategoriesService (access groups)', () => {
     );
 
     const result = await service.listTree();
-    assert.equal(result.data[0]?.topicCount, 3);
-    assert.equal(result.data[0]?.commentCount, 10);
+    assert.equal(result.data[0]?.topicCount, 4);
+    assert.equal(result.data[0]?.commentCount, 12);
     assert.equal(result.data[0]?.children[0]?.topicCount, 1);
     assert.equal(result.data[0]?.children[0]?.commentCount, 2);
   });
