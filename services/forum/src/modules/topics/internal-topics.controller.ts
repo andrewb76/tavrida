@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -116,7 +117,7 @@ class HomeFeedQuery {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @MaxLength(20)
+  @Max(20)
   limit?: number;
 }
 
