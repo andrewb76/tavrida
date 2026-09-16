@@ -95,11 +95,29 @@ class ListTopicsQuery {
   @IsString()
   isAdmin?: string;
 
-  /** Search in title/body (ILIKE). */
   @IsOptional()
-  @IsString()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   @MaxLength(100)
   q?: string;
+}
+
+class HomeFeedQuery {
+  @IsOptional()
+  @IsString()
+  viewerId?: string;
+
+  @IsOptional()
+  @IsString()
+  isAdmin?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @MaxLength(20)
+  limit?: number;
 }
 
 class CreateTopicRequestDto extends CreateTopicDto {
@@ -195,6 +213,15 @@ export class InternalTopicsController {
       viewerId: query.viewerId,
       isAdmin: query.isAdmin === '1' || query.isAdmin === 'true',
       q: query.q,
+    });
+  }
+
+  @Get('grouped-for-home')
+  listGroupedForHome(@Query() query: HomeFeedQuery) {
+    return this.topics.listGroupedForHome({
+      viewerId: query.viewerId,
+      isAdmin: query.isAdmin === '1' || query.isAdmin === 'true',
+      limit: query.limit,
     });
   }
 

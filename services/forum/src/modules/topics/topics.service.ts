@@ -110,6 +110,74 @@ export class TopicsService {
     };
   }
 
+  async listGroupedForHome(input: {
+    viewerId?: string;
+    isAdmin?: boolean;
+    limit?: number;
+  }): Promise<{
+    groups: {
+      public: ReturnType<TopicsService['toSummary']>[];
+      myGroups: ReturnType<TopicsService['toSummary']>[];
+      myTopics: ReturnType<TopicsService['toSummary']>[];
+    };
+    merged: ReturnType<TopicsService['toSummary']>[];
+  }> {
+    const take = Math.min(Math.max(input.limit ?? 5, 1), 20);
+
+    const { groupsByCategory, viewerGroupIds, accessibleIds } =
+      await this.categoryAcl.loadAclContext(input.viewerId, input.isAdmin);
+
+    const allTopics = await this.topics
+      .createQueryBuilder('topic')
+      .where('topic.status = :status', { status: 'PUBLISHED' })
+      .andWhere('topic.deleted_at IS NULL')
+      .orderBy('topic.created_at', 'DESC')
+      .take(500)
+      .getMany();
+
+    const accessible = allTopics.filter((t) => accessibleIds.has(t.categoryId));
+
+    const publicTopics: TopicEntity[] = [];
+    const myGroupTopics: TopicEntity[] = [];
+    const myTopicsList: TopicEntity[] = [];
+
+    for (const topic of accessible) {
+      const linked = groupsByCategory.get(topic.categoryId) ?? [];
+      const isPublic = linked.length === 0;
+      const isMyGroup = !isPublic && linked.some((g) => viewerGroupIds.has(g));
+      const isMine = input.viewerId != null && topic.authorId === input.viewerId;
+
+      if (isPublic) publicTopics.push(topic);
+      if (isMyGroup) myGroupTopics.push(topic);
+      if (isMine) myTopicsList.push(topic);
+    }
+
+    const sortByCreated = (a: TopicEntity, b: TopicEntity) =>
+      b.createdAt.getTime() - a.createdAt.getTime();
+    publicTopics.sort(sortByCreated);
+    myGroupTopics.sort(sortByCreated);
+    myTopicsList.sort(sortByCreated);
+
+    const seen = new Set<string>();
+    const merged: ReturnType<TopicsService['toSummary']>[] = [];
+    const allSorted = [...accessible].sort(sortByCreated);
+    for (const topic of allSorted) {
+      if (seen.has(topic.id)) continue;
+      seen.add(topic.id);
+      merged.push(this.toSummary(topic));
+      if (merged.length >= take) break;
+    }
+
+    return {
+      groups: {
+        public: publicTopics.map((t) => this.toSummary(t)),
+        myGroups: myGroupTopics.map((t) => this.toSummary(t)),
+        myTopics: myTopicsList.map((t) => this.toSummary(t)),
+      },
+      merged,
+    };
+  }
+
   private normalizeSearchQuery(raw?: string): string | undefined {
     if (raw == null) return undefined;
     const q = raw.trim().slice(0, 100);

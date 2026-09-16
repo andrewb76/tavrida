@@ -2,7 +2,7 @@
 import { listAuctions, type AuctionCard } from '@/services/auctions';
 import { auctionTypeShortLabel } from '@/services/auction-format';
 import ProxiedImg from '@/components/media/ProxiedImg.vue';
-import { listTopics, type TopicSummary } from '@/services/forum';
+import { listHomeFeed, type TopicSummary } from '@/services/forum';
 import { formatMoney } from '@/services/wallet';
 import { useSessionStore } from '@/stores/session';
 import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
@@ -77,8 +77,8 @@ async function loadForum() {
   loadingForum.value = true;
   forumError.value = null;
   try {
-    const { data } = await listTopics();
-    topics.value = data.slice(0, 5);
+    const feed = await listHomeFeed();
+    topics.value = feed.merged;
   } catch (e) {
     forumError.value = e instanceof Error ? e.message : 'Не удалось загрузить форум';
     topics.value = [];

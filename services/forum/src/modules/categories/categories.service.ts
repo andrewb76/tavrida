@@ -85,6 +85,27 @@ export class CategoriesService {
     );
   }
 
+  /**
+   * Bulk-load ACL context for home feed grouping.
+   * Returns pre-computed data so callers can classify topics without extra queries.
+   */
+  async loadAclContext(viewerId?: string | null, isAdmin?: boolean): Promise<{
+    groupsByCategory: Map<string, string[]>;
+    viewerGroupIds: Set<string>;
+    accessibleIds: Set<string>;
+  }> {
+    const rows = await this.categories.find({ select: { id: true } });
+    const ids = rows.map((r) => r.id);
+    const groupsByCategory = await this.accessGroups.loadGroupsByCategory(ids);
+    const viewerGroupIds = isAdmin
+      ? new Set<string>()
+      : await this.accessGroups.loadViewerGroupIds(viewerId);
+    const accessibleIds = new Set(
+      ids.filter((id) => this.isAllowed(id, groupsByCategory, viewerGroupIds, isAdmin)),
+    );
+    return { groupsByCategory, viewerGroupIds, accessibleIds };
+  }
+
   async assertAccessible(categoryId: string, access: CategoryAccessViewer = {}) {
     await this.requireCategory(categoryId);
     const groupsByCategory = await this.accessGroups.loadGroupsByCategory([categoryId]);

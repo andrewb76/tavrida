@@ -311,6 +311,37 @@ export class ForumController {
     return { data, total: res.total };
   }
 
+  @Get('topics/home-feed')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getHomeFeed(@Req() req: Request & { user?: AuthUser }) {
+    const userId = req.user?.sub;
+    const isAdmin = userId ? await this.keto.isPlatformAdmin(userId) : false;
+    const res = await this.forum.listGroupedTopicsForHome(
+      { userId, isAdmin },
+      5,
+    );
+
+    const enrich = (items: Array<{ authorId: string }>) =>
+      this.authors.enrichMany(items);
+
+    const [publicEnriched, myGroupsEnriched, myTopicsEnriched, mergedEnriched] =
+      await Promise.all([
+        enrich(res.groups.public as Array<{ authorId: string }>),
+        enrich(res.groups.myGroups as Array<{ authorId: string }>),
+        enrich(res.groups.myTopics as Array<{ authorId: string }>),
+        enrich(res.merged as Array<{ authorId: string }>),
+      ]);
+
+    return {
+      groups: {
+        public: publicEnriched,
+        myGroups: myGroupsEnriched,
+        myTopics: myTopicsEnriched,
+      },
+      merged: mergedEnriched,
+    };
+  }
+
   @Get('topics/:id')
   @UseGuards(OptionalJwtAuthGuard)
   async getTopic(@Param('id') id: string, @Req() req: Request & { user?: AuthUser }) {

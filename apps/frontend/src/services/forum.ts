@@ -121,6 +121,23 @@ export async function listTopics(options?: {
   return json;
 }
 
+export type HomeFeedResponse = {
+  groups: {
+    public: TopicSummary[];
+    myGroups: TopicSummary[];
+    myTopics: TopicSummary[];
+  };
+  merged: TopicSummary[];
+};
+
+export async function listHomeFeed(): Promise<HomeFeedResponse> {
+  const res = await fetch(`${apiBase()}/forum/topics/home-feed`, {
+    headers: await forumAuthHeaders(true),
+  });
+  if (!res.ok) throw new Error('Не удалось загрузить ленту');
+  return (await res.json()) as HomeFeedResponse;
+}
+
 export async function fetchForumMeta(): Promise<ForumMeta> {
   const res = await fetch(`${apiBase()}/forum/meta`);
   if (!res.ok) throw new Error('Не удалось загрузить настройки форума');

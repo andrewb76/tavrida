@@ -139,6 +139,21 @@ export class ForumClient {
     return this.request<{ data: unknown[]; total: number }>('GET', `/internal/v1/topics${suffix}`);
   }
 
+  listGroupedTopicsForHome(
+    viewer?: { userId?: string; isAdmin?: boolean },
+    limit?: number,
+  ) {
+    const params = new URLSearchParams();
+    if (viewer?.userId) params.set('viewerId', viewer.userId);
+    if (viewer?.isAdmin) params.set('isAdmin', '1');
+    if (limit != null) params.set('limit', String(limit));
+    const suffix = params.size ? `?${params.toString()}` : '';
+    return this.request<{
+      groups: { public: unknown[]; myGroups: unknown[]; myTopics: unknown[] };
+      merged: unknown[];
+    }>('GET', `/internal/v1/topics/grouped-for-home${suffix}`);
+  }
+
   getTopic(
     topicId: string,
     viewer?: { userId?: string; changeWindowMinutes?: number; isAdmin?: boolean },
