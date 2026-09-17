@@ -310,7 +310,7 @@ services:
           echo "DB has $$APP_COUNT apps, skipping seed"
         fi
         echo "Running DB alterations..."
-        npm run cli db alteration deploy
+        npm run cli db alteration deploy -- --target 1.43.0 || echo "Alteration skipped or already applied"
         exec npm start
     environment:
       TRUST_PROXY_HEADER: 'true'
