@@ -9,4 +9,4 @@ function hydrateSecretEnv(keys: readonly string[]): void {
   }
 }
 
-hydrateSecretEnv(['DATABASE_URL', 'INTERNAL_SERVICE_TOKEN']);
+hydrateSecretEnv(['DATABASE_URL', 'INTERNAL_SERVICE_TOKEN', 'BILLING_URL']);

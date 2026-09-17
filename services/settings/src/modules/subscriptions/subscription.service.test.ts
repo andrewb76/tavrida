@@ -5,6 +5,7 @@ import type { Repository } from 'typeorm';
 
 import { PlanEntity } from '../../entities/plan.entity';
 import { UserSubscriptionEntity } from '../../entities/user-subscription.entity';
+import { BillingClient } from '../billing/billing-client.service';
 import { SubscriptionService } from './subscription.service';
 
 function makeSub(overrides: Partial<UserSubscriptionEntity> = {}): UserSubscriptionEntity {
@@ -22,24 +23,41 @@ function makeSub(overrides: Partial<UserSubscriptionEntity> = {}): UserSubscript
   } as UserSubscriptionEntity;
 }
 
+function makePlan(overrides: Partial<PlanEntity> = {}): PlanEntity {
+  return {
+    id: 'basic',
+    title: 'Basic',
+    description: '',
+    monthlyPrice: 500,
+    yearlyPrice: 5000,
+    isActive: true,
+    sortOrder: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  } as PlanEntity;
+}
+
+function matchWhere(where: Record<string, unknown>, item: Record<string, unknown>): boolean {
+  return Object.entries(where).every(([k, v]) => {
+    if (v && typeof v === 'object' && '_type' in v) {
+      const op = v as { _type: string; _value: unknown };
+      const val = item[k];
+      if (op._type === 'lessThanOrEqual') return (val as number) <= (op._value as number);
+      return true;
+    }
+    return item[k] === v;
+  });
+}
+
 function createHarness(opts: {
   subs?: UserSubscriptionEntity[];
   plans?: PlanEntity[];
+  billingChargeResult?: { transactionId: string; status: string; balanceAfter: number };
+  billingError?: Error;
 } = {}) {
   const subs = [...(opts.subs ?? [])];
   const plans = [...(opts.plans ?? [])];
-
-  function matchWhere(where: Record<string, unknown>, item: Record<string, unknown>): boolean {
-    return Object.entries(where).every(([k, v]) => {
-      if (v && typeof v === 'object' && '_type' in v) {
-        const op = v as { _type: string; _value: unknown };
-        const val = item[k];
-        if (op._type === 'lessThanOrEqual') return (val as number) <= (op._value as number);
-        return true;
-      }
-      return item[k] === v;
-    });
-  }
 
   function makeRepo<T>(store: T[]) {
     return {
@@ -52,11 +70,9 @@ function createHarness(opts: {
       },
       findOne: async (opts?: { where?: unknown }) => {
         if (!opts?.where) return store[0] ?? null;
+        const w = opts.where as Record<string, unknown>;
         return (
-          store.find((item) => {
-            const w = opts.where as Record<string, unknown>;
-            return Object.entries(w).every(([k, v]) => (item as Record<string, unknown>)[k] === v);
-          }) ?? null
+          store.find((item) => matchWhere(w, item as Record<string, unknown>)) ?? null
         );
       },
       create: (data: T) => ({ ...data }) as T,
@@ -68,20 +84,21 @@ function createHarness(opts: {
         else store.push(entity);
         return entity;
       },
-      remove: async (entity: T) => {
-        const idx = store.findIndex(
-          (item) => (item as Record<string, unknown>).userId === (entity as Record<string, unknown>).userId,
-        );
-        if (idx >= 0) store.splice(idx, 1);
-        return entity;
-      },
     } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  const subsRepo = makeRepo<UserSubscriptionEntity>(subs);
-  const plansRepo = makeRepo<PlanEntity>(plans);
+  const billing = {
+    charge: async () => {
+      if (opts.billingError) throw opts.billingError;
+      return opts.billingChargeResult ?? { transactionId: 'tx-1', status: 'COMPLETED', balanceAfter: 0 };
+    },
+  } as unknown as BillingClient;
 
-  const service = new SubscriptionService(subsRepo as Repository<UserSubscriptionEntity>, plansRepo as Repository<PlanEntity>);
+  const service = new SubscriptionService(
+    makeRepo(subs) as Repository<UserSubscriptionEntity>,
+    makeRepo(plans) as Repository<PlanEntity>,
+    billing,
+  );
 
   return { service, subs, plans };
 }
@@ -105,24 +122,41 @@ describe('SubscriptionService', () => {
   });
 
   describe('activate', () => {
-    it('creates new subscription', async () => {
-      const { service, subs } = createHarness();
-      await service.activate({
+    it('charges billing when price > 0', async () => {
+      const { service, subs } = createHarness({
+        plans: [makePlan({ monthlyPrice: 500 })],
+      });
+      const result = await service.activate({
         userId: 'u1',
-        planId: 'pro',
+        planId: 'basic',
         billingPeriod: 'monthly',
         autoRenew: true,
       });
+      assert.equal(result.billingCharged, true);
+      assert.equal(result.transactionId, 'tx-1');
       assert.equal(subs.length, 1);
-      assert.equal(subs[0].planId, 'pro');
-      assert.equal(subs[0].status, 'ACTIVE');
-      assert.equal(subs[0].autoRenew, true);
+      assert.equal(subs[0].planId, 'basic');
       assert.ok(subs[0].expiresAt);
+    });
+
+    it('skips billing when price is 0 (free plan)', async () => {
+      const { service, subs } = createHarness({
+        plans: [makePlan({ id: 'free', monthlyPrice: 0, yearlyPrice: 0 })],
+      });
+      const result = await service.activate({
+        userId: 'u1',
+        planId: 'free',
+        billingPeriod: 'monthly',
+      });
+      assert.equal(result.billingCharged, false);
+      assert.equal(result.transactionId, undefined);
+      assert.equal(subs[0].expiresAt, null);
     });
 
     it('updates existing subscription', async () => {
       const { service, subs } = createHarness({
         subs: [makeSub({ planId: 'basic' })],
+        plans: [makePlan({ monthlyPrice: 0 }), makePlan({ id: 'pro', monthlyPrice: 0 })],
       });
       await service.activate({
         userId: 'u1',
@@ -134,15 +168,28 @@ describe('SubscriptionService', () => {
     });
 
     it('yearly adds 1 year', async () => {
-      const { service, subs } = createHarness();
+      const { service, subs } = createHarness({
+        plans: [makePlan({ yearlyPrice: 5000 })],
+      });
       await service.activate({
         userId: 'u1',
-        planId: 'pro',
+        planId: 'basic',
         billingPeriod: 'yearly',
       });
       const expires = subs[0].expiresAt!.getTime();
       const yearMs = 365 * 86_400_000;
       assert.ok(expires > Date.now() + yearMs - 2000);
+    });
+
+    it('propagates billing insufficient balance error', async () => {
+      const { service } = createHarness({
+        plans: [makePlan({ monthlyPrice: 500 })],
+        billingError: new Error('insufficient_balance'),
+      });
+      await assert.rejects(
+        () => service.activate({ userId: 'u1', planId: 'basic', billingPeriod: 'monthly' }),
+        { message: 'insufficient_balance' },
+      );
     });
   });
 
@@ -202,19 +249,45 @@ describe('SubscriptionService', () => {
       assert.equal(subs[0].status, 'EXPIRED');
     });
 
-    it('renews subs with autoRenew', async () => {
+    it('renews subs with autoRenew and charges billing', async () => {
       const { service, subs } = createHarness({
         subs: [makeSub({ expiresAt: new Date('2020-01-01'), autoRenew: true, billingPeriod: 'monthly' })],
+        plans: [makePlan({ monthlyPrice: 500 })],
       });
       const result = await service.renewDue();
       assert.equal(result.renewed, 1);
-      assert.equal(result.expired, 0);
+      assert.equal(result.failed, 0);
+      assert.ok(result.results[0].transactionId);
       assert.ok(subs[0].expiresAt!.getTime() > Date.now());
+    });
+
+    it('marks failed when billing charge throws', async () => {
+      const { service, subs } = createHarness({
+        subs: [makeSub({ expiresAt: new Date('2020-01-01'), autoRenew: true, billingPeriod: 'monthly' })],
+        plans: [makePlan({ monthlyPrice: 500 })],
+        billingError: new Error('insufficient_balance'),
+      });
+      const result = await service.renewDue();
+      assert.equal(result.failed, 1);
+      assert.equal(result.renewed, 0);
+      assert.equal(subs[0].status, 'EXPIRED');
+      assert.equal(result.results[0].action, 'failed');
+    });
+
+    it('renews free plans without billing', async () => {
+      const { service } = createHarness({
+        subs: [makeSub({ expiresAt: new Date('2020-01-01'), autoRenew: true, billingPeriod: 'monthly' })],
+        plans: [makePlan({ monthlyPrice: 0, yearlyPrice: 0 })],
+      });
+      const result = await service.renewDue();
+      assert.equal(result.renewed, 1);
+      assert.equal(result.failed, 0);
     });
 
     it('defaults to monthly when billingPeriod is null', async () => {
       const { service, subs } = createHarness({
         subs: [makeSub({ expiresAt: new Date('2020-01-01'), autoRenew: true, billingPeriod: null })],
+        plans: [makePlan({ monthlyPrice: 0 })],
       });
       const result = await service.renewDue();
       assert.equal(result.renewed, 1);
@@ -229,6 +302,16 @@ describe('SubscriptionService', () => {
       assert.equal(result.scanned, 0);
       assert.equal(result.renewed, 0);
       assert.equal(result.expired, 0);
+    });
+
+    it('marks failed when plan not found', async () => {
+      const { service, subs } = createHarness({
+        subs: [makeSub({ expiresAt: new Date('2020-01-01'), autoRenew: true, planId: 'nonexistent' })],
+        plans: [],
+      });
+      const result = await service.renewDue();
+      assert.equal(result.failed, 1);
+      assert.equal(subs[0].status, 'EXPIRED');
     });
   });
 });
