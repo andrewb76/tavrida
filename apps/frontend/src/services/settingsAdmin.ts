@@ -110,19 +110,34 @@ export async function patchSystemValues(
   return JSON.parse(text);
 }
 
-export async function fetchPlanValues(planId?: string): Promise<unknown> {
+export type PlanValueRow = {
+  planId: string;
+  paramKey: string;
+  value: unknown;
+  parameter?: {
+    key: string;
+    name: string;
+    description: string;
+    service: string;
+    paramType: string;
+    category: string;
+  } | null;
+};
+
+export async function fetchPlanValues(planId?: string): Promise<PlanValueRow[]> {
   const qs = planId ? `?planId=${encodeURIComponent(planId)}` : '';
   const res = await adminFetch(`/admin/settings/plan-values${qs}`);
   const text = await res.text();
   if (!text) return [];
-  return JSON.parse(text);
+  const json = JSON.parse(text);
+  return Array.isArray(json) ? json : [];
 }
 
 export async function setPlanValue(
   planId: string,
   key: string,
   value: unknown,
-): Promise<unknown> {
+): Promise<PlanValueRow> {
   const res = await adminFetch(`/admin/settings/plan-values/${planId}/${key}`, {
     method: 'PATCH',
     body: JSON.stringify({ value }),
@@ -130,14 +145,70 @@ export async function setPlanValue(
   return res.json();
 }
 
-export async function fetchLimitState(userId: string, key?: string): Promise<unknown> {
+export type UserValueRow = {
+  userId: string;
+  paramKey: string;
+  value: unknown;
+};
+
+export async function fetchUserValues(userId: string): Promise<UserValueRow[]> {
+  const res = await adminFetch(`/admin/settings/user-values/${userId}`);
+  const text = await res.text();
+  if (!text) return [];
+  const json = JSON.parse(text);
+  return Array.isArray(json) ? json : json.data ?? [];
+}
+
+export async function setUserValue(
+  userId: string,
+  key: string,
+  value: unknown,
+): Promise<UserValueRow> {
+  const res = await adminFetch(`/admin/settings/user-values/${userId}/${key}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ value }),
+  });
+  return res.json();
+}
+
+export async function deleteUserValue(userId: string, key: string): Promise<void> {
+  await adminFetch(`/admin/settings/user-values/${userId}/${key}`, { method: 'DELETE' });
+}
+
+export type LimitState = {
+  paramKey: string;
+  planId: string;
+  userId: string;
+  period: string;
+  maxValue: number;
+  remaining: number;
+  cycleStart: string;
+  cycleEnd: string;
+};
+
+export async function fetchLimitState(userId: string, key?: string): Promise<{ limits: LimitState[] }> {
   const qs = new URLSearchParams({ userId });
   if (key) qs.set('key', key);
   const res = await adminFetch(`/admin/settings/limits/state?${qs}`);
   return res.json();
 }
 
-export async function fetchUsageLog(params: Record<string, string>): Promise<unknown> {
+export type UsageLogEntry = {
+  id: string;
+  paramKey: string;
+  planId: string;
+  userId: string;
+  period: string;
+  delta: number;
+  remainingAfter: number;
+  source: string;
+  meta: unknown;
+  createdAt: string;
+};
+
+export async function fetchUsageLog(
+  params: Record<string, string>,
+): Promise<{ data: UsageLogEntry[]; total: number; page: number; pageSize: number }> {
   const qs = new URLSearchParams(params);
   const res = await adminFetch(`/admin/settings/limits/usage-log?${qs}`);
   return res.json();
