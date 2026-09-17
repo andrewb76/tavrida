@@ -14,6 +14,7 @@
     "check:logto": "node scripts/check-logto-env.mjs",
     "setup:logto-webhook": "node scripts/setup-logto-webhook.mjs",
     "setup:logto-branding": "node scripts/setup-logto-branding.mjs",
+    "setup:logto-signin": "node scripts/setup-logto-signin.mjs",
     "setup:logto-storage": "node scripts/setup-logto-storage.mjs",
     "sync:logto-users": "node scripts/sync-logto-users.mjs",
     "grant:admin": "sh scripts/grant-admin.sh",

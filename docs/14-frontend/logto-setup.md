@@ -96,6 +96,32 @@ DOCKER_CONTEXT=dev-swarm docker service update --force tavrida-dev_logto
 
 Документация Logto: [File storage provider](https://docs.logto.io/logto-oss/file-storage-provider).
 
+### Sign-in methods (Sign-up / Sign-in)
+
+Console: **Sign-in & account → Sign-up and sign-in** (или скрипт).
+
+Logto OSS при первом запуске seed создаёт базовую sign-in experience без методов. Если форма входа пустая (только заголовок, нет полей ввода) — нужно настроить методы аутентификации.
+
+```bash
+# Username + Password (built-in, без SMTP) — рекомендуется для invite-only клуба
+pnpm setup:logto-signin
+
+# Email + Password (требует SMTP connector)
+pnpm setup:logto-signin --method=email
+
+# Phone + Password (требует SMS connector)
+pnpm setup:logto-signin --method=phone
+
+# проверить текущую конфигурацию:
+VERIFY=1 pnpm setup:logto-signin
+```
+
+| `--method` | signUp | signIn | Примечание |
+|---|---|---|---|
+| `username` (default) | username + password | username + password | Built-in, без SMTP. Для invite-only. |
+| `email` | email + verify | email + password/verify | Требует SMTP connector |
+| `phone` | phone + verify | phone + password/verify | Требует SMS connector |
+
 ---
 
 ## 2. Logto Cloud (опционально)
