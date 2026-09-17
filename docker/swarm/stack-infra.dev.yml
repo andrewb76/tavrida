@@ -294,7 +294,7 @@ services:
 
   # Self-hosted Logto (OIDC + Admin Console) — replaces Cloud tenant for Swarm dev.
   logto:
-    image: svhd/logto:1.41.0
+    image: svhd/logto:1.43.0
     secrets:
       - postgres_password
     entrypoint: ['/bin/sh', '-c']
@@ -309,6 +309,8 @@ services:
         else
           echo "DB has $$APP_COUNT apps, skipping seed"
         fi
+        echo "Running DB alterations..."
+        npm run cli db alteration deploy
         exec npm start
     environment:
       TRUST_PROXY_HEADER: 'true'
