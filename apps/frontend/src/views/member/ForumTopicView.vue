@@ -761,10 +761,33 @@ async function submitTopicComment() {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1rem;
-  overflow: hidden;
   min-width: 0;
+  overflow: hidden;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.forum-topic__head :deep(.markdown-body),
+.forum-topic__comments :deep(.markdown-body) {
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.forum-topic__head :deep(.markdown-body pre),
+.forum-topic__comments :deep(.markdown-body pre) {
+  max-width: 100%;
+}
+
+.forum-topic__head :deep(.markdown-body table),
+.forum-topic__comments :deep(.markdown-body table) {
+  max-width: 100%;
+}
+
+.forum-topic__head :deep(.markdown-body img),
+.forum-topic__comments :deep(.markdown-body img) {
+  max-width: 100%;
 }
 
 .forum-topic__author-row {
