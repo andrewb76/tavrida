@@ -4,7 +4,6 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import {
   CATEGORY_LABELS,
-  createSettingsPlan,
   deleteUserValue,
   fetchLimitState,
   fetchPlanValues,
@@ -15,6 +14,7 @@ import {
   patchSystemValues,
   setPlanValue,
   setUserValue,
+  updateSettingsPlan,
   type LimitState,
   type PlanValueRow,
   type SettingsParameter,
@@ -85,7 +85,6 @@ const userValueLoading = ref(false);
 const limitsTarget = ref('');
 const limitsList = ref<LimitState[]>([]);
 const limitsLoading = ref(false);
-const limitsUsageLog = ref<{ data: Record<string, unknown>[]; total: number }>({ data: [], total: 0 });
 
 async function load() {
   loading.value = true;
@@ -213,6 +212,55 @@ async function loadLimits() {
     toast.error(`Ошибка: ${e instanceof Error ? e.message : e}`);
   } finally {
     limitsLoading.value = false;
+  }
+}
+
+async function savePlans() {
+  savingPlans.value = true;
+  error.value = '';
+  try {
+    const calls: Promise<unknown>[] = [];
+    for (const plan of plans.value) {
+      const form = planForms[plan.id];
+      if (!form) continue;
+      calls.push(updateSettingsPlan(plan.id, {
+        title: form.title,
+        monthlyPrice: form.monthlyPrice,
+        yearlyPrice: form.yearlyPrice,
+        isActive: form.isActive,
+      }));
+    }
+    if (calls.length) {
+      await Promise.all(calls);
+      toast.success(`Сохранено ${calls.length} тарифов`);
+    } else {
+      toast.info('Изменений нет');
+    }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Ошибка сохранения тарифов';
+    toast.error(error.value);
+  } finally {
+    savingPlans.value = false;
+  }
+}
+
+async function saveSystemValues(domain: string) {
+  savingSystemValues.value = true;
+  error.value = '';
+  try {
+    const raw = systemValueForms[domain];
+    if (!raw) return;
+    const values: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(raw)) {
+      values[key] = val === '' ? null : val;
+    }
+    await patchSystemValues(domain, values);
+    toast.success(`Сохранены системные значения: ${domain}`);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Ошибка сохранения';
+    toast.error(error.value);
+  } finally {
+    savingSystemValues.value = false;
   }
 }
 
@@ -546,7 +594,7 @@ onMounted(() => {
                   class="px-3 py-2"
                 >
                   <input
-                    v-model="planValueForms[plan.id]?.[param.key]"
+                    v-model="planValueForms[plan.id][param.key]"
                     type="text"
                     class="w-full max-w-24 rounded-md border border-border bg-bg px-2 py-1"
                     :aria-label="`${param.name}, ${plan.title}`"
