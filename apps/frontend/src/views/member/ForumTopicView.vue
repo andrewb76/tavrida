@@ -423,7 +423,15 @@ async function submitTopicComment() {
               :limit="3"
             />
           </div>
-          <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
+          <span class="forum-topic__meta">
+            <UiIcon
+              v-if="topic?.isPinned"
+              name="pin"
+              :size="14"
+              class="forum-topic__pin-icon"
+            />
+            <time>{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
+          </span>
           <div
             class="forum-topic__actions"
             role="group"
@@ -893,8 +901,16 @@ async function submitTopicComment() {
 .forum-topic__meta {
   grid-row: 2;
   grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   color: var(--color-text-muted);
   font-size: 0.875rem;
+}
+
+.forum-topic__pin-icon {
+  color: var(--color-accent);
+  vertical-align: middle;
 }
 
 .forum-topic__actions {
