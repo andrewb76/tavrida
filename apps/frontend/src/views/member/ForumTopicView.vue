@@ -763,6 +763,8 @@ async function submitTopicComment() {
   padding: 1rem;
   overflow: hidden;
   min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .forum-topic__author-row {

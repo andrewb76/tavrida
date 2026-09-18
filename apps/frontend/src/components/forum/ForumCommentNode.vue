@@ -512,6 +512,8 @@ async function onDelete() {
   padding: 0.75rem;
   background: var(--color-surface);
   overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .forum-comment__header {
