@@ -338,6 +338,7 @@ function authorOf(topic: TopicSummary) {
 .forum-list {
   display: grid;
   gap: 1.25rem;
+  overflow: hidden;
 }
 
 .forum-list__header {

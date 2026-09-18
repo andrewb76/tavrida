@@ -503,6 +503,7 @@ async function onDelete() {
 <style scoped>
 .forum-comment {
   list-style: none;
+  min-width: 0;
 }
 
 .forum-comment__card {
@@ -510,6 +511,7 @@ async function onDelete() {
   border-radius: 8px;
   padding: 0.75rem;
   background: var(--color-surface);
+  overflow: hidden;
 }
 
 .forum-comment__header {
