@@ -20,7 +20,7 @@ import { useSessionStore } from '@/stores/session';
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { syncAttachmentMarkdown, allAttachmentUrlsPresent } from '@/services/media';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, onBeforeUnmount } from 'vue';
 import { RouterLink } from 'vue-router';
 import { toast } from 'vue-sonner';
 
@@ -107,6 +107,7 @@ const postError = ref<string | null>(null);
 const promoting = ref(false);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
+const commentMenuOpen = ref(false);
 
 function startEdit() {
   editBody.value = props.node.body;
@@ -220,6 +221,18 @@ async function onDelete() {
     deleting.value = false;
   }
 }
+
+function closeCommentMenu(e: MouseEvent) {
+  const wrapper = (e.target as HTMLElement)?.closest?.('.forum-comment__menu-wrapper');
+  if (!wrapper) commentMenuOpen.value = false;
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeCommentMenu);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeCommentMenu);
+});
 </script>
 
 <template>
@@ -236,25 +249,23 @@ async function onDelete() {
           :user-id="node.author?.userId ?? node.authorId"
           size="sm"
         />
-        <div class="forum-comment__header-text">
-          <div class="forum-comment__author-row">
-            <span class="forum-comment__author">{{ forumAuthorLabel(node.author) }}</span>
-            <img
-              v-for="m in commentMedalsWithIcon"
-              :key="m.medalId"
-              :src="m.medalIconUrl!"
-              :alt="m.medalName"
-              :title="m.reason ? `${m.medalName} — ${m.reason}` : m.medalName"
-              class="forum-comment__medal-icon"
-            >
-            <span
-              v-if="commentMedalsOverflow > 0"
-              class="forum-comment__medal-more"
-              :title="commentMedals.slice(2).map(m => m.medalName).join(', ')"
-            >+{{ commentMedalsOverflow }}</span>
-          </div>
-          <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
+        <div class="forum-comment__author-row">
+          {{ forumAuthorLabel(node.author) }}
+          <img
+            v-for="m in commentMedalsWithIcon"
+            :key="m.medalId"
+            :src="m.medalIconUrl!"
+            :alt="m.medalName"
+            :title="m.reason ? `${m.medalName} — ${m.reason}` : m.medalName"
+            class="forum-comment__medal-icon"
+          >
+          <span
+            v-if="commentMedalsOverflow > 0"
+            class="forum-comment__medal-more"
+            :title="commentMedals.slice(2).map(m => m.medalName).join(', ')"
+          >+{{ commentMedalsOverflow }}</span>
         </div>
+        <time class="forum-comment__time">{{ new Date(node.createdAt).toLocaleString('ru-RU') }}</time>
         <div
           class="forum-comment__actions"
           role="group"
@@ -330,6 +341,53 @@ async function onDelete() {
               label="Открыть выделенную тему"
             />
           </RouterLink>
+        </div>
+        <div class="forum-comment__menu-wrapper">
+          <UiButton
+            intent="ghost"
+            size="icon"
+            type="button"
+            aria-label="Ещё"
+            title="Ещё"
+            @click="commentMenuOpen = !commentMenuOpen"
+          >
+            <UiIcon name="more" :size="18" />
+          </UiButton>
+          <div
+            v-if="commentMenuOpen"
+            class="forum-comment__menu"
+          >
+            <button
+              v-if="!isDeleted"
+              class="forum-comment__menu-item"
+              @click="showReply = !showReply; commentMenuOpen = false"
+            >
+              <UiIcon name="reply" :size="16" /> {{ showReply ? 'Закрыть ответ' : 'Ответить' }}
+            </button>
+            <button
+              v-if="canEdit && !editing"
+              class="forum-comment__menu-item"
+              @click="startEdit(); commentMenuOpen = false"
+            >
+              <UiIcon name="edit" :size="16" /> Редактировать
+            </button>
+            <button
+              v-if="canPromote"
+              class="forum-comment__menu-item"
+              :disabled="promoting"
+              @click="onPromote(); commentMenuOpen = false"
+            >
+              <UiIcon name="promote" :size="16" /> Выделить в тему
+            </button>
+            <button
+              v-if="canDelete"
+              class="forum-comment__menu-item"
+              :disabled="deleting"
+              @click="onDelete(); commentMenuOpen = false"
+            >
+              <UiIcon name="trash" :size="16" /> Удалить
+            </button>
+          </div>
         </div>
       </header>
 
@@ -517,28 +575,33 @@ async function onDelete() {
 }
 
 .forum-comment__header {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 0.15rem 0.625rem;
   margin-bottom: 0.5rem;
 }
 
 .forum-comment__avatar {
-  flex: none;
-}
-
-.forum-comment__header-text {
-  display: grid;
-  gap: 0.1rem;
-  min-width: 0;
-  flex: 1;
+  grid-row: 1 / 3;
+  grid-column: 1;
+  align-self: center;
 }
 
 .forum-comment__author-row {
+  grid-row: 1;
+  grid-column: 2;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .forum-comment__author {
@@ -560,15 +623,58 @@ async function onDelete() {
 }
 
 .forum-comment__time {
+  grid-row: 2;
+  grid-column: 2;
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
 .forum-comment__actions {
-  margin-left: auto;
-  display: inline-flex;
+  grid-row: 1 / 3;
+  grid-column: 3;
+  display: flex;
   align-items: center;
   gap: 0.15rem;
+}
+
+.forum-comment__menu-wrapper {
+  display: none;
+  grid-row: 1 / 3;
+  grid-column: 3;
+  position: relative;
+}
+
+.forum-comment__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 10rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+}
+
+.forum-comment__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.forum-comment__menu-item:hover {
+  background: var(--color-border);
 }
 
 .forum-comment__promoted-link {
@@ -646,5 +752,15 @@ async function onDelete() {
   font-size: 0.875rem;
   color: var(--color-text-muted);
   font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .forum-comment__actions {
+    display: none;
+  }
+
+  .forum-comment__menu-wrapper {
+    display: block;
+  }
 }
 </style>

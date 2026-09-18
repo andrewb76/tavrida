@@ -30,7 +30,7 @@ import {
 import { UiButton, UiIcon } from '@tavrida/ui';
 import { canEditForumContent } from '@tavrida/shared';
 import { syncAttachmentMarkdown, allAttachmentUrlsPresent } from '@/services/media';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
 import { useWs } from '@/composables/useWs';
@@ -65,6 +65,7 @@ const commentBody = ref('');
 const posting = ref(false);
 const topicChatOpen = ref(false);
 const postError = ref<string | null>(null);
+const topicMenuOpen = ref(false);
 const commentAttachmentsExpanded = ref(false);
 const commentUpload = useMediaUpload('forum');
 
@@ -356,6 +357,14 @@ function focusCommentForm() {
   el?.focus();
 }
 
+function closeTopicMenu(e: MouseEvent) {
+  const wrapper = (e.target as HTMLElement)?.closest?.('.forum-topic__menu-wrapper');
+  if (!wrapper) topicMenuOpen.value = false;
+}
+
+onMounted(() => document.addEventListener('click', closeTopicMenu));
+onBeforeUnmount(() => document.removeEventListener('click', closeTopicMenu));
+
 async function submitTopicComment() {
   if (!commentBody.value.trim()) return;
   posting.value = true;
@@ -406,15 +415,15 @@ async function submitTopicComment() {
             :user-id="topic.author?.userId ?? topic.authorId"
             size="md"
           />
-          <div class="forum-topic__author-text">
-            <span class="forum-topic__author-name">{{ forumAuthorLabel(topic.author) }}</span>
+          <div class="forum-topic__author-name">
+            {{ forumAuthorLabel(topic.author) }}
             <MedalBadges
               v-if="topic.author?.userId"
               :user-id="topic.author.userId"
               :limit="3"
             />
-            <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           </div>
+          <time class="forum-topic__meta">{{ new Date(topic.createdAt).toLocaleString('ru-RU') }}</time>
           <div
             class="forum-topic__actions"
             role="group"
@@ -508,6 +517,62 @@ async function submitTopicComment() {
             >
               {{ publishing ? 'Публикация…' : 'Опубликовать' }}
             </UiButton>
+          </div>
+          <div class="forum-topic__menu-wrapper">
+            <UiButton
+              intent="ghost"
+              size="icon"
+              type="button"
+              aria-label="Ещё"
+              title="Ещё"
+              @click="topicMenuOpen = !topicMenuOpen"
+            >
+              <UiIcon
+                name="more"
+                :size="18"
+              />
+            </UiButton>
+            <div
+              v-if="topicMenuOpen"
+              class="forum-topic__menu"
+            >
+              <button
+                v-if="session.isMember && !isDraft"
+                class="forum-topic__menu-item"
+                @click="topicChatOpen = true; topicMenuOpen = false"
+              >
+                <UiIcon name="chat" :size="16" /> Чат темы
+              </button>
+              <button
+                v-if="session.isMember && !isDraft"
+                class="forum-topic__menu-item"
+                @click="focusCommentForm(); topicMenuOpen = false"
+              >
+                <UiIcon name="reply" :size="16" /> Ответить
+              </button>
+              <button
+                v-if="canEditTopic && !editingTopic"
+                class="forum-topic__menu-item"
+                @click="startTopicEdit(); topicMenuOpen = false"
+              >
+                <UiIcon name="edit" :size="16" /> Редактировать
+              </button>
+              <button
+                v-if="canDeleteTopic && !editingTopic"
+                class="forum-topic__menu-item"
+                :disabled="deletingTopic"
+                @click="onDeleteTopic(); topicMenuOpen = false"
+              >
+                <UiIcon name="trash" :size="16" /> Удалить тему
+              </button>
+              <button
+                v-if="canPinTopic && !editingTopic"
+                class="forum-topic__menu-item"
+                @click="togglePin(); topicMenuOpen = false"
+              >
+                <UiIcon name="pin" :size="16" /> {{ topic?.isPinned ? 'Открепить' : 'Закрепить' }}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -801,31 +866,84 @@ async function submitTopicComment() {
 }
 
 .forum-topic__author-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 0.35rem 0.75rem;
   margin-bottom: 0.75rem;
 }
 
 .forum-topic__avatar {
-  flex: none;
+  grid-row: 1 / 3;
+  grid-column: 1;
+  align-self: center;
 }
 
-.forum-topic__author-text {
-  display: grid;
-  gap: 0.15rem;
+.forum-topic__author-name {
+  grid-row: 1;
+  grid-column: 2;
+  font-weight: 600;
+  color: var(--color-text);
   min-width: 0;
-  flex: 1;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.forum-topic__meta {
+  grid-row: 2;
+  grid-column: 2;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
 .forum-topic__actions {
-  margin-left: auto;
+  grid-row: 1 / 3;
+  grid-column: 3;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-end;
   gap: 0.25rem;
-  min-width: 0;
+}
+
+.forum-topic__menu-wrapper {
+  display: none;
+  grid-row: 1 / 3;
+  grid-column: 3;
+  position: relative;
+}
+
+.forum-topic__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 10rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+}
+
+.forum-topic__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.forum-topic__menu-item:hover {
+  background: var(--color-border);
 }
 
 .forum-topic__toolbar {
@@ -877,16 +995,6 @@ async function submitTopicComment() {
   border-radius: 6px;
   background: color-mix(in srgb, var(--color-warning) 12%, transparent);
   color: var(--color-text);
-  font-size: 0.875rem;
-}
-
-.forum-topic__author-name {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.forum-topic__meta {
-  color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
@@ -943,5 +1051,19 @@ async function submitTopicComment() {
   display: flex;
   justify-content: center;
   padding: 0.75rem 0;
+}
+
+@media (max-width: 480px) {
+  .forum-topic__author-row {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .forum-topic__actions {
+    display: none;
+  }
+
+  .forum-topic__menu-wrapper {
+    display: block;
+  }
 }
 </style>
