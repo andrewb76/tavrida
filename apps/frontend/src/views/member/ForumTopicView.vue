@@ -753,7 +753,9 @@ async function submitTopicComment() {
 <style scoped>
 .forum-topic {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
+  min-width: 0;
 }
 
 .forum-topic__head,
@@ -762,6 +764,7 @@ async function submitTopicComment() {
   border-radius: 8px;
   padding: 1rem;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -770,9 +773,16 @@ async function submitTopicComment() {
 .forum-topic__head :deep(.markdown-body),
 .forum-topic__comments :deep(.markdown-body) {
   min-width: 0;
-  max-width: 100%;
-  word-break: break-word;
+  max-width: none;
   overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.forum-topic__head :deep(.markdown-body > *),
+.forum-topic__comments :deep(.markdown-body > *) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .forum-topic__head :deep(.markdown-body pre),
@@ -815,6 +825,7 @@ async function submitTopicComment() {
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .forum-topic__toolbar {
