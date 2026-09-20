@@ -61,9 +61,9 @@ export const settingsApi = {
 
   // System Values
   async getSystemValues(domain?: string): Promise<SystemValue[]> {
-    const { data } = await domain
+    const { data } = await (domain
       ? api.get(`/system-values/${domain}`)
-      : api.get('/system-values');
+      : api.get('/system-values'));
     return data;
   },
 
