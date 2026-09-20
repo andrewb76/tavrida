@@ -367,6 +367,25 @@ services:
     deploy:
       <<: *nest-deploy
 
+  settings:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-settings:${GIT_SHA}
+    secrets:
+      - internal_service_token
+      - rabbitmq_url
+    environment:
+      <<: *nest-env
+      SETTINGS_PORT: '3020'
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/settings
+    networks:
+      - tavrida_net
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3020/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *nest-deploy
+
   bff:
     image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-bff:${GIT_SHA}
     secrets:
@@ -408,6 +427,7 @@ services:
       MEDIA_PUBLIC_BASE_URL: https://s3.${DEV_DOMAIN}
       # Browser presigned PUT must use public HTTPS (not http://minio:9000)
       MINIO_PRESIGN_ENDPOINT: https://s3.${DEV_DOMAIN}
+      SETTINGS_URL: http://settings:3020
       VANGA_DEFAULTS_PATH: /app/config/vanga.defaults.yaml
     networks:
       - tavrida_net
@@ -439,6 +459,21 @@ services:
         - traefik.http.routers.frontend.entrypoints=websecure
         - traefik.http.routers.frontend.tls.certresolver=le
         - traefik.http.services.frontend.loadbalancer.server.port=80
+
+  admin:
+    image: ${GHCR_REGISTRY}/${GHCR_OWNER}/tavrida-admin:${GIT_SHA}
+    networks:
+      - tavrida_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.admin.rule=Host(`admin.${DEV_DOMAIN}`)
+        - traefik.http.routers.admin.entrypoints=websecure
+        - traefik.http.routers.admin.tls.certresolver=le
+        - traefik.http.services.admin.loadbalancer.server.port=80
 
 # Network `tavrida_net` is created by stack-infra.dev.yml (same stack deploy -c … -c …).
 # Do not mark it external here — merge would override infra and require a pre-existing network.

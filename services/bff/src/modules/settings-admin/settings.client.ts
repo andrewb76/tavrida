@@ -34,13 +34,39 @@ export class SettingsClient {
     return this.request('DELETE', `/internal/v1/plans/${id}`);
   }
 
-  async listParameters(service?: string): Promise<unknown> {
-    const qs = service ? `?service=${encodeURIComponent(service)}` : '';
+  async listParameters(service?: string, category?: string): Promise<unknown> {
+    const params = new URLSearchParams();
+    if (service) params.set('service', service);
+    if (category) params.set('category', category);
+    const qs = params.toString() ? `?${params}` : '';
     return this.request('GET', `/internal/v1/parameters${qs}`);
+  }
+
+  async getParameter(key: string): Promise<unknown> {
+    return this.request('GET', `/internal/v1/parameters/${encodeURIComponent(key)}`);
+  }
+
+  async listServices(): Promise<unknown[]> {
+    const all = await this.request<unknown[]>('GET', '/internal/v1/parameters');
+    const map = new Map<string, number>();
+    for (const p of all) {
+      const svc = (p as Record<string, unknown>).service as string;
+      map.set(svc, (map.get(svc) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([name, parameterCount]) => ({ name, parameterCount }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async registerParameter(body: unknown): Promise<unknown> {
     return this.request('POST', '/internal/v1/parameters/register', body);
+  }
+
+  async updateParameter(key: string, body: unknown): Promise<unknown> {
+    return this.request('POST', '/internal/v1/parameters/register', {
+      ...(body as Record<string, unknown>),
+      key,
+    });
   }
 
   async deleteParameter(key: string): Promise<void> {
@@ -53,6 +79,23 @@ export class SettingsClient {
 
   async patchSystemValues(domain: string, body: unknown): Promise<unknown> {
     return this.request('POST', `/internal/v1/system-values/${domain}`, body);
+  }
+
+  async getAllSystemValues(): Promise<unknown[]> {
+    const allParams = await this.request<unknown[]>('GET', '/internal/v1/parameters');
+    const domains = new Set<string>();
+    for (const p of allParams) {
+      const svc = (p as Record<string, unknown>).service as string;
+      domains.add(svc);
+    }
+    const results: unknown[] = [];
+    for (const domain of domains) {
+      try {
+        const vals = await this.request<unknown[]>(`GET`, `/internal/v1/system-values/${domain}`);
+        if (Array.isArray(vals)) results.push(...vals);
+      } catch { /* domain may have no system values */ }
+    }
+    return results;
   }
 
   async getUserValues(userId: string): Promise<unknown> {
@@ -88,6 +131,19 @@ export class SettingsClient {
     const qs = new URLSearchParams({ userId });
     if (key) qs.set('key', key);
     return this.request('GET', `/internal/v1/limits/state?${qs}`);
+  }
+
+  async getUserLimits(planId?: string): Promise<unknown> {
+    const qs = planId ? `?planId=${encodeURIComponent(planId)}` : '';
+    return this.request('GET', `/internal/v1/limits/state${qs}`);
+  }
+
+  async getUserLimitsByUser(userId: string): Promise<unknown> {
+    return this.request('GET', `/internal/v1/limits/state?userId=${encodeURIComponent(userId)}`);
+  }
+
+  async grantLimit(body: unknown): Promise<unknown> {
+    return this.request('POST', '/internal/v1/limits/grant', body);
   }
 
   async checkLimit(body: unknown): Promise<unknown> {
