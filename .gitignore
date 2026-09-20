@@ -41,3 +41,6 @@ test-results/
 # Local SonarCloud token (never commit)
 .sonarcloud-token
 draft.md
+
+# Content (books, images, etc.)
+content/
