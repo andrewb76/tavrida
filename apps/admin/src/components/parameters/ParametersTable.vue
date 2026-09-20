@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { Parameter } from '@/types/settings';
 import CategoryBadge from './CategoryBadge.vue';
 import ParameterTypeIcon from './ParameterTypeIcon.vue';
 
-const props = defineProps<{
+defineProps<{
   parameters: Parameter[];
   loading: boolean;
 }>();

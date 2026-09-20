@@ -32,15 +32,6 @@ watch(
   },
   { immediate: true }
 );
-
-const isNew = ref(false);
-
-function toggleNew() {
-  isNew.value = !isNew.value;
-  if (isNew.value) {
-    form.value = { id: '', title: '', description: '', monthlyPrice: 0, yearlyPrice: 0, isActive: true, sortOrder: 0 };
-  }
-}
 </script>
 
 <template>

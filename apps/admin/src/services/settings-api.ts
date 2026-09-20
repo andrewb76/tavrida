@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type {
-  ImportPreview,
   Parameter,
   Plan,
   PlanValue,
@@ -10,7 +9,6 @@ import type {
   UserLimit,
   UserSubscription,
   UserValue,
-  YamlConfig,
 } from '@/types/settings';
 
 const api = axios.create({
