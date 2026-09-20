@@ -21,7 +21,7 @@ flowchart LR
   PushMaster[push master] --> Pages[docs-pages.yml]
   PushDev[push dev] --> Deploy[deploy-dev.yml]
   Deploy --> GHCR[(GHCR)]
-  Deploy --> Swarm[Swarm evatorg.su]
+  Deploy --> Swarm[Swarm tavridalot.ru]
   Sync[sync-secrets-dev.yml] -.->|редко| Secrets[Swarm secrets]
   Secrets --> Swarm
   Prune[prune-ghcr-dev.yml] -.->|weekly| GHCR
@@ -152,19 +152,19 @@ PR или push в `master` / `dev` → job **SonarQube Scan** → отчёт в 
 | -------------------------- | ------------------------------------------------------ |
 | `DEV_SWARM_SSH_HOST`       | `193.142.148.175`                                      |
 | `DEV_SWARM_SSH_USER`       | `deploy`                                               |
-| `DEV_DOMAIN`               | `evatorg.su`                                           |
+| `DEV_DOMAIN`               | `tavridalot.ru`                                           |
 | `ACME_EMAIL`               | `andrewb@bk.ru`                                        |
 | `TAVRIDA_REPO_ROOT`        | `/opt/tavrida`                                         |
 | `GHCR_OWNER`               | `andrewb76` (опц., иначе `repository_owner`)           |
-| `LOGTO_ENDPOINT`           | `https://auth.evatorg.su` (Logto OSS)                   |
-| `LOGTO_JWKS_URL`           | `https://auth.evatorg.su/oidc/jwks`                     |
-| `LOGTO_AUDIENCE`           | `https://api.evatorg.su`                               |
-| `LOGTO_M2M_APP_ID`         | M2M app id (из `https://logto.evatorg.su`)             |
+| `LOGTO_ENDPOINT`           | `https://auth.tavridalot.ru` (Logto OSS)                   |
+| `LOGTO_JWKS_URL`           | `https://auth.tavridalot.ru/oidc/jwks`                     |
+| `LOGTO_AUDIENCE`           | `https://api.tavridalot.ru`                               |
+| `LOGTO_M2M_APP_ID`         | M2M app id (из `https://logto.tavridalot.ru`)             |
 | `LOGTO_M2M_RESOURCE`       | `https://default.logto.app/api` (OSS, не Cloud URL)    |
-| `FRONTEND_ORIGIN`          | `https://app.evatorg.su`                               |
-| `VITE_LOGTO_ENDPOINT`      | `https://auth.evatorg.su`                              |
+| `FRONTEND_ORIGIN`          | `https://app.tavridalot.ru`                               |
+| `VITE_LOGTO_ENDPOINT`      | `https://auth.tavridalot.ru`                              |
 | `VITE_LOGTO_APP_ID`        | SPA app id                                             |
-| `VITE_LOGTO_API_RESOURCE`  | `https://api.evatorg.su` (= `LOGTO_AUDIENCE`)          |
+| `VITE_LOGTO_API_RESOURCE`  | `https://api.tavridalot.ru` (= `LOGTO_AUDIENCE`)          |
 | `GRAFANA_CLOUD_PROMETHEUS_URL` | remote write URL из Grafana Cloud stack            |
 | `GRAFANA_CLOUD_PROMETHEUS_USERNAME` | Prometheus instance id                        |
 | `GRAFANA_CLOUD_LOKI_URL`   | Loki push URL                                          |
@@ -285,7 +285,7 @@ Bind-mounts в `stack-infra.dev.yml` идут в `${TAVRIDA_REPO_ROOT}/docker/co
 
 ### Порядок первого деплоя
 
-1. DNS `*.evatorg.su` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
+1. DNS `*.tavridalot.ru` + Logto tenant «dev/server» — [dev-evatorg.md](./dev-evatorg.md).
 2. Заполнить Environment `dev` (vars + secrets), в т.ч. `VITE_LOGTO_*`.
 3. **Actions → Sync secrets (dev)** — для нового токена: `force=true`, **`only=GRAFANA_CLOUD_TOKEN`**, `redeploy=true`. Не крутите force по всему manifest без нужды (`POSTGRES_PASSWORD` особенно опасен).
 4. **Actions → Deploy / Sync** — всегда с кодом ветки **`dev`** (workflows сами делают `checkout ref: dev` на manual run). Не выбирайте `master` как источник устаревших stack-файлов.

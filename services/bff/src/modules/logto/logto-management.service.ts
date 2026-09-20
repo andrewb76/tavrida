@@ -109,7 +109,7 @@ export class LogtoManagementService {
       return `${endpoint}/api`;
     }
 
-    // Self-hosted OSS (auth.evatorg.su, localhost, …): Management API resource is
+    // Self-hosted OSS (auth.tavridalot.ru, localhost, …): Management API resource is
     // always https://default.logto.app/api — NOT https://auth…/api (common misconfig).
     const ossDefault = 'https://default.logto.app/api';
     if (configured && configured !== ossDefault) {

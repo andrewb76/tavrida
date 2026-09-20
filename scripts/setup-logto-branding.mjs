@@ -5,9 +5,9 @@
  * Console equivalent: Sign-in & account → Branding + Account center → Custom CSS
  *
  * Usage (from repo root, M2M in docker/swarm/dev.secrets.env or .env.local):
- *   LOGTO_ENDPOINT=https://auth.evatorg.su \
+ *   LOGTO_ENDPOINT=https://auth.tavridalot.ru \
  *   LOGTO_M2M_APP_ID=… LOGTO_M2M_APP_SECRET=… \
- *   FRONTEND_ORIGIN=https://app.evatorg.su \
+ *   FRONTEND_ORIGIN=https://app.tavridalot.ru \
  *     pnpm setup:logto-branding
  *
  * Dry-run (print payload only):
@@ -61,7 +61,7 @@ const clientSecret = cleanEnvValue(process.env.LOGTO_M2M_APP_SECRET);
 const frontendOrigin = (
   process.env.FRONTEND_ORIGIN ||
   process.env.VITE_APP_ORIGIN ||
-  'https://app.evatorg.su'
+  'https://app.tavridalot.ru'
 ).replace(/\/$/, '');
 const m2mResource =
   process.env.LOGTO_M2M_RESOURCE?.trim() ||
@@ -273,4 +273,4 @@ if (!branded) {
   console.warn('\nBranding may not have propagated yet — hard-refresh auth host or wait ~1 min.');
 }
 
-console.log('Preview: https://logto.evatorg.su → Sign-in & account → Branding → Live preview');
+console.log('Preview: https://logto.tavridalot.ru → Sign-in & account → Branding → Live preview');

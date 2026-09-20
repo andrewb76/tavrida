@@ -1,4 +1,4 @@
-# Dev Swarm (`evatorg.su`)
+# Dev Swarm (`tavridalot.ru`)
 
 Docker Swarm на VPS `193.142.148.175`: **инфраструктура** из public images, **core-сервисы** — из **GHCR**.
 
@@ -8,16 +8,16 @@ Docker Swarm на VPS `193.142.148.175`: **инфраструктура** из p
 
 | Host | Сервис |
 |------|--------|
-| `evatorg.su` / `www.evatorg.su` | 301 → `app.evatorg.su` |
-| `app.evatorg.su` | Vue frontend |
-| `api.evatorg.su` | BFF (`/api/v1`) |
-| `auth.evatorg.su` | Logto OSS (OIDC) |
-| `logto.evatorg.su` | Logto Admin Console |
-| `s3.evatorg.su` | MinIO S3 API |
-| `minio.evatorg.su` | MinIO Console |
-| `img.evatorg.su` | imgproxy |
-| `rabbitmq.evatorg.su` | RabbitMQ Management |
-| `traefik.evatorg.su` | Traefik dashboard |
+| `tavridalot.ru` / `www.tavridalot.ru` | 301 → `app.tavridalot.ru` |
+| `app.tavridalot.ru` | Vue frontend |
+| `api.tavridalot.ru` | BFF (`/api/v1`) |
+| `auth.tavridalot.ru` | Logto OSS (OIDC) |
+| `logto.tavridalot.ru` | Logto Admin Console |
+| `s3.tavridalot.ru` | MinIO S3 API |
+| `minio.tavridalot.ru` | MinIO Console |
+| `img.tavridalot.ru` | imgproxy |
+| `rabbitmq.tavridalot.ru` | RabbitMQ Management |
+| `traefik.tavridalot.ru` | Traefik dashboard |
 
 TLS: Let's Encrypt (HTTP-01) через Traefik.
 
@@ -84,14 +84,14 @@ export DOCKER_CONTEXT=dev-swarm   # или --context в каждой коман�
 cp docker/swarm/dev.env.example docker/swarm/dev.env
 cp docker/swarm/dev.secrets.env.example docker/swarm/dev.secrets.env
 # dev.env: LOGTO_*, VITE_LOGTO_*, ACME_EMAIL, TAVRIDA_REPO_ROOT=/opt/tavrida
-# DEV_DOMAIN=evatorg.su
+# DEV_DOMAIN=tavridalot.ru
 # dev.secrets.env: пароли
 
 docker context create dev-swarm --docker "host=ssh://user@193.142.148.175"
 
 echo "$GITHUB_TOKEN" | docker --context dev-swarm login ghcr.io -u "$GITHUB_USER" --password-stdin
 
-export GHCR_OWNER=andrewb76 GIT_SHA=$(git rev-parse --short HEAD) DEV_DOMAIN=evatorg.su
+export GHCR_OWNER=andrewb76 GIT_SHA=$(git rev-parse --short HEAD) DEV_DOMAIN=tavridalot.ru
 # + VITE_LOGTO_* из отдельного Logto tenant
 ./docker/swarm/build-images.sh --push
 
@@ -101,7 +101,7 @@ DOCKER_CONTEXT=dev-swarm ./docker/swarm/sync-secrets-dev.sh
 DOCKER_CONTEXT=dev-swarm ./docker/swarm/deploy-dev.sh
 ```
 
-На VPS: `git clone … /opt/tavrida`, `git checkout dev`, Swarm manager, порты 80/443, DNS `*.evatorg.su`.
+На VPS: `git clone … /opt/tavrida`, `git checkout dev`, Swarm manager, порты 80/443, DNS `*.tavridalot.ru`.
 
 ## Образы GHCR
 
@@ -146,8 +146,8 @@ Env в `dev.env` / GitHub Environment:
 
 Redirect URIs в консоли:
 
-- `https://app.evatorg.su/callback`
-- `https://app.evatorg.su`
+- `https://app.tavridalot.ru/callback`
+- `https://app.tavridalot.ru`
 
 API resource indicator — **точно** как `LOGTO_AUDIENCE` / `VITE_LOGTO_API_RESOURCE`.
 

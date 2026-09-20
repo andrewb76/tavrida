@@ -45,11 +45,11 @@ fi
 
 FLOATING_TAG="$ENV"
 
-# DEV_DOMAIN is used for frontend build args; stage uses tavridalot.ru, dev uses evatorg.su
+# DEV_DOMAIN is used for frontend build args; stage uses tavridalot.ru, dev uses tavridalot.ru
 if [[ "$ENV" == "stage" ]]; then
   DEV_DOMAIN="${DEV_DOMAIN:-tavridalot.ru}"
 else
-  DEV_DOMAIN="${DEV_DOMAIN:-evatorg.su}"
+  DEV_DOMAIN="${DEV_DOMAIN:-tavridalot.ru}"
 fi
 
 declare -A SERVICES=(

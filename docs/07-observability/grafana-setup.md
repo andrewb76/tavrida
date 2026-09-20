@@ -1,7 +1,7 @@
 # 📈 Grafana Cloud
 
 > **Статус:** in progress · **Версия:** 0.5  
-> **Среда:** dev Swarm (`evatorg.su`) → Grafana Cloud Free (SaaS)
+> **Среда:** dev Swarm (`tavridalot.ru`) → Grafana Cloud Free (SaaS)
 
 ## 🎯 Стек observability
 

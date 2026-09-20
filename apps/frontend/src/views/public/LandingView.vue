@@ -265,7 +265,7 @@ const pillars = [
             Инвайт
           </RouterLink>
           <a
-            href="mailto:hello@evatorg.su"
+            href="mailto:hello@tavridalot.ru"
             rel="noopener"
           >Связь</a>
         </nav>

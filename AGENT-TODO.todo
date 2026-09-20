@@ -119,7 +119,7 @@ Testing rollout:
   ✔ T5 CI: required E2E smoke job in ci.yml @testing @ci @done(26-07-26)
   ☐ T6: deploy gates, k6, ZAP, image scan, release rehearsals @testing @ops
 
-Dev Swarm (evatorg.su):
+Dev Swarm (tavridalot.ru):
   ✔ Репо: CD только с dev + apex redirect + docs @ops @docs @done(26-07-18)
   ✔ Logto OSS в stack-infra (auth./logto.) вместо Cloud @ops @done(26-07-19)
   ✔ Alloy stack-tools + docs → Grafana Cloud (нужны credentials в GH env) @ops @observability @done(26-07-25)

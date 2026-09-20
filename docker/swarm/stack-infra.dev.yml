@@ -83,7 +83,7 @@ services:
         - traefik.http.routers.traefik.service=api@internal
         # Dummy port required when service=api@internal (Swarm provider)
         - traefik.http.services.traefik-noop.loadbalancer.server.port=8080
-        # Apex / www → app.<DEV_DOMAIN> (evatorg.su → app.evatorg.su)
+        # Apex / www → app.<DEV_DOMAIN> (tavridalot.ru → app.tavridalot.ru)
         - traefik.http.middlewares.apex-to-app.redirectregex.regex=^https://[^/]+(.*)
         - traefik.http.middlewares.apex-to-app.redirectregex.replacement=https://app.${DEV_DOMAIN}$$1
         - traefik.http.middlewares.apex-to-app.redirectregex.permanent=true

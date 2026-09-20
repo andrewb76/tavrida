@@ -14,7 +14,7 @@
  *   # On VPS (/opt/tavrida) — unset DOCKER_CONTEXT (local daemon):
  *   SKIP_MINIO=1 pnpm setup:logto-storage
  *
- *   DEV_DOMAIN=evatorg.su MINIO_ROOT_PASSWORD=… POSTGRES_PASSWORD=… …
+ *   DEV_DOMAIN=tavridalot.ru MINIO_ROOT_PASSWORD=… POSTGRES_PASSWORD=… …
  *
  * Dry-run:
  *   DRY_RUN=1 pnpm setup:logto-storage
@@ -64,7 +64,7 @@ loadEnvFile('docker/swarm/dev.secrets.env', { override: true });
 const dryRun = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true';
 const skipMinio = process.env.SKIP_MINIO === '1' || process.env.SKIP_MINIO === 'true';
 
-const devDomain = process.env.DEV_DOMAIN?.trim() || 'evatorg.su';
+const devDomain = process.env.DEV_DOMAIN?.trim() || 'tavridalot.ru';
 const bucket = process.env.LOGTO_STORAGE_BUCKET?.trim() || 'logto-avatars';
 
 const remoteDockerContext =

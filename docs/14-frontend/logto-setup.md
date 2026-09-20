@@ -1,6 +1,6 @@
 # Logto — настройка (Cloud / OSS / Swarm)
 
-> **Статус:** local — `logto.local.yml` · **dev Swarm — OSS** (`auth.` / `logto.` на `evatorg.su`) · Cloud — опционально.  
+> **Статус:** local — `logto.local.yml` · **dev Swarm — OSS** (`auth.` / `logto.` на `tavridalot.ru`) · Cloud — опционально.  
 > **Модель доступа:** [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) · [club-access.md](../01-goal/club-access.md)
 
 ## Кратко
@@ -16,7 +16,7 @@
 | Среда | Endpoint | Management API resource |
 |-------|----------|-------------------------|
 | Local compose | `http://localhost:3301` | `https://default.logto.app/api` |
-| **Dev Swarm OSS** | `https://auth.evatorg.su` | `https://default.logto.app/api` |
+| **Dev Swarm OSS** | `https://auth.tavridalot.ru` | `https://default.logto.app/api` |
 | Logto Cloud | `https://<tenant>.logto.app` | `https://<tenant>.logto.app/api` |
 
 ---
@@ -27,16 +27,16 @@
 Чеклист DNS / Console / GH vars: [dev-evatorg.md](../04-deployment/dev-evatorg.md).
 
 ```env
-LOGTO_ENDPOINT=https://auth.evatorg.su
-LOGTO_JWKS_URL=https://auth.evatorg.su/oidc/jwks
-LOGTO_AUDIENCE=https://api.evatorg.su
+LOGTO_ENDPOINT=https://auth.tavridalot.ru
+LOGTO_JWKS_URL=https://auth.tavridalot.ru/oidc/jwks
+LOGTO_AUDIENCE=https://api.tavridalot.ru
 LOGTO_M2M_RESOURCE=https://default.logto.app/api
-VITE_LOGTO_ENDPOINT=https://auth.evatorg.su
+VITE_LOGTO_ENDPOINT=https://auth.tavridalot.ru
 VITE_LOGTO_APP_ID=<spa-id>
-VITE_LOGTO_API_RESOURCE=https://api.evatorg.su
+VITE_LOGTO_API_RESOURCE=https://api.tavridalot.ru
 ```
 
-Admin: `https://logto.evatorg.su`. После смены endpoint — **rebuild** frontend (`VITE_*` bake-in).
+Admin: `https://logto.tavridalot.ru`. После смены endpoint — **rebuild** frontend (`VITE_*` bake-in).
 
 ### Branding (Sign-in experience)
 
@@ -46,12 +46,12 @@ Console: **Sign-in & account → Branding** (или скрипт ниже).
 |------|----------|
 | Brand color (light) | `#1F7A6E` (patina) |
 | Brand color (dark) | `#3D9B8E` |
-| Logo / favicon | `https://app.evatorg.su/branding/logo-full-color-dark.svg` + `…/tavrida-mark.svg` |
+| Logo / favicon | `https://app.tavridalot.ru/branding/logo-full-color-dark.svg` + `…/tavrida-mark.svg` |
 | Custom CSS (sign-in) | [`docker/config/logto/tavrida-sign-in.css`](../../docker/config/logto/tavrida-sign-in.css) |
 | Custom CSS (Account Center) | [`docker/config/logto/tavrida-account-center.css`](../../docker/config/logto/tavrida-account-center.css) |
 
 ```bash
-# M2M + LOGTO_ENDPOINT в dev.secrets.env; FRONTEND_ORIGIN=https://app.evatorg.su
+# M2M + LOGTO_ENDPOINT в dev.secrets.env; FRONTEND_ORIGIN=https://app.tavridalot.ru
 pnpm setup:logto-branding
 
 # проверить, что на auth.* не дефолтный фиолетовый Logto (#6139F6):
@@ -134,10 +134,10 @@ VERIFY=1 pnpm setup:logto-signin
 
 | Поле | Local dev | Dev Swarm |
 |------|-----------|-----------|
-| Redirect | `http://localhost:5173/callback` | `https://app.evatorg.su/callback` |
-| Sign-out | `http://localhost:5173/` | `https://app.evatorg.su/` |
-| CORS | `http://localhost:5173` | `https://app.evatorg.su` |
-| **Unknown session redirect URL** (Advanced) | `http://localhost:5173/auth/unknown-session` | `https://app.evatorg.su/auth/unknown-session` |
+| Redirect | `http://localhost:5173/callback` | `https://app.tavridalot.ru/callback` |
+| Sign-out | `http://localhost:5173/` | `https://app.tavridalot.ru/` |
+| CORS | `http://localhost:5173` | `https://app.tavridalot.ru` |
+| **Unknown session redirect URL** (Advanced) | `http://localhost:5173/auth/unknown-session` | `https://app.tavridalot.ru/auth/unknown-session` |
 
 5. **M2M app** (для BFF): Machine-to-machine → роль с **Logto Management API** permission `all` → scopes `users` (create user).
 
@@ -148,7 +148,7 @@ VERIFY=1 pnpm setup:logto-signin
 
 | Поле | Local / Swarm |
 |------|----------------|
-| API identifier | `https://api.tavrida-lot.localhost` или `https://api.evatorg.su` |
+| API identifier | `https://api.tavrida-lot.localhost` или `https://api.tavridalot.ru` |
 | Permissions | назначить SPA-приложению |
 
 > `VITE_LOGTO_API_RESOURCE` должен **точно** совпадать с `LOGTO_AUDIENCE` на BFF.
