@@ -1,5 +1,6 @@
 import {
   getMediaLimits,
+  isImageAttachment,
   uploadFile,
   type MediaAttachment,
   type MediaDomain,
@@ -9,11 +10,13 @@ import { computed, onMounted, ref } from 'vue';
 
 export type UploadItem = {
   id: string;
-  file: File;
+  /** Null for already-saved attachments seeded in edit mode. */
+  file: File | null;
   previewUrl: string | null;
   status: 'queued' | 'uploading' | 'ready' | 'error';
   error: string | null;
   result: MediaAttachment | null;
+  existing?: boolean;
 };
 
 export function useMediaUpload(domain: MediaDomain) {
@@ -76,9 +79,23 @@ export function useMediaUpload(domain: MediaDomain) {
     }
   }
 
+  /** Replace the list with already-saved attachments (edit mode). */
+  function seedExisting(attachments: MediaAttachment[]) {
+    reset();
+    items.value = attachments.map((attachment, index) => ({
+      id: `existing-${index}-${attachment.url}`,
+      file: null,
+      previewUrl: isImageAttachment(attachment) ? attachment.url : null,
+      status: 'ready' as const,
+      error: null,
+      result: attachment,
+      existing: true,
+    }));
+  }
+
   async function uploadOne(item: UploadItem) {
     const index = items.value.findIndex((row) => row.id === item.id);
-    if (index < 0) return;
+    if (index < 0 || !item.file) return;
 
     items.value[index] = { ...item, status: 'uploading', error: null };
     try {
@@ -125,5 +142,6 @@ export function useMediaUpload(domain: MediaDomain) {
     addFiles,
     removeItem,
     reset,
+    seedExisting,
   };
 }

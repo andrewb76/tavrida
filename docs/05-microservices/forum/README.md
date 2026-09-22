@@ -66,13 +66,13 @@
 | GET/PUT | `/admin/forum/categories/{id}/access-groups` | Привязка групп (admin) · [category-acl.md](./category-acl.md) |
 | CRUD | `/admin/forum/access-groups` (+ `/members`) | Группы доступа и состав |
 | GET/POST | `/forum/topics` | Список (published; `?status=DRAFT` — свои) / создание (`status`) |
-| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator) |
+| GET/PATCH | `/forum/topics/{id}` | Детали (+ `myVote`) / edit (автор в окне **или** admin/moderator); PATCH принимает `body`, `title`, `categoryId`, `status`, **`attachments: MediaAttachment[]`** (полный список — добавить/удалить) |
 | DELETE | `/forum/topics/{id}` | Soft-delete темы (**только** admin/moderator) |
 | GET | `/forum/tags` | Autocomplete `?q=` |
 | GET | `/forum/tags/{slug}` | Карточка тега + topicIds |
 | PUT | `/forum/topics/{id}/tags` | Заменить теги (автор **или** staff) |
 | GET/POST | `/forum/topics/{id}/comments` | Ветка; GET с `myVote` при auth; удалённые — placeholder |
-| PATCH | `/forum/topics/{id}/comments/{commentId}` | Edit (автор в окне **или** staff) |
+| PATCH | `/forum/topics/{id}/comments/{commentId}` | Edit (автор в окне **или** staff); принимает `body` и/или **`attachments: MediaAttachment[]`** (полный список) |
 | DELETE | `/forum/topics/{id}/comments/{commentId}` | Soft-delete комментария (**только** staff) |
 | POST | `/forum/topics/{id}/comments/{commentId}/promote-to-topic` | Выделить в тему + subtree (**только** admin/moderator) |
 | POST | `/forum/votes` | `{ contentId, contentType, value: 1\|-1 }` |
@@ -81,6 +81,13 @@
 | POST | `/forum/content/report` | Жалоба → `forum.content_reported` |
 
 Лимиты UI → [requirements](./requirements/README.md) + [PLATFORM-REGISTRY](../PLATFORM-REGISTRY.md).
+
+### Вложения в edit-режиме
+
+PATCH topic/comment принимает `attachments` (полный список `MediaAttachment[]`) отдельно от `body`:
+BFF валидирует медиа (`assertMediaAttachmentsAllowed`) при любом из полей. UI редактирования (тема и комментарий) дублирует композер создания: seed существующих файлов в `useMediaUpload`, добавление/удаление через `MediaUploader`, при сохранении шлётся `readyAttachments` (uploading → блок save).
+
+См. [media/README.md](../media/README.md), [wireframes/W06](../../11-ux-ui/wireframes/forum.md).
 
 ## 💬 Ветки комментариев
 

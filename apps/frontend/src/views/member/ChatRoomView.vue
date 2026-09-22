@@ -989,7 +989,7 @@ function messageParts(msg: ChatMessage): BodyPart[] {
               :src="item.previewUrl"
               alt=""
             >
-            <span v-else>{{ item.file.name }}</span>
+            <span v-else>{{ item.file?.name ?? item.result?.filename ?? 'Файл' }}</span>
             <button
               type="button"
               @click="upload.removeItem(item.id)"

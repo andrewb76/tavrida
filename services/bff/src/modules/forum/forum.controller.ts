@@ -347,8 +347,8 @@ export class ForumController {
     @Body() body: UpdateTopicDto,
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    if (body.body) {
-      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    if (body.body !== undefined || body.attachments !== undefined) {
+      this.validateForumMedia(user.sub, body.body ?? '', body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);
@@ -419,8 +419,8 @@ export class ForumController {
     @Body() body: UpdateCommentDto,
   ) {
     const limits = await this.mediaLimits.getLimits(user.sub, 'forum');
-    if (body.body) {
-      this.validateForumMedia(user.sub, body.body, body.attachments, limits);
+    if (body.body !== undefined || body.attachments !== undefined) {
+      this.validateForumMedia(user.sub, body.body ?? '', body.attachments, limits);
     }
     const editWindowMinutes = await this.forumSettings.editWindowMinutes();
     const asModerator = await this.keto.isForumStaff(user.sub);

@@ -60,8 +60,8 @@ function onSelect(event: Event) {
           v-else
           class="media-uploader__file"
         >
-          <span>{{ item.file.name }}</span>
-          <small>{{ formatFileSize(item.file.size) }}</small>
+          <span>{{ item.file?.name ?? item.result?.filename ?? 'Файл' }}</span>
+          <small>{{ formatFileSize(item.file?.size ?? item.result?.sizeBytes ?? 0) }}</small>
         </div>
 
         <p

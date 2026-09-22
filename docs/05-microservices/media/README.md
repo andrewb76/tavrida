@@ -87,7 +87,7 @@ docker exec "$BFF" rm -f /app/ensure-minio-buckets.cjs
 ## Доменные данные
 
 - **Auction:** `images: string[]` — только URL после confirm.
-- **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`.
+- **Forum:** `attachments: MediaAttachment[]` + опционально картинки в markdown `body`. Принимается и в **PATCH** topic/comment при редактировании (полный список: seedExisting → add/delete в UI → `readyAttachments` на save).
 - **Marketplace:** `portfolio_item.imageUrl` — URL после confirm (`domain=marketplace`).
 - **Chat:** `attachmentIds: uuid[]` = upload intent ids; BFF enrich → `attachments: MediaAttachment[]` на сообщениях.
 

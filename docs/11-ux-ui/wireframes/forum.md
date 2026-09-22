@@ -66,10 +66,11 @@ ForumTopicListPage:
 
 | Зона | Элементы | Поведение |
 |------|----------|-----------|
-| Body | Markdown topic | |
+| Body | Markdown topic | Edit mode: seed existing attachments + `MediaUploader` (add/delete), save → `attachments: readyAttachments` |
+| Attachments | `AttachmentList` (view) / `MediaUploader` (edit) | Hidden in edit mode; upload in progress blocks save |
 | Reactions | 👍 👎 ❤️, Pro paid menu | Charge 50–100₽ |
 | Comments | Nested tree — ответ на тему **и** на любой comment | Depth per plan-config; см. [ветки](../../05-microservices/forum/README.md#-ветки-комментариев) |
-| Composer | New comment (к теме) / reply (к comment) | Auth required; `parentId` в POST |
+| Composer | New comment (к теме) / reply (к comment) | Auth required; `parentId` в POST; edit mode: attachments add/delete same as create |
 | Pro chat | Split panel (desktop) | `forum.topicChatEnabled` |
 | Mod actions | Pin, hide, promote | [moderator-mapping](../../09-security/moderator-mapping.md) |
 

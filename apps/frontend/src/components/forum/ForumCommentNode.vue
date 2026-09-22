@@ -90,10 +90,14 @@ const postError = ref<string | null>(null);
 const promoting = ref(false);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
+const editAttachmentsExpanded = ref(false);
+const editUpload = useMediaUpload('forum');
 
 function startEdit() {
   editBody.value = props.node.body;
   editError.value = null;
+  editUpload.seedExisting(props.node.attachments ?? []);
+  editAttachmentsExpanded.value = Boolean(props.node.attachments?.length);
   editing.value = true;
   showReply.value = false;
 }
@@ -101,18 +105,31 @@ function startEdit() {
 function cancelEdit() {
   editing.value = false;
   editError.value = null;
+  editUpload.reset();
+  editAttachmentsExpanded.value = false;
 }
 
 async function saveEdit() {
   if (!editBody.value.trim()) return;
+  if (
+    editUpload.items.value.some(
+      (item) => item.status === 'uploading' || item.status === 'queued',
+    )
+  ) {
+    editError.value = 'Дождитесь завершения загрузки вложений';
+    return;
+  }
   savingEdit.value = true;
   editError.value = null;
   try {
     const updated = await updateComment(props.topicId, props.node.id, {
       body: editBody.value.trim(),
+      attachments: editUpload.readyAttachments.value,
     });
     emit('updated', updated);
     editing.value = false;
+    editUpload.reset();
+    editAttachmentsExpanded.value = false;
   } catch (e) {
     editError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
   } finally {
@@ -304,6 +321,36 @@ async function onDelete() {
               required
             />
           </label>
+
+          <div class="forum-comment__attachments">
+            <button
+              type="button"
+              class="forum-comment__attachments-toggle"
+              @click="editAttachmentsExpanded = !editAttachmentsExpanded"
+            >
+              Вложения
+              <span
+                v-if="editUpload.count.value > 0"
+              >📎 {{ editUpload.count.value }}</span>
+              <span>{{ editAttachmentsExpanded ? '▼' : '▶' }}</span>
+            </button>
+            <div v-if="editAttachmentsExpanded">
+              <p
+                v-if="editUpload.globalError.value"
+                class="forum-comment__error"
+              >
+                {{ editUpload.globalError.value }}
+              </p>
+              <MediaUploader
+                :items="editUpload.items.value"
+                :accept="editUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="editUpload.canAddMore.value"
+                @select="editUpload.addFiles($event)"
+                @remove="editUpload.removeItem"
+              />
+            </div>
+          </div>
+
           <p
             v-if="editError"
             class="forum-comment__error"
@@ -335,7 +382,7 @@ async function onDelete() {
           :body="node.body"
         />
         <AttachmentList
-          v-if="node.attachments?.length"
+          v-if="!editing && node.attachments?.length"
           :attachments="node.attachments"
           variant="forum"
         />

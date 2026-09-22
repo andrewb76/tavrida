@@ -51,6 +51,8 @@ const topicTitleDraft = ref('');
 const topicBodyDraft = ref('');
 const savingTopic = ref(false);
 const topicEditError = ref<string | null>(null);
+const topicAttachmentsExpanded = ref(false);
+const topicEditUpload = useMediaUpload('forum');
 
 const commentTree = computed(() => buildCommentTree(comments.value));
 
@@ -154,6 +156,8 @@ async function load(id: string) {
   topic.value = null;
   comments.value = [];
   editingTopic.value = false;
+  topicEditUpload.reset();
+  topicAttachmentsExpanded.value = false;
   postError.value = null;
   unbindWs();
   try {
@@ -186,24 +190,39 @@ function startTopicEdit() {
   topicTitleDraft.value = topic.value.title;
   topicBodyDraft.value = topic.value.body;
   topicEditError.value = null;
+  topicEditUpload.seedExisting(topic.value.attachments ?? []);
+  topicAttachmentsExpanded.value = Boolean(topic.value.attachments?.length);
   editingTopic.value = true;
 }
 
 function cancelTopicEdit() {
   editingTopic.value = false;
   topicEditError.value = null;
+  topicEditUpload.reset();
+  topicAttachmentsExpanded.value = false;
 }
 
 async function saveTopicEdit() {
   if (!topic.value || !topicTitleDraft.value.trim() || !topicBodyDraft.value.trim()) return;
+  if (
+    topicEditUpload.items.value.some(
+      (item) => item.status === 'uploading' || item.status === 'queued',
+    )
+  ) {
+    topicEditError.value = 'Дождитесь завершения загрузки вложений';
+    return;
+  }
   savingTopic.value = true;
   topicEditError.value = null;
   try {
     topic.value = await updateTopic(topicId.value, {
       title: topicTitleDraft.value.trim(),
       body: topicBodyDraft.value.trim(),
+      attachments: topicEditUpload.readyAttachments.value,
     });
     editingTopic.value = false;
+    topicEditUpload.reset();
+    topicAttachmentsExpanded.value = false;
   } catch (e) {
     topicEditError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
   } finally {
@@ -463,6 +482,36 @@ async function submitTopicComment() {
               required
             />
           </label>
+          <fieldset class="forum-topic__edit-attachments">
+            <legend>
+              <button
+                type="button"
+                class="forum-topic__attachments-toggle"
+                @click="topicAttachmentsExpanded = !topicAttachmentsExpanded"
+              >
+                Вложения
+                <span
+                  v-if="topicEditUpload.count.value > 0"
+                >📎 {{ topicEditUpload.count.value }}</span>
+                <span>{{ topicAttachmentsExpanded ? '▼' : '▶' }}</span>
+              </button>
+            </legend>
+            <div v-if="topicAttachmentsExpanded">
+              <p
+                v-if="topicEditUpload.globalError.value"
+                class="forum-topic__error"
+              >
+                {{ topicEditUpload.globalError.value }}
+              </p>
+              <MediaUploader
+                :items="topicEditUpload.items.value"
+                :accept="topicEditUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="topicEditUpload.canAddMore.value"
+                @select="topicEditUpload.addFiles($event)"
+                @remove="topicEditUpload.removeItem"
+              />
+            </div>
+          </fieldset>
           <p
             v-if="topicEditError"
             class="forum-topic__error"
@@ -501,7 +550,7 @@ async function submitTopicComment() {
           <MarkdownBody :body="topic.body" />
         </template>
         <AttachmentList
-          v-if="topic.attachments?.length"
+          v-if="!editingTopic && topic.attachments?.length"
           :attachments="topic.attachments"
           variant="forum"
         />
@@ -689,6 +738,16 @@ async function submitTopicComment() {
 .forum-topic__edit-field input,
 .forum-topic__edit-field textarea {
   width: 100%;
+}
+
+.forum-topic__edit-attachments {
+  border: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.forum-topic__edit-attachments legend {
+  padding: 0;
 }
 
 .forum-topic__edit-actions {
