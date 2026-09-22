@@ -5,26 +5,29 @@ packages:
 
 overrides:
   lodash: '>=4.18.1'
-  multer: '>=2.2.0'
-  qs: '>=6.15.2'
+  # GHSA-wc9g / GHSA-535w / GHSA-qfvm (high DoS) — multer 2.2.0
+  multer: '>=2.3.0'
+  # GHSA array-limit + isBuffer DoS — 6.15.4 does not exist; 6.16.0 is first patched line
+  qs: '>=6.16.0'
   vite: '>=6.4.3'
   file-type: '>=21.3.2'
   uuid: '>=11.1.1'
-  # brace-expansion: do NOT force 5.0.8 — ESM-only releases break minimatch CJS
-  # (`brace_expansion_1.default is not a function` → TypeORM glob crash in Nest).
-  # Pin CJS-compatible patched lines (CVE-2026-33750 / related advisories).
-  'brace-expansion@<2.1.0': '2.0.3'
-  'brace-expansion@>=5': '5.0.5'
-  # GHSA-r28c-9q8g-f849 — sourceMappingURL path traversal
-  postcss: '>=8.5.18'
-
-# GHSA-mh99 / GHSA-3jxr claim patched only >=5.0.8, but that line is ESM-only and
-# breaks Nest/TypeORM at runtime. We keep CJS-safe 2.0.3 / 5.0.5 and ignore those
-# advisories until minimatch ships a compatible consumer.
-auditConfig:
-  ignoreGhsas:
-    - GHSA-mh99-v99m-4gvg
-    - GHSA-3jxr-9vmj-r5cp
+  # brace-expansion GHSA-rgw5 (high) + GHSA-mh99 / GHSA-3jxr:
+  # minimatch@3/@9 call module.exports as a function → need CJS 2.1.4 (type=commonjs).
+  # minimatch@10 uses .expand (named export) → dual-package 5.0.9+ is safe.
+  # Do NOT force 5.x onto minimatch@9 (^2.0.2) — object export breaks __importDefault.default.
+  'brace-expansion@<3': '2.1.4'
+  'brace-expansion@>=5': '5.0.9'
+  # GHSA-5p4m / GHSA-2883 (high) — @eslint/eslintrc wants ^4.1.1
+  'js-yaml@4': '4.3.2'
+  # GHSA-2v37 (high) — postcss wants ^3.3.16; nanoid 4+ is ESM-only
+  'nanoid@<4': '3.3.19'
+  # GHSA-r28c sourceMappingURL path traversal + incomplete-fix advisory — 8.5.23
+  postcss: '>=8.5.23'
+  # moderates: TypeORM migration code injection, DOMPurify IN_PLACE hook
+  # typeorm: stay on 0.3.x (services declare ^0.3.20); 1.x is a different major
+  typeorm: '>=0.3.31 <0.4'
+  dompurify: '>=3.4.13'
 
 allowBuilds:
   '@nestjs/core': true
