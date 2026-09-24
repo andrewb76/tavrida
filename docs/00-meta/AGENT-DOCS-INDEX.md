@@ -4,7 +4,7 @@
 > **Обновлять:** в конце задачи, если добавились/изменились docs или статус реализации.  
 > **Правила ведения:** [docs-guidelines.md](../13-maintenance/docs-guidelines.md) · **Ревью docs:** [docs-review.md](../13-maintenance/docs-review.md) · **Bootstrap:** [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md)
 
-**Последнее обновление индекса:** 2026-08-26 (presence service added)
+**Последнее обновление индекса:** 2026-09-24 (AI-CODING-GUIDELINES added)
 
 ---
 
@@ -21,7 +21,7 @@
 
 | Тема | Когда читать | Читать (обязательно) | Дополнительно | Код / статус |
 |------|--------------|----------------------|---------------|--------------|
-| **Bootstrap / новая сессия** | Любая незнакомая задача | [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | [docs/README.md](../README.md) | — |
+| **Bootstrap / новая сессия** | Любая незнакомая задача | [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md) | [AI-CODING-GUIDELINES.md](./AI-CODING-GUIDELINES.md) · [docs/README.md](../README.md) | — |
 | **Инвайты / клуб / referral** | BFF invites, `/join`, Logto OTT, claim | [club-access.md](../01-goal/club-access.md) → [ADR-012](../03-architecture/adr/012-club-invite-via-logto.md) → [06-api/invites-api.md](../06-api/invites-api.md) → [invites-api.md](../05-microservices/bff/invites-api.md) → [user-profile/README.md](../05-microservices/user-profile/README.md) | [karma-and-rating.md](../01-goal/karma-and-rating.md) · [event-catalog.md](../03-architecture/event-catalog.md) · [plan-config/README.md](../05-microservices/plan-config/README.md) | create/resolve/claim ✅ · quota ✅ · `invitation.redeemed` RMQ publish ✅ · consumers later |
 | **BFF (общее)** | Новые REST/WS routes, proxy, агрегация | [bff/README.md](../05-microservices/bff/README.md) → [ADR-002](../03-architecture/adr/002-bff-rest-wss.md) → [06-api/README.md](../06-api/README.md) | [event-catalog.md](../03-architecture/event-catalog.md) | REST v1 · admin APIs · WS planned |
 | **Scalar config** | Scalar registry, club.* | [registry-keys.md](../13-maintenance/registry-keys.md) → [scalar-config/README.md](../05-microservices/scalar-config/README.md) → [ADR-003](../03-architecture/adr/003-settings-vs-financial-policy.md) → [PLATFORM-REGISTRY.md](../05-microservices/PLATFORM-REGISTRY.md) | [ADR-017](../03-architecture/adr/017-plan-config-scalar-config-rename.md) · [ADR-020](../03-architecture/adr/020-three-config-registries.md) · [invites-api.md](../05-microservices/bff/invites-api.md) | DB registry/admin v1 · `/internal/v1/scalar-variables` · Redis planned · **user-prefs post-MVP** |
