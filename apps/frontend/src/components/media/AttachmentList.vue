@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { formatFileSize, isImageAttachment, type MediaAttachment } from '@/services/media';
 import { imageProxyPresets, proxiedMediaUrl } from '@/utils/imageProxy';
+import ProxiedImg from './ProxiedImg.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -46,13 +47,14 @@ function inlineSrc(file: MediaAttachment): string {
         class="attachment-list__gallery-link"
         :title="file.filename"
       >
-        <img
+        <ProxiedImg
           :src="inlineSrc(file)"
+          :fallback-src="file.url"
           :alt="file.filename"
           class="attachment-list__gallery-img"
           loading="lazy"
           decoding="async"
-        >
+        />
       </a>
     </div>
 
@@ -71,12 +73,13 @@ function inlineSrc(file: MediaAttachment): string {
           rel="noopener noreferrer"
           class="attachment-list__link"
         >
-          <img
+          <ProxiedImg
             v-if="variant === 'compact' && isImageAttachment(file)"
             :src="thumbSrc(file)"
+            :fallback-src="file.url"
             :alt="file.filename"
             class="attachment-list__thumb"
-          >
+          />
           <span
             v-else
             class="attachment-list__file-icon"
