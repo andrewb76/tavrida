@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
+import AttachmentList from '@/components/media/AttachmentList.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
 import ForumVoteBar from '@/components/forum/ForumVoteBar.vue';
 import UserAvatar from '@/components/user/UserAvatar.vue';
@@ -107,6 +108,9 @@ const postError = ref<string | null>(null);
 const promoting = ref(false);
 const replyAttachmentsExpanded = ref(false);
 const replyUpload = useMediaUpload('forum');
+
+const commentEditAttachmentsExpanded = ref(false);
+const commentEditUpload = useMediaUpload('forum');
 const commentMenuOpen = ref(false);
 
 function startEdit() {
@@ -114,11 +118,14 @@ function startEdit() {
   editError.value = null;
   editing.value = true;
   showReply.value = false;
+  commentEditUpload.reset();
+  commentEditAttachmentsExpanded.value = false;
 }
 
 function cancelEdit() {
   editing.value = false;
   editError.value = null;
+  commentEditUpload.reset();
 }
 
 function restoreCommentAttachments() {
@@ -142,11 +149,17 @@ async function saveEdit() {
   savingEdit.value = true;
   editError.value = null;
   try {
+    const combinedAttachments = [
+      ...(props.node.attachments ?? []),
+      ...commentEditUpload.readyAttachments.value,
+    ];
     const updated = await updateComment(props.topicId, props.node.id, {
       body: editBody.value.trim(),
+      attachments: combinedAttachments,
     });
     emit('updated', updated);
     editing.value = false;
+    commentEditUpload.reset();
   } catch (e) {
     editError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
   } finally {
@@ -412,6 +425,41 @@ onBeforeUnmount(() => {
               placeholder="Отредактируйте комментарий..."
             />
           </label>
+          <fieldset class="forum-comment__attachments">
+            <legend>
+              <button
+                type="button"
+                class="forum-comment__attachments-toggle"
+                @click="commentEditAttachmentsExpanded = !commentEditAttachmentsExpanded"
+              >
+                Вложения
+                <span
+                  v-if="(node.attachments?.length ?? 0) + commentEditUpload.count.value > 0"
+                >📎 {{ (node.attachments?.length ?? 0) + commentEditUpload.count.value }}</span>
+                <span>{{ commentEditAttachmentsExpanded ? '▼' : '▶' }}</span>
+              </button>
+            </legend>
+            <div v-if="commentEditAttachmentsExpanded">
+              <AttachmentList
+                v-if="node.attachments?.length"
+                :attachments="node.attachments"
+                variant="forum"
+              />
+              <p
+                v-if="commentEditUpload.globalError.value"
+                class="forum-comment__error"
+              >
+                {{ commentEditUpload.globalError.value }}
+              </p>
+              <MediaUploader
+                :items="commentEditUpload.items.value"
+                :accept="commentEditUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="commentEditUpload.canAddMore.value"
+                @select="commentEditUpload.addFiles($event)"
+                @remove="commentEditUpload.removeItem"
+              />
+            </div>
+          </fieldset>
           <p
             v-if="editError"
             class="forum-comment__error"

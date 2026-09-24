@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MarkdownBody from '@/components/media/MarkdownBody.vue';
 import MediaUploader from '@/components/media/MediaUploader.vue';
+import AttachmentList from '@/components/media/AttachmentList.vue';
 import ForumCommentNode from '@/components/forum/ForumCommentNode.vue';
 import ForumBreadcrumbs from '@/components/forum/ForumBreadcrumbs.vue';
 import ForumReactionBar from '@/components/forum/ForumReactionBar.vue';
@@ -68,6 +69,9 @@ const postError = ref<string | null>(null);
 const topicMenuOpen = ref(false);
 const commentAttachmentsExpanded = ref(false);
 const commentUpload = useMediaUpload('forum');
+
+const topicEditAttachmentsExpanded = ref(false);
+const topicEditUpload = useMediaUpload('forum');
 
 const canEditTopic = computed(() => {
   if (!topic.value || !session.userId || !forumMeta.value) return false;
@@ -227,11 +231,14 @@ function startTopicEdit() {
   topicBodyDraft.value = topic.value.body;
   topicEditError.value = null;
   editingTopic.value = true;
+  topicEditUpload.reset();
+  topicEditAttachmentsExpanded.value = false;
 }
 
 function cancelTopicEdit() {
   editingTopic.value = false;
   topicEditError.value = null;
+  topicEditUpload.reset();
 }
 
 function restoreTopicAttachments() {
@@ -257,11 +264,17 @@ async function saveTopicEdit() {
   savingTopic.value = true;
   topicEditError.value = null;
   try {
+    const combinedAttachments = [
+      ...(topic.value.attachments ?? []),
+      ...topicEditUpload.readyAttachments.value,
+    ];
     topic.value = await updateTopic(topicId.value, {
       title: topicTitleDraft.value.trim(),
       body: topicBodyDraft.value.trim(),
+      attachments: combinedAttachments,
     });
     editingTopic.value = false;
+    topicEditUpload.reset();
   } catch (e) {
     topicEditError.value = e instanceof Error ? e.message : 'Не удалось сохранить';
   } finally {
@@ -620,6 +633,41 @@ async function submitTopicComment() {
               placeholder="**жирный**, *курсив*, списки, ссылки, `код`, ```блоки кода```"
             />
           </label>
+          <fieldset class="forum-topic__attachments">
+            <legend>
+              <button
+                type="button"
+                class="forum-topic__attachments-toggle"
+                @click="topicEditAttachmentsExpanded = !topicEditAttachmentsExpanded"
+              >
+                Вложения
+                <span
+                  v-if="(topic.attachments?.length ?? 0) + topicEditUpload.count.value > 0"
+                >📎 {{ (topic.attachments?.length ?? 0) + topicEditUpload.count.value }}</span>
+                <span>{{ topicEditAttachmentsExpanded ? '▼' : '▶' }}</span>
+              </button>
+            </legend>
+            <div v-if="topicEditAttachmentsExpanded">
+              <AttachmentList
+                v-if="topic.attachments?.length"
+                :attachments="topic.attachments"
+                variant="forum"
+              />
+              <p
+                v-if="topicEditUpload.globalError.value"
+                class="forum-topic__error"
+              >
+                {{ topicEditUpload.globalError.value }}
+              </p>
+              <MediaUploader
+                :items="topicEditUpload.items.value"
+                :accept="topicEditUpload.limits.value?.accept ?? 'image/*,.pdf'"
+                :can-add-more="topicEditUpload.canAddMore.value"
+                @select="topicEditUpload.addFiles($event)"
+                @remove="topicEditUpload.removeItem"
+              />
+            </div>
+          </fieldset>
           <p
             v-if="topicEditError"
             class="forum-topic__error"
