@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { resolve } from 'node:path';
+import './config/pg-date-strings';
 import { PeriodCategoryEntity } from './entities/period-category.entity';
 import { PeriodEntity } from './entities/period.entity';
 import { HealthController } from './modules/health/health.controller';

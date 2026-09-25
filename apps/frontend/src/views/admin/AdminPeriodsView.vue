@@ -4,6 +4,7 @@ import PeriodTree from '@/components/periods/PeriodTree.vue';
 import { UiButton } from '@tavrida/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
+import { periodDateOnly } from '@/utils/periodDate';
 import {
   adminDeleteCategory,
   adminDeletePeriod,
@@ -177,8 +178,8 @@ function startNewPeriod(parent: PeriodRecord | null) {
   editingPeriod.value = null;
   periodForm.value = {
     title: '',
-    startsOn: parent?.startsOn ? String(parent.startsOn).slice(0, 10) : '1000-01-01',
-    endsOn: parent?.endsOn ? String(parent.endsOn).slice(0, 10) : '2000-12-31',
+    startsOn: parent?.startsOn ? periodDateOnly(parent.startsOn) : '1000-01-01',
+    endsOn: parent?.endsOn ? periodDateOnly(parent.endsOn) : '2000-12-31',
     summary: '',
     body: '',
     metadata: {},
@@ -191,8 +192,8 @@ function startEditPeriod(period: PeriodRecord) {
   editingPeriod.value = period;
   periodForm.value = {
     title: period.title,
-    startsOn: String(period.startsOn).slice(0, 10),
-    endsOn: String(period.endsOn).slice(0, 10),
+    startsOn: periodDateOnly(period.startsOn),
+    endsOn: periodDateOnly(period.endsOn),
     summary: period.summary,
     body: period.body,
     metadata: { ...period.metadata },
@@ -242,14 +243,14 @@ function openPartition(parent: PeriodRecord) {
       ? kids.map((c) => ({
           id: c.id,
           title: c.title,
-          startsOn: String(c.startsOn).slice(0, 10),
-          endsOn: String(c.endsOn).slice(0, 10),
+          startsOn: periodDateOnly(c.startsOn),
+          endsOn: periodDateOnly(c.endsOn),
         }))
       : [
           {
             title: 'Часть 1',
-            startsOn: String(parent.startsOn).slice(0, 10),
-            endsOn: String(parent.endsOn).slice(0, 10),
+            startsOn: periodDateOnly(parent.startsOn),
+            endsOn: periodDateOnly(parent.endsOn),
           },
         ];
 }
@@ -259,7 +260,7 @@ function addPartitionRow() {
   partitionDraft.value.push({
     title: `Часть ${partitionDraft.value.length + 1}`,
     startsOn: last?.endsOn ?? '',
-    endsOn: partitionParent.value ? String(partitionParent.value.endsOn).slice(0, 10) : '',
+    endsOn: partitionParent.value ? periodDateOnly(partitionParent.value.endsOn) : '',
   });
 }
 

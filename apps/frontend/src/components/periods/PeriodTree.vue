@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { UiButton } from '@tavrida/ui';
 import type { PeriodRecord } from '@/services/periodsAdmin';
+import { periodDateOnly } from '@/utils/periodDate';
 
 defineProps<{
   nodes: PeriodRecord[];
@@ -14,7 +15,7 @@ defineEmits<{
 }>();
 
 function formatDate(dateStr: string): string {
-  const s = String(dateStr).slice(0, 10);
+  const s = periodDateOnly(dateStr);
   const neg = s.startsWith('-');
   const clean = neg ? s.slice(1) : s;
   const [y, m, d] = clean.split('-');

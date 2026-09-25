@@ -128,7 +128,7 @@
 
 **Важно:**
 - Год 0 не существует: `-0001-01-01` = 1 до н.э., `-0002-01-01` = 2 до н.э.
-- PostgreSQL `date` тип поддерживает оба формата нatively
+- PostgreSQL `date` не понимает ISO-8601 отрицательные годы — в БД значения хранятся в нативном виде (`0476-01-01` / `0500-01-01 BC`), а конвертация в/из канонического формата выполняется `periodDateTransformer` (`services/periods/src/common/period-date.ts`); драйвер `pg` настроен отдавать `date` строкой (`config/pg-date-strings.ts`)
 - Сравнение дат выполняется через `parseDateDays()` (proleptic Gregorian calendar), **не** лексикографически
 
 ## 📏 Инварианты partition

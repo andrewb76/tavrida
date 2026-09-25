@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { validateMetadataValues } from '../../common/metadata-schema';
 import { cmpDate as cmpDateImported, validateSiblingPartition } from '../../common/partition';
+import { normalizePeriodDate, toDbDate } from '../../common/period-date';
 import { PeriodCategoryEntity } from '../../entities/period-category.entity';
 import { PeriodEntity } from '../../entities/period.entity';
 import { CategoriesService } from '../categories/categories.service';
@@ -26,16 +27,14 @@ export type QueryPeriodsInput = {
   view?: 'flat' | 'tree';
 };
 
-const ISO_DATE_RE = /^-?\d{4}-\d{2}-\d{2}$/;
-
 function normalizeDate(value: string): string {
-  // Strip time component if present (e.g. "2024-01-15T00:00:00Z" → "2024-01-15")
-  // For BCE dates: "-0001-01-01T00:00:00Z" → "-0001-01-01"
-  const sliced = value.slice(0, 10);
-  if (!ISO_DATE_RE.test(sliced)) {
+  // Strips a trailing time component ("2024-01-15T00:00:00Z" → "2024-01-15",
+  // "-0500-01-01T00:00:00Z" → "-0500-01-01") and validates the result.
+  const normalized = normalizePeriodDate(value);
+  if (normalized === null) {
     throw new BadRequestException(`Invalid date format: "${value}" (expected YYYY-MM-DD or -YYYY-MM-DD)`);
   }
-  return sliced;
+  return normalized;
 }
 
 @Injectable()
@@ -46,9 +45,8 @@ export class PeriodsService {
     private readonly categories: CategoriesService,
   ) {}
 
-  private toDateString(value: string | Date): string {
-    if (typeof value === 'string') return normalizeDate(value);
-    return value.toISOString().slice(0, 10);
+  private toDateString(value: string): string {
+    return normalizeDate(value);
   }
 
   private async assertPartition(parent: PeriodEntity) {
@@ -401,10 +399,11 @@ export class PeriodsService {
     input: QueryPeriodsInput,
   ): void {
     if (input.from) {
-      qb.andWhere('p.endsOn >= :from', { from: normalizeDate(input.from) });
+      // Raw QueryBuilder parameters bypass the column transformer.
+      qb.andWhere('p.endsOn >= :from', { from: toDbDate(normalizeDate(input.from)) });
     }
     if (input.to) {
-      qb.andWhere('p.startsOn <= :to', { to: normalizeDate(input.to) });
+      qb.andWhere('p.startsOn <= :to', { to: toDbDate(normalizeDate(input.to)) });
     }
   }
 

@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { periodDateTransformer } from '../common/period-date';
 
 @Entity({ name: 'period', schema: 'periods' })
 @Index('idx_period_category_range', ['categoryId', 'startsOn', 'endsOn'])
@@ -30,10 +31,10 @@ export class PeriodEntity {
   @Column({ type: 'int', default: 0 })
   sortIndex!: number;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', transformer: periodDateTransformer })
   startsOn!: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', transformer: periodDateTransformer })
   endsOn!: string;
 
   @Column({ type: 'varchar', length: 512 })

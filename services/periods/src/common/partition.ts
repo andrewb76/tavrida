@@ -8,7 +8,8 @@
  *         "-0476-01-01"   (= 476 BC)
  *   Year 0 does not exist: -0001 = 1 BCE, -0002 = 2 BCE.
  *
- * PostgreSQL `date` type accepts both formats natively.
+ * PostgreSQL `date` has no ISO-8601 negative years; BCE values are stored as
+ * "0500-01-01 BC" and converted by periodDateTransformer().
  * Lexicographic comparison is NOT reliable for mixed CE/BCE — use parseDateDays().
  */
 

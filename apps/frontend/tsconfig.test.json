@@ -24,6 +24,8 @@
     "src/services/sessionReauth.logic.ts",
     "src/services/sessionReauth.test.ts",
     "src/utils/imageProxy.ts",
+    "src/utils/periodDate.ts",
+    "src/utils/periodDate.test.ts",
     "src/utils/renderForumMarkdown.ts",
     "src/utils/renderForumMarkdown.test.ts"
   ]
