@@ -375,7 +375,7 @@ services:
     environment:
       <<: *nest-env
       SETTINGS_PORT: '3020'
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/settings
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/tavrida_lot?sslmode=disable&search_path=settings
     networks:
       - tavrida_net
     healthcheck:
