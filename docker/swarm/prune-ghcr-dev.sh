@@ -33,6 +33,8 @@ PACKAGES=(
   tavrida-marketplace
   tavrida-chat
   tavrida-frontend
+  tavrida-admin
+  tavrida-settings
 )
 
 IFS=',' read -r -a PROTECTED_TAGS <<<"$KEEP_TAGS"

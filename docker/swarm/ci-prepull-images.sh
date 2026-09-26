@@ -52,6 +52,8 @@ IMAGES=(
   tavrida-bff
   tavrida-deal-feedback
   tavrida-frontend
+  tavrida-admin
+  tavrida-settings
 )
 
 pull_one_local() {
@@ -126,6 +128,8 @@ IMAGES=(
   tavrida-bff
   tavrida-deal-feedback
   tavrida-frontend
+  tavrida-admin
+  tavrida-settings
 )
 
 pull_one() {

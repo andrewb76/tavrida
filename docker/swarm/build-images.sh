@@ -67,6 +67,7 @@ declare -A SERVICES=(
   [notifications]="@tavrida/notifications|services/notifications"
   [chat]="@tavrida/chat|services/chat"
   [presence]="@tavrida/presence|services/presence"
+  [settings]="@tavrida/settings|services/settings"
 )
 
 build_service() {
@@ -109,6 +110,18 @@ if $PUSH; then
   docker push "${frontend_image}"
   docker tag "${frontend_image}" "${REGISTRY}/${OWNER}/tavrida-frontend:${FLOATING_TAG}"
   docker push "${REGISTRY}/${OWNER}/tavrida-frontend:${FLOATING_TAG}"
+fi
+
+admin_image="${REGISTRY}/${OWNER}/tavrida-admin:${TAG}"
+echo "==> Building ${admin_image}" >&2
+docker build -f "${ROOT}/docker/images/Dockerfile.admin" \
+  --build-arg "VITE_API_BASE_URL=https://api.${DEV_DOMAIN}/api/v1" \
+  -t "${admin_image}" \
+  "${ROOT}"
+if $PUSH; then
+  docker push "${admin_image}"
+  docker tag "${admin_image}" "${REGISTRY}/${OWNER}/tavrida-admin:${FLOATING_TAG}"
+  docker push "${REGISTRY}/${OWNER}/tavrida-admin:${FLOATING_TAG}"
 fi
 
 echo "Built tag: ${TAG} (+ :${FLOATING_TAG})" >&2
